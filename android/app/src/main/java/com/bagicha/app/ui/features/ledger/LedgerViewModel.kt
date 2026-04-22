@@ -6,6 +6,7 @@ import com.bagicha.app.data.remote.AddLogBody
 import com.bagicha.app.data.remote.CreateTreeBody
 import com.bagicha.app.data.remote.LifecycleStageDto
 import com.bagicha.app.data.remote.LogTypeDto
+import com.bagicha.app.data.remote.SeasonalStateDto
 import com.bagicha.app.data.remote.TreeDto
 import com.bagicha.app.data.remote.TreeLogDto
 import com.bagicha.app.data.remote.TreeTypeDto
@@ -54,6 +55,18 @@ data class TreeLog(
     val photoUrl: String? = null
 )
 
+data class SeasonalState(
+    val speciesFamily: String,
+    val currentPhase: String,
+    val upcomingPhase: String,
+    val confidence: String,
+    val doNow: List<String>,
+    val avoidNow: List<String>,
+    val watchFor: List<String>,
+    val nextCheckpointDays: Int,
+    val basis: String
+)
+
 data class LogDraft(
     val type: LogType = LogType.NOTE,
     val content: String = ""
@@ -72,6 +85,9 @@ class LedgerViewModel @Inject constructor(
 
     private val _timeline = MutableStateFlow<List<TreeLog>>(emptyList())
     val timeline: StateFlow<List<TreeLog>> = _timeline.asStateFlow()
+
+    private val _seasonalState = MutableStateFlow<SeasonalState?>(null)
+    val seasonalState: StateFlow<SeasonalState?> = _seasonalState.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -113,6 +129,7 @@ class LedgerViewModel @Inject constructor(
         _selectedTreeId.value = treeId
         _selectedTree.value = _trees.value.find { it.id == treeId }
         loadSelectedTree()
+        loadSeasonalState()
         loadTimeline()
     }
 
@@ -151,6 +168,22 @@ class LedgerViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _error.value = e.message ?: "Failed to load timeline"
+            }
+        }
+    }
+
+    fun loadSeasonalState() {
+        val treeId = _selectedTreeId.value ?: return
+        viewModelScope.launch {
+            try {
+                val response = ledgerRepository.getTreeSeasonalState(treeId)
+                if (response.success) {
+                    _seasonalState.value = response.data?.toUiModel()
+                } else {
+                    _seasonalState.value = null
+                }
+            } catch (_: Exception) {
+                _seasonalState.value = null
             }
         }
     }
@@ -361,6 +394,20 @@ private fun TreeLogDto.toUiModel(): TreeLog {
         date = timestamp.toTimelineLabel(),
         content = content ?: defaultLogContent(type),
         photoUrl = null
+    )
+}
+
+private fun SeasonalStateDto.toUiModel(): SeasonalState {
+    return SeasonalState(
+        speciesFamily = speciesFamily,
+        currentPhase = currentPhase,
+        upcomingPhase = upcomingPhase,
+        confidence = confidence,
+        doNow = doNow,
+        avoidNow = avoidNow,
+        watchFor = watchFor,
+        nextCheckpointDays = nextCheckpointDays,
+        basis = basis
     )
 }
 

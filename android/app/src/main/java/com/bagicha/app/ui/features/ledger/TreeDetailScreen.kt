@@ -48,6 +48,7 @@ fun TreeDetailScreen(
 ) {
     val tree by viewModel.selectedTree.collectAsState()
     val timeline by viewModel.timeline.collectAsState()
+    val seasonalState by viewModel.seasonalState.collectAsState()
     val isSubmitting by viewModel.isSubmitting.collectAsState()
     val error by viewModel.error.collectAsState()
     var showLogDialog by remember { mutableStateOf(false) }
@@ -207,6 +208,13 @@ fun TreeDetailScreen(
                     Spacer(modifier = Modifier.height(48.dp))
                 }
 
+                seasonalState?.let { state ->
+                    item {
+                        SeasonalGuidanceSection(state = state)
+                        Spacer(modifier = Modifier.height(48.dp))
+                    }
+                }
+
                 // 3. Growth Moments (Horizontal Timeline)
                 item {
                     Row(
@@ -342,6 +350,58 @@ fun TimelineMomentCard(log: TreeLog) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(text = log.type.displayLabel(), style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp), color = PrimaryForest)
             Text(text = log.content, style = MaterialTheme.typography.bodySmall, maxLines = 2)
+        }
+    }
+}
+
+@Composable
+fun SeasonalGuidanceSection(state: SeasonalState) {
+    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+        Text("Seasonal Intelligence", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
+        Text("WHAT THIS TREE LIKELY NEEDS NOW", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(SurfaceContainerLow, Shapes.large)
+                .padding(24.dp)
+        ) {
+            Text(
+                text = state.currentPhase.readableToken(),
+                style = MaterialTheme.typography.headlineSmall,
+                color = PrimaryForest
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Next: ${state.upcomingPhase.readableToken()} in about ${state.nextCheckpointDays} days",
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            GuidanceList("Do now", state.doNow)
+            Spacer(modifier = Modifier.height(16.dp))
+            GuidanceList("Avoid now", state.avoidNow)
+            Spacer(modifier = Modifier.height(16.dp))
+            GuidanceList("Watch for", state.watchFor)
+        }
+    }
+}
+
+@Composable
+private fun GuidanceList(title: String, items: List<String>) {
+    Column {
+        Text(title.uppercase(), style = MaterialTheme.typography.labelMedium, color = PrimaryForest)
+        Spacer(modifier = Modifier.height(8.dp))
+        items.forEach { item ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text("•", color = SecondaryTerracotta, modifier = Modifier.padding(end = 8.dp))
+                Text(item, style = MaterialTheme.typography.bodyMedium, color = OnSurfaceNeutral)
+            }
+            Spacer(modifier = Modifier.height(6.dp))
         }
     }
 }
@@ -517,5 +577,11 @@ private fun LogType.displayLabel(): String {
         LogType.HARVEST -> "Harvest"
         LogType.PEST -> "Pest Diagnosis"
         LogType.TREATMENT -> "Treatment"
+    }
+}
+
+private fun String.readableToken(): String {
+    return split("_").joinToString(" ") { token ->
+        token.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
 }

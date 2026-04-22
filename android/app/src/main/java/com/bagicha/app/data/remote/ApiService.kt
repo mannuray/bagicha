@@ -98,6 +98,18 @@ data class TreeLogDto(
     val timestamp: String
 )
 
+data class SeasonalStateDto(
+    @SerializedName("species_family") val speciesFamily: String,
+    @SerializedName("current_phase") val currentPhase: String,
+    @SerializedName("upcoming_phase") val upcomingPhase: String,
+    val confidence: String,
+    @SerializedName("do_now") val doNow: List<String>,
+    @SerializedName("avoid_now") val avoidNow: List<String>,
+    @SerializedName("watch_for") val watchFor: List<String>,
+    @SerializedName("next_checkpoint_days") val nextCheckpointDays: Int,
+    val basis: String
+)
+
 interface ApiService {
     @POST("auth/request-otp")
     suspend fun requestOtp(@Body body: RequestOtpBody): ApiResponse<String>
@@ -122,6 +134,9 @@ interface ApiService {
 
     @GET("ledger/trees/{id}")
     suspend fun getTreeDetail(@Path("id") id: String): ApiResponse<TreeDto>
+
+    @GET("ledger/trees/{id}/seasonal-state")
+    suspend fun getTreeSeasonalState(@Path("id") id: String): ApiResponse<SeasonalStateDto>
 
     @GET("ledger/trees/{id}/timeline")
     suspend fun getTreeTimeline(

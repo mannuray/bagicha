@@ -3,6 +3,7 @@ package com.bagicha.app.data.repository
 import com.bagicha.app.data.remote.AddLogBody
 import com.bagicha.app.data.remote.ApiService
 import com.bagicha.app.data.remote.CreateTreeBody
+import com.bagicha.app.data.remote.SeasonalStateDto
 import com.bagicha.app.data.remote.TreeDto
 import com.bagicha.app.data.remote.TreeLogDto
 import com.bagicha.app.data.remote.dto.ApiResponse
@@ -26,6 +27,10 @@ class LedgerRepositoryImpl @Inject constructor(
 
     override suspend fun getTreeDetail(id: String): ApiResponse<TreeDto> {
         return apiService.getTreeDetail(id)
+    }
+
+    override suspend fun getTreeSeasonalState(id: String): ApiResponse<SeasonalStateDto> {
+        return apiService.getTreeSeasonalState(id)
     }
 
     override suspend fun getTreeTimeline(id: String, page: Int, pageSize: Int): ApiResponse<List<TreeLogDto>> {
