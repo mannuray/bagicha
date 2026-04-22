@@ -39,7 +39,7 @@ object NetworkModule {
     @Singleton
     fun provideApiService(okHttpClient: OkHttpClient): ApiService {
         return Retrofit.Builder()
-            .baseUrl("http://192.168.31.205:3700/api/v1/") // Actual machine IP for physical device
+            .baseUrl("http://192.168.31.60:3700/api/v1/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
