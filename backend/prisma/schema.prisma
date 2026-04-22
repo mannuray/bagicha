@@ -1,0 +1,175 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TreeType {
+  FRUIT_BEARING
+  NON_FRUIT_BEARING
+  ORNAMENTAL
+}
+
+enum LifecycleStage {
+  SAPLING
+  JUVENILE
+  FIRST_FLOWERING
+  MATURE_BEARING
+}
+
+enum LogType {
+  PHOTO
+  NOTE
+  HARVEST
+  PEST_DIAGNOSIS
+  TREATMENT
+}
+
+enum TaskType {
+  WATER
+  PRUNE
+  FEED
+  HARVEST
+  TREAT
+}
+
+enum TaskStatus {
+  PENDING
+  COMPLETED
+  SKIPPED
+}
+
+model User {
+  id             String   @id @default(uuid())
+  phone_number   String   @unique
+  name           String?
+  latitude       Float?
+  longitude      Float?
+  district       String?
+  garden_types   String[] @default([])
+  language_pref  String   @default("en")
+  ranking_points Int      @default(0)
+  badge_level    String   @default("Seedling")
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  trees    Tree[]
+  posts    Post[]
+  comments Comment[]
+  sent_messages     Message[] @relation("SentMessages")
+  received_messages Message[] @relation("ReceivedMessages")
+  verifications     ExpertVerification?
+
+  @@map("users")
+}
+
+model Tree {
+  id                String         @id @default(uuid())
+  user_id           String
+  name              String
+  species           String
+  variety           String?
+  type              TreeType       @default(FRUIT_BEARING)
+  lifecycle_stage   LifecycleStage @default(SAPLING)
+  lifecycle_stage_manual Boolean   @default(false)
+  planting_date     DateTime?
+  health_status     String         @default("Healthy")
+  created_at        DateTime       @default(now())
+  updated_at        DateTime       @updatedAt
+
+  user  User  @relation(fields: [user_id], references: [id])
+  logs  Log[]
+  tasks Task[]
+
+  @@map("trees")
+}
+
+model Log {
+  id         String   @id @default(uuid())
+  tree_id    String
+  type       LogType
+  content    String?  // Text note or photo URL
+  metadata   Json?    // For yield weight, pest details, etc.
+  timestamp  DateTime @default(now())
+
+  tree Tree @relation(fields: [tree_id], references: [id])
+
+  @@map("tree_logs")
+}
+
+model Task {
+  id         String     @id @default(uuid())
+  tree_id    String
+  type       TaskType
+  due_date   DateTime
+  status     TaskStatus @default(PENDING)
+  completed_at DateTime?
+  created_at DateTime   @default(now())
+
+  tree Tree @relation(fields: [tree_id], references: [id])
+
+  @@map("tasks")
+}
+
+model Post {
+  id         String   @id @default(uuid())
+  author_id  String
+  tree_id    String?
+  content    String
+  district   String?  // For hyper-local feed
+  is_alert   Boolean  @default(false)
+  upvotes    Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  author   User      @relation(fields: [author_id], references: [id])
+  comments Comment[]
+
+  @@map("posts")
+}
+
+model Comment {
+  id         String   @id @default(uuid())
+  post_id    String
+  author_id  String
+  content    String
+  is_expert_verified Boolean @default(false)
+  created_at DateTime @default(now())
+
+  post   Post @relation(fields: [post_id], references: [id])
+  author User @relation(fields: [author_id], references: [id])
+
+  @@map("comments")
+}
+
+model Message {
+  id           String   @id @default(uuid())
+  sender_id    String
+  receiver_id  String
+  content      String
+  shared_resource_id String? // Link to Tree or Diagnosis
+  created_at   DateTime @default(now())
+
+  sender   User @relation("SentMessages", fields: [sender_id], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiver_id], references: [id])
+
+  @@map("messages")
+}
+
+model ExpertVerification {
+  id              String   @id @default(uuid())
+  user_id         String   @unique
+  credential_type String
+  status          String   @default("PENDING")
+  verified_at     DateTime?
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("expert_verifications")
+}
