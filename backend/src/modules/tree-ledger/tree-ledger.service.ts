@@ -6,12 +6,14 @@ import { LifecycleService } from './services/lifecycle.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { UpdateTreeDto } from './dto/update-tree.dto';
+import { SeasonalIntelligenceService } from './services/seasonal-intelligence.service';
 
 @Injectable()
 export class TreeLedgerService {
   constructor(
     private prisma: PrismaService,
     private lifecycleService: LifecycleService,
+    private seasonalIntelligenceService: SeasonalIntelligenceService,
     @InjectQueue('task-generation') private taskQueue: Queue,
   ) {}
 
@@ -158,5 +160,21 @@ export class TreeLedgerService {
         has_previous: page > 1,
       },
     };
+  }
+
+  async getSeasonalState(userId: string, treeId: string) {
+    const tree = await this.getTreeDetail(userId, treeId);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        district: true,
+        latitude: true,
+        longitude: true,
+      },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    return this.seasonalIntelligenceService.inferTreeSeasonalState(tree, user);
   }
 }

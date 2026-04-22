@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.bagicha.app.R
 import com.bagicha.app.ui.theme.*
 
 data class Language(val code: String, val name: String, val nativeName: String)
@@ -36,7 +37,7 @@ val languages = listOf(
     Language("hi", "Hindi", "हिन्दी"),
     Language("bn", "Bengali", "বাংলা"),
     Language("te", "Telugu", "తెలుగు"),
-    Language("mr", "Marathi", "मराठी"),
+    Language("mr", "Marathi", "मরাठी"),
     Language("ta", "Tamil", "தமிழ்")
 )
 
@@ -61,7 +62,7 @@ fun LanguageSelectionScreen(
                     .height(320.dp)
             ) {
                 AsyncImage(
-                    model = "https://lh3.googleusercontent.com/aida-public/AB6AXuD0qi3WpNt1DNKngC5iKuuG8B5rACBmK9M7JKnUB8v-MpceF5keAXfDIHsiBSMCd-ITqRmlre_xBURASv04NfpZeD4qCTyIeE3pZzlxRAHhyRwXCeLBDBRod-obINfwN0hdmGvhS8Btz-qufTvuysrkeiQ8u1Sea-VdkQlXWNCkS6Hb1mQdD3ewBMJWO5saz_3eF1Yxgko8gRjO_X9H8MbLqbj3XvDDBAthMBzdj-p_Iq2NtzZjCgt0UCA1aO6N7o_T5IYJZshcYXk",
+                    model = R.drawable.login_hero,
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop

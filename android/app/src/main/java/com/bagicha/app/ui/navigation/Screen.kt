@@ -26,5 +26,5 @@ sealed class Screen(val route: String) {
     object Paywall : Screen("paywall")
     object SeedBoxBuilder : Screen("seed_box_builder")
     object SubscriptionStatus : Screen("subscription_status")
-    object Settings : Screen("settings")
+    object Profile : Screen("profile")
 }

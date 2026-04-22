@@ -7,10 +7,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.bagicha.app.ui.theme.*
 
 @Composable
 fun ProductCard(
@@ -20,32 +25,55 @@ fun ProductCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = SurfaceContainerLow),
+        shape = Shapes.large
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
-            )
-            Spacer(modifier = Modifier.height(12.dp))
+                    .height(160.dp)
+                    .clip(PebbleShape6)
+                    .background(SurfaceContainer)
+            ) {
+                // Placeholder for product image
+                Box(modifier = Modifier.fillMaxSize().background(PrimaryForest.copy(alpha = 0.05f)), contentAlignment = Alignment.Center) {
+                    Text(text = product.name.first().toString(), style = MaterialTheme.typography.headlineLarge, color = PrimaryForest.copy(alpha = 0.2f))
+                }
+            }
+            Spacer(modifier = Modifier.height(20.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = product.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text(text = "₹${product.price}", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = product.name, style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp), color = PrimaryForest)
+                    Text(text = "₹${product.price}", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+                }
             }
-            Text(text = product.description, fontSize = 12.sp, color = Color.Gray, maxLines = 2)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = product.description,
+                style = MaterialTheme.typography.bodySmall,
+                color = OnSurfaceMuted.copy(alpha = 0.6f),
+                maxLines = 2
+            )
+            Spacer(modifier = Modifier.height(20.dp))
             Button(
                 onClick = onAction,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .background(PrimaryGradient, FullRounded),
+                shape = FullRounded,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
             ) {
-                Text(text = actionLabel)
+                Text(
+                    text = actionLabel.uppercase(),
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.sp),
+                    color = Color.White
+                )
             }
         }
     }

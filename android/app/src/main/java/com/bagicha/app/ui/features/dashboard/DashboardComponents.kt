@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.bagicha.app.R
 import com.bagicha.app.ui.theme.*
 
 @Composable
@@ -110,7 +111,7 @@ fun VisualAssetBleedDense() {
         modifier = Modifier.fillMaxWidth().height(180.dp).clip(Shapes.large)
     ) {
         AsyncImage(
-            model = "https://lh3.googleusercontent.com/aida-public/AB6AXuAZ7d1a4JLDWgfwFnrK_NPvFGUoNcwR1p-pGdRGw1qhzQ3R0PkOAcVVKaa0_fUdmehcKOsgWHHmOPOmaJ9L-yQsGTQMjn88Tp8VYOraaZY9bx2NtK2aiF_8-MBLAaXjmIuToy-a9P3thyfMeputpQmMeBUUnY7bt-6uSKXpgP425jRxx48puiR_7LfHs-GOtTIudnG_THeezmu2C5sei0UJNM0xM4MfRGSpMG3EWK7vsH5dwNJXm3GTuSX8-bX6cFkO2HsbftDAGs8",
+            model = R.drawable.dashboard_hero,
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop

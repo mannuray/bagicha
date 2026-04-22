@@ -124,7 +124,7 @@ fun NavGraph(navController: NavHostController) {
         composable(Screen.AiMentor.route) { AiMentorScreen(viewModel = communityViewModel, navController = navController) }
 
         // Profile & Settings
-        composable(Screen.Settings.route) {
+        composable(Screen.Profile.route) {
             ProfileScreen(navController = navController)
         }
 

@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.bagicha.app.R
 import com.bagicha.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,23 +57,39 @@ fun TreeDetailScreen(
             containerColor = SurfaceBase,
             topBar = {
                 TopAppBar(
-                    title = { Text("Biography", style = MaterialTheme.typography.titleLarge.copy(fontStyle = FontStyle.Italic, fontFamily = androidx.compose.ui.text.font.FontFamily.Serif)) },
+                    title = { },
                     navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.Default.ArrowBack, null, tint = PrimaryForest)
+                        Box(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .size(40.dp)
+                                .background(SurfaceBase.copy(alpha = 0.8f), CircleShape)
+                                .clip(CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(Icons.Default.ArrowBack, null, tint = PrimaryForest)
+                            }
                         }
                     },
                     actions = {
-                        TextButton(
-                            onClick = {
-                                viewModel.startEditingSelectedTree()
-                                navController.navigate(com.bagicha.app.ui.navigation.Screen.EditTree.route)
-                            }
+                        Box(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .background(SurfaceBase.copy(alpha = 0.8f), FullRounded)
+                                .clip(FullRounded)
                         ) {
-                            Text("Edit Registry", color = PrimaryForest)
+                            TextButton(
+                                onClick = {
+                                    viewModel.startEditingSelectedTree()
+                                    navController.navigate(com.bagicha.app.ui.navigation.Screen.EditTree.route)
+                                }
+                            ) {
+                                Text("EDIT REGISTRY", style = MaterialTheme.typography.labelMedium, color = PrimaryForest)
+                            }
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceBase.copy(alpha = 0.7f))
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
             },
             floatingActionButton = {
@@ -99,58 +116,66 @@ fun TreeDetailScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
             ) {
-                // 1. Hero Section: Asymmetric Layout
+                // 1. Hero Section: Full Overlay Style
                 item {
-                    Box(modifier = Modifier.fillMaxWidth().padding(bottom = 48.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(start = 24.dp, top = 48.dp)
-                            ) {
-                                Text(
-                                    text = currentTree.type.toHeroLabel(),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = SecondaryTerracotta
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(600.dp)
+                    ) {
+                        // Background Image
+                        AsyncImage(
+                            model = R.drawable.leaf_detail,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                        
+                        // Scrim Gradient for text readability
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(
+                                            Color.Transparent,
+                                            Color.Black.copy(alpha = 0.1f),
+                                            Color.Black.copy(alpha = 0.8f)
+                                        )
+                                    )
                                 )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = currentTree.name.formatHeroTitle(),
-                                    style = MaterialTheme.typography.headlineLarge.copy(fontSize = 56.sp),
-                                    color = PrimaryForest,
-                                    lineHeight = 60.sp
-                                )
-                                Spacer(modifier = Modifier.height(24.dp))
-                                Text(
-                                    text = currentTree.buildSummary(),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = OnSurfaceVariant
-                                )
-                            }
-                            
-                            // Bleeding Image
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(0.6f)
-                                    .height(500.dp)
-                                    .offset(x = 40.dp)
-                                    .clip(RoundedCornerShape(topStart = 64.dp, bottomStart = 64.dp))
-                            ) {
-                                AsyncImage(
-                                    model = "https://lh3.googleusercontent.com/aida-public/AB6AXuBVH-U7sXysGDYsa6cual1c1DqJ8furKsz8F4R2g0No_WnTP7DOhTD5cJuk8zeDxk_d50PDZ-8sBi_g4ZpFV8EwRoF7FlW4Fe9DIyXa0O4QKxuvD3ylC55FYRkON-zat6w5J4cOhfjnEOWAaYm1pFy_dfykFOgt0lZ6eMMPVKsPFH7WYTr1MFCz_p8bP8cdiwkBevCvzuBr4E19GAtF_0mr1w-FLf8g3fbLKTGPQW2Gl-vYYdCa-agAGiq_c6DFqh_fU7HvsiE3aNo",
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                                // Gradient Overlay to blend with background
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(Brush.horizontalGradient(listOf(SurfaceBase, Color.Transparent, Color.Transparent)))
-                                )
-                            }
+                        )
+
+                        // Content Overlay
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(24.dp)
+                                .padding(bottom = 32.dp)
+                        ) {
+                            Text(
+                                text = currentTree.type.toHeroLabel(),
+                                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 2.sp),
+                                color = SecondaryTerracotta
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = currentTree.name.uppercase(),
+                                style = MaterialTheme.typography.headlineLarge.copy(
+                                    fontSize = 52.sp,
+                                    fontWeight = FontWeight.Black,
+                                    lineHeight = 56.sp
+                                ),
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = currentTree.buildSummary(),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.White.copy(alpha = 0.7f),
+                                lineHeight = 24.sp
+                            )
                         }
                     }
                 }
@@ -338,6 +363,7 @@ fun HealthRecordItem(title: String, date: String, status: String) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogMomentDialog(
     isSubmitting: Boolean,
@@ -345,68 +371,116 @@ fun LogMomentDialog(
     onDismiss: () -> Unit,
     onSubmit: (LogDraft) -> Unit
 ) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var selectedType by remember { mutableStateOf(LogType.NOTE) }
     var content by remember { mutableStateOf("") }
 
-    AlertDialog(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        confirmButton = {
+        sheetState = sheetState,
+        containerColor = SurfaceBase,
+        shape = RoundedCornerShape(topStart = 48.dp, topEnd = 48.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .size(width = 40.dp, height = 4.dp)
+                    .background(PrimaryForest.copy(alpha = 0.1f), FullRounded)
+            )
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(24.dp)
+                .padding(bottom = 16.dp)
+        ) {
+            // Header
+            Text(
+                text = "Log a Moment",
+                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 32.sp),
+                color = PrimaryForest
+            )
+            Text(
+                text = "ADD TO THE LEGACY TIMELINE",
+                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 2.sp),
+                color = SecondaryTerracotta
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // 1. Horizontal Pebble Selection (Sticky/Fixed)
+            Text(text = "SELECT MOMENT TYPE", style = MaterialTheme.typography.labelMedium, color = OnSurfaceVariant)
+            Spacer(modifier = Modifier.height(12.dp))
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 8.dp)
+            ) {
+                items(LogType.values()) { type ->
+                    val isSelected = selectedType == type
+                    Box(
+                        modifier = Modifier
+                            .clip(FullRounded)
+                            .background(if (isSelected) PrimaryForest else SurfaceContainerLow)
+                            .clickable { selectedType = type }
+                            .padding(horizontal = 20.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = type.displayLabel().uppercase(),
+                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 10.sp),
+                            color = if (isSelected) Color.White else PrimaryForest
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 2. Input Zone
+            OutlinedTextField(
+                value = content,
+                onValueChange = { content = it },
+                placeholder = { Text("What happened in the garden today?", color = OnSurfaceVariant.copy(alpha = 0.4f)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 120.dp)
+                    .background(SurfaceContainerLowest, Shapes.large),
+                shape = Shapes.large,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = PrimaryForest.copy(alpha = 0.3f),
+                    unfocusedBorderColor = Color.Transparent
+                )
+            )
+
+            error?.let {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(text = it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // 3. The Sticky Action Bar
             Button(
                 onClick = { onSubmit(LogDraft(type = selectedType, content = content)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .background(PrimaryGradient, FullRounded),
+                shape = FullRounded,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 enabled = content.isNotBlank() && !isSubmitting
             ) {
                 if (isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                        color = Color.White
-                    )
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("Save")
+                    Text("SAVE TO BIOGRAPHY", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 2.sp), color = Color.White)
                 }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isSubmitting) {
-                Text("Cancel")
-            }
-        },
-        title = { Text("Log A Moment") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                LogType.values().forEach { type ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { selectedType = type }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = selectedType == type,
-                            onClick = { selectedType = type }
-                        )
-                        Text(type.displayLabel())
-                    }
-                }
-                OutlinedTextField(
-                    value = content,
-                    onValueChange = { content = it },
-                    label = { Text("What happened?") },
-                    minLines = 3,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                error?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
         }
-    )
+    }
 }
 
 private fun TreeCategory.toHeroLabel(): String {

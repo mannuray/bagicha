@@ -26,9 +26,10 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.bagicha.app.R
 import com.bagicha.app.ui.theme.*
 
-data class GardenProfileOption(val id: String, val title: String, val label: String, val imageUrl: String)
+data class GardenProfileOption(val id: String, val title: String, val label: String, val imageUrl: Any)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,19 +47,19 @@ fun GardenProfileScreen(
             id = "trees",
             title = "Fruit Trees",
             label = "Orchard",
-            imageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuBtXBk2LGEzmzyeeUnZfBteww-TGhJIG4_3vx6ovNoN_nNJH_CAp0dz1d4DhqEqh_qPHL-3oMGTkAE5_F6NmhJapVH26oKgJqRUrZLIT6beyTmjbfpl3nSdeKbcFPUl5WlRNKEEZJlIwAdgJ6ft143INF8Zq1-XbQFcpliqZvcNzGWxB7qRlT8gUe2vgTWynE0gNtHV6PsFvbszYzMKR57EeuEihdMw2JyQLQScVENF7RmDUcCafpgY-AsQzCp6TuEGErrSsCuMOzQ"
+            imageUrl = R.drawable.fruit_trees
         ),
         GardenProfileOption(
             id = "veggies",
             title = "Vegetables",
             label = "Harvest",
-            imageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuD-pxg5-uvAkJHjP_jgYMi4stE93nMo2P6y8G5X6x63fc98qw-szdO-ezm0NlV5aruVfa9f3BxtyXmk8NeiyW4EeC3WCRVavale661FthZKztYhhd6uVJ2qEp9mHcFZlRTfvxp5p_E44jHMLb4rMI3JtSCDlDu5IVkdH9ETCUVsvfJPzWEECQzc9IovmTc2QwLusddW7K4Fzfm_nT6BABjlzfKVta5kO6OCxf98SLc1pGyhPDR4iE7t1PQTTQ9G4f-g3bNCAMg4RvU"
+            imageUrl = R.drawable.vegetables
         ),
         GardenProfileOption(
             id = "flowers",
             title = "Flowers",
             label = "Pollinator",
-            imageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuAh0KD9YWIyb9uyr4Hvi2veeLp6IelhGOeRHSGdy9rJLyqNScxzsh54GSKJJcZiq9Ptb1XI8E-hqlfwguFG99py3hTS-6f0uWO4wiOJGI0d-WfhuLT7B63IN41W80sSyPtQsWhXVBLHb4bKvq2hy9NUKf7UtnlJnNtjYcdQAL86LQpsDyy0IhyIlTBl403K4B17vdHXjBTwKZhBu9nTV32cOTPHz4oJzADAwspir4okzB8huPo1BevzL_NOppwIQAlw-MZWOSbZ9LU"
+            imageUrl = R.drawable.flowers
         )
     )
 
@@ -96,7 +97,7 @@ fun GardenProfileScreen(
             // Hero Header
             Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.3f).height(240.dp)) {
                 AsyncImage(
-                    model = "https://lh3.googleusercontent.com/aida-public/AB6AXuAw4eLea5zG-RXDot1Ckuig5KGi7TkbIHkzaazMNFzB8R7WIVv2qWNLOAUP23KFDt7qIpd-W0uXWOCe4VMNEyeaaFsS0TkmgJfJIzAFB84fmuGL0Be3IK7z7gqIIdwhb6K3Wo_IFvHUN4q7SnQzxRFlF7M9x4QUzuHMnkT9gZFII9iAIjHWIPz3Ko5y5mAJuLdHu-QmCzKwOH1HyQhu5rsCMpaLZH71_G6gXnPI5omu_H2xYGfyrNBx254on7NBxNWoo4IHUGJ_0Mg",
+                    model = R.drawable.garden_profile_hero,
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop

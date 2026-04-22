@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.bagicha.app.R
 import com.bagicha.app.ui.features.onboarding.OnboardingViewModel
 import com.bagicha.app.ui.theme.*
 
@@ -39,17 +40,16 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(SurfaceBase),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(SurfaceBase)
     ) {
-        // 1. Dynamic Hero Section (33% of screen)
+        // 1. Fixed Hero Section (33%)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.33f)
         ) {
             AsyncImage(
-                model = "https://lh3.googleusercontent.com/aida-public/AB6AXuD0qi3WpNt1DNKngC5iKuuG8B5rACBmK9M7JKnUB8v-MpceF5keAXfDIHsiBSMCd-ITqRmlre_xBURASv04NfpZeD4qCTyIeE3pZzlxRAHhyRwXCeLBDBRod-obINfwN0hdmGvhS8Btz-qufTvuysrkeiQ8u1Sea-VdkQlXWNCkS6Hb1mQdD3ewBMJWO5saz_3eF1Yxgko8gRjO_X9H8MbLqbj3XvDDBAthMBzdj-p_Iq2NtzZjCgt0UCA1aO6N7o_T5IYJZshcYXk",
+                model = R.drawable.login_hero,
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop

@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.bagicha.app.R
 import com.bagicha.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,14 +54,14 @@ fun AddTreeScreen(
                 .fillMaxSize()
                 .verticalScroll(scrollState)
         ) {
-            // 1. Hero Header
+            // Hero Header Section
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(380.dp)
             ) {
                 AsyncImage(
-                    model = "https://lh3.googleusercontent.com/aida-public/AB6AXuCSx8KJjBCfomcTgwg1uW4O3J1QacmXtxeqv8Lk6G8Kff-_7ptOvTl7PHW5Y1L4G-GYnibeoZXhxG5APBJiAYSZOS0u0CYVxS-P0S7yYQ-VjpXPPbFalbxvvdwTr1gZ3rFHpLFBnWcA2V0FQ6MxUDhWxZdQstMUKkU4mo0HjDVDTsDOWRgkxXEgctnOVEiKsrDXASphacKV98ud1i7U9-wqg1O4fQtPKaYQlCpWQrZ8hC11Fm7bYV6k7DSn8lT5je9H9pnQF0ODG4s",
+                    model = R.drawable.login_hero, // Using login_hero as a temporary local replacement
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop

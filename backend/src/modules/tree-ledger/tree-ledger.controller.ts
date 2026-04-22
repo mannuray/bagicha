@@ -25,6 +25,11 @@ export class TreeLedgerController {
     return this.treeLedgerService.getTreeDetail(req.user.id, id);
   }
 
+  @Get('trees/:id/seasonal-state')
+  async getSeasonalState(@Request() req, @Param('id') id: string) {
+    return this.treeLedgerService.getSeasonalState(req.user.id, id);
+  }
+
   @Put('trees/:id')
   async updateTree(@Request() req, @Param('id') id: string, @Body() updateTreeDto: UpdateTreeDto) {
     return this.treeLedgerService.updateTree(req.user.id, id, updateTreeDto);

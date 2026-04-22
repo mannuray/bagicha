@@ -41,12 +41,6 @@ fun TreeListScreen(
 
     Scaffold(
         containerColor = SurfaceBase,
-        topBar = {
-            TopAppBar(
-                title = { },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
         bottomBar = { BottomNavigationBar(navController = navController) },
         floatingActionButton = {
             FloatingActionButton(
@@ -66,9 +60,11 @@ fun TreeListScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 24.dp)
         ) {
+            // 0. Top Padding Spacer
+            item { Spacer(modifier = Modifier.height(24.dp)) }
+
             // 1. Editorial Header
             item {
-                Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = "CURATED COLLECTION",
                     style = MaterialTheme.typography.labelMedium,

@@ -10,7 +10,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Yard
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -77,10 +77,10 @@ fun BottomNavigationBar(navController: NavController) {
                 onClick = { navController.navigate(Screen.Community.route) }
             )
             NavItem(
-                label = "Settings",
-                icon = Icons.Default.Settings,
-                selected = currentRoute == Screen.Settings.route,
-                onClick = { navController.navigate(Screen.Settings.route) }
+                label = "Profile",
+                icon = Icons.Default.Person,
+                selected = currentRoute == Screen.Profile.route,
+                onClick = { navController.navigate(Screen.Profile.route) }
             )
         }
     }

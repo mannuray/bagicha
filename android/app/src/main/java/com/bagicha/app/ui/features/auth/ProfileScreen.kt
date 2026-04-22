@@ -1,5 +1,6 @@
 package com.bagicha.app.ui.features.auth
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 
 import androidx.compose.foundation.background
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.bagicha.app.R
 import com.bagicha.app.ui.navigation.BottomNavigationBar
 import com.bagicha.app.ui.theme.*
 
@@ -33,22 +35,6 @@ import com.bagicha.app.ui.theme.*
 fun ProfileScreen(navController: NavController) {
     Scaffold(
         containerColor = SurfaceBase,
-        topBar = {
-            TopAppBar(
-                title = { Text("Profile", style = MaterialTheme.typography.titleLarge.copy(fontStyle = FontStyle.Italic, fontFamily = androidx.compose.ui.text.font.FontFamily.Serif)) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, null, tint = PrimaryForest)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.Settings, null, tint = PrimaryForest)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceBase.copy(alpha = 0.7f))
-            )
-        },
         bottomBar = { BottomNavigationBar(navController = navController) }
     ) { paddingValues ->
         LazyColumn(
@@ -58,12 +44,14 @@ fun ProfileScreen(navController: NavController) {
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // 0. Top Padding Spacer
+            item { Spacer(modifier = Modifier.height(24.dp)) }
+
             // 1. Profile Header
             item {
-                Spacer(modifier = Modifier.height(32.dp))
                 Box(modifier = Modifier.size(160.dp)) {
                     AsyncImage(
-                        model = "https://lh3.googleusercontent.com/aida-public/AB6AXuAMamxWyKAFmngr2GyhromTRhzNwEJOSxRVMMUW8pJu8_NPefdebdgF75VnXzN6eLV_vpyHxPyQ3WxjBsVoKpFo1Bd6lZj4efgsAVG0PNBLNiMehz7G3U9LNx7JgFfTduBuNWQerz6J6xi1MSO4Htt8mCIcPBMQGUn_zxnaxSW1JLE1YmJ7TuCfDfYvbbsoYBJCwSlpgbg6YU43b6fLyHUtFUl2CPK_-tJaY_c-8Gw-m1zh28svsh9iBUNFa4sRjuZMNVZ3-SLMQIQ",
+                        model = R.drawable.avatar_arjun,
                         contentDescription = "Profile Photo",
                         modifier = Modifier.fillMaxSize().clip(PebbleShape6),
                         contentScale = ContentScale.Crop
@@ -214,4 +202,3 @@ fun SettingsItem(
         }
     }
 }
-

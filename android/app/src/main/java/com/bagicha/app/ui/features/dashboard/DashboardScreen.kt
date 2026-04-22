@@ -7,13 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material3.*
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -48,20 +43,20 @@ fun DashboardScreen(
         bottomBar = { BottomNavigationBar(navController = navController) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* AI Mentor */ },
+                onClick = { navController.navigate(Screen.AiMentor.route) },
                 containerColor = PrimaryForest,
                 contentColor = Color.White,
                 shape = FullRounded,
                 modifier = Modifier.size(56.dp)
             ) {
-                Icon(Icons.Default.AutoAwesome, null, modifier = Modifier.size(28.dp))
+                Icon(Icons.Default.Psychology, null, modifier = Modifier.size(28.dp))
             }
         }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(bottom = paddingValues.calculateBottomPadding())
         ) {
             // 1. Sticky Header
             stickyHeader {
@@ -69,6 +64,7 @@ fun DashboardScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(SurfaceBase.copy(alpha = 0.95f))
+                        .statusBarsPadding()
                         .padding(horizontal = 24.dp, vertical = 12.dp)
                 ) {
                     DashboardHeader(weather = weather)

@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import coil.compose.AsyncImage
+import com.bagicha.app.R
 import com.bagicha.app.ui.features.onboarding.OnboardingViewModel
 import com.bagicha.app.ui.theme.*
 
@@ -79,7 +80,7 @@ fun OtpScreen(
             modifier = Modifier.fillMaxWidth().fillMaxHeight(0.33f)
         ) {
             AsyncImage(
-                model = "https://lh3.googleusercontent.com/aida-public/AB6AXuAVUERQVZuYthi7ib4xy4TKnDxUkJZ-qUOWESmtKzUyUnOZYs5BWOP4ASHtq4VAO5pEdbK2El3YwdpsOotzaTUhS_CHBlWmsCd0685pvJ1sPZDaj16YTppBPE6gyr9V_R1Er_Qg_eMKge-ZJh-SdJtjrN2vxorESu5B7IhQ1XdKbPv1RXudwnLKmWSPSgHRePSRT5yYmzGfFE_31g0i-gF7CzyuRXjSqfAj1ldE-IIVZ6KYTFBDkehnyGqILjbz92lTdKQ74y_-iFI",
+                model = R.drawable.otp_hero,
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop

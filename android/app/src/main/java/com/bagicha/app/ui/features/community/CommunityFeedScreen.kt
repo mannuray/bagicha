@@ -34,30 +34,6 @@ fun CommunityFeedScreen(
 
     Scaffold(
         containerColor = SurfaceBase,
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        "The Community", 
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontStyle = FontStyle.Italic,
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Serif
-                        )
-                    ) 
-                },
-                actions = {
-                    IconButton(onClick = { navController.navigate(Screen.ChatInbox.route) }) {
-                        Icon(Icons.Default.QuestionAnswer, null, tint = PrimaryForest)
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = { /* Menu */ }) {
-                        Icon(Icons.Default.Menu, null, tint = PrimaryForest)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceBase.copy(alpha = 0.7f))
-            )
-        },
         bottomBar = { BottomNavigationBar(navController = navController) },
         floatingActionButton = {
             FloatingActionButton(
@@ -77,6 +53,9 @@ fun CommunityFeedScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 24.dp)
         ) {
+            // 0. Top Padding Spacer
+            item { Spacer(modifier = Modifier.height(24.dp)) }
+
             // 1. Navigation Toggle
             item {
                 FeedToggle(
