@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Psychology
@@ -59,29 +60,26 @@ fun DashboardScreen(
                 .fillMaxSize()
                 .padding(bottom = paddingValues.calculateBottomPadding())
         ) {
-            // 1. Sticky Header
+            // 1. Clean Sticky Header (Journal Style)
             stickyHeader {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(SurfaceBase.copy(alpha = 0.95f))
                         .statusBarsPadding()
-                        .padding(horizontal = 24.dp, vertical = 12.dp)
+                        .padding(horizontal = 24.dp, vertical = 20.dp)
                 ) {
                     DashboardHeader(weather = weather)
                 }
-                Divider(color = GhostBorderNeutral, thickness = 0.5.dp)
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
-            // 2. Critical Alert (High Density)
+            // 2. Integrated Biological Pulse
             alert?.let {
                 item {
                     Box(modifier = Modifier.padding(horizontal = 24.dp)) {
-                        UrgentAlertCardDense(alert = it, onDismiss = { viewModel.dismissAlert() })
+                        IntegratedObservationTag(alert = it, onDismiss = { viewModel.dismissAlert() })
                     }
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
 
@@ -92,49 +90,50 @@ fun DashboardScreen(
                             onCreateEntry = { navController.navigate(Screen.AddTree.route) }
                         )
                     }
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(48.dp))
                 }
             }
 
-            // 3. Bento Grid (Reduced Height for Density)
+            // 3. Asymmetric Overlap Bento (Now just the Harvest Insight as a standalone organic card)
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
                 ) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        RipeningInsightCardDense()
-                    }
-                    Box(modifier = Modifier.weight(1.2f)) {
-                        VisualAssetBleedDense()
-                    }
+                    RipeningInsightPebble()
                 }
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(64.dp))
             }
 
-            // 4. Daily Docket (High Density)
+            // 4. Daily Path (Task Feed)
             item {
                 Text(
-                    text = "TODAY'S TASKS",
+                    text = "THE DAILY PATH",
                     modifier = Modifier.padding(horizontal = 24.dp),
                     style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 2.sp),
                     color = OnSurfaceMuted
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            items(tasks) { task ->
-                Box(
+            // Continuous Path Background for tasks
+            item {
+                Column(
                     modifier = Modifier
+                        .padding(horizontal = 24.dp)
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 4.dp)
-                        .background(SurfaceContainerLow, Shapes.large)
+                        .background(SurfaceContainerLow.copy(alpha = 0.5f), Shapes.large)
+                        .padding(24.dp)
                 ) {
-                    TaskItemDense(
-                        task = task,
-                        onToggle = { viewModel.toggleTask(task.id) },
-                        onOpen = { onOpenTask(task) }
-                    )
+                    tasks.forEachIndexed { index, task ->
+                        JournalTaskItem(
+                            task = task, 
+                            shape = PebbleShapes[index % PebbleShapes.size],
+                            onToggle = { viewModel.toggleTask(task.id) },
+                            onOpen = { onOpenTask(task) }
+                        )
+                    }
                 }
             }
             
