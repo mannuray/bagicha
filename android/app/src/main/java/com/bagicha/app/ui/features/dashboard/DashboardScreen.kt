@@ -27,7 +27,8 @@ import com.bagicha.app.ui.theme.*
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel,
-    navController: NavController
+    navController: NavController,
+    onOpenTask: (GardenTask) -> Unit
 ) {
     val weather by viewModel.weather.collectAsState()
     val alert by viewModel.alert.collectAsState()
@@ -129,7 +130,11 @@ fun DashboardScreen(
                         .padding(horizontal = 24.dp, vertical = 4.dp)
                         .background(SurfaceContainerLow, Shapes.large)
                 ) {
-                    TaskItemDense(task = task, onToggle = { viewModel.toggleTask(task.id) })
+                    TaskItemDense(
+                        task = task,
+                        onToggle = { viewModel.toggleTask(task.id) },
+                        onOpen = { onOpenTask(task) }
+                    )
                 }
             }
             

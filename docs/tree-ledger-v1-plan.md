@@ -14,6 +14,14 @@ It should answer:
 - What has happened to it over time?
 - What care history, harvest history, and health history exist for it?
 
+Longer term, it should also answer:
+- What went wrong this harvest?
+- What was different from last year?
+- What should change before the next cycle?
+
+Detailed domain model:
+- [tree-domain-model.md](/Users/metallonudo/code/bagicha/docs/tree-domain-model.md)
+
 ## Scope Decision
 Tree Ledger V1 will focus on **permanent assets**:
 - fruit trees
@@ -72,6 +80,13 @@ Files:
 
 ## Tree Ledger V1 Goal
 Ship a real, backend-driven ledger that users can actually use.
+
+V1 is still the base layer.
+The full tree domain will later expand into:
+- yearly cycle summaries
+- milestone tracking
+- diagnosis context
+- next-cycle mitigation planning
 
 ## Tree Ledger V1 Feature Scope
 
@@ -135,10 +150,11 @@ V1 log creation should support:
 - companion planting logic
 - offline sync
 - media upload pipeline
-- edit/delete tree flows
+- full yearly cycle comparison
+- post-harvest mitigation analysis
+- diagnosis-aware tree memory
 - yield charts
 - advanced pest history visualizations
-- per-species intelligence beyond current lifecycle/task logic
 - premium gating
 
 ## Backend Gaps To Close
@@ -197,3 +213,15 @@ This is especially important because many users may have:
 - seasonal vegetables
 
 These users may not identify strongly with an orchard-style ledger, so Seasonal must follow soon after Tree Ledger.
+
+## Tree Domain Follow-Up
+After the current ledger base is stable, the tree model should evolve into:
+- lifecycle state
+- seasonal phase
+- structured event history
+- yearly `TreeCycle` summaries
+- milestone tracking
+- AI-usable context for diagnosis and mitigation
+
+That work is described in:
+- [tree-domain-model.md](/Users/metallonudo/code/bagicha/docs/tree-domain-model.md)

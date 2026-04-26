@@ -22,6 +22,7 @@ fun PebbleBadge(stage: LifecycleStage) {
         LifecycleStage.SAPLING -> PrimaryForestContainer.copy(alpha = 0.8f) to "Sapling"
         LifecycleStage.JUVENILE -> PrimaryForestContainer.copy(alpha = 0.6f) to "Juvenile"
         LifecycleStage.FLOWERING -> SecondaryTerracottaContainer.copy(alpha = 0.8f) to "Flowering"
+        LifecycleStage.FIRST_HARVEST -> SecondaryTerracotta.copy(alpha = 0.9f) to "First Harvest"
         LifecycleStage.MATURE -> PrimaryForest.copy(alpha = 0.9f) to "Mature"
     }
 

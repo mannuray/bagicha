@@ -71,7 +71,7 @@ fun TreeListScreen(
                     color = SecondaryTerracotta
                 )
                 Text(
-                    text = "Orchard",
+                    text = "Garden Records",
                     style = MaterialTheme.typography.headlineLarge.copy(fontSize = 48.sp),
                     color = PrimaryForest
                 )
@@ -170,6 +170,12 @@ fun VisualTreeCard(tree: Tree, shape: androidx.compose.ui.graphics.Shape, onClic
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(text = tree.name, style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp), color = PrimaryForest)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = tree.recordKind.name.lowercase().replaceFirstChar(Char::titlecase),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = SecondaryTerracotta
+                )
                 Text(text = tree.species, style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic))
                 if (tree.variety != null) {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -193,8 +199,8 @@ fun AddSuggestionCard(onRegister: () -> Unit) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(Icons.Default.Nature, null, tint = PrimaryForest, modifier = Modifier.size(32.dp))
             Spacer(modifier = Modifier.height(12.dp))
-            Text("New Planting?", style = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-            Text("Expand your sanctuary.", style = MaterialTheme.typography.bodySmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Text("New Record?", style = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Text("Add a tree, flower, or crop.", style = MaterialTheme.typography.bodySmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             Spacer(modifier = Modifier.height(16.dp))
             TextButton(onClick = onRegister) {
                 Text("REGISTER", style = MaterialTheme.typography.labelMedium, color = PrimaryForest)

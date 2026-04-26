@@ -13,6 +13,8 @@ sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Ledger : Screen("ledger")
     object TreeDetail : Screen("tree_detail")
+    object RecordTasks : Screen("record_tasks")
+    object SeasonReview : Screen("season_review")
     object AddTree : Screen("add_tree")
     object EditTree : Screen("edit_tree")
     object Scan : Screen("scan")

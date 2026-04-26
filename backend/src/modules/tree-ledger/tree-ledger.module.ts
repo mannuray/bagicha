@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { TreeLedgerService } from './tree-ledger.service';
 import { TreeLedgerController } from './tree-ledger.controller';
 import { LifecycleService } from './services/lifecycle.service';
+import { SpeciesNormalizationService } from './services/species-normalization.service';
 import { TaskProcessor } from './processors/task.processor';
 import { SeasonalIntelligenceService } from './services/seasonal-intelligence.service';
 
@@ -13,6 +14,7 @@ import { SeasonalIntelligenceService } from './services/seasonal-intelligence.se
     }),
   ],
   controllers: [TreeLedgerController],
-  providers: [TreeLedgerService, LifecycleService, SeasonalIntelligenceService, TaskProcessor],
+  providers: [TreeLedgerService, LifecycleService, SpeciesNormalizationService, SeasonalIntelligenceService, TaskProcessor],
+  exports: [SeasonalIntelligenceService, SpeciesNormalizationService],
 })
 export class TreeLedgerModule {}

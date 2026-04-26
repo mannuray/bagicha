@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RedisModule } from './common/redis/redis.module';
+import { MonitorModule } from './common/monitor';
 import { TreeLedgerModule } from './modules/tree-ledger/tree-ledger.module';
 import { SeasonalModule } from './modules/seasonal/seasonal.module';
 import { VisionModule } from './modules/vision/vision.module';
@@ -13,6 +14,7 @@ import { CommunityModule } from './modules/community/community.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
+import { PlantsModule } from './modules/plants/plants.module';
 import { UserModule } from './modules/user/user.module';
 
 @Module({
@@ -30,6 +32,7 @@ import { UserModule } from './modules/user/user.module';
         },
       }),
     }),
+    MonitorModule,
     PrismaModule,
     RedisModule,
     AuthModule,
@@ -40,6 +43,7 @@ import { UserModule } from './modules/user/user.module';
     ChatModule,
     SubscriptionModule,
     MarketplaceModule,
+    PlantsModule,
     UserModule,
   ],
   controllers: [AppController],

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Get, UseGuards, Request, Param, Post } from '@nestjs/common';
 import { SeasonalService } from './seasonal.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -16,5 +16,15 @@ export class SeasonalController {
   @Get('guide')
   async getGuide(@Request() req) {
     return this.seasonalService.getSeasonalGuide(req.user.district || 'Patna');
+  }
+
+  @Get('tree/:id/intelligence')
+  async getTreeIntelligence(@Request() req, @Param('id') id: string) {
+    return this.seasonalService.getTreeIntelligence(req.user.id, id);
+  }
+
+  @Post('tree/:id/materialize-tasks')
+  async materializeTasks(@Request() req, @Param('id') id: string) {
+    return this.seasonalService.materializeTasksForTree(req.user.id, id);
   }
 }

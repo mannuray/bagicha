@@ -1,5 +1,5 @@
-import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
-import { LifecycleStage, TreeType } from '@prisma/client';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { GrowthHabit, LifecycleStage, PlantingDatePrecision, RecordKind, RecordPattern, TreeType } from '@prisma/client';
 
 export class UpdateTreeDto {
   @IsOptional()
@@ -19,8 +19,24 @@ export class UpdateTreeDto {
   type?: TreeType;
 
   @IsOptional()
-  @IsDateString()
+  @IsEnum(RecordKind)
+  record_kind?: RecordKind;
+
+  @IsOptional()
+  @IsEnum(GrowthHabit)
+  growth_habit?: GrowthHabit;
+
+  @IsOptional()
+  @IsEnum(RecordPattern)
+  record_pattern?: RecordPattern;
+
+  @IsOptional()
+  @IsString()
   planting_date?: string | null;
+
+  @IsOptional()
+  @IsEnum(PlantingDatePrecision)
+  planting_date_precision?: PlantingDatePrecision | null;
 
   @IsOptional()
   @IsEnum(LifecycleStage)

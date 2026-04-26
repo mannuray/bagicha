@@ -1,6 +1,7 @@
 package com.bagicha.app.ui.features.ledger
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.EnergySavingsLeaf
 import androidx.compose.material.icons.filled.Park
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Yard
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.*
@@ -38,7 +40,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.bagicha.app.R
+import com.bagicha.app.ui.navigation.Screen
 import com.bagicha.app.ui.theme.*
+import java.time.LocalDate
+import java.time.OffsetDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +53,9 @@ fun TreeDetailScreen(
 ) {
     val tree by viewModel.selectedTree.collectAsState()
     val timeline by viewModel.timeline.collectAsState()
+    val cycles by viewModel.cycles.collectAsState()
+    val tasks by viewModel.tasks.collectAsState()
+    val mitigationPlan by viewModel.mitigationPlan.collectAsState()
     val seasonalState by viewModel.seasonalState.collectAsState()
     val isSubmitting by viewModel.isSubmitting.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -74,19 +82,33 @@ fun TreeDetailScreen(
                         }
                     },
                     actions = {
-                        Box(
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .background(SurfaceBase.copy(alpha = 0.8f), FullRounded)
-                                .clip(FullRounded)
-                        ) {
-                            TextButton(
-                                onClick = {
-                                    viewModel.startEditingSelectedTree()
-                                    navController.navigate(com.bagicha.app.ui.navigation.Screen.EditTree.route)
-                                }
+                        Row {
+                            Box(
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .background(SurfaceBase.copy(alpha = 0.8f), FullRounded)
+                                    .clip(FullRounded)
                             ) {
-                                Text("EDIT REGISTRY", style = MaterialTheme.typography.labelMedium, color = PrimaryForest)
+                                TextButton(
+                                    onClick = { navController.navigate(Screen.RecordTasks.route) }
+                                ) {
+                                    Text("TASKS", style = MaterialTheme.typography.labelMedium, color = PrimaryForest)
+                                }
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .background(SurfaceBase.copy(alpha = 0.8f), FullRounded)
+                                    .clip(FullRounded)
+                            ) {
+                                TextButton(
+                                    onClick = {
+                                        viewModel.startEditingSelectedTree()
+                                        navController.navigate(com.bagicha.app.ui.navigation.Screen.EditTree.route)
+                                    }
+                                ) {
+                                    Text("EDIT REGISTRY", style = MaterialTheme.typography.labelMedium, color = PrimaryForest)
+                                }
                             }
                         }
                     },
@@ -116,7 +138,8 @@ fun TreeDetailScreen(
         ) { paddingValues ->
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding())
             ) {
                 // 1. Hero Section: Full Overlay Style
                 item {
@@ -156,7 +179,7 @@ fun TreeDetailScreen(
                                 .padding(bottom = 32.dp)
                         ) {
                             Text(
-                                text = currentTree.type.toHeroLabel(),
+                                text = currentTree.toHeroLabel(),
                                 style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 2.sp),
                                 color = SecondaryTerracotta
                             )
@@ -191,7 +214,7 @@ fun TreeDetailScreen(
                             .padding(32.dp)
                     ) {
                         Text("Growth Journey", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
-                        Text("Mapping the physiological evolution.", style = MaterialTheme.typography.bodyMedium)
+                        Text("Mapping the biological evolution of this record.", style = MaterialTheme.typography.bodyMedium)
                         Spacer(modifier = Modifier.height(32.dp))
                         
                         Row(
@@ -199,12 +222,66 @@ fun TreeDetailScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            LifecycleStep("Sapling", Icons.Default.Yard, currentTree.stage == LifecycleStage.SAPLING)
-                            LifecycleStep("Juvenile", Icons.Default.Eco, currentTree.stage == LifecycleStage.JUVENILE)
-                            LifecycleStep("Flowering", Icons.Default.EnergySavingsLeaf, currentTree.stage == LifecycleStage.FLOWERING)
-                            LifecycleStep("Mature", Icons.Default.Park, currentTree.stage == LifecycleStage.MATURE)
+                            currentTree.lifecycleSteps().forEach { step ->
+                                LifecycleStep(
+                                    label = step.label,
+                                    icon = step.icon,
+                                    isActive = currentTree.stage == step.stage
+                                )
+                            }
                         }
                     }
+                    Spacer(modifier = Modifier.height(48.dp))
+                }
+
+                item {
+                    MilestoneSection(tree = currentTree)
+                    Spacer(modifier = Modifier.height(48.dp))
+                }
+
+                if (cycles.isNotEmpty()) {
+                    item {
+                        CycleSummarySection(cycles = cycles)
+                        Spacer(modifier = Modifier.height(48.dp))
+                    }
+
+                    item {
+                        CycleComparisonSection(cycles = cycles)
+                        Spacer(modifier = Modifier.height(48.dp))
+                    }
+                }
+
+                mitigationPlan?.let { plan ->
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            TextButton(onClick = { navController.navigate(Screen.SeasonReview.route) }) {
+                                Text("OPEN REVIEW", color = PrimaryForest)
+                            }
+                        }
+                    }
+
+                    item {
+                        SeasonReviewSection(plan = plan)
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+
+                    item {
+                        NextCycleMitigationSection(plan = plan)
+                        Spacer(modifier = Modifier.height(48.dp))
+                    }
+                }
+
+                item {
+                    RecordTaskSummaryCard(
+                        recordKind = currentTree.recordKind,
+                        tasks = tasks,
+                        onOpenTasks = { navController.navigate(Screen.RecordTasks.route) }
+                    )
                     Spacer(modifier = Modifier.height(48.dp))
                 }
 
@@ -215,7 +292,7 @@ fun TreeDetailScreen(
                     }
                 }
 
-                // 3. Growth Moments (Horizontal Timeline)
+                // 3. Growth Moments grouped by cycle
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
@@ -233,18 +310,21 @@ fun TreeDetailScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     if (timeline.isEmpty()) {
                         Text(
-                            text = "No moments recorded yet.",
+                            text = "No journal events recorded yet.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = OnSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 24.dp)
                         )
                     } else {
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 24.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        val cycleGroups = timeline.groupIntoCycles()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp),
+                            verticalArrangement = Arrangement.spacedBy(24.dp)
                         ) {
-                            items(timeline) { log ->
-                                TimelineMomentCard(log = log)
+                            cycleGroups.forEach { group ->
+                                TimelineCycleSection(group = group)
                             }
                         }
                     }
@@ -268,10 +348,12 @@ fun TreeDetailScreen(
                                     Text("HEALTH DIAGNOSTICS", style = MaterialTheme.typography.labelMedium)
                                 }
                                 Spacer(modifier = Modifier.height(24.dp))
-                                val healthLogs = timeline.filter { it.type == LogType.PEST || it.type == LogType.TREATMENT }
+                                val healthLogs = timeline.filter {
+                                    it.type == LogType.PEST || it.type == LogType.TREATMENT || it.type == LogType.DIAGNOSIS
+                                }
                                 if (healthLogs.isEmpty()) {
                                     Text(
-                                        text = "No health records logged yet.",
+                                text = "No health records logged yet.",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = OnSurfaceNeutral.copy(alpha = 0.7f)
                                     )
@@ -294,6 +376,7 @@ fun TreeDetailScreen(
 
         if (showLogDialog) {
             LogMomentDialog(
+                recordKind = currentTree.recordKind,
                 isSubmitting = isSubmitting,
                 error = error,
                 onDismiss = {
@@ -309,6 +392,18 @@ fun TreeDetailScreen(
         }
     }
 }
+
+data class TimelineCycleGroup(
+    val label: String,
+    val sublabel: String,
+    val entries: List<TreeLog>
+)
+
+private data class LifecycleStepDefinition(
+    val label: String,
+    val icon: ImageVector,
+    val stage: LifecycleStage
+)
 
 @Composable
 fun LifecycleStep(label: String, icon: ImageVector, isActive: Boolean) {
@@ -335,22 +430,179 @@ fun LifecycleStep(label: String, icon: ImageVector, isActive: Boolean) {
 @Composable
 fun TimelineMomentCard(log: TreeLog) {
     Card(
-        modifier = Modifier.width(280.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
         shape = Shapes.large
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(log.date.uppercase(), style = MaterialTheme.typography.labelMedium, color = PrimaryForest.copy(alpha = 0.6f))
-            Spacer(modifier = Modifier.height(12.dp))
-            Box(modifier = Modifier.fillMaxWidth().height(140.dp).clip(PebbleShape6).background(SurfaceContainerLow)) {
-                if (log.photoUrl != null) {
-                    AsyncImage(model = log.photoUrl, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        log.type.displayLabel().uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = SecondaryTerracotta
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = log.content,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = PrimaryForest
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    log.date.uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = PrimaryForest.copy(alpha = 0.6f)
+                )
+            }
+
+            if (log.metadata.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                FlowMetadataChips(metadata = log.metadata)
+            }
+
+            if (log.photoUrl != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                        .clip(PebbleShape6)
+                        .background(SurfaceContainerLow)
+                ) {
+                    AsyncImage(
+                        model = log.photoUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(text = log.type.displayLabel(), style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp), color = PrimaryForest)
-            Text(text = log.content, style = MaterialTheme.typography.bodySmall, maxLines = 2)
         }
+    }
+}
+
+@Composable
+fun TimelineCycleSection(group: TimelineCycleGroup) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Column {
+                Text(
+                    text = group.label,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = PrimaryForest
+                )
+                Text(
+                    text = group.sublabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = OnSurfaceVariant
+                )
+            }
+            Text(
+                text = "${group.entries.size} events",
+                style = MaterialTheme.typography.labelMedium,
+                color = SecondaryTerracotta
+            )
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            group.entries.forEach { log ->
+                TimelineMomentCard(log)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FlowMetadataChips(metadata: Map<String, String>) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        metadata.entries.chunked(2).forEach { rowEntries ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                rowEntries.forEach { (key, value) ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(FullRounded)
+                            .border(1.dp, PrimaryForest.copy(alpha = 0.12f), FullRounded)
+                            .background(SurfaceBase)
+                            .padding(horizontal = 12.dp, vertical = 10.dp)
+                    ) {
+                        Column {
+                            Text(
+                                text = key.toMetadataLabel(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = OnSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = value.replace('_', ' '),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = PrimaryForest,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+                if (rowEntries.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MilestoneSection(tree: Tree) {
+    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+        Text("Milestones", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
+        Text("LIFETIME RECORD HISTORY", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(SurfaceContainerLow, Shapes.large)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            MilestoneRow(tree.plantedLabel(), tree.plantingDateInput ?: tree.plantingDate.toDisplayDate())
+            MilestoneRow(tree.firstFloweringLabel(), tree.firstFloweringAt.toDisplayDate())
+            if (tree.supportsFruitingMilestones()) {
+                MilestoneRow("First Fruit Set", tree.firstFruitSetAt.toDisplayDate())
+            }
+            if (tree.supportsHarvestMilestones()) {
+                MilestoneRow("First Harvest", tree.firstHarvestAt.toDisplayDate())
+                MilestoneRow("Latest Harvest", tree.latestHarvestAt.toDisplayDate())
+            }
+        }
+    }
+}
+
+@Composable
+private fun MilestoneRow(label: String, value: String?) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = OnSurfaceNeutral)
+        Text(
+            text = value ?: "Not recorded",
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (value == null) OnSurfaceVariant else PrimaryForest,
+            fontWeight = if (value == null) FontWeight.Normal else FontWeight.Medium
+        )
     }
 }
 
@@ -358,7 +610,7 @@ fun TimelineMomentCard(log: TreeLog) {
 fun SeasonalGuidanceSection(state: SeasonalState) {
     Column(modifier = Modifier.padding(horizontal = 24.dp)) {
         Text("Seasonal Intelligence", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
-        Text("WHAT THIS TREE LIKELY NEEDS NOW", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+        Text("WHAT THIS RECORD LIKELY NEEDS NOW", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
         Spacer(modifier = Modifier.height(16.dp))
 
         Column(
@@ -385,6 +637,490 @@ fun SeasonalGuidanceSection(state: SeasonalState) {
             Spacer(modifier = Modifier.height(16.dp))
             GuidanceList("Watch for", state.watchFor)
         }
+    }
+}
+
+@Composable
+fun CycleSummarySection(cycles: List<TreeCycleSummary>) {
+    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+        Text("Cycle Summary", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
+        Text("BACKEND TRACKED SEASON OUTCOMES", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            cycles.forEach { cycle ->
+                CycleSummaryCard(cycle = cycle)
+            }
+        }
+    }
+}
+
+@Composable
+fun CycleComparisonSection(cycles: List<TreeCycleSummary>) {
+    val latest = cycles.firstOrNull() ?: return
+    val previous = cycles.getOrNull(1)
+    val changeNotes = latest.buildChangeNotes(previous)
+    val mitigationSteps = latest.nextActions.ifEmpty {
+        listOf("Keep logging flowering, fruit set, stress, and harvest so the next cycle has a stronger baseline.")
+    }
+
+    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+        Text("Comparison & Mitigation", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
+        Text(
+            if (previous != null) "WHAT CHANGED FROM ${previous.year} TO ${latest.year}"
+            else "USE ${latest.year} AS THE BASELINE FOR NEXT CYCLE",
+            style = MaterialTheme.typography.labelMedium,
+            color = SecondaryTerracotta
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(SurfaceContainerLow, Shapes.large)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            if (previous != null) {
+                ComparisonMetricRow("Harvest", latest.harvestOutcomeLabel(), previous.harvestOutcomeLabel())
+                ComparisonMetricRow("Stress", latest.stressOutcomeLabel(), previous.stressOutcomeLabel())
+                ComparisonMetricRow("Pests", latest.pestOutcomeLabel(), previous.pestOutcomeLabel())
+                ComparisonMetricRow("Fruit Set", latest.fruitSetOutcomeLabel(), previous.fruitSetOutcomeLabel())
+            } else {
+                Text(
+                    text = "There is only one recorded cycle so far. Keep logging key events to unlock stronger season-over-season diagnosis.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = OnSurfaceNeutral
+                )
+            }
+
+            if (changeNotes.isNotEmpty()) {
+                Divider(color = PrimaryForest.copy(alpha = 0.08f))
+                Text("What changed", style = MaterialTheme.typography.titleMedium, color = PrimaryForest)
+                changeNotes.forEach { note ->
+                    ComparisonBullet(note)
+                }
+            }
+
+            Divider(color = PrimaryForest.copy(alpha = 0.08f))
+            Text("Mitigate next cycle", style = MaterialTheme.typography.titleMedium, color = PrimaryForest)
+            mitigationSteps.forEach { step ->
+                ComparisonBullet(step)
+            }
+        }
+    }
+}
+
+@Composable
+fun NextCycleMitigationSection(plan: MitigationPlan) {
+    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+        Text("Next Cycle Plan", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
+        Text(
+            text = if (plan.cycleYear != null) "MITIGATION FOR WHAT CHANGED IN ${plan.cycleYear}" else "NEXT-CYCLE MITIGATION",
+            style = MaterialTheme.typography.labelMedium,
+            color = SecondaryTerracotta
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(SurfaceContainerLow, Shapes.large)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            Text(plan.summary, style = MaterialTheme.typography.bodyLarge, color = OnSurfaceNeutral)
+
+            MitigationListSection("Likely issues", plan.likelyIssues)
+            MitigationListSection("What to change", plan.whatToChange)
+            MitigationListSection("Watch early", plan.watchEarly)
+            MitigationListSection("Priority actions", plan.priorityActions)
+        }
+    }
+}
+
+@Composable
+fun SeasonReviewSection(plan: MitigationPlan) {
+    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+        Text("Season Review", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
+        Text(
+            text = if (plan.cycleYear != null) "HOW THE ${plan.cycleYear} CYCLE ACTUALLY RAN" else "CURRENT CYCLE REVIEW",
+            style = MaterialTheme.typography.labelMedium,
+            color = SecondaryTerracotta
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(SurfaceContainerLow, Shapes.large)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(plan.summary, style = MaterialTheme.typography.bodyLarge, color = OnSurfaceNeutral)
+            Divider(color = PrimaryForest.copy(alpha = 0.08f))
+            CycleMetaRow("Completed Tasks", plan.completedTasks.toString())
+            CycleMetaRow("Skipped Tasks", plan.skippedTasks.toString())
+            CycleMetaRow("Pending Tasks", plan.pendingTasks.toString())
+        }
+    }
+}
+
+@Composable
+private fun MitigationListSection(title: String, items: List<String>) {
+    if (items.isEmpty()) return
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(title.uppercase(), style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+        items.forEach { item ->
+            Row(verticalAlignment = Alignment.Top) {
+                Text("•", color = PrimaryForest, modifier = Modifier.padding(end = 8.dp))
+                Text(item, style = MaterialTheme.typography.bodyMedium, color = OnSurfaceNeutral)
+            }
+        }
+    }
+}
+
+@Composable
+fun TreeTasksSection(
+    recordKind: RecordKind,
+    tasks: List<TreeTask>,
+    isSubmitting: Boolean,
+    onSyncTasks: () -> Unit,
+    onCompleteTask: (String) -> Unit,
+    onSkipTask: (String) -> Unit
+) {
+    val groupedTasks = tasks.groupForDisplay()
+
+    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Column {
+                Text("${recordKind.displayName()} Tasks", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
+                Text("PENDING WORK FOR THIS ${recordKind.displayName().uppercase()}", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+            }
+            TextButton(
+                onClick = onSyncTasks,
+                enabled = !isSubmitting
+            ) {
+                Text(if (isSubmitting) "SYNCING..." else "SYNC TASKS", color = PrimaryForest)
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (tasks.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(SurfaceContainerLow, Shapes.large)
+                    .padding(24.dp)
+            ) {
+                Text(
+                    text = "No ${recordKind.displayName().lowercase()} tasks yet.",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = PrimaryForest
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Use Sync Tasks to materialize seasonal and personalized task suggestions for this ${recordKind.displayName().lowercase()}.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = OnSurfaceVariant
+                )
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                TaskBucketSection(
+                    title = "Overdue",
+                    subtitle = "Needs attention first",
+                    tasks = groupedTasks.overdue,
+                    isSubmitting = isSubmitting,
+                    onCompleteTask = onCompleteTask,
+                    onSkipTask = onSkipTask
+                )
+                TaskBucketSection(
+                    title = "Upcoming",
+                    subtitle = "Current planned work",
+                    tasks = groupedTasks.upcoming,
+                    isSubmitting = isSubmitting,
+                    onCompleteTask = onCompleteTask,
+                    onSkipTask = onSkipTask
+                )
+                TaskBucketSection(
+                    title = "Completed / Skipped",
+                    subtitle = "Closed task history",
+                    tasks = groupedTasks.closed,
+                    isSubmitting = isSubmitting,
+                    onCompleteTask = onCompleteTask,
+                    onSkipTask = onSkipTask
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun RecordTaskSummaryCard(
+    recordKind: RecordKind,
+    tasks: List<TreeTask>,
+    onOpenTasks: () -> Unit
+) {
+    val openTasks = tasks.count { it.status.equals("Pending", ignoreCase = true) }
+    val overdueTasks = tasks.count {
+        it.status.equals("Pending", ignoreCase = true) && it.dueAt.toLocalDateOrNull()?.isBefore(LocalDate.now()) == true
+    }
+    val nextTask = tasks
+        .filter { it.status.equals("Pending", ignoreCase = true) }
+        .sortedBy { it.dueAt }
+        .firstOrNull()
+
+    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+        Text("${recordKind.displayName()} Tasks", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
+        Text("QUICK TASK VIEW", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(SurfaceContainerLow, Shapes.large)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            CycleMetaRow("Open Tasks", openTasks.toString())
+            CycleMetaRow("Overdue", overdueTasks.toString())
+            nextTask?.let {
+                CycleMetaRow("Next", it.title)
+                CycleMetaRow("Due", it.dueDate)
+            }
+
+            TextButton(onClick = onOpenTasks) {
+                Icon(Icons.Default.PlayArrow, null, tint = PrimaryForest)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("OPEN TASKS", color = PrimaryForest)
+            }
+        }
+    }
+}
+
+@Composable
+private fun TaskBucketSection(
+    title: String,
+    subtitle: String,
+    tasks: List<TreeTask>,
+    isSubmitting: Boolean,
+    onCompleteTask: (String) -> Unit,
+    onSkipTask: (String) -> Unit
+) {
+    if (tasks.isEmpty()) return
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column {
+            Text(title, style = MaterialTheme.typography.titleMedium, color = PrimaryForest)
+            Text(subtitle, style = MaterialTheme.typography.labelMedium, color = OnSurfaceVariant)
+        }
+        tasks.forEach { task ->
+            TreeTaskCard(
+                task = task,
+                isSubmitting = isSubmitting,
+                onCompleteTask = onCompleteTask,
+                onSkipTask = onSkipTask
+            )
+        }
+    }
+}
+
+@Composable
+private fun TreeTaskCard(
+    task: TreeTask,
+    isSubmitting: Boolean,
+    onCompleteTask: (String) -> Unit,
+    onSkipTask: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(SurfaceContainerLow, Shapes.large)
+            .padding(20.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(task.title, style = MaterialTheme.typography.titleMedium, color = PrimaryForest)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Due ${task.dueDate}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = OnSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Box(
+                modifier = Modifier
+                    .clip(FullRounded)
+                    .background(task.priorityColor())
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                Text(task.priority.uppercase(), style = MaterialTheme.typography.labelMedium, color = Color.White)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        val provenance = linkedMapOf(
+            "type" to task.type,
+            "status" to task.status,
+            "source" to task.source
+        ).apply {
+            task.cycleLabel?.let { put("cycle", it) }
+        }
+        FlowMetadataChips(metadata = provenance)
+
+        task.explanationText()?.let { explanation ->
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = explanation,
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnSurfaceNeutral
+            )
+        }
+
+        if (task.status.equals("Pending", ignoreCase = true)) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(
+                    onClick = { onSkipTask(task.id) },
+                    enabled = !isSubmitting
+                ) {
+                    Text("SKIP")
+                }
+                Button(
+                    onClick = { onCompleteTask(task.id) },
+                    enabled = !isSubmitting,
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryForest)
+                ) {
+                    Text("MARK DONE", color = Color.White)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ComparisonMetricRow(label: String, current: String, previous: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(label.uppercase(), style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Current: $current", style = MaterialTheme.typography.bodyMedium, color = PrimaryForest)
+            Text("Previous: $previous", style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun ComparisonBullet(text: String) {
+    Row(verticalAlignment = Alignment.Top) {
+        Text("•", color = PrimaryForest, modifier = Modifier.padding(end = 8.dp))
+        Text(text, style = MaterialTheme.typography.bodyMedium, color = OnSurfaceNeutral)
+    }
+}
+
+@Composable
+private fun CycleSummaryCard(cycle: TreeCycleSummary) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(SurfaceContainerLow, Shapes.large)
+            .padding(24.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "${cycle.year} Cycle",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = PrimaryForest
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = cycle.summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = OnSurfaceNeutral
+                )
+            }
+            if (cycle.yieldSummary != null) {
+                Spacer(modifier = Modifier.width(12.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(FullRounded)
+                        .background(PrimaryForest)
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = cycle.yieldSummary.uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            CycleMetaRow("Flowering", cycle.floweringDate)
+            CycleMetaRow("Fruit Set", cycle.fruitSetDate)
+            CycleMetaRow("Harvest", cycle.harvestWindow)
+            CycleMetaRow("Flower Drop", cycle.flowerDropLevel?.readableToken())
+            CycleMetaRow("Fruit Drop", cycle.fruitDropLevel?.readableToken())
+            CycleMetaRow("Stress Signals", cycle.stressScore.takeIf { it > 0 }?.toString())
+            CycleMetaRow("Pest Signals", cycle.pestPressureScore.takeIf { it > 0 }?.toString())
+            CycleMetaRow("Treatments", cycle.treatmentCount.takeIf { it > 0 }?.toString())
+        }
+
+        if (cycle.recentEventLabels.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("RECENT EVENTS", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+            Spacer(modifier = Modifier.height(8.dp))
+            FlowMetadataChips(
+                metadata = cycle.recentEventLabels.distinct().take(4).associateWith { "Logged" }
+            )
+        }
+
+        if (cycle.nextActions.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("NEXT CYCLE ACTIONS", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+            Spacer(modifier = Modifier.height(8.dp))
+            cycle.nextActions.forEach { action ->
+                Row(verticalAlignment = Alignment.Top) {
+                    Text("•", color = PrimaryForest, modifier = Modifier.padding(end = 8.dp))
+                    Text(action, style = MaterialTheme.typography.bodyMedium, color = OnSurfaceNeutral)
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun CycleMetaRow(label: String, value: String?) {
+    if (value == null) return
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodyMedium, color = PrimaryForest, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -426,6 +1162,7 @@ fun HealthRecordItem(title: String, date: String, status: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogMomentDialog(
+    recordKind: RecordKind,
     isSubmitting: Boolean,
     error: String?,
     onDismiss: () -> Unit,
@@ -433,7 +1170,17 @@ fun LogMomentDialog(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var selectedType by remember { mutableStateOf(LogType.NOTE) }
+    var eventAt by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
+    var severity by remember { mutableStateOf("MEDIUM") }
+    var harvestQuantityValue by remember { mutableStateOf("") }
+    var harvestQuantityUnit by remember { mutableStateOf("kg") }
+    var quality by remember { mutableStateOf("GOOD") }
+    var harvestLossCategory by remember { mutableStateOf("OTHER") }
+    var harvestLossNote by remember { mutableStateOf("") }
+    var fruitSetStrength by remember { mutableStateOf("MEDIUM") }
+    var pruningType by remember { mutableStateOf("") }
+    var feedingType by remember { mutableStateOf("") }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -477,7 +1224,9 @@ fun LogMomentDialog(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(bottom = 8.dp)
             ) {
-                items(LogType.values()) { type ->
+                items(
+                    recordKind.availableLogTypes()
+                ) { type ->
                     val isSelected = selectedType == type
                     Box(
                         modifier = Modifier
@@ -497,11 +1246,113 @@ fun LogMomentDialog(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            Text(
+                text = selectedType.promptText(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+            BagichaInput(
+                label = "WHEN DID THIS HAPPEN?",
+                placeholder = "YYYY-MM-DD, YYYY-MM, or YYYY",
+                value = eventAt,
+                onValueChange = { eventAt = it }
+            )
+
+            if (selectedType.requiresSeverity()) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(text = "SEVERITY", style = MaterialTheme.typography.labelMedium, color = OnSurfaceVariant)
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("LOW", "MEDIUM", "HIGH").forEach { option ->
+                        StagePebble(option, severity == option) { severity = option }
+                    }
+                }
+            }
+
+            if (selectedType == LogType.HARVEST) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        BagichaInput(
+                            label = "HARVEST QUANTITY",
+                            placeholder = "e.g. 12",
+                            value = harvestQuantityValue,
+                            onValueChange = { harvestQuantityValue = it }
+                        )
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        BagichaInput(
+                            label = "UNIT",
+                            placeholder = "kg / fruits",
+                            value = harvestQuantityUnit,
+                            onValueChange = { harvestQuantityUnit = it }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = "HARVEST QUALITY", style = MaterialTheme.typography.labelMedium, color = OnSurfaceVariant)
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("POOR", "FAIR", "GOOD", "EXCELLENT").forEach { option ->
+                        StagePebble(option, quality == option) { quality = option }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(text = "LOSS CATEGORY", style = MaterialTheme.typography.labelMedium, color = OnSurfaceVariant)
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("CRACKING", "PEST_DAMAGE", "BIRD_DAMAGE", "ROT", "WEATHER_DAMAGE", "OTHER").forEach { option ->
+                        StagePebble(option.replace('_', ' '), harvestLossCategory == option) { harvestLossCategory = option }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                BagichaInput(
+                    label = "LOSS / DAMAGE NOTE",
+                    placeholder = "e.g. 15 fruits cracked after rain",
+                    value = harvestLossNote,
+                    onValueChange = { harvestLossNote = it }
+                )
+            }
+
+            if (selectedType == LogType.FRUIT_SET) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(text = "FRUIT SET STRENGTH", style = MaterialTheme.typography.labelMedium, color = OnSurfaceVariant)
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("LOW", "MEDIUM", "HIGH").forEach { option ->
+                        StagePebble(option, fruitSetStrength == option) { fruitSetStrength = option }
+                    }
+                }
+            }
+
+            if (selectedType == LogType.PRUNING) {
+                Spacer(modifier = Modifier.height(20.dp))
+                BagichaInput(
+                    label = "PRUNING TYPE",
+                    placeholder = "e.g. light structural pruning",
+                    value = pruningType,
+                    onValueChange = { pruningType = it }
+                )
+            }
+
+            if (selectedType == LogType.FEEDING) {
+                Spacer(modifier = Modifier.height(20.dp))
+                BagichaInput(
+                    label = "FEEDING TYPE",
+                    placeholder = "e.g. compost + micronutrients",
+                    value = feedingType,
+                    onValueChange = { feedingType = it }
+                )
+            }
+
             // 2. Input Zone
+            Spacer(modifier = Modifier.height(24.dp))
             OutlinedTextField(
                 value = content,
                 onValueChange = { content = it },
-                placeholder = { Text("What happened in the garden today?", color = OnSurfaceVariant.copy(alpha = 0.4f)) },
+                placeholder = { Text(selectedType.placeholderText(), color = OnSurfaceVariant.copy(alpha = 0.4f)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 120.dp)
@@ -522,14 +1373,36 @@ fun LogMomentDialog(
 
             // 3. The Sticky Action Bar
             Button(
-                onClick = { onSubmit(LogDraft(type = selectedType, content = content)) },
+                onClick = {
+                    onSubmit(
+                        LogDraft(
+                            type = selectedType,
+                            eventAt = eventAt.takeIf { it.isNotBlank() },
+                            content = content,
+                            severity = severity.takeIf { selectedType.requiresSeverity() },
+                            harvestQuantityValue = harvestQuantityValue.takeIf { selectedType == LogType.HARVEST },
+                            harvestQuantityUnit = harvestQuantityUnit.takeIf { selectedType == LogType.HARVEST },
+                            quality = quality.takeIf { selectedType == LogType.HARVEST },
+                            harvestLossCategory = harvestLossCategory.takeIf { selectedType == LogType.HARVEST },
+                            harvestLossNote = harvestLossNote.takeIf { selectedType == LogType.HARVEST },
+                            fruitSetStrength = fruitSetStrength.takeIf { selectedType == LogType.FRUIT_SET },
+                            pruningType = pruningType.takeIf { selectedType == LogType.PRUNING },
+                            feedingType = feedingType.takeIf { selectedType == LogType.FEEDING }
+                        )
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp)
                     .background(PrimaryGradient, FullRounded),
                 shape = FullRounded,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                enabled = content.isNotBlank() && !isSubmitting
+                enabled = selectedType.canSubmitMoment(
+                    content = content,
+                    harvestQuantityValue = harvestQuantityValue,
+                    pruningType = pruningType,
+                    feedingType = feedingType
+                ) && !isSubmitting
             ) {
                 if (isSubmitting) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
@@ -543,45 +1416,444 @@ fun LogMomentDialog(
     }
 }
 
-private fun TreeCategory.toHeroLabel(): String {
-    return when (this) {
-        TreeCategory.FRUIT_BEARING -> "FRUIT BEARING SPECIMEN"
-        TreeCategory.NON_FRUIT_BEARING -> "NON-FRUIT SPECIMEN"
-        TreeCategory.ORNAMENTAL -> "ORNAMENTAL SPECIMEN"
-    }
-}
-
 private fun Tree.buildSummary(): String {
     val varietyText = variety?.let { "Variety: $it." } ?: ""
-    val plantingText = plantingDate?.let { " Planted on ${it.take(10)}." } ?: ""
-    return "${species} in ${stage.displayLabel().lowercase()} stage. $varietyText Health status: $health.$plantingText".trim()
+    val familyText = speciesFamily?.let { " Family: $it." } ?: ""
+    val habitText = " Growth habit: ${growthHabit.displayLabel()}."
+    val patternText = " Record pattern: ${recordPattern.displayLabel()}."
+    val plantingText = plantingDateInput?.let { " Planted: $it." } ?: plantingDate?.let { " Planted on ${it.take(10)}." } ?: ""
+    return "${species} in ${stage.displayLabel(recordKind).lowercase()} stage.$familyText $varietyText$habitText$patternText Health status: $health.$plantingText".trim()
 }
 
 private fun String.formatHeroTitle(): String {
     return split(" ").joinToString("\n")
 }
 
-private fun LifecycleStage.displayLabel(): String {
+private fun Tree.toHeroLabel(): String {
+    return when (recordKind) {
+        RecordKind.TREE -> when (type) {
+            TreeCategory.FRUIT_BEARING -> "FRUIT TREE RECORD"
+            TreeCategory.NON_FRUIT_BEARING -> "TREE RECORD"
+            TreeCategory.ORNAMENTAL -> "ORNAMENTAL TREE RECORD"
+        }
+        RecordKind.FLOWER -> "FLOWER RECORD"
+        RecordKind.CROP -> "CROP RECORD"
+    }
+}
+
+private fun Tree.lifecycleSteps(): List<LifecycleStepDefinition> {
+    return when (recordKind) {
+        RecordKind.TREE -> listOf(
+            LifecycleStepDefinition("Sapling", Icons.Default.Yard, LifecycleStage.SAPLING),
+            LifecycleStepDefinition("Juvenile", Icons.Default.Eco, LifecycleStage.JUVENILE),
+            LifecycleStepDefinition("Flowering", Icons.Default.EnergySavingsLeaf, LifecycleStage.FLOWERING),
+            LifecycleStepDefinition("Harvest", Icons.Default.VerifiedUser, LifecycleStage.FIRST_HARVEST),
+            LifecycleStepDefinition("Mature", Icons.Default.Park, LifecycleStage.MATURE),
+        )
+        RecordKind.FLOWER -> listOf(
+            LifecycleStepDefinition("Seedling", Icons.Default.Yard, LifecycleStage.SAPLING),
+            LifecycleStepDefinition("Vegetative", Icons.Default.Eco, LifecycleStage.JUVENILE),
+            LifecycleStepDefinition("Flowering", Icons.Default.EnergySavingsLeaf, LifecycleStage.FLOWERING),
+            LifecycleStepDefinition("Established", Icons.Default.Park, LifecycleStage.MATURE),
+        )
+        RecordKind.CROP -> listOf(
+            LifecycleStepDefinition("Seedling", Icons.Default.Yard, LifecycleStage.SAPLING),
+            LifecycleStepDefinition("Vegetative", Icons.Default.Eco, LifecycleStage.JUVENILE),
+            LifecycleStepDefinition("Flowering", Icons.Default.EnergySavingsLeaf, LifecycleStage.FLOWERING),
+            LifecycleStepDefinition("Harvest", Icons.Default.VerifiedUser, LifecycleStage.FIRST_HARVEST),
+        )
+    }
+}
+
+private fun Tree.plantedLabel(): String = when (recordKind) {
+    RecordKind.CROP -> "Started"
+    else -> "Planted"
+}
+
+private fun Tree.firstFloweringLabel(): String = when (recordKind) {
+    RecordKind.FLOWER -> "First Bloom"
+    else -> "First Flowering"
+}
+
+private fun Tree.supportsHarvestMilestones(): Boolean = recordKind != RecordKind.FLOWER
+
+private fun Tree.supportsFruitingMilestones(): Boolean = recordKind != RecordKind.FLOWER
+
+private fun LifecycleStage.displayLabel(recordKind: RecordKind): String {
+    return when (recordKind) {
+        RecordKind.TREE -> when (this) {
+            LifecycleStage.SAPLING -> "Sapling"
+            LifecycleStage.JUVENILE -> "Juvenile"
+            LifecycleStage.FLOWERING -> "First Flowering"
+            LifecycleStage.FIRST_HARVEST -> "First Harvest"
+            LifecycleStage.MATURE -> "Mature Bearing"
+        }
+        RecordKind.FLOWER -> when (this) {
+            LifecycleStage.SAPLING -> "Seedling"
+            LifecycleStage.JUVENILE -> "Vegetative"
+            LifecycleStage.FLOWERING -> "Flowering"
+            LifecycleStage.FIRST_HARVEST -> "Peak Bloom"
+            LifecycleStage.MATURE -> "Established"
+        }
+        RecordKind.CROP -> when (this) {
+            LifecycleStage.SAPLING -> "Seedling"
+            LifecycleStage.JUVENILE -> "Vegetative"
+            LifecycleStage.FLOWERING -> "Flowering"
+            LifecycleStage.FIRST_HARVEST -> "Harvest Window"
+            LifecycleStage.MATURE -> "Established"
+        }
+    }
+}
+
+private fun GrowthHabit.displayLabel(): String {
     return when (this) {
-        LifecycleStage.SAPLING -> "Sapling"
-        LifecycleStage.JUVENILE -> "Juvenile"
-        LifecycleStage.FLOWERING -> "First Flowering"
-        LifecycleStage.MATURE -> "Mature Bearing"
+        GrowthHabit.PERENNIAL -> "Perennial"
+        GrowthHabit.ANNUAL -> "Annual"
+        GrowthHabit.BIENNIAL -> "Biennial"
+        GrowthHabit.SEASONAL -> "Seasonal"
+        GrowthHabit.UNKNOWN -> "Unknown"
+    }
+}
+
+private fun RecordPattern.displayLabel(): String {
+    return when (this) {
+        RecordPattern.LONG_LIVED -> "Long lived"
+        RecordPattern.RECURRING_SEASONAL -> "Recurring seasonal"
+        RecordPattern.ONE_OFF_SEASON -> "One off season"
+    }
+}
+
+private fun RecordKind.displayName(): String {
+    return when (this) {
+        RecordKind.TREE -> "Tree"
+        RecordKind.FLOWER -> "Flower"
+        RecordKind.CROP -> "Crop"
     }
 }
 
 private fun LogType.displayLabel(): String {
     return when (this) {
+        LogType.PLANTING -> "Planting"
         LogType.PHOTO -> "Photo"
         LogType.NOTE -> "Note"
+        LogType.WATERING -> "Watering"
+        LogType.WATERING_STRESS -> "Water Stress"
+        LogType.PRUNING -> "Pruning"
+        LogType.FEEDING -> "Feeding"
+        LogType.FLOWERING -> "Flowering"
+        LogType.FLOWER_DROP -> "Flower Drop"
+        LogType.FRUIT_SET -> "Fruit Set"
+        LogType.FRUIT_DROP -> "Fruit Drop"
         LogType.HARVEST -> "Harvest"
         LogType.PEST -> "Pest Diagnosis"
         LogType.TREATMENT -> "Treatment"
+        LogType.DIAGNOSIS -> "Diagnosis"
+        LogType.WEATHER_DAMAGE -> "Weather Damage"
     }
+}
+
+private fun LogType.promptText(): String {
+    return when (this) {
+        LogType.FLOWERING -> "Record when flowering started and any useful context."
+        LogType.FLOWER_DROP -> "Capture how much flower drop you saw and what may have triggered it."
+        LogType.FRUIT_SET -> "Record first visible fruit set or how strong the set looks."
+        LogType.FRUIT_DROP -> "Record fruit drop so the next cycle can be compared properly."
+        LogType.HARVEST -> "Record quantity, quality, or any harvest outcome you observed."
+        LogType.WATERING_STRESS -> "Log drought or irrigation stress to improve future mitigation."
+        LogType.PRUNING -> "Record pruning work done on this record."
+        LogType.FEEDING -> "Record feeding or nutrient support applied."
+        LogType.PEST -> "Record pest symptoms or confirmed pest presence."
+        LogType.TREATMENT -> "Record what treatment was applied and on which part was affected."
+        LogType.DIAGNOSIS -> "Record a diagnosis result or suspected issue."
+        else -> "Add a structured event to this record's history."
+    }
+}
+
+private fun LogType.canSubmitMoment(
+    content: String,
+    harvestQuantityValue: String,
+    pruningType: String,
+    feedingType: String
+): Boolean {
+    if (content.isNotBlank()) return true
+    return when (this) {
+        LogType.HARVEST -> harvestQuantityValue.isNotBlank()
+        LogType.PRUNING -> pruningType.isNotBlank()
+        LogType.FEEDING -> feedingType.isNotBlank()
+        LogType.FLOWERING,
+        LogType.FLOWER_DROP,
+        LogType.FRUIT_SET,
+        LogType.FRUIT_DROP,
+        LogType.WATERING_STRESS,
+        LogType.PEST,
+        LogType.TREATMENT,
+        LogType.DIAGNOSIS,
+        LogType.WEATHER_DAMAGE -> true
+        else -> false
+    }
+}
+
+private fun LogType.placeholderText(): String {
+    return when (this) {
+        LogType.FLOWERING -> "Panicles visible across most outer branches..."
+        LogType.FLOWER_DROP -> "Flower drop increased after two hot dry days..."
+        LogType.FRUIT_SET -> "Small fruit set visible on the south side..."
+        LogType.FRUIT_DROP -> "Young fruit dropped after sudden heat..."
+        LogType.HARVEST -> "First harvest was light but fruit quality was good..."
+        LogType.WATERING_STRESS -> "Leaves curled and soil was dry near roots..."
+        LogType.PRUNING -> "Light structural pruning done after harvest..."
+        LogType.FEEDING -> "Applied compost and micronutrient mix..."
+        LogType.PEST -> "Saw hopper activity on new panicles..."
+        LogType.TREATMENT -> "Neem spray applied to affected branches..."
+        LogType.DIAGNOSIS -> "Likely anthracnose on inflorescences..."
+        else -> "What happened with this record?"
+    }
+}
+
+private fun LogType.requiresSeverity(): Boolean {
+    return this == LogType.FLOWER_DROP || this == LogType.FRUIT_DROP || this == LogType.WATERING_STRESS
 }
 
 private fun String.readableToken(): String {
     return split("_").joinToString(" ") { token ->
         token.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
+}
+
+private fun String?.toDisplayDate(): String? {
+    val value = this?.takeUnless { it.isBlank() } ?: return null
+    return when {
+        value.length >= 10 && value[4] == '-' && value[7] == '-' -> value.take(10)
+        value.length >= 7 && value[4] == '-' -> value.take(7)
+        else -> value
+    }
+}
+
+private fun List<TreeLog>.groupIntoCycles(): List<TimelineCycleGroup> {
+    return groupBy { it.timestamp.toCycleYearLabel() }
+        .entries
+        .sortedByDescending { it.key.cycleSortKey() }
+        .map { (label, entries) ->
+            TimelineCycleGroup(
+                label = label,
+                sublabel = entries.buildCycleSublabel(),
+                entries = entries.sortedByDescending { it.timestamp }
+            )
+        }
+}
+
+private fun String.toCycleYearLabel(): String {
+    return try {
+        "${OffsetDateTime.parse(this).year} cycle"
+    } catch (_: Exception) {
+        "Earlier records"
+    }
+}
+
+private fun String.cycleSortKey(): Int {
+    return substringBefore(' ').toIntOrNull() ?: Int.MIN_VALUE
+}
+
+private fun List<TreeLog>.buildCycleSublabel(): String {
+    val primaryTypes = map { it.type }
+    return when {
+        primaryTypes.any { it == LogType.HARVEST } -> "Harvest history and care events"
+        primaryTypes.any { it == LogType.FLOWERING || it == LogType.FRUIT_SET } -> "Flowering and fruiting observations"
+        else -> "Care and observation history"
+    }
+}
+
+private fun RecordKind.availableLogTypes(): List<LogType> {
+    return when (this) {
+        RecordKind.TREE -> listOf(
+            LogType.FLOWERING,
+            LogType.FLOWER_DROP,
+            LogType.FRUIT_SET,
+            LogType.FRUIT_DROP,
+            LogType.HARVEST,
+            LogType.WATERING_STRESS,
+            LogType.PRUNING,
+            LogType.FEEDING,
+            LogType.PEST,
+            LogType.TREATMENT,
+            LogType.DIAGNOSIS,
+            LogType.NOTE,
+        )
+        RecordKind.FLOWER -> listOf(
+            LogType.FLOWERING,
+            LogType.FLOWER_DROP,
+            LogType.WATERING_STRESS,
+            LogType.PRUNING,
+            LogType.FEEDING,
+            LogType.PEST,
+            LogType.TREATMENT,
+            LogType.DIAGNOSIS,
+            LogType.NOTE,
+        )
+        RecordKind.CROP -> listOf(
+            LogType.FLOWERING,
+            LogType.FLOWER_DROP,
+            LogType.FRUIT_SET,
+            LogType.FRUIT_DROP,
+            LogType.HARVEST,
+            LogType.WATERING_STRESS,
+            LogType.PRUNING,
+            LogType.FEEDING,
+            LogType.PEST,
+            LogType.TREATMENT,
+            LogType.DIAGNOSIS,
+            LogType.NOTE,
+        )
+    }
+}
+
+private fun String.toMetadataLabel(): String {
+    return when (this) {
+        "fruit_set_strength" -> "Fruit set"
+        "pruning_type" -> "Pruning"
+        "feeding_type" -> "Feeding"
+        else -> replace('_', ' ')
+            .split(' ')
+            .joinToString(" ") { token -> token.replaceFirstChar { it.uppercase() } }
+    }
+}
+
+private fun TreeTask.priorityColor(): Color {
+    return when (priority.uppercase()) {
+        "HIGH" -> SecondaryTerracotta
+        "LOW" -> PrimaryForest.copy(alpha = 0.7f)
+        else -> PrimaryForest
+    }
+}
+
+private data class GroupedTreeTasks(
+    val overdue: List<TreeTask>,
+    val upcoming: List<TreeTask>,
+    val closed: List<TreeTask>
+)
+
+private fun List<TreeTask>.groupForDisplay(): GroupedTreeTasks {
+    val today = LocalDate.now()
+    val overdue = mutableListOf<TreeTask>()
+    val upcoming = mutableListOf<TreeTask>()
+    val closed = mutableListOf<TreeTask>()
+
+    for (task in this) {
+        when {
+            task.status.equals("Completed", ignoreCase = true) ||
+                task.status.equals("Skipped", ignoreCase = true) -> {
+                closed += task
+            }
+
+            task.dueAt.toLocalDateOrNull()?.isBefore(today) == true -> {
+                overdue += task
+            }
+
+            else -> {
+                upcoming += task
+            }
+        }
+    }
+
+    return GroupedTreeTasks(
+        overdue = overdue.sortedBy { it.dueAt },
+        upcoming = upcoming.sortedBy { it.dueAt },
+        closed = closed.sortedByDescending { it.dueAt }
+    )
+}
+
+private fun String.toLocalDateOrNull(): LocalDate? {
+    return try {
+        OffsetDateTime.parse(this).toLocalDate()
+    } catch (_: Exception) {
+        null
+    }
+}
+
+private fun TreeTask.explanationText(): String? {
+    val specific = reason?.takeIf { it.isNotBlank() }
+    val sourceContext = sourceSummary?.takeIf { it.isNotBlank() }
+    return listOfNotNull(specific, sourceContext).joinToString(" ").takeIf { it.isNotBlank() }
+}
+
+private fun TreeCycleSummary.harvestOutcomeLabel(): String {
+    return when {
+        yieldSummary != null -> yieldSummary
+        harvestWindow != null -> "Harvest logged"
+        else -> "No harvest logged"
+    }
+}
+
+private fun TreeCycleSummary.stressOutcomeLabel(): String {
+    return when {
+        stressScore <= 0 -> "No stress logs"
+        stressScore == 1 -> "1 stress signal"
+        else -> "$stressScore stress signals"
+    }
+}
+
+private fun TreeCycleSummary.pestOutcomeLabel(): String {
+    return when {
+        pestPressureScore <= 0 -> "No pest logs"
+        pestPressureScore == 1 -> "1 pest signal"
+        else -> "$pestPressureScore pest signals"
+    }
+}
+
+private fun TreeCycleSummary.fruitSetOutcomeLabel(): String {
+    return when {
+        fruitSetDate != null -> "Confirmed"
+        floweringDate != null -> "Not confirmed"
+        else -> "No flowering log"
+    }
+}
+
+private fun TreeCycleSummary.buildChangeNotes(previous: TreeCycleSummary?): List<String> {
+    if (previous == null) {
+        val notes = mutableListOf<String>()
+        if (floweringDate != null && fruitSetDate == null) {
+            notes += "Flowering was recorded, but fruit set was not confirmed in this cycle."
+        }
+        if (stressScore > 0) {
+            notes += "Stress signals were recorded, so moisture or weather stability should be watched more closely next cycle."
+        }
+        if (pestPressureScore > 0) {
+            notes += "Pest pressure appeared in this cycle and should be tracked earlier next time."
+        }
+        return notes
+    }
+
+    val notes = mutableListOf<String>()
+
+    if (harvestWindow == null && previous.harvestWindow != null) {
+        notes += "The latest cycle has not reached harvest yet, while the previous cycle did."
+    } else if (harvestWindow != null && previous.harvestWindow == null) {
+        notes += "The latest cycle recorded a harvest where the previous cycle did not."
+    } else if (yieldSummary != null && previous.yieldSummary != null && yieldSummary != previous.yieldSummary) {
+        notes += "Harvest outcome changed from ${previous.yieldSummary.lowercase()} to ${yieldSummary.lowercase()}."
+    }
+
+    if (stressScore > previous.stressScore) {
+        notes += "Stress signals increased from ${previous.stressScore} to $stressScore."
+    } else if (stressScore < previous.stressScore) {
+        notes += "Stress signals dropped from ${previous.stressScore} to $stressScore."
+    }
+
+    if (pestPressureScore > previous.pestPressureScore) {
+        notes += "Pest pressure increased compared with the previous cycle."
+    } else if (pestPressureScore < previous.pestPressureScore) {
+        notes += "Pest pressure eased compared with the previous cycle."
+    }
+
+    if (floweringDate != null && fruitSetDate == null && previous.fruitSetDate != null) {
+        notes += "This cycle has flowering recorded but no confirmed fruit set yet, unlike the previous cycle."
+    } else if (fruitSetDate != null && previous.fruitSetDate == null) {
+        notes += "Fruit set was confirmed this cycle after being absent in the previous one."
+    }
+
+    if (notes.isEmpty()) {
+        notes += "The current and previous cycles look broadly similar from the recorded data so far."
+    }
+
+    return notes
 }

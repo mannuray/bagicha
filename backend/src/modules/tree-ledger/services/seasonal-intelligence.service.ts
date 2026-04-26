@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { LifecycleStage, Tree, User } from '@prisma/client';
+import { SpeciesNormalizationService } from './species-normalization.service';
 
 type Confidence = 'low' | 'medium' | 'high';
 
@@ -26,12 +27,15 @@ interface SeasonalRuleOutput {
 
 @Injectable()
 export class SeasonalIntelligenceService {
+  constructor(private speciesNormalizationService: SpeciesNormalizationService) {}
+
   inferTreeSeasonalState(tree: Tree, user: Pick<User, 'district' | 'latitude' | 'longitude'>): TreeSeasonalState {
     const month = new Date().getMonth() + 1;
-    const speciesFamily = this.resolveSpeciesFamily(tree.species);
+    const speciesFamily = this.speciesNormalizationService.resolveSpeciesFamily(tree);
     const seasonalWindow = this.resolveSeasonalWindow(month, user.district);
 
     const guidance = this.buildGuidance(speciesFamily, tree.lifecycle_stage, seasonalWindow);
+    const speciesBasis = this.speciesNormalizationService.buildClassificationBasis(tree);
 
     return {
       species_family: speciesFamily,
@@ -42,19 +46,8 @@ export class SeasonalIntelligenceService {
       avoid_now: guidance.avoid_now,
       watch_for: guidance.watch_for,
       next_checkpoint_days: guidance.next_checkpoint_days,
-      basis: `month_window+species_rule+lifecycle_stage${user.district ? '+district' : ''}`,
+      basis: `month_window+species_rule+lifecycle_stage+${speciesBasis}${user.district ? '+district' : ''}`,
     };
-  }
-
-  private resolveSpeciesFamily(species: string): string {
-    const normalized = species.toLowerCase();
-
-    if (normalized.includes('mango')) return 'mango';
-    if (normalized.includes('lemon') || normalized.includes('citrus') || normalized.includes('lime') || normalized.includes('orange')) return 'citrus';
-    if (normalized.includes('litchi') || normalized.includes('lychee')) return 'litchi';
-    if (normalized.includes('guava')) return 'guava';
-
-    return 'generic_perennial';
   }
 
   private resolveSeasonalWindow(month: number, district?: string | null): 'late_winter' | 'spring' | 'summer' | 'monsoon' | 'post_monsoon' {

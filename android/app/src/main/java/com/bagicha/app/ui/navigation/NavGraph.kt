@@ -28,6 +28,7 @@ fun NavGraph(navController: NavHostController) {
     val chatViewModel: ChatViewModel = hiltViewModel()
     val storeViewModel: StoreViewModel = hiltViewModel()
     val onboardingViewModel: OnboardingViewModel = hiltViewModel()
+    val dashboardViewModel: DashboardViewModel = hiltViewModel()
 
     NavHost(
         navController = navController,
@@ -89,13 +90,28 @@ fun NavGraph(navController: NavHostController) {
 
         // Main App
         composable(Screen.Home.route) { 
-            DashboardScreen(viewModel = hiltViewModel(), navController = navController)
+            DashboardScreen(
+                viewModel = dashboardViewModel,
+                navController = navController,
+                onOpenTask = { task ->
+                    task.treeId?.let {
+                        ledgerViewModel.selectTree(it)
+                        navController.navigate(Screen.RecordTasks.route)
+                    }
+                }
+            )
         }
         composable(Screen.Ledger.route) { 
             TreeListScreen(viewModel = ledgerViewModel, navController = navController)
         }
         composable(Screen.TreeDetail.route) {
             TreeDetailScreen(viewModel = ledgerViewModel, navController = navController)
+        }
+        composable(Screen.RecordTasks.route) {
+            RecordTasksScreen(viewModel = ledgerViewModel, navController = navController)
+        }
+        composable(Screen.SeasonReview.route) {
+            SeasonReviewScreen(viewModel = ledgerViewModel, navController = navController)
         }
         composable(Screen.AddTree.route) {
             AddTreeScreen(
@@ -114,8 +130,19 @@ fun NavGraph(navController: NavHostController) {
         composable(Screen.Scan.route) { 
             ScanScreen(viewModel = visionViewModel, navController = navController)
         }
-        composable(Screen.IdentifyResult.route) { IdentifyResultScreen(navController = navController) }
-        composable(Screen.DiagnoseResult.route) { DiagnoseResultScreen(navController = navController) }
+        composable(Screen.IdentifyResult.route) {
+            IdentifyResultScreen(viewModel = visionViewModel, navController = navController)
+        }
+        composable(Screen.DiagnoseResult.route) {
+            DiagnoseResultScreen(
+                viewModel = visionViewModel,
+                navController = navController,
+                onOpenTree = {
+                    visionViewModel.selectedTreeId.value?.let { ledgerViewModel.selectTree(it) }
+                    navController.navigate(Screen.TreeDetail.route)
+                }
+            )
+        }
         composable(Screen.Community.route) { 
             CommunityFeedScreen(viewModel = communityViewModel, navController = navController)
         }

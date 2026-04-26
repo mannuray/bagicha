@@ -125,9 +125,11 @@ fun VisualAssetBleedDense() {
 }
 
 @Composable
-fun TaskItemDense(task: GardenTask, onToggle: () -> Unit) {
+fun TaskItemDense(task: GardenTask, onToggle: () -> Unit, onOpen: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -143,15 +145,42 @@ fun TaskItemDense(task: GardenTask, onToggle: () -> Unit) {
             }
         }
         Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .clickable { onOpen() }
+        ) {
             Text(
                 text = task.title,
                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
                 color = if (task.isCompleted) OnSurfaceMuted else PrimaryForest
             )
-            Text("South Sector • Guava", style = MaterialTheme.typography.labelMedium.copy(fontSize = 10.sp), color = OnSurfaceMuted.copy(alpha = 0.6f))
+            Text(
+                buildString {
+                    task.recordKind?.let {
+                        append(
+                            when (it) {
+                                com.bagicha.app.ui.features.ledger.RecordKind.TREE -> "Tree"
+                                com.bagicha.app.ui.features.ledger.RecordKind.FLOWER -> "Flower"
+                                com.bagicha.app.ui.features.ledger.RecordKind.CROP -> "Crop"
+                            }
+                        )
+                    }
+                    if (!task.treeName.isNullOrBlank()) {
+                        if (isNotEmpty()) append(" • ")
+                        append(task.treeName)
+                    }
+                    if (isEmpty()) append("Garden record")
+                },
+                style = MaterialTheme.typography.labelMedium.copy(fontSize = 10.sp),
+                color = OnSurfaceMuted.copy(alpha = 0.6f)
+            )
         }
-        Text("08:00 AM", style = MaterialTheme.typography.labelMedium.copy(fontSize = 9.sp), color = OnSurfaceMuted.copy(alpha = 0.3f))
+        Text(
+            task.dueDate ?: "Open",
+            style = MaterialTheme.typography.labelMedium.copy(fontSize = 9.sp),
+            color = OnSurfaceMuted.copy(alpha = 0.3f)
+        )
     }
 }
 

@@ -14,6 +14,8 @@
 - **Persistent Inventory:** Users log permanent assets (e.g., Mango, Litchi, Lemon trees).
 - **Health Profiles:** Track tree age, specific variety (e.g., Jardalu, Langra), and historical yields.
 - **Perennial Care Scheduler:** Automated, critical schedules for low-frequency events like deep-feeding (NPK/Micronutrients) and seasonal pruning to maximize fruit-bearing.
+- **Tree History & Cycle Memory:** Each tree should maintain a durable biological record including flowering, fruit set, flower drop, harvests, pest/treatment history, and year-over-year cycle comparison.
+- **Post-Harvest Learning:** The system should help users understand what likely went wrong this harvest and what to change before the next cycle.
 
 ### 3.2. The Seasonal Engine (Agile Layer)
 - **Crop Rotation Planner:** Manages seasonal vegetable patches. Automatically transitions the app's state based on seasons (e.g., switching from Winter Peas/Carrots to Summer Gourds/Okra).

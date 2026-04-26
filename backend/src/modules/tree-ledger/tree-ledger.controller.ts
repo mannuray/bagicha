@@ -3,6 +3,7 @@ import { TreeLedgerService } from './tree-ledger.service';
 import { CreateTreeDto } from './dto/create-tree.dto';
 import { AddLogDto } from './dto/add-log.dto';
 import { UpdateTreeDto } from './dto/update-tree.dto';
+import { UpdateTaskStatusDto } from './dto/update-task-status.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('ledger')
@@ -52,5 +53,35 @@ export class TreeLedgerController {
     // However, the interceptor expects 'data', so we return it in a specific way that the interceptor can handle
     // for pagination cases if needed. For now, we return it as an object.
     return result;
+  }
+
+  @Get('trees/:id/cycles')
+  async getCycles(@Request() req, @Param('id') id: string) {
+    return this.treeLedgerService.getCycles(req.user.id, id);
+  }
+
+  @Get('trees/:id/tasks')
+  async getTasks(@Request() req, @Param('id') id: string) {
+    return this.treeLedgerService.getTasks(req.user.id, id);
+  }
+
+  @Get('tasks')
+  async getUserTasks(@Request() req) {
+    return this.treeLedgerService.getUserTasks(req.user.id);
+  }
+
+  @Get('trees/:id/mitigation-plan')
+  async getMitigationPlan(@Request() req, @Param('id') id: string) {
+    return this.treeLedgerService.getMitigationPlan(req.user.id, id);
+  }
+
+  @Put('trees/:id/tasks/:taskId')
+  async updateTaskStatus(
+    @Request() req,
+    @Param('id') id: string,
+    @Param('taskId') taskId: string,
+    @Body() updateTaskStatusDto: UpdateTaskStatusDto,
+  ) {
+    return this.treeLedgerService.updateTaskStatus(req.user.id, id, taskId, updateTaskStatusDto.status);
   }
 }

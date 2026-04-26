@@ -20,19 +20,83 @@ enum LifecycleStage {
   SAPLING
   JUVENILE
   FIRST_FLOWERING
+  FIRST_HARVEST
   MATURE_BEARING
 }
 
 enum LogType {
+  PLANTING
   PHOTO
   NOTE
+  WATERING
+  WATERING_STRESS
+  PRUNING
+  FEEDING
+  FLOWERING
+  FLOWER_DROP
+  FRUIT_SET
+  FRUIT_DROP
   HARVEST
   PEST_DIAGNOSIS
   TREATMENT
+  DIAGNOSIS
+  WEATHER_DAMAGE
+}
+
+enum PlantedContext {
+  GROUND
+  POT
+  GROW_BAG
+  UNKNOWN
+}
+
+enum PlantingDatePrecision {
+  EXACT_DATE
+  MONTH_YEAR
+  YEAR
+  UNKNOWN
+}
+
+enum GrowthHabit {
+  PERENNIAL
+  ANNUAL
+  BIENNIAL
+  SEASONAL
+  UNKNOWN
+}
+
+enum RecordPattern {
+  LONG_LIVED
+  RECURRING_SEASONAL
+  ONE_OFF_SEASON
+}
+
+enum RecordKind {
+  TREE
+  FLOWER
+  CROP
+}
+
+enum DropLevel {
+  NONE
+  LOW
+  MEDIUM
+  HIGH
+  UNKNOWN
+}
+
+enum YieldQuality {
+  POOR
+  FAIR
+  GOOD
+  EXCELLENT
+  UNKNOWN
 }
 
 enum TaskType {
   WATER
+  INSPECT
+  OBSERVE
   PRUNE
   FEED
   HARVEST
@@ -43,6 +107,77 @@ enum TaskStatus {
   PENDING
   COMPLETED
   SKIPPED
+}
+
+enum RegionCluster {
+  NORTH_INDIA
+  EAST_INDIA
+  WEST_INDIA
+  CENTRAL_INDIA
+  SOUTH_DECCAN
+  COASTAL_HUMID
+  HILLS_COOL
+}
+
+enum SeasonWindow {
+  LATE_WINTER
+  SPRING
+  SUMMER
+  MONSOON
+  POST_MONSOON
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskCategory {
+  WATERING
+  INSPECTION
+  PRUNING
+  FEEDING
+  HARVEST
+  TREATMENT
+  OBSERVATION
+}
+
+enum TaskSource {
+  SYSTEM
+  SEASONAL_PACK
+  PERSONALIZED_OVERLAY
+  MANUAL
+}
+
+enum DiagnosisSubjectType {
+  TREE
+  CROP_SEASON
+  FLOWER_SEASON
+}
+
+enum DiagnosisStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+enum DiagnosisIssueType {
+  PEST
+  DISEASE
+  NUTRIENT
+  WATER_STRESS
+  WEATHER_DAMAGE
+  FRUIT_DROP
+  FLOWER_DROP
+  UNKNOWN
+}
+
+enum DiagnosisSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  UNKNOWN
 }
 
 model User {
@@ -65,20 +200,52 @@ model User {
   sent_messages     Message[] @relation("SentMessages")
   received_messages Message[] @relation("ReceivedMessages")
   verifications     ExpertVerification?
+  personalized_overlays PersonalizedOverlay[]
 
   @@map("users")
+}
+
+model PlantCatalogEntry {
+  id                String   @id @default(uuid())
+  species_family    String
+  species           String
+  variety           String?
+  display_name      String
+  plant_type        String
+  aliases           String[] @default([])
+  languages         Json?
+  regions           String[] @default([])
+  confidence_weight Float    @default(0.5)
+  active            Boolean  @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@index([species_family, species, active])
+  @@index([display_name, active])
+  @@map("plant_catalog_entries")
 }
 
 model Tree {
   id                String         @id @default(uuid())
   user_id           String
   name              String
+  species_family    String?
   species           String
   variety           String?
+  record_kind       RecordKind     @default(TREE)
   type              TreeType       @default(FRUIT_BEARING)
+  growth_habit      GrowthHabit    @default(PERENNIAL)
+  record_pattern    RecordPattern  @default(LONG_LIVED)
   lifecycle_stage   LifecycleStage @default(SAPLING)
   lifecycle_stage_manual Boolean   @default(false)
+  planted_context   PlantedContext @default(UNKNOWN)
   planting_date     DateTime?
+  planting_date_precision PlantingDatePrecision @default(UNKNOWN)
+  planting_date_input String?
+  first_flowering_at DateTime?
+  first_fruit_set_at DateTime?
+  first_harvest_at   DateTime?
+  latest_harvest_at  DateTime?
   health_status     String         @default("Healthy")
   created_at        DateTime       @default(now())
   updated_at        DateTime       @updatedAt
@@ -86,6 +253,10 @@ model Tree {
   user  User  @relation(fields: [user_id], references: [id])
   logs  Log[]
   tasks Task[]
+  cycles TreeCycle[]
+  personalized_overlays PersonalizedOverlay[]
+  diagnosis_sessions DiagnosisSession[]
+  diagnosis_outcomes DiagnosisOutcome[]
 
   @@map("trees")
 }
@@ -93,28 +264,197 @@ model Tree {
 model Log {
   id         String   @id @default(uuid())
   tree_id    String
+  tree_cycle_id String?
+  diagnosis_outcome_id String?
   type       LogType
   content    String?  // Text note or photo URL
   metadata   Json?    // For yield weight, pest details, etc.
-  timestamp  DateTime @default(now())
+  timestamp  DateTime @default(now()) // When the event actually happened
+  recorded_at DateTime @default(now()) // When the user/system recorded it
 
   tree Tree @relation(fields: [tree_id], references: [id])
+  tree_cycle TreeCycle? @relation(fields: [tree_cycle_id], references: [id])
+  diagnosis_outcome DiagnosisOutcome? @relation(fields: [diagnosis_outcome_id], references: [id])
+
+  @@index([tree_id, timestamp])
+  @@index([tree_cycle_id])
+  @@index([diagnosis_outcome_id])
 
   @@map("tree_logs")
 }
 
 model Task {
-  id         String     @id @default(uuid())
+  id         String       @id @default(uuid())
   tree_id    String
+  tree_cycle_id String?
   type       TaskType
+  title      String?
+  category   TaskCategory?
+  priority   TaskPriority @default(MEDIUM)
+  source     TaskSource   @default(SYSTEM)
+  source_key String?
+  reason     String?
+  metadata   Json?
   due_date   DateTime
-  status     TaskStatus @default(PENDING)
+  status     TaskStatus   @default(PENDING)
+  seasonal_pack_id String?
+  personalized_overlay_id String?
+  diagnosis_outcome_id String?
   completed_at DateTime?
   created_at DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
 
   tree Tree @relation(fields: [tree_id], references: [id])
+  tree_cycle TreeCycle? @relation(fields: [tree_cycle_id], references: [id])
+  seasonal_pack SeasonalPack? @relation(fields: [seasonal_pack_id], references: [id])
+  personalized_overlay PersonalizedOverlay? @relation(fields: [personalized_overlay_id], references: [id])
+  diagnosis_outcome DiagnosisOutcome? @relation(fields: [diagnosis_outcome_id], references: [id])
+
+  @@index([tree_id, due_date, status])
+  @@index([tree_cycle_id])
+  @@index([source, due_date])
+  @@index([seasonal_pack_id])
+  @@index([personalized_overlay_id])
+  @@index([diagnosis_outcome_id])
 
   @@map("tasks")
+}
+
+model TreeCycle {
+  id                             String       @id @default(uuid())
+  tree_id                        String
+  cycle_year                     Int
+  region_cluster                 RegionCluster?
+  season_window                  SeasonWindow?
+  expected_flowering_window      String?
+  observed_flowering_at          DateTime?
+  observed_fruit_set_at          DateTime?
+  harvest_started_at             DateTime?
+  harvest_completed_at           DateTime?
+  yield_quantity                 Float?
+  yield_unit                     String?
+  yield_quality                  YieldQuality @default(UNKNOWN)
+  flower_drop_level              DropLevel    @default(UNKNOWN)
+  fruit_drop_level               DropLevel    @default(UNKNOWN)
+  stress_score                   Int?
+  pest_pressure_score            Int?
+  treatment_count                Int          @default(0)
+  cycle_summary                  String?
+  recommended_next_cycle_actions Json?
+  created_at                     DateTime     @default(now())
+  updated_at                     DateTime     @updatedAt
+
+  tree  Tree   @relation(fields: [tree_id], references: [id])
+  logs  Log[]
+  tasks Task[]
+
+  @@unique([tree_id, cycle_year], name: "tree_cycle_year")
+  @@index([tree_id, cycle_year])
+  @@map("tree_cycles")
+}
+
+model SeasonalPack {
+  id              String         @id @default(uuid())
+  region_cluster  RegionCluster
+  species_family  String
+  lifecycle_stage LifecycleStage
+  season_window   SeasonWindow
+  pack_version    Int            @default(1)
+  model_version   String?
+  current_phase   String
+  upcoming_phase  String
+  confidence      String
+  do_now          Json
+  avoid_now       Json
+  watch_for       Json
+  task_templates  Json
+  basis           String
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+
+  tasks                 Task[]
+  personalized_overlays PersonalizedOverlay[]
+
+  @@unique([region_cluster, species_family, lifecycle_stage, season_window, pack_version], name: "seasonal_pack_cohort_version")
+  @@index([region_cluster, species_family, lifecycle_stage, season_window])
+  @@map("seasonal_packs")
+}
+
+model PersonalizedOverlay {
+  id                    String    @id @default(uuid())
+  user_id               String
+  tree_id               String
+  seasonal_pack_id      String
+  adjusted_phase        String?
+  priority_actions      Json?
+  suppressed_actions    Json?
+  personalized_tasks    Json?
+  reasoning_summary     String?
+  expires_at            DateTime?
+  refreshed_at          DateTime?
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+
+  user          User         @relation(fields: [user_id], references: [id])
+  tree          Tree         @relation(fields: [tree_id], references: [id])
+  seasonal_pack SeasonalPack @relation(fields: [seasonal_pack_id], references: [id])
+  generated_tasks Task[]
+
+  @@index([user_id, tree_id])
+  @@index([tree_id, expires_at])
+  @@index([seasonal_pack_id])
+  @@map("personalized_overlays")
+}
+
+model DiagnosisSession {
+  id              String               @id @default(uuid())
+  subject_type    DiagnosisSubjectType
+  subject_id      String
+  tree_id         String?
+  status          DiagnosisStatus      @default(OPEN)
+  messages        Json?
+  attachments     Json?
+  started_at      DateTime             @default(now())
+  closed_at       DateTime?
+  created_at      DateTime             @default(now())
+  updated_at      DateTime             @updatedAt
+
+  tree            Tree?                @relation(fields: [tree_id], references: [id])
+  outcomes        DiagnosisOutcome[]
+
+  @@index([subject_type, subject_id, status])
+  @@index([tree_id, created_at])
+  @@map("diagnosis_sessions")
+}
+
+model DiagnosisOutcome {
+  id                  String              @id @default(uuid())
+  session_id          String
+  tree_id             String?
+  event_at            DateTime            @default(now())
+  primary_issue       DiagnosisIssueType  @default(UNKNOWN)
+  secondary_issues    String[]            @default([])
+  symptoms            Json?
+  confidence          String?
+  severity            DiagnosisSeverity   @default(UNKNOWN)
+  affected_part       String?
+  reasoning_summary   String?
+  recommended_actions Json?
+  needs_follow_up     Boolean             @default(false)
+  follow_up_days      Int?
+  attachments         Json?
+  created_at          DateTime            @default(now())
+  updated_at          DateTime            @updatedAt
+
+  session             DiagnosisSession    @relation(fields: [session_id], references: [id])
+  tree                Tree?               @relation(fields: [tree_id], references: [id])
+  logs                Log[]
+  generated_tasks     Task[]
+
+  @@index([session_id])
+  @@index([tree_id, event_at])
+  @@index([primary_issue, severity])
+  @@map("diagnosis_outcomes")
 }
 
 model Post {
