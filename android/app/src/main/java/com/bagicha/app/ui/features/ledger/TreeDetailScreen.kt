@@ -798,58 +798,57 @@ fun TreeTasksSection(
             verticalAlignment = Alignment.Bottom
         ) {
             Column {
-                Text("${recordKind.displayName()} Tasks", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
-                Text("PENDING WORK FOR THIS ${recordKind.displayName().uppercase()}", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+                Text("${recordKind.displayName()} Moments", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
+                Text("REQUIRED CARE ACTIONS", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
             }
             TextButton(
                 onClick = onSyncTasks,
-                enabled = !isSubmitting
+                enabled = !isSubmitting,
+                modifier = Modifier.background(SurfaceContainerLow, FullRounded)
             ) {
-                Text(if (isSubmitting) "SYNCING..." else "SYNC TASKS", color = PrimaryForest)
+                Text(if (isSubmitting) "SYNCING..." else "SYNC PLAN", color = PrimaryForest, style = MaterialTheme.typography.labelMedium)
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         if (tasks.isEmpty()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(SurfaceContainerLow, Shapes.large)
-                    .padding(24.dp)
+                    .padding(32.dp)
             ) {
                 Text(
-                    text = "No ${recordKind.displayName().lowercase()} tasks yet.",
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "The cycle is clear.",
+                    style = MaterialTheme.typography.titleLarge,
                     color = PrimaryForest
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Use Sync Tasks to materialize seasonal and personalized task suggestions for this ${recordKind.displayName().lowercase()}.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = OnSurfaceVariant
+                    text = "No ${recordKind.displayName().lowercase()} tasks are pending. Sync with the seasonal engine to generate new care plans.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = OnSurfaceMuted.copy(alpha = 0.6f),
+                    lineHeight = 24.sp
                 )
             }
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(48.dp)) {
                 TaskBucketSection(
-                    title = "Overdue",
-                    subtitle = "Needs attention first",
+                    title = "OVERDUE ACTIONS",
                     tasks = groupedTasks.overdue,
                     isSubmitting = isSubmitting,
                     onCompleteTask = onCompleteTask,
                     onSkipTask = onSkipTask
                 )
                 TaskBucketSection(
-                    title = "Upcoming",
-                    subtitle = "Current planned work",
+                    title = "CURRENT PLAN",
                     tasks = groupedTasks.upcoming,
                     isSubmitting = isSubmitting,
                     onCompleteTask = onCompleteTask,
                     onSkipTask = onSkipTask
                 )
                 TaskBucketSection(
-                    title = "Completed / Skipped",
-                    subtitle = "Closed task history",
+                    title = "CLOSED HISTORY",
                     tasks = groupedTasks.closed,
                     isSubmitting = isSubmitting,
                     onCompleteTask = onCompleteTask,
@@ -876,28 +875,42 @@ fun RecordTaskSummaryCard(
         .firstOrNull()
 
     Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-        Text("${recordKind.displayName()} Tasks", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
-        Text("QUICK TASK VIEW", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
-        Spacer(modifier = Modifier.height(16.dp))
+        Text("${recordKind.displayName()} Path", style = MaterialTheme.typography.headlineMedium, color = PrimaryForest)
+        Text("UPCOMING MILESTONES", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+        Spacer(modifier = Modifier.height(24.dp))
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(SurfaceContainerLow, Shapes.large)
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .background(SurfaceContainerLow, PebbleShape6)
+                .padding(28.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            CycleMetaRow("Open Tasks", openTasks.toString())
-            CycleMetaRow("Overdue", overdueTasks.toString())
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("PENDING", style = MaterialTheme.typography.labelMedium, color = OnSurfaceMuted)
+                Text(openTasks.toString(), style = MaterialTheme.typography.titleLarge, color = PrimaryForest)
+            }
+            if (overdueTasks > 0) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("OVERDUE", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
+                    Text(overdueTasks.toString(), style = MaterialTheme.typography.titleLarge, color = SecondaryTerracotta)
+                }
+            }
             nextTask?.let {
-                CycleMetaRow("Next", it.title)
-                CycleMetaRow("Due", it.dueDate)
+                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(PrimaryForest.copy(alpha = 0.05f)))
+                Text("NEXT ACTION", style = MaterialTheme.typography.labelMedium, color = OnSurfaceMuted)
+                Text(it.title, style = MaterialTheme.typography.titleLarge.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Serif), color = PrimaryForest)
+                Text("DUE ${it.dueDate}", style = MaterialTheme.typography.labelMedium, color = SecondaryTerracotta)
             }
 
-            TextButton(onClick = onOpenTasks) {
-                Icon(Icons.Default.PlayArrow, null, tint = PrimaryForest)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("OPEN TASKS", color = PrimaryForest)
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onOpenTasks,
+                modifier = Modifier.fillMaxWidth().height(56.dp).background(PrimaryGradient, FullRounded),
+                shape = FullRounded,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+            ) {
+                Text("VIEW FULL PATH", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.sp), color = Color.White)
             }
         }
     }
@@ -906,7 +919,6 @@ fun RecordTaskSummaryCard(
 @Composable
 private fun TaskBucketSection(
     title: String,
-    subtitle: String,
     tasks: List<TreeTask>,
     isSubmitting: Boolean,
     onCompleteTask: (String) -> Unit,
@@ -914,14 +926,12 @@ private fun TaskBucketSection(
 ) {
     if (tasks.isEmpty()) return
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Column {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = PrimaryForest)
-            Text(subtitle, style = MaterialTheme.typography.labelMedium, color = OnSurfaceVariant)
-        }
-        tasks.forEach { task ->
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        Text(title, style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 2.sp), color = OnSurfaceMuted)
+        tasks.forEachIndexed { index, task ->
             TreeTaskCard(
                 task = task,
+                shape = PebbleShapes[index % PebbleShapes.size],
                 isSubmitting = isSubmitting,
                 onCompleteTask = onCompleteTask,
                 onSkipTask = onSkipTask
@@ -933,15 +943,18 @@ private fun TaskBucketSection(
 @Composable
 private fun TreeTaskCard(
     task: TreeTask,
+    shape: androidx.compose.ui.graphics.Shape,
     isSubmitting: Boolean,
     onCompleteTask: (String) -> Unit,
     onSkipTask: (String) -> Unit
 ) {
+    val isPending = task.status.equals("Pending", ignoreCase = true)
+    
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(SurfaceContainerLow, Shapes.large)
-            .padding(20.dp)
+            .background(if (isPending) SurfaceContainerLow else SurfaceBase, shape)
+            .padding(24.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -949,59 +962,62 @@ private fun TreeTaskCard(
             verticalAlignment = Alignment.Top
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(task.title, style = MaterialTheme.typography.titleMedium, color = PrimaryForest)
+                Text(
+                    text = task.title, 
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                        textDecoration = if (!isPending) androidx.compose.ui.text.style.TextDecoration.LineThrough else null
+                    ), 
+                    color = if (isPending) PrimaryForest else OnSurfaceMuted.copy(alpha = 0.4f)
+                )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Due ${task.dueDate}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = OnSurfaceVariant
+                    text = "DUE ${task.dueDate}",
+                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 10.sp),
+                    color = if (isPending) SecondaryTerracotta else OnSurfaceMuted.copy(alpha = 0.3f)
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Box(
-                modifier = Modifier
-                    .clip(FullRounded)
-                    .background(task.priorityColor())
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
-            ) {
-                Text(task.priority.uppercase(), style = MaterialTheme.typography.labelMedium, color = Color.White)
+            if (isPending) {
+                Box(
+                    modifier = Modifier
+                        .clip(FullRounded)
+                        .background(task.priorityColor().copy(alpha = 0.1f))
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(task.priority.uppercase(), style = MaterialTheme.typography.labelMedium.copy(fontSize = 9.sp), color = task.priorityColor())
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-        val provenance = linkedMapOf(
-            "type" to task.type,
-            "status" to task.status,
-            "source" to task.source
-        ).apply {
-            task.cycleLabel?.let { put("cycle", it) }
-        }
-        FlowMetadataChips(metadata = provenance)
-
-        task.explanationText()?.let { explanation ->
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = explanation,
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnSurfaceNeutral
-            )
-        }
-
-        if (task.status.equals("Pending", ignoreCase = true)) {
+        if (isPending) {
             Spacer(modifier = Modifier.height(16.dp))
+            task.explanationText()?.let { explanation ->
+                Text(
+                    text = explanation,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = PrimaryForest.copy(alpha = 0.7f),
+                    lineHeight = 22.sp
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(
+                TextButton(
                     onClick = { onSkipTask(task.id) },
-                    enabled = !isSubmitting
+                    enabled = !isSubmitting,
+                    modifier = Modifier.weight(1f).height(48.dp).background(SurfaceBase, FullRounded)
                 ) {
-                    Text("SKIP")
+                    Text("SKIP", style = MaterialTheme.typography.labelMedium, color = OnSurfaceMuted)
                 }
                 Button(
                     onClick = { onCompleteTask(task.id) },
                     enabled = !isSubmitting,
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryForest)
+                    modifier = Modifier.weight(1.5f).height(48.dp).background(PrimaryGradient, FullRounded),
+                    shape = FullRounded,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
                 ) {
-                    Text("MARK DONE", color = Color.White)
+                    Text("MARK DONE", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold), color = Color.White)
                 }
             }
         }
