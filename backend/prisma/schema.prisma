@@ -41,6 +41,18 @@ enum LogType {
   TREATMENT
   DIAGNOSIS
   WEATHER_DAMAGE
+  // Crop-oriented events
+  SOWING
+  TRANSPLANTING
+  GERMINATION
+  THINNING
+  BOLTING
+  // Flower-oriented events
+  PINCHING
+  DEADHEADING
+  BLOOM_PEAK
+  // Cross-kind cycle close
+  SEASON_END
 }
 
 enum PlantedContext {
@@ -148,6 +160,7 @@ enum TaskSource {
   SEASONAL_PACK
   PERSONALIZED_OVERLAY
   MANUAL
+  AI_DIAGNOSIS
 }
 
 enum DiagnosisSubjectType {
@@ -194,7 +207,7 @@ model User {
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
-  trees    Tree[]
+  plants Plant[]
   posts    Post[]
   comments Comment[]
   sent_messages     Message[] @relation("SentMessages")
@@ -225,7 +238,7 @@ model PlantCatalogEntry {
   @@map("plant_catalog_entries")
 }
 
-model Tree {
+model Plant {
   id                String         @id @default(uuid())
   user_id           String
   name              String
@@ -251,9 +264,9 @@ model Tree {
   updated_at        DateTime       @updatedAt
 
   user  User  @relation(fields: [user_id], references: [id])
-  logs  Log[]
+  journal_entries JournalEntry[]
   tasks Task[]
-  cycles TreeCycle[]
+  cycles PlantCycle[]
   personalized_overlays PersonalizedOverlay[]
   diagnosis_sessions DiagnosisSession[]
   diagnosis_outcomes DiagnosisOutcome[]
@@ -261,10 +274,10 @@ model Tree {
   @@map("trees")
 }
 
-model Log {
+model JournalEntry {
   id         String   @id @default(uuid())
-  tree_id    String
-  tree_cycle_id String?
+  plant_id  String   @map("tree_id")
+  plant_cycle_id String? @map("tree_cycle_id")
   diagnosis_outcome_id String?
   type       LogType
   content    String?  // Text note or photo URL
@@ -272,12 +285,12 @@ model Log {
   timestamp  DateTime @default(now()) // When the event actually happened
   recorded_at DateTime @default(now()) // When the user/system recorded it
 
-  tree Tree @relation(fields: [tree_id], references: [id])
-  tree_cycle TreeCycle? @relation(fields: [tree_cycle_id], references: [id])
+  plant Plant @relation(fields: [plant_id], references: [id])
+  plant_cycle PlantCycle? @relation(fields: [plant_cycle_id], references: [id])
   diagnosis_outcome DiagnosisOutcome? @relation(fields: [diagnosis_outcome_id], references: [id])
 
-  @@index([tree_id, timestamp])
-  @@index([tree_cycle_id])
+  @@index([plant_id, timestamp])
+  @@index([plant_cycle_id])
   @@index([diagnosis_outcome_id])
 
   @@map("tree_logs")
@@ -285,8 +298,8 @@ model Log {
 
 model Task {
   id         String       @id @default(uuid())
-  tree_id    String
-  tree_cycle_id String?
+  plant_id  String       @map("tree_id")
+  plant_cycle_id String? @map("tree_cycle_id")
   type       TaskType
   title      String?
   category   TaskCategory?
@@ -304,14 +317,14 @@ model Task {
   created_at DateTime   @default(now())
   updated_at  DateTime   @updatedAt
 
-  tree Tree @relation(fields: [tree_id], references: [id])
-  tree_cycle TreeCycle? @relation(fields: [tree_cycle_id], references: [id])
+  plant Plant @relation(fields: [plant_id], references: [id])
+  plant_cycle PlantCycle? @relation(fields: [plant_cycle_id], references: [id])
   seasonal_pack SeasonalPack? @relation(fields: [seasonal_pack_id], references: [id])
   personalized_overlay PersonalizedOverlay? @relation(fields: [personalized_overlay_id], references: [id])
   diagnosis_outcome DiagnosisOutcome? @relation(fields: [diagnosis_outcome_id], references: [id])
 
-  @@index([tree_id, due_date, status])
-  @@index([tree_cycle_id])
+  @@index([plant_id, due_date, status])
+  @@index([plant_cycle_id])
   @@index([source, due_date])
   @@index([seasonal_pack_id])
   @@index([personalized_overlay_id])
@@ -320,9 +333,9 @@ model Task {
   @@map("tasks")
 }
 
-model TreeCycle {
+model PlantCycle {
   id                             String       @id @default(uuid())
-  tree_id                        String
+  plant_id                      String       @map("tree_id")
   cycle_year                     Int
   region_cluster                 RegionCluster?
   season_window                  SeasonWindow?
@@ -344,12 +357,12 @@ model TreeCycle {
   created_at                     DateTime     @default(now())
   updated_at                     DateTime     @updatedAt
 
-  tree  Tree   @relation(fields: [tree_id], references: [id])
-  logs  Log[]
+  plant Plant @relation(fields: [plant_id], references: [id])
+  journal_entries JournalEntry[]
   tasks Task[]
 
-  @@unique([tree_id, cycle_year], name: "tree_cycle_year")
-  @@index([tree_id, cycle_year])
+  @@unique([plant_id, cycle_year], name: "plant_cycle_year")
+  @@index([plant_id, cycle_year])
   @@map("tree_cycles")
 }
 
@@ -383,7 +396,7 @@ model SeasonalPack {
 model PersonalizedOverlay {
   id                    String    @id @default(uuid())
   user_id               String
-  tree_id               String
+  plant_id             String    @map("tree_id")
   seasonal_pack_id      String
   adjusted_phase        String?
   priority_actions      Json?
@@ -396,12 +409,12 @@ model PersonalizedOverlay {
   updated_at            DateTime  @updatedAt
 
   user          User         @relation(fields: [user_id], references: [id])
-  tree          Tree         @relation(fields: [tree_id], references: [id])
+  plant Plant @relation(fields: [plant_id], references: [id])
   seasonal_pack SeasonalPack @relation(fields: [seasonal_pack_id], references: [id])
   generated_tasks Task[]
 
-  @@index([user_id, tree_id])
-  @@index([tree_id, expires_at])
+  @@index([user_id, plant_id])
+  @@index([plant_id, expires_at])
   @@index([seasonal_pack_id])
   @@map("personalized_overlays")
 }
@@ -410,7 +423,7 @@ model DiagnosisSession {
   id              String               @id @default(uuid())
   subject_type    DiagnosisSubjectType
   subject_id      String
-  tree_id         String?
+  plant_id       String?              @map("tree_id")
   status          DiagnosisStatus      @default(OPEN)
   messages        Json?
   attachments     Json?
@@ -419,18 +432,18 @@ model DiagnosisSession {
   created_at      DateTime             @default(now())
   updated_at      DateTime             @updatedAt
 
-  tree            Tree?                @relation(fields: [tree_id], references: [id])
+  plant Plant? @relation(fields: [plant_id], references: [id])
   outcomes        DiagnosisOutcome[]
 
   @@index([subject_type, subject_id, status])
-  @@index([tree_id, created_at])
+  @@index([plant_id, created_at])
   @@map("diagnosis_sessions")
 }
 
 model DiagnosisOutcome {
   id                  String              @id @default(uuid())
   session_id          String
-  tree_id             String?
+  plant_id           String?             @map("tree_id")
   event_at            DateTime            @default(now())
   primary_issue       DiagnosisIssueType  @default(UNKNOWN)
   secondary_issues    String[]            @default([])
@@ -447,12 +460,12 @@ model DiagnosisOutcome {
   updated_at          DateTime            @updatedAt
 
   session             DiagnosisSession    @relation(fields: [session_id], references: [id])
-  tree                Tree?               @relation(fields: [tree_id], references: [id])
-  logs                Log[]
+  plant Plant? @relation(fields: [plant_id], references: [id])
+  journal_entries     JournalEntry[]
   generated_tasks     Task[]
 
   @@index([session_id])
-  @@index([tree_id, event_at])
+  @@index([plant_id, event_at])
   @@index([primary_issue, severity])
   @@map("diagnosis_outcomes")
 }
@@ -460,10 +473,12 @@ model DiagnosisOutcome {
 model Post {
   id         String   @id @default(uuid())
   author_id  String
-  tree_id    String?
+  plant_id   String?  @map("tree_id")
   content    String
+  image_urls String[] @default([])
   district   String?  // For hyper-local feed
   is_alert   Boolean  @default(false)
+  is_hidden  Boolean  @default(false)
   upvotes    Int      @default(0)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -471,6 +486,7 @@ model Post {
   author   User      @relation(fields: [author_id], references: [id])
   comments Comment[]
 
+  @@index([is_hidden, created_at])
   @@map("posts")
 }
 
@@ -480,12 +496,39 @@ model Comment {
   author_id  String
   content    String
   is_expert_verified Boolean @default(false)
+  is_hidden  Boolean  @default(false)
   created_at DateTime @default(now())
 
   post   Post @relation(fields: [post_id], references: [id])
   author User @relation(fields: [author_id], references: [id])
 
   @@map("comments")
+}
+
+enum ReportTargetType {
+  POST
+  COMMENT
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
+
+model Report {
+  id           String           @id @default(uuid())
+  target_type  ReportTargetType
+  target_id    String
+  reporter_id  String
+  reason       String?
+  status       ReportStatus     @default(PENDING)
+  created_at   DateTime         @default(now())
+  resolved_at  DateTime?
+
+  @@index([target_type, target_id, status])
+  @@index([status, created_at])
+  @@map("reports")
 }
 
 model Message {

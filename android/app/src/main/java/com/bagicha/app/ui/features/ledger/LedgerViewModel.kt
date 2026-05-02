@@ -3,7 +3,7 @@ package com.bagicha.app.ui.features.ledger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bagicha.app.data.remote.AddLogBody
-import com.bagicha.app.data.remote.CreateTreeBody
+import com.bagicha.app.data.remote.CreatePlantBody
 import com.bagicha.app.data.remote.LifecycleStageDto
 import com.bagicha.app.data.remote.LogTypeDto
 import com.bagicha.app.data.remote.MitigationPlanDto
@@ -18,11 +18,11 @@ import com.bagicha.app.data.remote.TaskPriorityDto
 import com.bagicha.app.data.remote.TaskSourceDto
 import com.bagicha.app.data.remote.TaskStatusDto
 import com.bagicha.app.data.remote.TaskTypeDto
-import com.bagicha.app.data.remote.TreeTaskDto
-import com.bagicha.app.data.remote.TreeCycleDto
-import com.bagicha.app.data.remote.TreeDto
-import com.bagicha.app.data.remote.TreeLogDto
-import com.bagicha.app.data.remote.TreeTypeDto
+import com.bagicha.app.data.remote.PlantTaskDto
+import com.bagicha.app.data.remote.PlantCycleDto
+import com.bagicha.app.data.remote.PlantDto
+import com.bagicha.app.data.remote.JournalEntryDto
+import com.bagicha.app.data.remote.PlantCategoryDto
 import com.bagicha.app.data.remote.UpdateTaskStatusBody
 import com.bagicha.app.domain.repository.LedgerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -55,21 +55,55 @@ enum class LogType {
     PEST,
     TREATMENT,
     DIAGNOSIS,
-    WEATHER_DAMAGE
+    WEATHER_DAMAGE,
+    SOWING,
+    TRANSPLANTING,
+    GERMINATION,
+    THINNING,
+    BOLTING,
+    PINCHING,
+    DEADHEADING,
+    BLOOM_PEAK,
+    SEASON_END
 }
-enum class TreeCategory { FRUIT_BEARING, NON_FRUIT_BEARING, ORNAMENTAL }
+
+fun LogType.allowedFor(kind: RecordKind): Boolean = when (this) {
+    // Universal — appropriate for any record
+    LogType.PLANTING, LogType.PHOTO, LogType.NOTE, LogType.WATERING,
+    LogType.WATERING_STRESS, LogType.PRUNING, LogType.FEEDING,
+    LogType.FLOWERING, LogType.FLOWER_DROP, LogType.PEST, LogType.TREATMENT,
+    LogType.DIAGNOSIS, LogType.WEATHER_DAMAGE -> true
+    // Fruit-cycle events
+    LogType.FRUIT_SET, LogType.FRUIT_DROP, LogType.HARVEST -> kind != RecordKind.FLOWER
+    // Crop-oriented events
+    LogType.SOWING, LogType.TRANSPLANTING, LogType.GERMINATION,
+    LogType.THINNING, LogType.BOLTING -> kind == RecordKind.CROP
+    // Flower-oriented events
+    LogType.PINCHING, LogType.DEADHEADING, LogType.BLOOM_PEAK -> kind == RecordKind.FLOWER
+    // Cross-kind cycle close
+    LogType.SEASON_END -> kind != RecordKind.TREE
+}
+enum class PlantCategory { FRUIT_BEARING, NON_FRUIT_BEARING, ORNAMENTAL }
 enum class RecordKind { TREE, FLOWER, CROP }
+
+fun RecordKind.displayName(): String {
+    return when (this) {
+        RecordKind.TREE -> "Tree"
+        RecordKind.FLOWER -> "Flower"
+        RecordKind.CROP -> "Crop"
+    }
+}
 enum class GrowthHabit { PERENNIAL, ANNUAL, BIENNIAL, SEASONAL, UNKNOWN }
 enum class RecordPattern { LONG_LIVED, RECURRING_SEASONAL, ONE_OFF_SEASON }
 
-data class Tree(
+data class Plant(
     val id: String,
     val name: String,
     val speciesFamily: String?,
     val species: String,
     val variety: String?,
     val recordKind: RecordKind,
-    val type: TreeCategory,
+    val type: PlantCategory,
     val growthHabit: GrowthHabit,
     val recordPattern: RecordPattern,
     val stage: LifecycleStage,
@@ -84,19 +118,19 @@ data class Tree(
     val logCount: Int = 0
 )
 
-data class TreeDraft(
+data class RecordDraft(
     val name: String = "",
     val species: String = "",
     val variety: String = "",
     val plantingDate: String = "",
     val recordKind: RecordKind = RecordKind.TREE,
-    val type: TreeCategory = TreeCategory.FRUIT_BEARING,
+    val type: PlantCategory = PlantCategory.FRUIT_BEARING,
     val growthHabit: GrowthHabit = GrowthHabit.PERENNIAL,
     val recordPattern: RecordPattern = RecordPattern.LONG_LIVED,
     val stage: LifecycleStage = LifecycleStage.SAPLING
 )
 
-data class TreeLog(
+data class JournalEntry(
     val id: String,
     val type: LogType,
     val timestamp: String,
@@ -119,7 +153,7 @@ data class SeasonalState(
     val basis: String
 )
 
-data class TreeCycleSummary(
+data class CycleSummary(
     val id: String,
     val year: Int,
     val summary: String,
@@ -136,7 +170,7 @@ data class TreeCycleSummary(
     val recentEventLabels: List<String>
 )
 
-data class TreeTask(
+data class PlantTask(
     val id: String,
     val title: String,
     val type: String,
@@ -192,23 +226,23 @@ class LedgerViewModel @Inject constructor(
     private val ledgerRepository: LedgerRepository
 ) : ViewModel() {
 
-    private val _trees = MutableStateFlow<List<Tree>>(emptyList())
-    val trees: StateFlow<List<Tree>> = _trees.asStateFlow()
+    private val _trees = MutableStateFlow<List<Plant>>(emptyList())
+    val trees: StateFlow<List<Plant>> = _trees.asStateFlow()
 
-    private val _selectedTree = MutableStateFlow<Tree?>(null)
-    val selectedTree: StateFlow<Tree?> = _selectedTree.asStateFlow()
+    private val _selectedTree = MutableStateFlow<Plant?>(null)
+    val selectedTree: StateFlow<Plant?> = _selectedTree.asStateFlow()
 
-    private val _timeline = MutableStateFlow<List<TreeLog>>(emptyList())
-    val timeline: StateFlow<List<TreeLog>> = _timeline.asStateFlow()
+    private val _timeline = MutableStateFlow<List<JournalEntry>>(emptyList())
+    val timeline: StateFlow<List<JournalEntry>> = _timeline.asStateFlow()
 
     private val _seasonalState = MutableStateFlow<SeasonalState?>(null)
     val seasonalState: StateFlow<SeasonalState?> = _seasonalState.asStateFlow()
 
-    private val _cycles = MutableStateFlow<List<TreeCycleSummary>>(emptyList())
-    val cycles: StateFlow<List<TreeCycleSummary>> = _cycles.asStateFlow()
+    private val _cycles = MutableStateFlow<List<CycleSummary>>(emptyList())
+    val cycles: StateFlow<List<CycleSummary>> = _cycles.asStateFlow()
 
-    private val _tasks = MutableStateFlow<List<TreeTask>>(emptyList())
-    val tasks: StateFlow<List<TreeTask>> = _tasks.asStateFlow()
+    private val _tasks = MutableStateFlow<List<PlantTask>>(emptyList())
+    val tasks: StateFlow<List<PlantTask>> = _tasks.asStateFlow()
 
     private val _mitigationPlan = MutableStateFlow<MitigationPlan?>(null)
     val mitigationPlan: StateFlow<MitigationPlan?> = _mitigationPlan.asStateFlow()
@@ -240,7 +274,7 @@ class LedgerViewModel @Inject constructor(
             _isLoading.value = true
             _error.value = null
             try {
-                val response = ledgerRepository.getTrees()
+                val response = ledgerRepository.getPlants()
                 if (response.success) {
                     _trees.value = response.data.orEmpty().map { it.toUiModel() }
                     syncSelectedTreeFromList()
@@ -255,24 +289,25 @@ class LedgerViewModel @Inject constructor(
         }
     }
 
-    fun selectTree(treeId: String) {
-        _selectedTreeId.value = treeId
-        _selectedTree.value = _trees.value.find { it.id == treeId }
-        loadSelectedTree()
-        loadSeasonalState()
-        loadCycles()
-        loadTasks()
-        loadMitigationPlan()
-        loadTimeline()
+    fun selectTree(plantId: String) {
+        _selectedTreeId.value = plantId
+        _selectedTree.value = _trees.value.find { it.id == plantId }
+        loadSelectedTree(plantId)
+        loadSeasonalState(plantId)
+        loadCycles(plantId)
+        loadTasks(plantId)
+        loadMitigationPlan(plantId)
+        loadTimeline(plantId)
     }
 
-    fun loadSelectedTree() {
-        val treeId = _selectedTreeId.value ?: return
+    fun loadSelectedTree(explicitTreeId: String? = null) {
+        val plantId = explicitTreeId ?: _selectedTreeId.value ?: return
+        _selectedTreeId.value = plantId
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             try {
-                val response = ledgerRepository.getTreeDetail(treeId)
+                val response = ledgerRepository.getPlantDetail(plantId)
                 if (response.success && response.data != null) {
                     val tree = response.data.toUiModel()
                     _selectedTree.value = tree
@@ -288,14 +323,14 @@ class LedgerViewModel @Inject constructor(
         }
     }
 
-    fun loadTimeline() {
-        val treeId = _selectedTreeId.value ?: return
+    fun loadTimeline(explicitTreeId: String? = null) {
+        val plantId = explicitTreeId ?: _selectedTreeId.value ?: return
         viewModelScope.launch {
             _error.value = null
             try {
-                val response = ledgerRepository.getTreeTimeline(treeId)
-                if (response.success) {
-                    _timeline.value = response.data.orEmpty().map { it.toUiModel() }
+                val response = ledgerRepository.getPlantTimeline(plantId)
+                if (response.success && response.data != null) {
+                    _timeline.value = response.data.map { it.toUiModel() }
                 } else {
                     _error.value = response.error?.message ?: "Failed to load timeline"
                 }
@@ -305,11 +340,11 @@ class LedgerViewModel @Inject constructor(
         }
     }
 
-    fun loadSeasonalState() {
-        val treeId = _selectedTreeId.value ?: return
+    fun loadSeasonalState(explicitTreeId: String? = null) {
+        val plantId = explicitTreeId ?: _selectedTreeId.value ?: return
         viewModelScope.launch {
             try {
-                val response = ledgerRepository.getTreeSeasonalState(treeId)
+                val response = ledgerRepository.getPlantSeasonalState(plantId)
                 if (response.success) {
                     _seasonalState.value = response.data?.toUiModel()
                 } else {
@@ -321,11 +356,11 @@ class LedgerViewModel @Inject constructor(
         }
     }
 
-    fun loadCycles() {
-        val treeId = _selectedTreeId.value ?: return
+    fun loadCycles(explicitTreeId: String? = null) {
+        val plantId = explicitTreeId ?: _selectedTreeId.value ?: return
         viewModelScope.launch {
             try {
-                val response = ledgerRepository.getTreeCycles(treeId)
+                val response = ledgerRepository.getPlantCycles(plantId)
                 if (response.success) {
                     _cycles.value = response.data.orEmpty().map { it.toUiModel() }
                 } else {
@@ -337,11 +372,11 @@ class LedgerViewModel @Inject constructor(
         }
     }
 
-    fun loadTasks() {
-        val treeId = _selectedTreeId.value ?: return
+    fun loadTasks(explicitTreeId: String? = null) {
+        val plantId = explicitTreeId ?: _selectedTreeId.value ?: return
         viewModelScope.launch {
             try {
-                val response = ledgerRepository.getTreeTasks(treeId)
+                val response = ledgerRepository.getPlantTasks(plantId)
                 if (response.success) {
                     _tasks.value = response.data.orEmpty().map { it.toUiModel() }
                 } else {
@@ -353,11 +388,11 @@ class LedgerViewModel @Inject constructor(
         }
     }
 
-    fun loadMitigationPlan() {
-        val treeId = _selectedTreeId.value ?: return
+    fun loadMitigationPlan(explicitTreeId: String? = null) {
+        val plantId = explicitTreeId ?: _selectedTreeId.value ?: return
         viewModelScope.launch {
             try {
-                val response = ledgerRepository.getMitigationPlan(treeId)
+                val response = ledgerRepository.getMitigationPlan(plantId)
                 _mitigationPlan.value = if (response.success) {
                     response.data?.toUiModel()
                 } else {
@@ -370,12 +405,12 @@ class LedgerViewModel @Inject constructor(
     }
 
     fun syncTreeTasks(onSuccess: () -> Unit = {}) {
-        val treeId = _selectedTreeId.value ?: return
+        val plantId = _selectedTreeId.value ?: return
         viewModelScope.launch {
             _isSubmitting.value = true
             _error.value = null
             try {
-                val response = ledgerRepository.materializeTreeTasks(treeId)
+                val response = ledgerRepository.materializePlantTasks(plantId)
                 if (response.success) {
                     loadTasks()
                     loadMitigationPlan()
@@ -392,13 +427,13 @@ class LedgerViewModel @Inject constructor(
     }
 
     fun updateTaskStatus(taskId: String, status: TaskStatusDto, onSuccess: () -> Unit = {}) {
-        val treeId = _selectedTreeId.value ?: return
+        val plantId = _selectedTreeId.value ?: return
         viewModelScope.launch {
             _isSubmitting.value = true
             _error.value = null
             try {
-                val response = ledgerRepository.updateTreeTaskStatus(
-                    treeId,
+                val response = ledgerRepository.updatePlantTaskStatus(
+                    plantId,
                     taskId,
                     UpdateTaskStatusBody(status = status)
                 )
@@ -416,13 +451,13 @@ class LedgerViewModel @Inject constructor(
         }
     }
 
-    fun createTree(
+    fun createPlant(
         name: String,
         plantQuery: String,
         species: String,
         variety: String,
         recordKind: RecordKind,
-        type: TreeCategory,
+        type: PlantCategory,
         growthHabit: GrowthHabit,
         recordPattern: RecordPattern,
         plantingDate: String?,
@@ -433,8 +468,8 @@ class LedgerViewModel @Inject constructor(
             _isSubmitting.value = true
             _error.value = null
             try {
-                val response = ledgerRepository.createTree(
-                    CreateTreeBody(
+                val response = ledgerRepository.createPlant(
+                    CreatePlantBody(
                         name = name.trim(),
                         species = species.trim().ifBlank { plantQuery.trim() },
                         variety = variety.trim().ifBlank { null },
@@ -474,12 +509,12 @@ class LedgerViewModel @Inject constructor(
 
     fun isEditingTree(): Boolean = _editingTreeId.value != null
 
-    fun currentDraft(isEditMode: Boolean): TreeDraft {
+    fun currentDraft(isEditMode: Boolean): RecordDraft {
         val tree = if (isEditMode) _selectedTree.value else null
         return if (tree == null) {
-            TreeDraft()
+            RecordDraft()
         } else {
-            TreeDraft(
+            RecordDraft(
                 name = tree.name,
                 species = tree.species,
                 variety = tree.variety.orEmpty(),
@@ -500,7 +535,7 @@ class LedgerViewModel @Inject constructor(
         species: String,
         variety: String,
         recordKind: RecordKind,
-        type: TreeCategory,
+        type: PlantCategory,
         growthHabit: GrowthHabit,
         recordPattern: RecordPattern,
         plantingDate: String?,
@@ -508,7 +543,7 @@ class LedgerViewModel @Inject constructor(
         onSuccess: () -> Unit
     ) {
         if (isEditMode) {
-            updateTree(
+            updatePlant(
                 name = name,
                 plantQuery = plantQuery,
                 species = species,
@@ -522,7 +557,7 @@ class LedgerViewModel @Inject constructor(
                 onSuccess = onSuccess
             )
         } else {
-            createTree(
+            createPlant(
                 name = name,
                 plantQuery = plantQuery,
                 species = species,
@@ -538,27 +573,27 @@ class LedgerViewModel @Inject constructor(
         }
     }
 
-    private fun updateTree(
+    private fun updatePlant(
         name: String,
         plantQuery: String,
         species: String,
         variety: String,
         recordKind: RecordKind,
-        type: TreeCategory,
+        type: PlantCategory,
         growthHabit: GrowthHabit,
         recordPattern: RecordPattern,
         plantingDate: String?,
         stage: LifecycleStage,
         onSuccess: () -> Unit
     ) {
-        val treeId = _editingTreeId.value ?: _selectedTreeId.value ?: return
+        val plantId = _editingTreeId.value ?: _selectedTreeId.value ?: return
         viewModelScope.launch {
             _isSubmitting.value = true
             _error.value = null
             try {
-                val response = ledgerRepository.updateTree(
-                    treeId,
-                    CreateTreeBody(
+                val response = ledgerRepository.updatePlant(
+                    plantId,
+                    CreatePlantBody(
                         name = name.trim(),
                         species = species.trim().ifBlank { plantQuery.trim() },
                         variety = variety.trim().ifBlank { null },
@@ -590,13 +625,13 @@ class LedgerViewModel @Inject constructor(
     }
 
     fun addLog(draft: LogDraft, onSuccess: () -> Unit) {
-        val treeId = _selectedTreeId.value ?: return
+        val plantId = _selectedTreeId.value ?: return
         viewModelScope.launch {
             _isSubmitting.value = true
             _error.value = null
             try {
-                val response = ledgerRepository.addTreeLog(
-                    treeId,
+                val response = ledgerRepository.addPlantJournalEntry(
+                    plantId,
                     AddLogBody(
                         type = draft.type.toDto(),
                         content = draft.content.trim().ifBlank { null },
@@ -694,12 +729,12 @@ class LedgerViewModel @Inject constructor(
     }
 }
 
-private fun List<Tree>.replaceTree(tree: Tree): List<Tree> {
+private fun List<Plant>.replaceTree(tree: Plant): List<Plant> {
     return map { existing -> if (existing.id == tree.id) tree else existing }
 }
 
-private fun TreeDto.toUiModel(): Tree {
-    return Tree(
+private fun PlantDto.toUiModel(): Plant {
+    return Plant(
         id = id,
         name = name,
         speciesFamily = speciesFamily,
@@ -722,16 +757,17 @@ private fun TreeDto.toUiModel(): Tree {
     )
 }
 
-private fun TreeLogDto.toUiModel(): TreeLog {
-    return TreeLog(
+private fun JournalEntryDto.toUiModel(): JournalEntry {
+    val isPhoto = content?.startsWith("http") == true
+    return JournalEntry(
         id = id,
         type = type.toUiModel(),
         timestamp = timestamp,
         recordedAt = recordedAt,
         date = timestamp.toTimelineLabel(),
-        content = content ?: defaultLogContent(type),
+        content = if (isPhoto) "Photo Moment" else (content ?: defaultLogContent(type)),
         metadata = metadata.toDisplayMap(),
-        photoUrl = null
+        photoUrl = if (isPhoto) content else null
     )
 }
 
@@ -749,7 +785,7 @@ private fun SeasonalStateDto.toUiModel(): SeasonalState {
     )
 }
 
-private fun TreeCycleDto.toUiModel(): TreeCycleSummary {
+private fun PlantCycleDto.toUiModel(): CycleSummary {
     val harvestWindow = when {
         harvestStartedAt != null && harvestCompletedAt != null ->
             "${harvestStartedAt.toDisplayDateLabel()} to ${harvestCompletedAt.toDisplayDateLabel()}"
@@ -766,7 +802,7 @@ private fun TreeCycleDto.toUiModel(): TreeCycleSummary {
         else -> null
     }
 
-    return TreeCycleSummary(
+    return CycleSummary(
         id = id,
         year = cycleYear,
         summary = cycleSummary ?: "Cycle summary not available yet.",
@@ -784,8 +820,8 @@ private fun TreeCycleDto.toUiModel(): TreeCycleSummary {
     )
 }
 
-private fun TreeTaskDto.toUiModel(): TreeTask {
-    return TreeTask(
+private fun PlantTaskDto.toUiModel(): PlantTask {
+    return PlantTask(
         id = id,
         title = title,
         type = type.toReadableLabel(),
@@ -826,19 +862,19 @@ private fun PlantIdentityDto.toUiModel(): ResolvedPlantIdentity {
     )
 }
 
-private fun TreeTypeDto.toUiModel(): TreeCategory {
+private fun PlantCategoryDto.toUiModel(): PlantCategory {
     return when (this) {
-        TreeTypeDto.FRUIT_BEARING -> TreeCategory.FRUIT_BEARING
-        TreeTypeDto.NON_FRUIT_BEARING -> TreeCategory.NON_FRUIT_BEARING
-        TreeTypeDto.ORNAMENTAL -> TreeCategory.ORNAMENTAL
+        PlantCategoryDto.FRUIT_BEARING -> PlantCategory.FRUIT_BEARING
+        PlantCategoryDto.NON_FRUIT_BEARING -> PlantCategory.NON_FRUIT_BEARING
+        PlantCategoryDto.ORNAMENTAL -> PlantCategory.ORNAMENTAL
     }
 }
 
-private fun TreeCategory.toDto(): TreeTypeDto {
+private fun PlantCategory.toDto(): PlantCategoryDto {
     return when (this) {
-        TreeCategory.FRUIT_BEARING -> TreeTypeDto.FRUIT_BEARING
-        TreeCategory.NON_FRUIT_BEARING -> TreeTypeDto.NON_FRUIT_BEARING
-        TreeCategory.ORNAMENTAL -> TreeTypeDto.ORNAMENTAL
+        PlantCategory.FRUIT_BEARING -> PlantCategoryDto.FRUIT_BEARING
+        PlantCategory.NON_FRUIT_BEARING -> PlantCategoryDto.NON_FRUIT_BEARING
+        PlantCategory.ORNAMENTAL -> PlantCategoryDto.ORNAMENTAL
     }
 }
 
@@ -941,6 +977,15 @@ private fun LogTypeDto.toUiModel(): LogType {
         LogTypeDto.TREATMENT -> LogType.TREATMENT
         LogTypeDto.DIAGNOSIS -> LogType.DIAGNOSIS
         LogTypeDto.WEATHER_DAMAGE -> LogType.WEATHER_DAMAGE
+        LogTypeDto.SOWING -> LogType.SOWING
+        LogTypeDto.TRANSPLANTING -> LogType.TRANSPLANTING
+        LogTypeDto.GERMINATION -> LogType.GERMINATION
+        LogTypeDto.THINNING -> LogType.THINNING
+        LogTypeDto.BOLTING -> LogType.BOLTING
+        LogTypeDto.PINCHING -> LogType.PINCHING
+        LogTypeDto.DEADHEADING -> LogType.DEADHEADING
+        LogTypeDto.BLOOM_PEAK -> LogType.BLOOM_PEAK
+        LogTypeDto.SEASON_END -> LogType.SEASON_END
     }
 }
 
@@ -962,6 +1007,15 @@ private fun LogType.toDto(): LogTypeDto {
         LogType.TREATMENT -> LogTypeDto.TREATMENT
         LogType.DIAGNOSIS -> LogTypeDto.DIAGNOSIS
         LogType.WEATHER_DAMAGE -> LogTypeDto.WEATHER_DAMAGE
+        LogType.SOWING -> LogTypeDto.SOWING
+        LogType.TRANSPLANTING -> LogTypeDto.TRANSPLANTING
+        LogType.GERMINATION -> LogTypeDto.GERMINATION
+        LogType.THINNING -> LogTypeDto.THINNING
+        LogType.BOLTING -> LogTypeDto.BOLTING
+        LogType.PINCHING -> LogTypeDto.PINCHING
+        LogType.DEADHEADING -> LogTypeDto.DEADHEADING
+        LogType.BLOOM_PEAK -> LogTypeDto.BLOOM_PEAK
+        LogType.SEASON_END -> LogTypeDto.SEASON_END
     }
 }
 
@@ -1043,6 +1097,7 @@ private fun TaskSourceDto.toReadableLabel(): String {
         TaskSourceDto.SEASONAL_PACK -> "Seasonal"
         TaskSourceDto.PERSONALIZED_OVERLAY -> "Personalized"
         TaskSourceDto.MANUAL -> "Manual"
+        TaskSourceDto.AI_DIAGNOSIS -> "Diagnosis"
     }
 }
 
@@ -1064,6 +1119,15 @@ private fun LogType.toReadableLabel(): String {
         LogType.TREATMENT -> "Treatment"
         LogType.DIAGNOSIS -> "Diagnosis"
         LogType.WEATHER_DAMAGE -> "Weather Damage"
+        LogType.SOWING -> "Sowing"
+        LogType.TRANSPLANTING -> "Transplant"
+        LogType.GERMINATION -> "Germination"
+        LogType.THINNING -> "Thinning"
+        LogType.BOLTING -> "Bolting"
+        LogType.PINCHING -> "Pinching"
+        LogType.DEADHEADING -> "Deadheading"
+        LogType.BLOOM_PEAK -> "Bloom Peak"
+        LogType.SEASON_END -> "Season End"
     }
 }
 
@@ -1085,6 +1149,15 @@ private fun defaultLogContent(type: LogTypeDto): String {
         LogTypeDto.TREATMENT -> "Treatment recorded"
         LogTypeDto.DIAGNOSIS -> "Diagnosis recorded"
         LogTypeDto.WEATHER_DAMAGE -> "Weather damage recorded"
+        LogTypeDto.SOWING -> "Sowing recorded"
+        LogTypeDto.TRANSPLANTING -> "Transplant recorded"
+        LogTypeDto.GERMINATION -> "Germination observed"
+        LogTypeDto.THINNING -> "Thinning recorded"
+        LogTypeDto.BOLTING -> "Bolting noticed"
+        LogTypeDto.PINCHING -> "Pinching recorded"
+        LogTypeDto.DEADHEADING -> "Deadheading recorded"
+        LogTypeDto.BLOOM_PEAK -> "Bloom peak observed"
+        LogTypeDto.SEASON_END -> "Season closed"
     }
 }
 

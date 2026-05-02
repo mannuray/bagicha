@@ -3,18 +3,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 import {
   DiagnosisIssueType,
   DiagnosisSeverity,
-  DiagnosisStatus,
   DiagnosisSubjectType,
   LogType,
-  Prisma,
-  TaskCategory,
-  TaskPriority,
-  TaskSource,
-  TaskType,
-  Tree,
 } from '@prisma/client';
-import { SeasonalIntelligenceService } from '../tree-ledger/services/seasonal-intelligence.service';
-import { SpeciesNormalizationService } from '../tree-ledger/services/species-normalization.service';
+import { SeasonalIntelligenceService } from '../plant-ledger/services/seasonal-intelligence.service';
+import { SpeciesNormalizationService } from '../plant-ledger/services/species-normalization.service';
+import { DiagnosisPipelineService } from '../diagnosis/services/diagnosis-pipeline.service';
 import { VisionRequestDto } from './dto/vision-request.dto';
 import { GeminiService } from './services/gemini.service';
 
@@ -25,6 +19,7 @@ export class VisionService {
     private readonly prisma: PrismaService,
     private readonly seasonalIntelligenceService: SeasonalIntelligenceService,
     private readonly speciesNormalizationService: SpeciesNormalizationService,
+    private readonly diagnosisPipeline: DiagnosisPipelineService,
   ) {}
 
   async identifyPlant(dto: VisionRequestDto) {
@@ -40,10 +35,10 @@ export class VisionService {
   }
 
   async diagnosePlant(dto: VisionRequestDto) {
-    const treeContext = dto.tree_id ? await this.buildTreeContext(dto.tree_id) : null;
+    const treeContext = dto.plant_id ? await this.buildTreeContext(dto.plant_id) : null;
     const prompt = `
       Analyze this plant image for horticultural diagnosis.
-      Use the image as the main evidence, but also use the supplied tree history and seasonal context when available.
+      Use the image as the main evidence, but also use the supplied plant history and seasonal context when available.
       Focus on practical Indian gardening and orchard context.
 
       Return strict JSON only with these fields:
@@ -61,8 +56,8 @@ export class VisionService {
         "related_event_type": "PEST_DIAGNOSIS|FRUIT_DROP|FLOWER_DROP|WATERING_STRESS|WEATHER_DAMAGE|DIAGNOSIS"
       }
 
-      Tree context:
-      ${treeContext ? JSON.stringify(treeContext) : 'No tree context provided'}
+      Plant context:
+      ${treeContext ? JSON.stringify(treeContext) : 'No plant context provided'}
 
       User note:
       ${dto.note ?? 'No extra note provided'}
@@ -71,7 +66,7 @@ export class VisionService {
     const response = await this.geminiService.analyzeImage(this.toImagePart(dto.image_base64), prompt);
     const parsed = this.geminiService.parseJsonResponse(response) as Record<string, unknown>;
 
-    if (!dto.tree_id) {
+    if (!dto.plant_id) {
       return {
         diagnosis: parsed,
         persisted: false,
@@ -90,26 +85,6 @@ export class VisionService {
   }
 
   private async persistTreeDiagnosis(dto: VisionRequestDto, diagnosis: Record<string, unknown>) {
-    const tree = await this.prisma.tree.findUnique({
-      where: { id: dto.tree_id },
-      include: {
-        user: {
-          select: {
-            district: true,
-            latitude: true,
-            longitude: true,
-          },
-        },
-      },
-    });
-
-    if (!tree) {
-      throw new Error('Tree not found for diagnosis');
-    }
-
-    const eventAt = dto.event_at ? new Date(dto.event_at) : new Date();
-    const recordedAt = new Date();
-    const cycleYear = this.resolveCycleYear(tree, eventAt);
     const primaryIssue = this.mapDiagnosisIssue(diagnosis.primary_issue);
     const severity = this.mapDiagnosisSeverity(diagnosis.severity);
     const actions = this.toStringArray(diagnosis.recommended_actions);
@@ -127,155 +102,38 @@ export class VisionService {
       this.toOptionalString(diagnosis.related_event_type),
       primaryIssue,
     );
-    const attachmentSummary = [
-      {
-        kind: 'image',
-        source: 'vision_upload',
-      },
-    ];
+    const attachments = [{ kind: 'image', source: 'vision_upload' }];
 
-    return this.prisma.$transaction(async (tx) => {
-      const cycle = await tx.treeCycle.upsert({
-        where: {
-          tree_cycle_year: {
-            tree_id: tree.id,
-            cycle_year: cycleYear,
-          },
-        },
-        create: {
-          tree_id: tree.id,
-          cycle_year: cycleYear,
-        },
-        update: {},
-      });
-
-      const session = await tx.diagnosisSession.create({
-        data: {
-          subject_type: DiagnosisSubjectType.TREE,
-          subject_id: tree.id,
-          tree_id: tree.id,
-          status: DiagnosisStatus.RESOLVED,
-          messages: [
-            {
-              role: 'user',
-              note: dto.note ?? null,
-              image_provided: true,
-            },
-            {
-              role: 'assistant',
-              summary: reasoningSummary,
-              primary_issue: primaryIssue,
-              confidence,
-              severity,
-            },
-          ] as Prisma.InputJsonValue,
-          attachments: attachmentSummary as Prisma.InputJsonValue,
-          started_at: recordedAt,
-          closed_at: recordedAt,
-        },
-      });
-
-      const outcome = await tx.diagnosisOutcome.create({
-        data: {
-          session_id: session.id,
-          tree_id: tree.id,
-          event_at: eventAt,
-          primary_issue: primaryIssue,
-          secondary_issues: secondaryIssues,
-          symptoms: symptoms as Prisma.InputJsonValue,
-          confidence,
-          severity,
-          affected_part: affectedPart,
-          reasoning_summary: reasoningSummary,
-          recommended_actions: actions as Prisma.InputJsonValue,
-          needs_follow_up: needsFollowUp,
-          follow_up_days: needsFollowUp ? followUpDays : null,
-          attachments: attachmentSummary as Prisma.InputJsonValue,
-        },
-      });
-
-      const diagnosisLog = await tx.log.create({
-        data: {
-          tree_id: tree.id,
-          tree_cycle_id: cycle.id,
-          diagnosis_outcome_id: outcome.id,
-          type: LogType.DIAGNOSIS,
-          content: dto.note ?? reasoningSummary,
-          metadata: {
-            diagnosis_session_id: session.id,
-            primary_issue: primaryIssue,
-            symptoms,
-            confidence,
-            severity,
-            affected_part: affectedPart,
-            recommended_actions: actions,
-            attachments: attachmentSummary,
-          } as Prisma.InputJsonValue,
-          timestamp: eventAt,
-          recorded_at: recordedAt,
-        },
-      });
-
-      const logIds = [diagnosisLog.id];
-
-      if (relatedEventType && relatedEventType !== LogType.DIAGNOSIS) {
-        const relatedLog = await tx.log.create({
-          data: {
-            tree_id: tree.id,
-            tree_cycle_id: cycle.id,
-            diagnosis_outcome_id: outcome.id,
-            type: relatedEventType,
-            content: reasoningSummary,
-            metadata: {
-              diagnosis_session_id: session.id,
-              diagnosis_outcome_id: outcome.id,
-              inferred_from_diagnosis: true,
-              primary_issue: primaryIssue,
-              confidence,
-              severity,
-            } as Prisma.InputJsonValue,
-            timestamp: eventAt,
-            recorded_at: recordedAt,
-          },
-        });
-        logIds.push(relatedLog.id);
-      }
-
-      const task = needsFollowUp
-        ? await tx.task.create({
-            data: {
-              tree_id: tree.id,
-              tree_cycle_id: cycle.id,
-              diagnosis_outcome_id: outcome.id,
-              type: this.mapTaskType(primaryIssue),
-              title: this.buildTaskTitle(tree.name, primaryIssue),
-              category: this.mapTaskCategory(primaryIssue),
-              priority: this.mapTaskPriority(severity),
-              source: TaskSource.MANUAL,
-              source_key: `diagnosis:${outcome.id}`,
-              reason: reasoningSummary,
-              metadata: {
-                diagnosis_session_id: session.id,
-                diagnosis_outcome_id: outcome.id,
-                recommended_actions: actions,
-                primary_issue: primaryIssue,
-              } as Prisma.InputJsonValue,
-              due_date: new Date(eventAt.getTime() + followUpDays * 24 * 60 * 60 * 1000),
-            },
-          })
-        : null;
-
-      return {
-        sessionId: session.id,
-        outcomeId: outcome.id,
-        logIds,
-        taskId: task?.id ?? null,
-      };
+    const result = await this.diagnosisPipeline.finalize({
+      subject_type: DiagnosisSubjectType.TREE,
+      subject_id: dto.plant_id!,
+      event_at: dto.event_at,
+      primary_issue: primaryIssue,
+      secondary_issues: secondaryIssues,
+      symptoms,
+      affected_part: affectedPart ?? undefined,
+      severity,
+      confidence: confidence ?? undefined,
+      reasoning_summary: reasoningSummary,
+      recommended_actions: actions,
+      needs_follow_up: needsFollowUp,
+      follow_up_days: followUpDays,
+      user_note: dto.note,
+      related_event_type: relatedEventType ?? undefined,
+      attachments,
     });
+
+    return {
+      sessionId: result.session_id,
+      outcomeId: result.outcome_id,
+      logIds: result.log_ids,
+      taskId: result.task_ids[0] ?? null,
+      taskIds: result.task_ids,
+    };
   }
 
   private async buildTreeContext(treeId: string) {
-    const tree = await this.prisma.tree.findUnique({
+    const plant = await this.prisma.plant.findUnique({
       where: { id: treeId },
       include: {
         user: {
@@ -289,7 +147,7 @@ export class VisionService {
           orderBy: { cycle_year: 'desc' },
           take: 2,
         },
-        logs: {
+        journal_entries: {
           where: {
             type: {
               in: [LogType.DIAGNOSIS, LogType.PEST_DIAGNOSIS, LogType.TREATMENT, LogType.WATERING_STRESS, LogType.HARVEST],
@@ -309,28 +167,28 @@ export class VisionService {
       },
     });
 
-    if (!tree) return null;
+    if (!plant) return null;
 
-    const seasonalState = this.seasonalIntelligenceService.inferTreeSeasonalState(tree, tree.user);
-    const speciesFamily = this.speciesNormalizationService.resolveSpeciesFamily(tree);
+    const seasonalState = this.seasonalIntelligenceService.inferTreeSeasonalState(plant, plant.user);
+    const speciesFamily = this.speciesNormalizationService.resolveSpeciesFamily(plant);
 
     return {
-      tree: {
-        id: tree.id,
-        name: tree.name,
+      plant: {
+        id: plant.id,
+        name: plant.name,
         species_family: speciesFamily,
-        species: tree.species,
-        variety: tree.variety,
-        lifecycle_stage: tree.lifecycle_stage,
-        health_status: tree.health_status,
+        species: plant.species,
+        variety: plant.variety,
+        lifecycle_stage: plant.lifecycle_stage,
+        health_status: plant.health_status,
       },
       location: {
-        district: tree.user.district,
-        latitude: tree.user.latitude,
-        longitude: tree.user.longitude,
+        district: plant.user.district,
+        latitude: plant.user.latitude,
+        longitude: plant.user.longitude,
       },
       seasonal_state: seasonalState,
-      recent_cycles: tree.cycles.map((cycle) => ({
+      recent_cycles: plant.cycles.map((cycle) => ({
         cycle_year: cycle.cycle_year,
         yield_quantity: cycle.yield_quantity,
         yield_unit: cycle.yield_unit,
@@ -341,20 +199,20 @@ export class VisionService {
         pest_pressure_score: cycle.pest_pressure_score,
         cycle_summary: cycle.cycle_summary,
       })),
-      recent_logs: tree.logs.map((log) => ({
+      recent_logs: plant.journal_entries.map((log) => ({
         type: log.type,
         content: log.content,
         metadata: log.metadata,
         timestamp: log.timestamp,
       })),
-      recent_diagnoses: tree.diagnosis_outcomes.map((outcome) => ({
+      recent_diagnoses: plant.diagnosis_outcomes.map((outcome) => ({
         primary_issue: outcome.primary_issue,
         severity: outcome.severity,
         confidence: outcome.confidence,
         reasoning_summary: outcome.reasoning_summary,
         event_at: outcome.event_at,
       })),
-      open_tasks: tree.tasks.map((task) => ({
+      open_tasks: plant.tasks.map((task) => ({
         title: task.title,
         type: task.type,
         status: task.status,
@@ -370,31 +228,6 @@ export class VisionService {
         mimeType: 'image/jpeg',
       },
     };
-  }
-
-  private resolveCycleYear(tree: Pick<Tree, 'name' | 'species' | 'variety'>, referenceDate = new Date()): number {
-    const speciesFamily = this.speciesNormalizationService.resolveSpeciesFamily(tree);
-    const cycleStartMonth = this.getCycleStartMonth(speciesFamily);
-    const month = referenceDate.getUTCMonth() + 1;
-    const year = referenceDate.getUTCFullYear();
-    return month >= cycleStartMonth ? year : year - 1;
-  }
-
-  private getCycleStartMonth(speciesFamily: string): number {
-    switch (speciesFamily) {
-      case 'mango':
-      case 'litchi':
-        return 11;
-      case 'citrus':
-        return 7;
-      case 'guava':
-      case 'pomegranate':
-        return 6;
-      case 'banana':
-        return 1;
-      default:
-        return 1;
-    }
   }
 
   private mapDiagnosisIssue(value: unknown): DiagnosisIssueType {
@@ -466,57 +299,6 @@ export class VisionService {
     }
   }
 
-  private mapTaskType(issue: DiagnosisIssueType): TaskType {
-    switch (issue) {
-      case DiagnosisIssueType.PEST:
-      case DiagnosisIssueType.DISEASE:
-        return TaskType.TREAT;
-      case DiagnosisIssueType.WATER_STRESS:
-        return TaskType.WATER;
-      default:
-        return TaskType.INSPECT;
-    }
-  }
-
-  private mapTaskCategory(issue: DiagnosisIssueType): TaskCategory {
-    switch (issue) {
-      case DiagnosisIssueType.PEST:
-      case DiagnosisIssueType.DISEASE:
-        return TaskCategory.TREATMENT;
-      case DiagnosisIssueType.WATER_STRESS:
-        return TaskCategory.WATERING;
-      default:
-        return TaskCategory.INSPECTION;
-    }
-  }
-
-  private mapTaskPriority(severity: DiagnosisSeverity): TaskPriority {
-    switch (severity) {
-      case DiagnosisSeverity.HIGH:
-        return TaskPriority.HIGH;
-      case DiagnosisSeverity.MEDIUM:
-        return TaskPriority.MEDIUM;
-      default:
-        return TaskPriority.LOW;
-    }
-  }
-
-  private buildTaskTitle(treeName: string, issue: DiagnosisIssueType): string {
-    switch (issue) {
-      case DiagnosisIssueType.PEST:
-        return `Treat suspected pest issue on ${treeName}`;
-      case DiagnosisIssueType.DISEASE:
-        return `Follow up on disease symptoms for ${treeName}`;
-      case DiagnosisIssueType.WATER_STRESS:
-        return `Recheck watering stress on ${treeName}`;
-      case DiagnosisIssueType.FRUIT_DROP:
-        return `Inspect fruit drop on ${treeName}`;
-      case DiagnosisIssueType.FLOWER_DROP:
-        return `Inspect flower drop on ${treeName}`;
-      default:
-        return `Recheck diagnosis on ${treeName}`;
-    }
-  }
 
   private toStringArray(value: unknown): string[] {
     if (!Array.isArray(value)) return [];

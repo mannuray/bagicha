@@ -7,7 +7,7 @@ export class VisionRequestDto {
 
   @IsOptional()
   @IsString()
-  tree_id?: string; // Optional context for diagnosis
+  plant_id?: string; // Optional context for diagnosis
 
   @IsOptional()
   @IsString()

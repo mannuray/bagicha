@@ -27,7 +27,7 @@ import com.bagicha.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TreeListScreen(
+fun PlantListScreen(
     viewModel: LedgerViewModel,
     navController: NavController
 ) {
@@ -44,7 +44,7 @@ fun TreeListScreen(
         bottomBar = { BottomNavigationBar(navController = navController) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate(Screen.AddTree.route) },
+                onClick = { navController.navigate(Screen.AddPlant.route) },
                 containerColor = PrimaryForest,
                 contentColor = Color.White,
                 shape = FullRounded,
@@ -103,7 +103,7 @@ fun TreeListScreen(
                 }
             } else if (trees.isEmpty()) {
                 item {
-                    AddSuggestionCard(onRegister = { navController.navigate(Screen.AddTree.route) })
+                    AddSuggestionCard(onRegister = { navController.navigate(Screen.AddPlant.route) })
                     Spacer(modifier = Modifier.height(32.dp))
                 }
             }
@@ -126,8 +126,7 @@ fun TreeListScreen(
                                     tree = tree,
                                     shape = PebbleShapes[index % PebbleShapes.size],
                                     onClick = {
-                                        viewModel.selectTree(tree.id)
-                                        navController.navigate(Screen.TreeDetail.route)
+                                        navController.navigate(Screen.PlantDetail.createRoute(tree.id))
                                     }
                                 )
                             }
@@ -135,7 +134,7 @@ fun TreeListScreen(
                         if (rowTrees.size == 1) {
                             // Add Suggestion / Empty State Card
                             Box(modifier = Modifier.weight(1f).offset(y = 48.dp)) {
-                                AddSuggestionCard(onRegister = { navController.navigate(Screen.AddTree.route) })
+                                AddSuggestionCard(onRegister = { navController.navigate(Screen.AddPlant.route) })
                             }
                         }
                     }
@@ -149,7 +148,7 @@ fun TreeListScreen(
 }
 
 @Composable
-fun VisualTreeCard(tree: Tree, shape: androidx.compose.ui.graphics.Shape, onClick: () -> Unit) {
+fun VisualTreeCard(tree: Plant, shape: androidx.compose.ui.graphics.Shape, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -199,7 +198,7 @@ fun AddSuggestionCard(onRegister: () -> Unit) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(Icons.Default.Nature, null, tint = PrimaryForest, modifier = Modifier.size(32.dp))
             Spacer(modifier = Modifier.height(12.dp))
-            Text("New Record?", style = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Text("New Plant?", style = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             Text("Add a tree, flower, or crop.", style = MaterialTheme.typography.bodySmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             Spacer(modifier = Modifier.height(16.dp))
             TextButton(onClick = onRegister) {

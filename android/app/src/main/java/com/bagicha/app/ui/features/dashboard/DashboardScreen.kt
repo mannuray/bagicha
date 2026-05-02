@@ -87,7 +87,7 @@ fun DashboardScreen(
                 item {
                     Box(modifier = Modifier.padding(horizontal = 24.dp)) {
                         FirstLedgerEntryCard(
-                            onCreateEntry = { navController.navigate(Screen.AddTree.route) }
+                            onCreateEntry = { navController.navigate(Screen.AddPlant.route) }
                         )
                     }
                     Spacer(modifier = Modifier.height(48.dp))

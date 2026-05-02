@@ -101,8 +101,8 @@ class VisionViewModel @Inject constructor(
         _scanMode.value = mode
     }
 
-    fun selectTree(treeId: String?) {
-        _selectedTreeId.value = treeId
+    fun selectTree(plantId: String?) {
+        _selectedTreeId.value = plantId
     }
 
     fun updateDiagnosisNote(value: String) {
@@ -193,7 +193,7 @@ class VisionViewModel @Inject constructor(
                 val response = visionRepository.diagnosePlant(
                     VisionRequestBody(
                         imageBase64 = imageBase64,
-                        treeId = _selectedTreeId.value,
+                        plantId = _selectedTreeId.value,
                         note = _diagnosisNote.value.trim().ifBlank { null },
                         eventAt = _diagnosisEventAt.value.toEventAtIso()
                     )
@@ -217,7 +217,7 @@ class VisionViewModel @Inject constructor(
     private fun loadTrees() {
         viewModelScope.launch {
             try {
-                val response = ledgerRepository.getTrees()
+                val response = ledgerRepository.getPlants()
                 if (response.success) {
                     _trees.value = response.data.orEmpty().map {
                         VisionTreeOption(

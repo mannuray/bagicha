@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TreeLedgerService } from './tree-ledger.service';
+import { PlantLedgerService } from './plant-ledger.service';
 
-describe('TreeLedgerService', () => {
-  let service: TreeLedgerService;
+describe('PlantLedgerService', () => {
+  let service: PlantLedgerService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [TreeLedgerService],
+      providers: [PlantLedgerService],
     }).compile();
 
-    service = module.get<TreeLedgerService>(TreeLedgerService);
+    service = module.get<PlantLedgerService>(PlantLedgerService);
   });
 
   it('should be defined', () => {

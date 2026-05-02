@@ -14,14 +14,14 @@ import {
   TaskStatus,
   Task,
   TaskType,
-  Tree,
+  Plant,
   User,
 } from '@prisma/client';
 import { WeatherService } from './services/weather.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { SeasonalIntelligenceService } from '../tree-ledger/services/seasonal-intelligence.service';
-import { SpeciesNormalizationService } from '../tree-ledger/services/species-normalization.service';
+import { SeasonalIntelligenceService } from '../plant-ledger/services/seasonal-intelligence.service';
+import { SpeciesNormalizationService } from '../plant-ledger/services/species-normalization.service';
 
 interface TaskTemplateInput {
   key: string;
@@ -63,11 +63,11 @@ export class SeasonalService {
 
   async getTreeIntelligence(userId: string, treeId: string) {
     const treeRecord = await this.getTreeRecord(userId, treeId);
-    const seasonalPack = await this.getOrCreateSeasonalPack(treeRecord.tree, treeRecord.user);
+    const seasonalPack = await this.getOrCreateSeasonalPack(treeRecord.plant, treeRecord.user);
     const personalizedOverlay = await this.getOrRefreshPersonalizedOverlay(
-      treeRecord.tree,
+      treeRecord.plant,
       treeRecord.user,
-      treeRecord.logs,
+      treeRecord.journal_entries,
       seasonalPack,
     );
 
@@ -113,32 +113,32 @@ export class SeasonalService {
   }
 
   private async getTreeRecord(userId: string, treeId: string) {
-    const tree = await this.prisma.tree.findFirst({
+    const plant = await this.prisma.plant.findFirst({
       where: { id: treeId, user_id: userId },
       include: {
         user: true,
-        logs: {
+        journal_entries: {
           orderBy: { timestamp: 'desc' },
           take: 10,
         },
       },
     });
 
-    if (!tree) {
-      throw new NotFoundException('Tree not found');
+    if (!plant) {
+      throw new NotFoundException('Plant not found');
     }
 
-    const { user, logs, ...treeFields } = tree;
+    const { user, journal_entries, ...treeFields } = plant;
     return {
-      tree: treeFields as Tree,
+      plant: treeFields as Plant,
       user,
-      logs,
+      journal_entries,
     };
   }
 
-  private async getOrCreateSeasonalPack(tree: Tree, user: User) {
+  private async getOrCreateSeasonalPack(plant: Plant, user: User) {
     const regionCluster = this.resolveRegionCluster(user);
-    const speciesFamily = this.speciesNormalizationService.resolveSpeciesFamily(tree);
+    const speciesFamily = this.speciesNormalizationService.resolveSpeciesFamily(plant);
     const seasonWindow = this.resolveSeasonWindow(new Date());
 
     const existing = await this.prisma.seasonalPack.findUnique({
@@ -146,7 +146,7 @@ export class SeasonalService {
         seasonal_pack_cohort_version: {
           region_cluster: regionCluster,
           species_family: speciesFamily,
-          lifecycle_stage: tree.lifecycle_stage,
+          lifecycle_stage: plant.lifecycle_stage,
           season_window: seasonWindow,
           pack_version: 1,
         },
@@ -155,13 +155,13 @@ export class SeasonalService {
 
     if (existing) return existing;
 
-    const inferred = this.seasonalIntelligenceService.inferTreeSeasonalState(tree, user);
+    const inferred = this.seasonalIntelligenceService.inferTreeSeasonalState(plant, user);
 
     return this.prisma.seasonalPack.create({
       data: {
         region_cluster: regionCluster,
         species_family: speciesFamily,
-        lifecycle_stage: tree.lifecycle_stage,
+        lifecycle_stage: plant.lifecycle_stage,
         season_window: seasonWindow,
         pack_version: 1,
         model_version: 'bootstrap_rules_v1',
@@ -178,9 +178,9 @@ export class SeasonalService {
   }
 
   private async getOrRefreshPersonalizedOverlay(
-    tree: Tree,
+    plant: Plant,
     user: User,
-    logs: Array<{ content: string | null; metadata: Prisma.JsonValue | null; timestamp: Date }>,
+    journal_entries: Array<{ content: string | null; metadata: Prisma.JsonValue | null; timestamp: Date }>,
     seasonalPack: SeasonalPack,
   ) {
     if (!this.isPaidUser(user)) {
@@ -190,14 +190,14 @@ export class SeasonalService {
     const existing = await this.prisma.personalizedOverlay.findFirst({
       where: {
         user_id: user.id,
-        tree_id: tree.id,
+        plant_id: plant.id,
         seasonal_pack_id: seasonalPack.id,
         OR: [{ expires_at: null }, { expires_at: { gt: new Date() } }],
       },
       orderBy: { updated_at: 'desc' },
     });
 
-    const overlayPayload = this.buildPersonalizedOverlay(tree, logs, seasonalPack);
+    const overlayPayload = this.buildPersonalizedOverlay(plant, journal_entries, seasonalPack);
     if (!overlayPayload) {
       return existing;
     }
@@ -212,7 +212,7 @@ export class SeasonalService {
     return this.prisma.personalizedOverlay.create({
       data: {
         user_id: user.id,
-        tree_id: tree.id,
+        plant_id: plant.id,
         seasonal_pack_id: seasonalPack.id,
         ...overlayPayload,
       },
@@ -252,38 +252,38 @@ export class SeasonalService {
   }
 
   private buildPersonalizedOverlay(
-    tree: Tree,
-    logs: Array<{ content: string | null; metadata: Prisma.JsonValue | null; timestamp: Date }>,
+    plant: Plant,
+    journal_entries: Array<{ content: string | null; metadata: Prisma.JsonValue | null; timestamp: Date }>,
     seasonalPack: SeasonalPack,
   ) {
-    const drynessDetected = logs.some((log) => this.logSuggestsDryness(log.content, log.metadata));
+    const drynessDetected = journal_entries.some((log) => this.logSuggestsDryness(log.content, log.metadata));
     if (!drynessDetected) {
       return null;
     }
 
     return {
       adjusted_phase: `${seasonalPack.current_phase}_with_dryness_attention`,
-      priority_actions: ['Water the tree today', 'Recheck leaf stress after watering'],
+      priority_actions: ['Water the plant today', 'Recheck leaf stress after watering'],
       suppressed_actions: ['Do not defer irrigation until the next normal checkpoint'],
       personalized_tasks: [
         {
           key: 'water_tree_today',
-          title: 'Water the tree today',
+          title: 'Water the plant today',
           category: 'watering',
           priority: 'high',
           due_in_days: 0,
-          reason: `Dryness signal detected for ${tree.name}`,
+          reason: `Dryness signal detected for ${plant.name}`,
         },
         {
           key: 'recheck_dryness_response',
-          title: 'Recheck the tree after watering',
+          title: 'Recheck the plant after watering',
           category: 'inspection',
           priority: 'medium',
           due_in_days: 2,
           reason: 'Confirm recovery after dryness intervention',
         },
       ],
-      reasoning_summary: 'Recent logs indicate dryness or water stress, so irrigation support is needed immediately.',
+      reasoning_summary: 'Recent journal_entries indicate dryness or water stress, so irrigation support is needed immediately.',
       expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000),
       refreshed_at: new Date(),
     };
@@ -297,7 +297,7 @@ export class SeasonalService {
   ) {
     const existing = await this.prisma.task.findFirst({
       where: {
-        tree_id: treeId,
+        plant_id: treeId,
         source,
         source_key: template.key,
         status: TaskStatus.PENDING,
@@ -308,7 +308,7 @@ export class SeasonalService {
 
     return this.prisma.task.create({
       data: {
-        tree_id: treeId,
+        plant_id: treeId,
         type: this.mapTaskType(template.category),
         title: template.title,
         category: this.mapTaskCategory(template.category),

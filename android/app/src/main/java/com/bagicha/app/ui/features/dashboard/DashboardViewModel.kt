@@ -17,7 +17,7 @@ data class GardenTask(
     val id: String,
     val title: String,
     val isCompleted: Boolean = false,
-    val treeId: String? = null,
+    val plantId: String? = null,
     val treeName: String? = null,
     val recordKind: RecordKind? = null,
     val dueDate: String? = null
@@ -56,7 +56,7 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoadingLedgerState.value = true
             try {
-                val treesResponse = ledgerRepository.getTrees()
+                val treesResponse = ledgerRepository.getPlants()
                 _showFirstEntryPrompt.value = treesResponse.success && treesResponse.data.orEmpty().isEmpty()
 
                 val tasksResponse = ledgerRepository.getUserTasks()
@@ -66,7 +66,7 @@ class DashboardViewModel @Inject constructor(
                             id = task.id,
                             title = task.title,
                             isCompleted = task.status == TaskStatusDto.COMPLETED,
-                            treeId = task.treeId,
+                            plantId = task.plantId,
                             treeName = task.treeName,
                             recordKind = task.recordKind?.toUiModel(),
                             dueDate = task.dueDate.take(10)
@@ -86,13 +86,13 @@ class DashboardViewModel @Inject constructor(
 
     fun toggleTask(taskId: String) {
         val current = _tasks.value.find { it.id == taskId } ?: return
-        val treeId = current.treeId ?: return
+        val plantId = current.plantId ?: return
         val nextStatus = if (current.isCompleted) TaskStatusDto.PENDING else TaskStatusDto.COMPLETED
 
         viewModelScope.launch {
             try {
-                val response = ledgerRepository.updateTreeTaskStatus(
-                    treeId,
+                val response = ledgerRepository.updatePlantTaskStatus(
+                    plantId,
                     taskId,
                     com.bagicha.app.data.remote.UpdateTaskStatusBody(status = nextStatus)
                 )

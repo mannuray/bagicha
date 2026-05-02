@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,7 +37,8 @@ import com.bagicha.app.ui.theme.*
 @Composable
 fun OtpScreen(
     viewModel: OnboardingViewModel,
-    onVerified: () -> Unit
+    onVerified: () -> Unit,
+    onBack: () -> Unit
 ) {
     val otp by viewModel.otp.collectAsState()
     val phoneNumber by viewModel.phoneNumber.collectAsState()
@@ -86,6 +88,7 @@ fun OtpScreen(
                 contentScale = ContentScale.Crop
             )
             Box(modifier = Modifier.fillMaxSize().background(PrimaryForest.copy(alpha = 0.2f)))
+
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
@@ -173,6 +176,25 @@ fun OtpScreen(
                 Spacer(modifier = Modifier.weight(1f))
                 TextButton(onClick = { /* Resend */ }, modifier = Modifier.fillMaxWidth()) {
                     Text("Resend in 00:55", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = SecondaryTerracotta)
+                }
+                TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = null,
+                            tint = OnSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Wrong number? Change it",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant
+                        )
+                    }
                 }
             }
         }

@@ -72,10 +72,10 @@ fun PaywallScreen(navController: NavController) {
                 )
                 Spacer(modifier = Modifier.height(24.dp))
 
-                BenefitItem("Unlimited AI Tree Mentor")
+                BenefitItem("Unlimited AI Plant Mentor")
                 BenefitItem("Full Pest & Disease Diagnosis")
                 BenefitItem("Direct Chat with verified Experts")
-                BenefitItem("Unlimited Tree Ledger history")
+                BenefitItem("Unlimited Plant Ledger history")
 
                 Spacer(modifier = Modifier.weight(1f))
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { LifecycleStage, Tree, User } from '@prisma/client';
+import { LifecycleStage, Plant, User } from '@prisma/client';
 import { SpeciesNormalizationService } from './species-normalization.service';
 
 type Confidence = 'low' | 'medium' | 'high';
@@ -29,13 +29,13 @@ interface SeasonalRuleOutput {
 export class SeasonalIntelligenceService {
   constructor(private speciesNormalizationService: SpeciesNormalizationService) {}
 
-  inferTreeSeasonalState(tree: Tree, user: Pick<User, 'district' | 'latitude' | 'longitude'>): TreeSeasonalState {
+  inferTreeSeasonalState(plant: Plant, user: Pick<User, 'district' | 'latitude' | 'longitude'>): TreeSeasonalState {
     const month = new Date().getMonth() + 1;
-    const speciesFamily = this.speciesNormalizationService.resolveSpeciesFamily(tree);
+    const speciesFamily = this.speciesNormalizationService.resolveSpeciesFamily(plant);
     const seasonalWindow = this.resolveSeasonalWindow(month, user.district);
 
-    const guidance = this.buildGuidance(speciesFamily, tree.lifecycle_stage, seasonalWindow);
-    const speciesBasis = this.speciesNormalizationService.buildClassificationBasis(tree);
+    const guidance = this.buildGuidance(speciesFamily, plant.lifecycle_stage, seasonalWindow);
+    const speciesBasis = this.speciesNormalizationService.buildClassificationBasis(plant);
 
     return {
       species_family: speciesFamily,
@@ -143,7 +143,7 @@ export class SeasonalIntelligenceService {
     return {
       current_phase: 'vegetative_flush',
       upcoming_phase: 'pre_flowering',
-      do_now: ['Shape lightly if needed', 'Build tree vigor gradually', 'Inspect for pest carryover'],
+      do_now: ['Shape lightly if needed', 'Build plant vigor gradually', 'Inspect for pest carryover'],
       avoid_now: ['Avoid overfeeding', 'Avoid weak sanitation around canopy'],
       watch_for: ['Scale insects', 'Leaf spot'],
       next_checkpoint_days: 14,
@@ -158,7 +158,7 @@ export class SeasonalIntelligenceService {
         do_now: [
           'Watch for flower flush and early fruit set',
           'Maintain even watering',
-          'Feed lightly only if tree is not stressed',
+          'Feed lightly only if plant is not stressed',
         ],
         avoid_now: ['Avoid hard pruning during bloom', 'Avoid alternating drought and flood'],
         watch_for: ['Citrus canker', 'Leaf miner'],

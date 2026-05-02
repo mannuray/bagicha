@@ -5,12 +5,12 @@ import { SeasonalController } from './seasonal.controller';
 import { WeatherService } from './services/weather.service';
 import { WeatherProcessor } from './processors/weather.processor';
 import { PrismaModule } from '../../prisma/prisma.module';
-import { TreeLedgerModule } from '../tree-ledger/tree-ledger.module';
+import { PlantLedgerModule } from '../plant-ledger/plant-ledger.module';
 
 @Module({
   imports: [
     PrismaModule,
-    TreeLedgerModule,
+    PlantLedgerModule,
     BullModule.registerQueue({
       name: 'weather-checks',
     }),

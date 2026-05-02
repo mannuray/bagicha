@@ -18,12 +18,12 @@ export class SeasonalController {
     return this.seasonalService.getSeasonalGuide(req.user.district || 'Patna');
   }
 
-  @Get('tree/:id/intelligence')
+  @Get('plant/:id/intelligence')
   async getTreeIntelligence(@Request() req, @Param('id') id: string) {
     return this.seasonalService.getTreeIntelligence(req.user.id, id);
   }
 
-  @Post('tree/:id/materialize-tasks')
+  @Post('plant/:id/materialize-tasks')
   async materializeTasks(@Request() req, @Param('id') id: string) {
     return this.seasonalService.materializeTasksForTree(req.user.id, id);
   }

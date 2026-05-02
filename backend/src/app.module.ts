@@ -7,9 +7,11 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RedisModule } from './common/redis/redis.module';
 import { MonitorModule } from './common/monitor';
-import { TreeLedgerModule } from './modules/tree-ledger/tree-ledger.module';
+import { PlantLedgerModule } from './modules/plant-ledger/plant-ledger.module';
 import { SeasonalModule } from './modules/seasonal/seasonal.module';
 import { VisionModule } from './modules/vision/vision.module';
+import { DiagnosisModule } from './modules/diagnosis/diagnosis.module';
+import { MediaModule } from './modules/media/media.module';
 import { CommunityModule } from './modules/community/community.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
@@ -36,9 +38,11 @@ import { UserModule } from './modules/user/user.module';
     PrismaModule,
     RedisModule,
     AuthModule,
-    TreeLedgerModule,
+    PlantLedgerModule,
     SeasonalModule,
     VisionModule,
+    DiagnosisModule,
+    MediaModule,
     CommunityModule,
     ChatModule,
     SubscriptionModule,

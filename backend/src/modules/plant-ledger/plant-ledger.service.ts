@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateTreeDto } from './dto/create-tree.dto';
+import { CreatePlantDto } from './dto/create-plant.dto';
 import { AddLogDto } from './dto/add-log.dto';
 import { LifecycleService } from './services/lifecycle.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { UpdateTreeDto } from './dto/update-tree.dto';
+import { UpdatePlantDto } from './dto/update-plant.dto';
 import { SeasonalIntelligenceService } from './services/seasonal-intelligence.service';
 import { SpeciesNormalizationService } from './services/species-normalization.service';
 import {
@@ -18,7 +18,7 @@ import {
   TaskSource,
   TaskStatus,
   TaskType,
-  Tree,
+  Plant,
   YieldQuality,
 } from '@prisma/client';
 
@@ -29,7 +29,7 @@ interface ParsedPlantingDate {
 }
 
 @Injectable()
-export class TreeLedgerService {
+export class PlantLedgerService {
   constructor(
     private prisma: PrismaService,
     private lifecycleService: LifecycleService,
@@ -38,26 +38,26 @@ export class TreeLedgerService {
     @InjectQueue('task-generation') private taskQueue: Queue,
   ) {}
 
-  async createTree(userId: string, createTreeDto: CreateTreeDto) {
+  async createPlant(userId: string, createPlantDto: CreatePlantDto) {
     const parsedPlantingDate = this.parsePlantingDate(
-      createTreeDto.planting_date,
-      createTreeDto.planting_date_precision,
+      createPlantDto.planting_date,
+      createPlantDto.planting_date_precision,
     );
     const initialStage =
-      createTreeDto.lifecycle_stage ??
-      this.lifecycleService.calculateStage(parsedPlantingDate.date, createTreeDto.species);
-    const manualStage = !!createTreeDto.lifecycle_stage;
+      createPlantDto.lifecycle_stage ??
+      this.lifecycleService.calculateStage(parsedPlantingDate.date, createPlantDto.species);
+    const manualStage = !!createPlantDto.lifecycle_stage;
 
-    const tree = await this.prisma.tree.create({
+    const plant = await this.prisma.plant.create({
       data: {
         user_id: userId,
-        name: createTreeDto.name,
-        species: createTreeDto.species,
-        variety: createTreeDto.variety,
-        record_kind: createTreeDto.record_kind,
-        type: createTreeDto.type,
-        growth_habit: createTreeDto.growth_habit,
-        record_pattern: createTreeDto.record_pattern,
+        name: createPlantDto.name,
+        species: createPlantDto.species,
+        variety: createPlantDto.variety,
+        record_kind: createPlantDto.record_kind,
+        type: createPlantDto.type,
+        growth_habit: createPlantDto.growth_habit,
+        record_pattern: createPlantDto.record_pattern,
         planting_date: parsedPlantingDate.date,
         planting_date_precision: parsedPlantingDate.precision,
         planting_date_input: parsedPlantingDate.input,
@@ -68,87 +68,87 @@ export class TreeLedgerService {
 
     // Trigger task generation background job
     await this.taskQueue.add('generate', {
-      tree_id: tree.id,
-      lifecycle_stage: tree.lifecycle_stage,
-      species: tree.species,
+      plant_id: plant.id,
+      lifecycle_stage: plant.lifecycle_stage,
+      species: plant.species,
     });
 
-    return tree;
+    return plant;
   }
 
-  async getTrees(userId: string) {
-    return this.prisma.tree.findMany({
+  async getPlants(userId: string) {
+    return this.prisma.plant.findMany({
       where: { user_id: userId },
       orderBy: { created_at: 'desc' },
     });
   }
 
-  async getTreeDetail(userId: string, treeId: string) {
-    const tree = await this.prisma.tree.findUnique({
+  async getPlantDetail(userId: string, treeId: string) {
+    const plant = await this.prisma.plant.findUnique({
       where: { id: treeId },
       include: {
         _count: {
-          select: { logs: true },
+          select: { journal_entries: true },
         },
       },
     });
 
-    if (!tree) throw new NotFoundException('Tree not found');
-    if (tree.user_id !== userId) throw new ForbiddenException('Access denied');
+    if (!plant) throw new NotFoundException('Plant not found');
+    if (plant.user_id !== userId) throw new ForbiddenException('Access denied');
 
-    if (!tree.lifecycle_stage_manual) {
-      const currentStage = this.lifecycleService.calculateStage(tree.planting_date, tree.species);
+    if (!plant.lifecycle_stage_manual) {
+      const currentStage = this.lifecycleService.calculateStage(plant.planting_date, plant.species);
 
-      if (currentStage !== tree.lifecycle_stage) {
-        await this.prisma.tree.update({
+      if (currentStage !== plant.lifecycle_stage) {
+        await this.prisma.plant.update({
           where: { id: treeId },
           data: { lifecycle_stage: currentStage },
         });
 
         await this.taskQueue.add('generate', {
-          tree_id: tree.id,
+          plant_id: plant.id,
           lifecycle_stage: currentStage,
-          species: tree.species,
+          species: plant.species,
         });
 
-        tree.lifecycle_stage = currentStage;
+        plant.lifecycle_stage = currentStage;
       }
     }
 
-    return tree;
+    return plant;
   }
 
-  async updateTree(userId: string, treeId: string, updateTreeDto: UpdateTreeDto) {
-    const tree = await this.getTreeDetail(userId, treeId);
+  async updatePlant(userId: string, treeId: string, updatePlantDto: UpdatePlantDto) {
+    const plant = await this.getPlantDetail(userId, treeId);
 
     const parsedPlantingDate =
-      updateTreeDto.planting_date === undefined && updateTreeDto.planting_date_precision === undefined
+      updatePlantDto.planting_date === undefined && updatePlantDto.planting_date_precision === undefined
         ? {
-            date: tree.planting_date,
-            precision: tree.planting_date_precision,
-            input: tree.planting_date_input,
+            date: plant.planting_date,
+            precision: plant.planting_date_precision,
+            input: plant.planting_date_input,
           }
         : this.parsePlantingDate(
-            updateTreeDto.planting_date,
-            updateTreeDto.planting_date_precision ?? undefined,
+            updatePlantDto.planting_date,
+            updatePlantDto.planting_date_precision ?? undefined,
           );
 
-    const species = updateTreeDto.species ?? tree.species;
+    const species = updatePlantDto.species ?? plant.species;
     const lifecycleStage =
-      updateTreeDto.lifecycle_stage ??
+      updatePlantDto.lifecycle_stage ??
       this.lifecycleService.calculateStage(parsedPlantingDate.date, species);
-    const manualStage = !!updateTreeDto.lifecycle_stage;
+    const manualStage = !!updatePlantDto.lifecycle_stage;
 
-    const updatedTree = await this.prisma.tree.update({
+    const updatedTree = await this.prisma.plant.update({
       where: { id: treeId },
       data: {
-        name: updateTreeDto.name ?? undefined,
-        species: updateTreeDto.species ?? undefined,
-        variety: updateTreeDto.variety ?? undefined,
-        record_kind: updateTreeDto.record_kind ?? undefined,
-        type: updateTreeDto.type ?? undefined,
-        growth_habit: updateTreeDto.growth_habit ?? undefined,
-        record_pattern: updateTreeDto.record_pattern ?? undefined,
+        name: updatePlantDto.name ?? undefined,
+        species: updatePlantDto.species ?? undefined,
+        variety: updatePlantDto.variety ?? undefined,
+        record_kind: updatePlantDto.record_kind ?? undefined,
+        type: updatePlantDto.type ?? undefined,
+        growth_habit: updatePlantDto.growth_habit ?? undefined,
+        record_pattern: updatePlantDto.record_pattern ?? undefined,
         planting_date: parsedPlantingDate.date,
         planting_date_precision: parsedPlantingDate.precision,
         planting_date_input: parsedPlantingDate.input,
@@ -158,7 +158,7 @@ export class TreeLedgerService {
     });
 
     await this.taskQueue.add('generate', {
-      tree_id: updatedTree.id,
+      plant_id: updatedTree.id,
       lifecycle_stage: updatedTree.lifecycle_stage,
       species: updatedTree.species,
     });
@@ -167,20 +167,20 @@ export class TreeLedgerService {
   }
 
   async addLog(userId: string, treeId: string, addLogDto: AddLogDto) {
-    const tree = await this.getTreeDetail(userId, treeId);
+    const plant = await this.getPlantDetail(userId, treeId);
 
     return this.prisma.$transaction(async (tx) => {
       const eventAt = addLogDto.event_at ? new Date(addLogDto.event_at) : new Date();
-      const cycleYear = this.resolveCycleYear(tree, eventAt);
-      const cycle = await tx.treeCycle.upsert({
+      const cycleYear = this.resolveCycleYear(plant, eventAt);
+      const cycle = await tx.plantCycle.upsert({
         where: {
-          tree_cycle_year: {
-            tree_id: tree.id,
+          plant_cycle_year: {
+            plant_id: plant.id,
             cycle_year: cycleYear,
           },
         },
         create: {
-          tree_id: tree.id,
+          plant_id: plant.id,
           cycle_year: cycleYear,
         },
         update: {},
@@ -188,39 +188,39 @@ export class TreeLedgerService {
 
       const { event_at, ...logData } = addLogDto;
 
-      const log = await tx.log.create({
+      const log = await tx.journalEntry.create({
         data: {
           ...logData,
-          tree_id: tree.id,
-          tree_cycle_id: cycle.id,
+          plant_id: plant.id,
+          plant_cycle_id: cycle.id,
           timestamp: eventAt,
         },
       });
 
-      await this.syncTreeMilestonesFromLog(tx, tree, log.type, log.timestamp);
-      await this.refreshCycleSummary(tx, tree.id, cycle.id);
-      await this.createFollowUpTaskForLog(tx, tree.id, cycle.id, tree.name, log);
+      await this.syncTreeMilestonesFromLog(tx, plant, log.type, log.timestamp);
+      await this.refreshCycleSummary(tx, plant.id, cycle.id);
+      await this.createFollowUpTaskForLog(tx, plant.id, cycle.id, plant.name, log);
 
       return log;
     });
   }
 
   async getTimeline(userId: string, treeId: string, page = 1, pageSize = 20) {
-    const tree = await this.getTreeDetail(userId, treeId);
+    const plant = await this.getPlantDetail(userId, treeId);
 
-    const logs = await this.prisma.log.findMany({
-      where: { tree_id: tree.id },
+    const journal_entries = await this.prisma.journalEntry.findMany({
+      where: { plant_id: plant.id },
       orderBy: { timestamp: 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
     });
 
-    const totalItems = await this.prisma.log.count({
-      where: { tree_id: tree.id },
+    const totalItems = await this.prisma.journalEntry.count({
+      where: { plant_id: plant.id },
     });
 
     return {
-      items: logs,
+      items: journal_entries,
       pagination: {
         page,
         page_size: pageSize,
@@ -233,7 +233,7 @@ export class TreeLedgerService {
   }
 
   async getSeasonalState(userId: string, treeId: string) {
-    const tree = await this.getTreeDetail(userId, treeId);
+    const plant = await this.getPlantDetail(userId, treeId);
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -245,16 +245,16 @@ export class TreeLedgerService {
 
     if (!user) throw new NotFoundException('User not found');
 
-    return this.seasonalIntelligenceService.inferTreeSeasonalState(tree, user);
+    return this.seasonalIntelligenceService.inferTreeSeasonalState(plant, user);
   }
 
   async getCycles(userId: string, treeId: string) {
-    await this.getTreeDetail(userId, treeId);
+    await this.getPlantDetail(userId, treeId);
 
-    const cycles = await this.prisma.treeCycle.findMany({
-      where: { tree_id: treeId },
+    const cycles = await this.prisma.plantCycle.findMany({
+      where: { plant_id: treeId },
       include: {
-        logs: {
+        journal_entries: {
           orderBy: { timestamp: 'desc' },
           take: 3,
         },
@@ -279,7 +279,7 @@ export class TreeLedgerService {
       treatment_count: cycle.treatment_count,
       cycle_summary: cycle.cycle_summary,
       recommended_next_cycle_actions: cycle.recommended_next_cycle_actions,
-      recent_events: cycle.logs.map((log) => ({
+      recent_events: cycle.journal_entries.map((log) => ({
         id: log.id,
         type: log.type,
         content: log.content,
@@ -289,12 +289,12 @@ export class TreeLedgerService {
   }
 
   async getTasks(userId: string, treeId: string) {
-    await this.getTreeDetail(userId, treeId);
+    await this.getPlantDetail(userId, treeId);
 
     const tasks = await this.prisma.task.findMany({
-      where: { tree_id: treeId },
+      where: { plant_id: treeId },
       include: {
-        tree_cycle: {
+        plant_cycle: {
           select: { cycle_year: true },
         },
         seasonal_pack: {
@@ -324,19 +324,19 @@ export class TreeLedgerService {
   async getUserTasks(userId: string) {
     const tasks = await this.prisma.task.findMany({
       where: {
-        tree: {
+        plant: {
           user_id: userId,
         },
       },
       include: {
-        tree: {
+        plant: {
           select: {
             id: true,
             name: true,
             record_kind: true,
           },
         },
-        tree_cycle: {
+        plant_cycle: {
           select: { cycle_year: true },
         },
         seasonal_pack: {
@@ -364,17 +364,17 @@ export class TreeLedgerService {
   }
 
   async getMitigationPlan(userId: string, treeId: string) {
-    await this.getTreeDetail(userId, treeId);
+    await this.getPlantDetail(userId, treeId);
 
-    const cycles = await this.prisma.treeCycle.findMany({
-      where: { tree_id: treeId },
+    const cycles = await this.prisma.plantCycle.findMany({
+      where: { plant_id: treeId },
       orderBy: { cycle_year: 'desc' },
       take: 2,
     });
 
-    const recentHealthLogs = await this.prisma.log.findMany({
+    const recentHealthLogs = await this.prisma.journalEntry.findMany({
       where: {
-        tree_id: treeId,
+        plant_id: treeId,
         type: {
           in: [LogType.DIAGNOSIS, LogType.PEST_DIAGNOSIS, LogType.TREATMENT, LogType.WATERING_STRESS],
         },
@@ -383,8 +383,8 @@ export class TreeLedgerService {
       take: 6,
     });
     const latestCycleLogs = cycles[0]
-      ? await this.prisma.log.findMany({
-          where: { tree_id: treeId, tree_cycle_id: cycles[0].id },
+      ? await this.prisma.journalEntry.findMany({
+          where: { plant_id: treeId, plant_cycle_id: cycles[0].id },
           orderBy: { timestamp: 'desc' },
           take: 12,
         })
@@ -392,7 +392,7 @@ export class TreeLedgerService {
 
     const latestCycleTasks = cycles[0]
       ? await this.prisma.task.findMany({
-          where: { tree_id: treeId, tree_cycle_id: cycles[0].id },
+          where: { plant_id: treeId, plant_cycle_id: cycles[0].id },
           select: { status: true, title: true },
         })
       : [];
@@ -422,13 +422,13 @@ export class TreeLedgerService {
   }
 
   async updateTaskStatus(userId: string, treeId: string, taskId: string, status: TaskStatus) {
-    await this.getTreeDetail(userId, treeId);
+    await this.getPlantDetail(userId, treeId);
 
     const task = await this.prisma.task.findUnique({
       where: { id: taskId },
     });
 
-    if (!task || task.tree_id !== treeId) {
+    if (!task || task.plant_id !== treeId) {
       throw new NotFoundException('Task not found');
     }
 
@@ -439,7 +439,7 @@ export class TreeLedgerService {
         completed_at: status === TaskStatus.COMPLETED ? new Date() : null,
       },
       include: {
-        tree_cycle: {
+        plant_cycle: {
           select: { cycle_year: true },
         },
         seasonal_pack: {
@@ -468,8 +468,8 @@ export class TreeLedgerService {
       reason: updated.reason,
       due_date: updated.due_date,
       completed_at: updated.completed_at,
-      tree_cycle_id: updated.tree_cycle_id,
-      cycle_year: updated.tree_cycle?.cycle_year ?? null,
+      plant_cycle_id: updated.plant_cycle_id,
+      cycle_year: updated.plant_cycle?.cycle_year ?? null,
       source_summary: this.buildTaskSourceSummary(updated),
     };
   }
@@ -544,8 +544,8 @@ export class TreeLedgerService {
     return PlantingDatePrecision.EXACT_DATE;
   }
 
-  private resolveCycleYear(tree: Pick<Tree, 'name' | 'species' | 'variety'>, referenceDate = new Date()): number {
-    const family = this.speciesNormalizationService.resolveSpeciesFamily(tree);
+  private resolveCycleYear(plant: Pick<Plant, 'name' | 'species' | 'variety'>, referenceDate = new Date()): number {
+    const family = this.speciesNormalizationService.resolveSpeciesFamily(plant);
     const month = referenceDate.getUTCMonth() + 1;
     const cycleStartMonth = this.getCycleStartMonth(family);
     const year = referenceDate.getUTCFullYear();
@@ -571,51 +571,51 @@ export class TreeLedgerService {
 
   private async syncTreeMilestonesFromLog(
     tx: Prisma.TransactionClient,
-    tree: Tree,
+    plant: Plant,
     logType: LogType,
     eventAt: Date,
   ) {
     const milestoneData: Record<string, Date> = {};
 
-    if (logType === LogType.FLOWERING && !tree.first_flowering_at) {
+    if (logType === LogType.FLOWERING && !plant.first_flowering_at) {
       milestoneData.first_flowering_at = eventAt;
     }
 
-    if (logType === LogType.FRUIT_SET && !tree.first_fruit_set_at) {
+    if (logType === LogType.FRUIT_SET && !plant.first_fruit_set_at) {
       milestoneData.first_fruit_set_at = eventAt;
     }
 
     if (logType === LogType.HARVEST) {
-      if (!tree.first_harvest_at) {
+      if (!plant.first_harvest_at) {
         milestoneData.first_harvest_at = eventAt;
       }
       milestoneData.latest_harvest_at = eventAt;
     }
 
     if (Object.keys(milestoneData).length > 0) {
-      await tx.tree.update({
-        where: { id: tree.id },
+      await tx.plant.update({
+        where: { id: plant.id },
         data: milestoneData,
       });
     }
   }
 
   private async refreshCycleSummary(tx: Prisma.TransactionClient, treeId: string, cycleId: string) {
-    const logs = await tx.log.findMany({
-      where: { tree_id: treeId, tree_cycle_id: cycleId },
+    const journal_entries = await tx.journalEntry.findMany({
+      where: { plant_id: treeId, plant_cycle_id: cycleId },
       orderBy: { timestamp: 'asc' },
     });
 
-    const flowering = logs.find((log) => log.type === LogType.FLOWERING)?.timestamp ?? null;
-    const fruitSet = logs.find((log) => log.type === LogType.FRUIT_SET)?.timestamp ?? null;
-    const harvestLogs = logs.filter((log) => log.type === LogType.HARVEST);
+    const flowering = journal_entries.find((log) => log.type === LogType.FLOWERING)?.timestamp ?? null;
+    const fruitSet = journal_entries.find((log) => log.type === LogType.FRUIT_SET)?.timestamp ?? null;
+    const harvestLogs = journal_entries.filter((log) => log.type === LogType.HARVEST);
     const flowerDropLevel = this.maxDropLevel(
-      logs
+      journal_entries
         .filter((log) => log.type === LogType.FLOWER_DROP)
         .map((log) => this.parseDropLevel(log.metadata, 'severity')),
     );
     const fruitDropLevel = this.maxDropLevel(
-      logs
+      journal_entries
         .filter((log) => log.type === LogType.FRUIT_DROP)
         .map((log) => this.parseDropLevel(log.metadata, 'severity')),
     );
@@ -627,9 +627,9 @@ export class TreeLedgerService {
       latestHarvestMetadata?.quantity_unit ?? latestHarvestMetadata?.quantity,
     );
     const yieldQuality = this.parseYieldQuality(latestHarvestMetadata?.quality);
-    const stressScore = logs.filter((log) => log.type === LogType.WATERING_STRESS).length;
-    const pestPressureScore = logs.filter((log) => log.type === LogType.PEST_DIAGNOSIS).length;
-    const treatmentCount = logs.filter((log) => log.type === LogType.TREATMENT).length;
+    const stressScore = journal_entries.filter((log) => log.type === LogType.WATERING_STRESS).length;
+    const pestPressureScore = journal_entries.filter((log) => log.type === LogType.PEST_DIAGNOSIS).length;
+    const treatmentCount = journal_entries.filter((log) => log.type === LogType.TREATMENT).length;
 
     const summary = this.buildCycleSummary({
       flowering,
@@ -652,7 +652,7 @@ export class TreeLedgerService {
       treatmentCount,
     });
 
-    await tx.treeCycle.update({
+    await tx.plantCycle.update({
       where: { id: cycleId },
       data: {
         observed_flowering_at: flowering,
@@ -815,21 +815,21 @@ export class TreeLedgerService {
   private defaultTaskTitle(type: string): string {
     switch (type) {
       case 'WATER':
-        return 'Water the tree';
+        return 'Water the plant';
       case 'INSPECT':
-        return 'Inspect the tree';
+        return 'Inspect the plant';
       case 'OBSERVE':
-        return 'Observe the tree';
+        return 'Observe the plant';
       case 'PRUNE':
-        return 'Prune the tree';
+        return 'Prune the plant';
       case 'FEED':
-        return 'Feed the tree';
+        return 'Feed the plant';
       case 'HARVEST':
         return 'Prepare for harvest';
       case 'TREAT':
         return 'Apply treatment';
       default:
-        return 'Tree task';
+        return 'Plant task';
     }
   }
 
@@ -845,8 +845,8 @@ export class TreeLedgerService {
 
     await tx.task.create({
       data: {
-        tree_id: treeId,
-        tree_cycle_id: cycleId,
+        plant_id: treeId,
+        plant_cycle_id: cycleId,
         type: followUp.type,
         title: followUp.title,
         category: followUp.category,
@@ -900,7 +900,7 @@ export class TreeLedgerService {
           category: TaskCategory.INSPECTION,
           priority: TaskPriority.MEDIUM,
           title: `Recheck treatment outcome on ${treeName}`,
-          reason: 'Treatment was applied and the tree should be checked for recovery.',
+          reason: 'Treatment was applied and the plant should be checked for recovery.',
           dueInDays: 3,
         };
       default:
@@ -924,7 +924,7 @@ export class TreeLedgerService {
       if (originType) {
         return `Created from ${originType.toLowerCase().replace(/_/g, ' ')} follow-up.`;
       }
-      return 'Created from a tree log follow-up.';
+      return 'Created from a plant log follow-up.';
     }
 
     if (task.source === 'PERSONALIZED_OVERLAY') {
@@ -932,7 +932,7 @@ export class TreeLedgerService {
         task.personalized_overlay?.reasoning_summary ??
         (task.personalized_overlay?.adjusted_phase
           ? `Personalized guidance for ${task.personalized_overlay.adjusted_phase.replace(/_/g, ' ')}.`
-          : 'Personalized tree guidance.')
+          : 'Personalized plant guidance.')
       );
     }
 
@@ -942,7 +942,7 @@ export class TreeLedgerService {
       if (currentPhase && upcomingPhase) {
         return `Seasonal guidance for ${currentPhase}, with ${upcomingPhase} coming next.`;
       }
-      return 'Seasonal guidance for the current tree phase.';
+      return 'Seasonal guidance for the current plant phase.';
     }
 
     return null;
@@ -959,9 +959,9 @@ export class TreeLedgerService {
     reason: string | null;
     due_date: Date;
     completed_at: Date | null;
-    tree_cycle_id: string | null;
-    tree_cycle?: { cycle_year: number } | null;
-    tree?: { id: string; name: string; record_kind: string } | null;
+    plant_cycle_id: string | null;
+    plant_cycle?: { cycle_year: number } | null;
+    plant?: { id: string; name: string; record_kind: string } | null;
     seasonal_pack?: { current_phase: string | null; upcoming_phase: string | null } | null;
     personalized_overlay?: { reasoning_summary: string | null; adjusted_phase: string | null } | null;
   }) {
@@ -976,11 +976,11 @@ export class TreeLedgerService {
       reason: task.reason,
       due_date: task.due_date,
       completed_at: task.completed_at,
-      tree_id: task.tree?.id ?? null,
-      tree_name: task.tree?.name ?? null,
-      record_kind: task.tree?.record_kind ?? null,
-      tree_cycle_id: task.tree_cycle_id,
-      cycle_year: task.tree_cycle?.cycle_year ?? null,
+      plant_id: task.plant?.id ?? null,
+      tree_name: task.plant?.name ?? null,
+      record_kind: task.plant?.record_kind ?? null,
+      plant_cycle_id: task.plant_cycle_id,
+      cycle_year: task.plant_cycle?.cycle_year ?? null,
       source_summary: this.buildTaskSourceSummary(task),
     };
   }
@@ -1001,7 +1001,7 @@ export class TreeLedgerService {
       stress_score: number | null;
       pest_pressure_score: number | null;
     } | null,
-    logs: Array<{ type: LogType; content: string | null }>,
+    journal_entries: Array<{ type: LogType; content: string | null }>,
     tasks: Array<{ status: TaskStatus; title: string | null }>,
     cycleLogs: Array<{ type: LogType; metadata: Prisma.JsonValue | null }>,
   ): string[] {
@@ -1036,7 +1036,7 @@ export class TreeLedgerService {
       issues.push('Pest pressure increased compared with the previous cycle.');
     }
 
-    if (logs.some((log) => log.type === LogType.DIAGNOSIS || log.type === LogType.PEST_DIAGNOSIS)) {
+    if (journal_entries.some((log) => log.type === LogType.DIAGNOSIS || log.type === LogType.PEST_DIAGNOSIS)) {
       issues.push('Recent diagnosis activity suggests unresolved health stress may still be affecting recovery.');
     }
 
@@ -1066,7 +1066,7 @@ export class TreeLedgerService {
       observed_fruit_set_at: Date | null;
       harvest_completed_at: Date | null;
     } | null,
-    logs: Array<{ type: LogType; content: string | null }>,
+    journal_entries: Array<{ type: LogType; content: string | null }>,
     tasks: Array<{ status: TaskStatus; title: string | null }>,
     cycleLogs: Array<{ type: LogType; metadata: Prisma.JsonValue | null }>,
   ): string[] {
@@ -1080,7 +1080,7 @@ export class TreeLedgerService {
       actions.push('Stabilize watering and moisture checks before flowering and during early fruit development.');
     }
     if ((latest.pest_pressure_score ?? 0) > 0) {
-      actions.push('Start pest scouting earlier and follow diagnosis logs with a same-cycle treatment or inspection.');
+      actions.push('Start pest scouting earlier and follow diagnosis journal_entries with a same-cycle treatment or inspection.');
     }
     if (latest.flower_drop_level === DropLevel.HIGH || latest.flower_drop_level === DropLevel.MEDIUM) {
       actions.push('Track flower drop as soon as bloom starts so intervention is not delayed.');
@@ -1091,7 +1091,7 @@ export class TreeLedgerService {
     if (previous?.harvest_completed_at != null && latest.observed_fruit_set_at == null) {
       actions.push('Use last cycle as a benchmark and review what changed before flowering this year.');
     }
-    if (logs.some((log) => log.type === LogType.TREATMENT)) {
+    if (journal_entries.some((log) => log.type === LogType.TREATMENT)) {
       actions.push('Recheck treatment outcomes consistently so the next cycle starts from a cleaner health baseline.');
     }
     if (tasks.some((task) => task.status === TaskStatus.SKIPPED)) {
@@ -1116,7 +1116,7 @@ export class TreeLedgerService {
       stress_score: number | null;
       pest_pressure_score: number | null;
     } | null,
-    logs: Array<{ type: LogType; content: string | null }>,
+    journal_entries: Array<{ type: LogType; content: string | null }>,
     cycleLogs: Array<{ type: LogType; metadata: Prisma.JsonValue | null }>,
   ): string[] {
     const watch: string[] = [];
@@ -1134,7 +1134,7 @@ export class TreeLedgerService {
     if (latest.fruit_drop_level === DropLevel.HIGH || latest.fruit_drop_level === DropLevel.MEDIUM) {
       watch.push('Fruit drop shortly after set.')
     }
-    if (logs.some((log) => log.type === LogType.DIAGNOSIS)) {
+    if (journal_entries.some((log) => log.type === LogType.DIAGNOSIS)) {
       watch.push('Any repeat of the last diagnosis symptoms before the cycle stabilizes.')
     }
     const harvestLossCategory = this.extractHarvestLossCategory(cycleLogs);
@@ -1158,7 +1158,7 @@ export class TreeLedgerService {
       observed_fruit_set_at: Date | null;
       harvest_completed_at: Date | null;
     } | null,
-    logs: Array<{ type: LogType; content: string | null }>,
+    journal_entries: Array<{ type: LogType; content: string | null }>,
     tasks: Array<{ status: TaskStatus; title: string | null }>,
     cycleLogs: Array<{ type: LogType; metadata: Prisma.JsonValue | null }>,
   ): string[] {
@@ -1169,7 +1169,7 @@ export class TreeLedgerService {
     if ((latest.stress_score ?? 0) > 0) {
       actions.push('Set one moisture-check task before bloom and one during early fruit development.');
     }
-    if ((latest.pest_pressure_score ?? 0) > 0 || logs.some((log) => log.type === LogType.PEST_DIAGNOSIS)) {
+    if ((latest.pest_pressure_score ?? 0) > 0 || journal_entries.some((log) => log.type === LogType.PEST_DIAGNOSIS)) {
       actions.push('Schedule an early pest inspection instead of waiting for visible damage.');
     }
     if (latest.observed_flowering_at && !latest.observed_fruit_set_at) {
@@ -1209,9 +1209,9 @@ export class TreeLedgerService {
   }
 
   private extractHarvestLossCategory(
-    logs: Array<{ type: LogType; metadata: Prisma.JsonValue | null }>,
+    journal_entries: Array<{ type: LogType; metadata: Prisma.JsonValue | null }>,
   ): string | null {
-    const harvestMetadata = logs
+    const harvestMetadata = journal_entries
       .filter((log) => log.type === LogType.HARVEST)
       .map((log) => log.metadata as Record<string, unknown> | null | undefined)
       .find((metadata) => typeof metadata?.loss_category === 'string');

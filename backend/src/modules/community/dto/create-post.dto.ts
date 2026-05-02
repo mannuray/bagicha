@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsUUID, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsUUID, IsBoolean, IsArray, ArrayMaxSize, IsUrl } from 'class-validator';
 
 export class CreatePostDto {
   @IsNotEmpty()
@@ -7,9 +7,15 @@ export class CreatePostDto {
 
   @IsOptional()
   @IsUUID()
-  tree_id?: string;
+  plant_id?: string;
 
   @IsOptional()
   @IsBoolean()
   is_alert?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(4)
+  @IsUrl({}, { each: true })
+  image_urls?: string[];
 }

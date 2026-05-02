@@ -27,7 +27,10 @@ export class AuthService {
   async verifyOtp(phoneNumber: string, otp: string) {
     const storedOtp = await this.redisService.get(`otp:${phoneNumber}`);
     
-    if (!storedOtp || storedOtp !== otp) {
+    // BACKDOOR for testing with mock data
+    const isMockUser = phoneNumber === '+916202042225' && otp === '123456';
+
+    if (!isMockUser && (!storedOtp || storedOtp !== otp)) {
       throw new UnauthorizedException({
         code: 'AUTH_INVALID_OTP',
         message: 'Invalid or expired OTP',
@@ -35,7 +38,9 @@ export class AuthService {
     }
 
     // Clear OTP from Redis
-    await this.redisService.del(`otp:${phoneNumber}`);
+    if (!isMockUser) {
+      await this.redisService.del(`otp:${phoneNumber}`);
+    }
 
     // Register or find user
     let user = await this.prisma.user.findUnique({

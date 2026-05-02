@@ -236,7 +236,7 @@ fun ScanScreen(
                                 .fillMaxWidth()
                                 .clickable { treeMenuExpanded = true },
                             readOnly = true,
-                            label = { Text("Tree context") },
+                            label = { Text("Plant context") },
                             trailingIcon = { Icon(Icons.Default.KeyboardArrowDown, null) }
                         )
                         DropdownMenu(

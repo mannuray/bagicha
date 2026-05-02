@@ -7,5 +7,5 @@ export class AskAiDto {
 
   @IsOptional()
   @IsUUID()
-  tree_id?: string;
+  plant_id?: string;
 }

@@ -12,11 +12,15 @@ sealed class Screen(val route: String) {
     // Main App
     object Home : Screen("home")
     object Ledger : Screen("ledger")
-    object TreeDetail : Screen("tree_detail")
-    object RecordTasks : Screen("record_tasks")
+    object PlantDetail : Screen("plant_detail/{plantId}") {
+        fun createRoute(plantId: String) = "plant_detail/$plantId"
+    }
+    object PlantTasks : Screen("plant_tasks/{plantId}") {
+        fun createRoute(plantId: String) = "plant_tasks/$plantId"
+    }
     object SeasonReview : Screen("season_review")
-    object AddTree : Screen("add_tree")
-    object EditTree : Screen("edit_tree")
+    object AddPlant : Screen("add_plant")
+    object EditPlant : Screen("edit_plant")
     object Scan : Screen("scan")
     object IdentifyResult : Screen("identify_result")
     object DiagnoseResult : Screen("diagnose_result")

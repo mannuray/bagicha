@@ -36,7 +36,7 @@ data class UserDto(
     @SerializedName("garden_types") val gardenTypes: List<String> = emptyList()
 )
 
-enum class TreeTypeDto {
+enum class PlantCategoryDto {
     FRUIT_BEARING,
     NON_FRUIT_BEARING,
     ORNAMENTAL
@@ -93,15 +93,24 @@ enum class LogTypeDto {
     PEST_DIAGNOSIS,
     TREATMENT,
     DIAGNOSIS,
-    WEATHER_DAMAGE
+    WEATHER_DAMAGE,
+    SOWING,
+    TRANSPLANTING,
+    GERMINATION,
+    THINNING,
+    BOLTING,
+    PINCHING,
+    DEADHEADING,
+    BLOOM_PEAK,
+    SEASON_END
 }
 
-data class CreateTreeBody(
+data class CreatePlantBody(
     val name: String,
     val species: String,
     val variety: String?,
     @SerializedName("record_kind") val recordKind: RecordKindDto?,
-    val type: TreeTypeDto?,
+    val type: PlantCategoryDto?,
     @SerializedName("growth_habit") val growthHabit: GrowthHabitDto?,
     @SerializedName("record_pattern") val recordPattern: RecordPatternDto?,
     @SerializedName("planting_date") val plantingDate: String?,
@@ -120,14 +129,14 @@ data class TreeCountDto(
     val logs: Int
 )
 
-data class TreeDto(
+data class PlantDto(
     val id: String,
     val name: String,
     @SerializedName("species_family") val speciesFamily: String? = null,
     val species: String,
     val variety: String?,
     @SerializedName("record_kind") val recordKind: RecordKindDto,
-    val type: TreeTypeDto,
+    val type: PlantCategoryDto,
     @SerializedName("growth_habit") val growthHabit: GrowthHabitDto,
     @SerializedName("record_pattern") val recordPattern: RecordPatternDto,
     @SerializedName("lifecycle_stage") val lifecycleStage: LifecycleStageDto,
@@ -144,7 +153,7 @@ data class TreeDto(
     @SerializedName("_count") val count: TreeCountDto? = null
 )
 
-data class TreeLogDto(
+data class JournalEntryDto(
     val id: String,
     val type: LogTypeDto,
     val content: String?,
@@ -184,7 +193,7 @@ data class TreeCycleEventDto(
     val timestamp: String
 )
 
-data class TreeCycleDto(
+data class PlantCycleDto(
     val id: String,
     @SerializedName("cycle_year") val cycleYear: Int,
     @SerializedName("observed_flowering_at") val observedFloweringAt: String? = null,
@@ -230,10 +239,11 @@ enum class TaskSourceDto {
     SYSTEM,
     SEASONAL_PACK,
     PERSONALIZED_OVERLAY,
-    MANUAL
+    MANUAL,
+    AI_DIAGNOSIS
 }
 
-data class TreeTaskDto(
+data class PlantTaskDto(
     val id: String,
     val type: TaskTypeDto,
     val title: String,
@@ -245,16 +255,16 @@ data class TreeTaskDto(
     @SerializedName("source_summary") val sourceSummary: String? = null,
     @SerializedName("due_date") val dueDate: String,
     @SerializedName("completed_at") val completedAt: String? = null,
-    @SerializedName("tree_id") val treeId: String? = null,
+    @SerializedName("plant_id") val plantId: String? = null,
     @SerializedName("tree_name") val treeName: String? = null,
     @SerializedName("record_kind") val recordKind: RecordKindDto? = null,
-    @SerializedName("tree_cycle_id") val treeCycleId: String? = null,
+    @SerializedName("plant_cycle_id") val plantCycleId: String? = null,
     @SerializedName("cycle_year") val cycleYear: Int? = null
 )
 
 data class MaterializeTasksResponse(
     @SerializedName("created_count") val createdCount: Int,
-    @SerializedName("created_tasks") val createdTasks: List<TreeTaskDto> = emptyList()
+    @SerializedName("created_tasks") val createdTasks: List<PlantTaskDto> = emptyList()
 )
 
 data class UpdateTaskStatusBody(
@@ -290,7 +300,7 @@ data class ResolvePlantResponse(
 
 data class VisionRequestBody(
     @SerializedName("image_base64") val imageBase64: String,
-    @SerializedName("tree_id") val treeId: String? = null,
+    @SerializedName("plant_id") val plantId: String? = null,
     val note: String? = null,
     @SerializedName("event_at") val eventAt: String? = null
 )
@@ -334,42 +344,42 @@ interface ApiService {
     @PUT("user/profile/update")
     suspend fun updateProfile(@Body body: UpdateProfileBody): ApiResponse<UserDto>
 
-    @POST("ledger/trees")
-    suspend fun createTree(@Body body: CreateTreeBody): ApiResponse<TreeDto>
+    @POST("ledger/plants")
+    suspend fun createPlant(@Body body: CreatePlantBody): ApiResponse<PlantDto>
 
-    @PUT("ledger/trees/{id}")
-    suspend fun updateTree(
+    @PUT("ledger/plants/{id}")
+    suspend fun updatePlant(
         @Path("id") id: String,
-        @Body body: CreateTreeBody
-    ): ApiResponse<TreeDto>
+        @Body body: CreatePlantBody
+    ): ApiResponse<PlantDto>
 
-    @GET("ledger/trees")
-    suspend fun getTrees(): ApiResponse<List<TreeDto>>
+    @GET("ledger/plants")
+    suspend fun getPlants(): ApiResponse<List<PlantDto>>
 
-    @GET("ledger/trees/{id}")
-    suspend fun getTreeDetail(@Path("id") id: String): ApiResponse<TreeDto>
+    @GET("ledger/plants/{id}")
+    suspend fun getPlantDetail(@Path("id") id: String): ApiResponse<PlantDto>
 
-    @GET("ledger/trees/{id}/seasonal-state")
-    suspend fun getTreeSeasonalState(@Path("id") id: String): ApiResponse<SeasonalStateDto>
+    @GET("ledger/plants/{id}/seasonal-state")
+    suspend fun getPlantSeasonalState(@Path("id") id: String): ApiResponse<SeasonalStateDto>
 
-    @GET("ledger/trees/{id}/cycles")
-    suspend fun getTreeCycles(@Path("id") id: String): ApiResponse<List<TreeCycleDto>>
+    @GET("ledger/plants/{id}/cycles")
+    suspend fun getPlantCycles(@Path("id") id: String): ApiResponse<List<PlantCycleDto>>
 
-    @GET("ledger/trees/{id}/tasks")
-    suspend fun getTreeTasks(@Path("id") id: String): ApiResponse<List<TreeTaskDto>>
+    @GET("ledger/plants/{id}/tasks")
+    suspend fun getPlantTasks(@Path("id") id: String): ApiResponse<List<PlantTaskDto>>
 
     @GET("ledger/tasks")
-    suspend fun getUserTasks(): ApiResponse<List<TreeTaskDto>>
+    suspend fun getUserTasks(): ApiResponse<List<PlantTaskDto>>
 
-    @GET("ledger/trees/{id}/mitigation-plan")
+    @GET("ledger/plants/{id}/mitigation-plan")
     suspend fun getMitigationPlan(@Path("id") id: String): ApiResponse<MitigationPlanDto>
 
-    @PUT("ledger/trees/{id}/tasks/{taskId}")
-    suspend fun updateTreeTaskStatus(
+    @PUT("ledger/plants/{id}/tasks/{taskId}")
+    suspend fun updatePlantTaskStatus(
         @Path("id") id: String,
         @Path("taskId") taskId: String,
         @Body body: UpdateTaskStatusBody
-    ): ApiResponse<TreeTaskDto>
+    ): ApiResponse<PlantTaskDto>
 
     @GET("plants/search")
     suspend fun searchPlants(@Query("q") query: String): ApiResponse<PlantSearchResponse>
@@ -383,19 +393,19 @@ interface ApiService {
     @POST("vision/diagnose")
     suspend fun diagnosePlant(@Body body: VisionRequestBody): ApiResponse<DiagnosePlantResponseDto>
 
-    @GET("ledger/trees/{id}/timeline")
-    suspend fun getTreeTimeline(
+    @GET("ledger/plants/{id}/timeline")
+    suspend fun getPlantTimeline(
         @Path("id") id: String,
         @Query("page") page: Int = 1,
         @Query("page_size") pageSize: Int = 20
-    ): ApiResponse<List<TreeLogDto>>
+    ): ApiResponse<List<JournalEntryDto>>
 
-    @POST("ledger/trees/{id}/logs")
-    suspend fun addTreeLog(
+    @POST("ledger/plants/{id}/journal")
+    suspend fun addPlantJournalEntry(
         @Path("id") id: String,
         @Body body: AddLogBody
-    ): ApiResponse<TreeLogDto>
+    ): ApiResponse<JournalEntryDto>
 
-    @POST("seasonal/tree/{id}/materialize-tasks")
-    suspend fun materializeTreeTasks(@Path("id") id: String): ApiResponse<MaterializeTasksResponse>
+    @POST("seasonal/plant/{id}/materialize-tasks")
+    suspend fun materializePlantTasks(@Path("id") id: String): ApiResponse<MaterializeTasksResponse>
 }

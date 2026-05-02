@@ -1,7 +1,7 @@
 import { IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
 import { GrowthHabit, LifecycleStage, PlantingDatePrecision, RecordKind, RecordPattern, TreeType } from '@prisma/client';
 
-export class CreateTreeDto {
+export class CreatePlantDto {
   @IsNotEmpty()
   @IsString()
   name: string;

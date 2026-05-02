@@ -10,9 +10,9 @@ export class TaskProcessor extends WorkerHost {
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
-    const { tree_id, lifecycle_stage, species } = job.data;
+    const { plant_id, lifecycle_stage, species } = job.data;
     
-    console.log(`[PROCESSOR] Generating perennial tasks for ${species} in ${lifecycle_stage} stage (ID: ${tree_id})`);
+    console.log(`[PROCESSOR] Generating perennial tasks for ${species} in ${lifecycle_stage} stage (ID: ${plant_id})`);
 
     const tasks_to_create: any[] = [];
     const now = new Date();
@@ -20,14 +20,14 @@ export class TaskProcessor extends WorkerHost {
     // Logic based on species and stage
     if (species.toLowerCase().includes('mango')) {
       tasks_to_create.push({
-        tree_id,
+        plant_id,
         type: TaskType.FEED,
         due_date: new Date(now.setMonth(now.getMonth() + 6)), // Next deep feed
         status: TaskStatus.PENDING,
       });
       
       tasks_to_create.push({
-        tree_id,
+        plant_id,
         type: TaskType.PRUNE,
         due_date: new Date(now.setMonth(now.getMonth() + 3)), // Pruning window
         status: TaskStatus.PENDING,
@@ -35,7 +35,7 @@ export class TaskProcessor extends WorkerHost {
     } else {
       // General default tasks
       tasks_to_create.push({
-        tree_id,
+        plant_id,
         type: TaskType.WATER,
         due_date: new Date(now.setDate(now.getDate() + 3)),
         status: TaskStatus.PENDING,

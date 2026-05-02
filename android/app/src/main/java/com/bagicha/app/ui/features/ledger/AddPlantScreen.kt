@@ -32,7 +32,7 @@ import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddTreeScreen(
+fun AddPlantScreen(
     viewModel: LedgerViewModel,
     isEditMode: Boolean,
     navController: NavController
@@ -136,14 +136,14 @@ fun AddTreeScreen(
                         .padding(horizontal = 24.dp, vertical = 48.dp)
                 ) {
                     Text(
-                        text = "Start a\nLegacy",
+                        text = selectedRecordKind.heroTitle(),
                         style = MaterialTheme.typography.headlineLarge.copy(fontSize = 48.sp),
                         color = PrimaryForest,
                         lineHeight = 52.sp
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Document your new planting to begin its biological history.",
+                        text = selectedRecordKind.heroSubtitle(),
                         style = MaterialTheme.typography.bodyLarge,
                         color = OnSurfaceVariant
                     )
@@ -161,11 +161,26 @@ fun AddTreeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        ClassificationPebble("TREE", selectedRecordKind == RecordKind.TREE) { selectedRecordKind = RecordKind.TREE }
-                        ClassificationPebble("FLOWER", selectedRecordKind == RecordKind.FLOWER) { selectedRecordKind = RecordKind.FLOWER }
+                        ClassificationPebble("TREE", selectedRecordKind == RecordKind.TREE) {
+                            selectedRecordKind = RecordKind.TREE
+                            val (habit, pattern) = RecordKind.TREE.defaultPositioning()
+                            selectedGrowthHabit = habit
+                            selectedRecordPattern = pattern
+                        }
+                        ClassificationPebble("FLOWER", selectedRecordKind == RecordKind.FLOWER) {
+                            selectedRecordKind = RecordKind.FLOWER
+                            val (habit, pattern) = RecordKind.FLOWER.defaultPositioning()
+                            selectedGrowthHabit = habit
+                            selectedRecordPattern = pattern
+                        }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
-                    ClassificationPebble("CROP", selectedRecordKind == RecordKind.CROP) { selectedRecordKind = RecordKind.CROP }
+                    ClassificationPebble("CROP", selectedRecordKind == RecordKind.CROP) {
+                        selectedRecordKind = RecordKind.CROP
+                        val (habit, pattern) = RecordKind.CROP.defaultPositioning()
+                        selectedGrowthHabit = habit
+                        selectedRecordPattern = pattern
+                    }
 
                     Spacer(modifier = Modifier.height(32.dp))
 
@@ -181,11 +196,11 @@ fun AddTreeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        ClassificationPebble(selectedRecordKind.primaryTypeLabel(), selectedType == TreeCategory.FRUIT_BEARING) { selectedType = TreeCategory.FRUIT_BEARING }
-                        ClassificationPebble(selectedRecordKind.secondaryTypeLabel(), selectedType == TreeCategory.NON_FRUIT_BEARING) { selectedType = TreeCategory.NON_FRUIT_BEARING }
+                        ClassificationPebble(selectedRecordKind.primaryTypeLabel(), selectedType == PlantCategory.FRUIT_BEARING) { selectedType = PlantCategory.FRUIT_BEARING }
+                        ClassificationPebble(selectedRecordKind.secondaryTypeLabel(), selectedType == PlantCategory.NON_FRUIT_BEARING) { selectedType = PlantCategory.NON_FRUIT_BEARING }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
-                    ClassificationPebble(selectedRecordKind.tertiaryTypeLabel(), selectedType == TreeCategory.ORNAMENTAL) { selectedType = TreeCategory.ORNAMENTAL }
+                    ClassificationPebble(selectedRecordKind.tertiaryTypeLabel(), selectedType == PlantCategory.ORNAMENTAL) { selectedType = PlantCategory.ORNAMENTAL }
 
                     Spacer(modifier = Modifier.height(32.dp))
 
@@ -386,7 +401,7 @@ fun AddTreeScreen(
                             CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         } else {
                             Text(
-                                text = if (isEditMode) "UPDATE REGISTRY" else "ADD TO SANCTUARY",
+                                text = if (isEditMode) "UPDATE RECORD" else selectedRecordKind.saveCtaLabel(),
                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 2.sp),
                                 color = Color.White
                             )
@@ -491,6 +506,30 @@ private fun RecordKind.stageOptions(): List<StageOption> {
             StageOption(LifecycleStage.FIRST_HARVEST, "HARVEST WINDOW"),
         )
     }
+}
+
+private fun RecordKind.defaultPositioning(): Pair<GrowthHabit, RecordPattern> = when (this) {
+    RecordKind.TREE -> GrowthHabit.PERENNIAL to RecordPattern.LONG_LIVED
+    RecordKind.FLOWER -> GrowthHabit.PERENNIAL to RecordPattern.LONG_LIVED
+    RecordKind.CROP -> GrowthHabit.ANNUAL to RecordPattern.RECURRING_SEASONAL
+}
+
+private fun RecordKind.heroTitle(): String = when (this) {
+    RecordKind.TREE -> "Start a\nLegacy"
+    RecordKind.FLOWER -> "Plant a\nBloom"
+    RecordKind.CROP -> "Begin a\nSeason"
+}
+
+private fun RecordKind.heroSubtitle(): String = when (this) {
+    RecordKind.TREE -> "Document your new tree to begin its biological history."
+    RecordKind.FLOWER -> "Document your new flowering plant to begin its growing record."
+    RecordKind.CROP -> "Document your new sowing to begin its growing record."
+}
+
+private fun RecordKind.saveCtaLabel(): String = when (this) {
+    RecordKind.TREE -> "ADD TREE RECORD"
+    RecordKind.FLOWER -> "ADD FLOWER RECORD"
+    RecordKind.CROP -> "ADD CROP RECORD"
 }
 
 @Composable

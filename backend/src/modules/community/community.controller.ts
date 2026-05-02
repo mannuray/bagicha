@@ -3,6 +3,7 @@ import { CommunityService } from './community.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { AskAiDto } from './dto/ask-ai.dto';
+import { ReportTargetDto } from './dto/report-target.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('community')
@@ -33,5 +34,15 @@ export class CommunityController {
   @Post('ask-ai')
   async askAi(@Request() req, @Body() dto: AskAiDto) {
     return this.communityService.askAi(req.user.id, dto);
+  }
+
+  @Post('posts/:id/report')
+  async reportPost(@Request() req, @Param('id') id: string, @Body() dto: ReportTargetDto) {
+    return this.communityService.reportPost(req.user.id, id, dto);
+  }
+
+  @Post('comments/:id/report')
+  async reportComment(@Request() req, @Param('id') id: string, @Body() dto: ReportTargetDto) {
+    return this.communityService.reportComment(req.user.id, id, dto);
   }
 }

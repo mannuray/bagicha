@@ -19,13 +19,24 @@ export class GeminiService {
       if (imagePart.inlineData.data) {
         parts.push(imagePart);
       }
-      
+
       const result = await this.model.generateContent(parts);
       const response = await result.response;
       const text = response.text();
       return text;
     } catch (error) {
       console.error('[GEMINI] Error analyzing image/text:', error);
+      throw error;
+    }
+  }
+
+  async generateText(prompt: string): Promise<string> {
+    try {
+      const result = await this.model.generateContent([prompt]);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error('[GEMINI] Error generating text:', error);
       throw error;
     }
   }
