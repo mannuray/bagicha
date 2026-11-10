@@ -18,7 +18,7 @@ import {
 const PAGE_SIZE = 20;
 
 /** Growing plants by default; `ended` lists past trees. */
-export function usePlants(page: number, status: 'active' | 'ended' = 'active') {
+export function usePlants(page: number, status: 'active' | 'planned' | 'ended' = 'active') {
   const api = useApi();
   return useQuery({
     queryKey: queryKeys.plants.list(status, page),

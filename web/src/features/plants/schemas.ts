@@ -44,6 +44,12 @@ export const plantSchema = z.object({
   end_note: nullableOptional,
   end_entry_id: nullableOptional,
   replaced_by_id: nullableOptional,
+  crop_id: nullableOptional,
+  crop_stage: z
+    .enum(['PLANNED', 'NURSERY', 'IN_GROUND', 'HARVESTING', 'RESTING'])
+    .nullable()
+    .optional()
+    .transform((v) => v ?? null),
 });
 export type Plant = z.infer<typeof plantSchema>;
 export type PlantEndReason = NonNullable<Plant['end_reason']>;
@@ -103,6 +109,10 @@ export const cycleSchema = z.object({
   stress_score: z.number().nullable(),
   pest_pressure_score: z.number().nullable(),
   treatment_count: z.number(),
+  season_no: z.number().optional().transform((v) => v ?? 1),
+  started_at: nullableOptional,
+  closed_at: nullableOptional,
+  place_id: nullableOptional,
   cycle_summary: z.string().nullable(),
   recommended_next_cycle_actions: z.unknown(),
 });

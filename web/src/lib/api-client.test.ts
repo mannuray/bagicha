@@ -43,6 +43,20 @@ describe('api client', () => {
     });
   });
 
+  it('deletes with an empty 204 response, and still maps errors', async () => {
+    let method = '';
+    server.use(
+      http.delete(`${API}/crops/plan/c1`, ({ request }) => {
+        method = request.method;
+        return new HttpResponse(null, { status: 204 });
+      }),
+      http.delete(`${API}/crops/plan/c2`, () => fail(409, 'CROP_HAS_SEASONS')),
+    );
+    await expect(client().api.remove('/crops/plan/c1')).resolves.toBeUndefined();
+    expect(method).toBe('DELETE');
+    await expect(client().api.remove('/crops/plan/c2')).rejects.toMatchObject({ code: 'CROP_HAS_SEASONS' });
+  });
+
   it('returns a page from data + pagination', async () => {
     const pagination = { page: 1, page_size: 20, total_items: 1, total_pages: 1, has_next: false, has_previous: false };
     server.use(http.get(`${API}/ledger/plants`, ({ request }) => {

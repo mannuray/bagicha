@@ -4,6 +4,7 @@ import orchardPhoto from '../../assets/stitch/dashboard-orchard.jpg';
 import { systemClock } from '../../lib/clock';
 import { EmptyState, ErrorState, Icon, LoadingState, Pebble, Screen } from '../../ui';
 import { useSession } from '../auth';
+import { useCropSyncOnce } from '../crops';
 import { useAllPlants } from '../plants';
 import { useSeasonalGuide } from '../seasonal';
 import { hasPendingSoon, TaskGroups, useMyTasks } from '../tasks';
@@ -16,7 +17,9 @@ export function DashboardScreen() {
   const { t } = useTranslation();
   const { user } = useSession();
   const plants = useAllPlants();
-  const season = useSessionMaterialize(plants.data?.map((p) => p.id));
+  // Journey crops follow the crop calendar, not the tree season pack.
+  const season = useSessionMaterialize(plants.data?.filter((p) => !p.crop_id).map((p) => p.id));
+  useCropSyncOnce();
   const tasks = useMyTasks();
   const guide = useSeasonalGuide();
   const now = systemClock.now();
@@ -71,7 +74,9 @@ export function DashboardScreen() {
               <p className="font-label text-xs font-bold uppercase tracking-widest text-primary-fixed-dim">{t('dashboard.season', { season: guide.data.season })}</p>
               <h2 id="guide-heading" className="mt-2 font-headline text-lg">{guide.data.advice}</h2>
               {guide.data.crops.length > 0 && (
-                <p className="mt-2 font-body text-sm text-primary-fixed-dim">{t('dashboard.sowNow', { crops: guide.data.crops.join(', ') })}</p>
+                <Link to="/crops" className="mt-2 block font-body text-sm text-primary-fixed-dim underline-offset-2 hover:underline">
+                  {t('dashboard.sowNowLink', { crops: guide.data.crops.join(', ') })}
+                </Link>
               )}
             </div>
           ) : (

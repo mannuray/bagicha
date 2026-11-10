@@ -8,9 +8,9 @@ import type { Plant } from './schemas';
 /** Stitch "Orchard Gallery": growing trees, and past trees on their own tab. */
 export function PlantListScreen() {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<'active' | 'ended'>('active');
+  const [status, setStatus] = useState<'active' | 'planned' | 'ended'>('active');
   const [pages, setPages] = useState(1);
-  const choose = (next: 'active' | 'ended') => {
+  const choose = (next: 'active' | 'planned' | 'ended') => {
     setStatus(next);
     setPages(1);
   };
@@ -32,7 +32,7 @@ export function PlantListScreen() {
       </header>
       <main className="space-y-3 px-4">
         <div role="tablist" className="flex gap-2">
-          {(['active', 'ended'] as const).map((s) => (
+          {(['active', 'planned', 'ended'] as const).map((s) => (
             <button
               key={s}
               type="button"
@@ -44,10 +44,16 @@ export function PlantListScreen() {
                 status === s ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-primary/70',
               )}
             >
-              {t(s === 'active' ? 'plants.list.growing' : 'plants.list.past')}
+              {t(s === 'active' ? 'plants.list.growing' : s === 'planned' ? 'plants.list.planned' : 'plants.list.past')}
             </button>
           ))}
         </div>
+        {status === 'planned' && (
+          <Link to="/crops" className="flex min-h-11 items-center gap-2 font-label text-sm font-bold text-secondary">
+            <Icon name="search" />
+            {t('crops.find')}
+          </Link>
+        )}
         {Array.from({ length: pages }, (_, i) => (
           <PlantPage key={`${status}-${i}`} status={status} page={i + 1} isLast={i + 1 === pages} onMore={() => setPages((p) => p + 1)} />
         ))}
@@ -56,7 +62,7 @@ export function PlantListScreen() {
   );
 }
 
-function PlantPage({ status, page, isLast, onMore }: { status: 'active' | 'ended'; page: number; isLast: boolean; onMore: () => void }) {
+function PlantPage({ status, page, isLast, onMore }: { status: 'active' | 'planned' | 'ended'; page: number; isLast: boolean; onMore: () => void }) {
   const { t } = useTranslation();
   const query = usePlants(page, status);
 
@@ -64,6 +70,9 @@ function PlantPage({ status, page, isLast, onMore }: { status: 'active' | 'ended
   if (query.isPending) return <LoadingState />;
   const { items, pagination } = query.data;
 
+  if (page === 1 && items.length === 0 && status === 'planned') {
+    return <p className="py-6 text-center font-body text-sm text-on-surface-variant">{t('plants.list.emptyPlanned')}</p>;
+  }
   if (page === 1 && items.length === 0 && status === 'ended') {
     return <p className="py-6 text-center font-body text-sm text-on-surface-variant">{t('plants.list.emptyPast')}</p>;
   }
@@ -116,7 +125,9 @@ function PlantCard({ plant }: { plant: Plant }) {
                 reason: t(`biography.end.reason.${plant.end_reason ?? 'UNKNOWN_CAUSE'}`),
                 date: new Date(plant.ended_at).toLocaleDateString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN', { month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }),
               })
-            : t(`plants.stage.${plant.lifecycle_stage}`)}
+            : plant.crop_stage
+              ? t(`crops.stage.${plant.crop_stage}`)
+              : t(`plants.stage.${plant.lifecycle_stage}`)}
         </span>
       </span>
       <Icon name="chevron_right" className="text-outline" />

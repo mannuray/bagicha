@@ -24,6 +24,8 @@ export interface ApiClient {
   getPage<T>(path: string, item: z.ZodType<T>, query?: Query): Promise<Page<T>>;
   send<T>(method: 'POST' | 'PUT', path: string, body: unknown, schema: z.ZodType<T>): Promise<T>;
   upload<T>(path: string, form: FormData, schema: z.ZodType<T>): Promise<T>;
+  /** DELETE; the backend answers 204 with no body. */
+  remove(path: string): Promise<void>;
 }
 
 export interface ApiClientOptions {
@@ -91,6 +93,8 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
       opts.onUnauthorized();
     }
 
+    if (response.status === 204) return { status: 204, data: undefined, pagination: undefined };
+
     let body: unknown;
     try {
       body = await response.json();
@@ -137,6 +141,9 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
         body: JSON.stringify(body),
       });
       return validate(schema, res.data, res.status, path);
+    },
+    async remove(path) {
+      await request(path, { method: 'DELETE' });
     },
     async upload(path, form, schema) {
       const res = await request(path, { method: 'POST', body: form });

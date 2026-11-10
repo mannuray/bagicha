@@ -70,6 +70,29 @@ describe('past trees', () => {
   });
 });
 
+describe('want to grow', () => {
+  it('lists planned crops under their own tab, with a way to find more', async () => {
+    server.use(
+      http.get(`${API}/ledger/plants`, ({ request }) =>
+        new URL(request.url).searchParams.get('status') === 'planned'
+          ? HttpResponse.json(pageOf([plantRecord({ id: 'c1', name: 'Tomato', species: 'Tomato', record_kind: 'CROP', crop_id: 'tomato', crop_stage: 'PLANNED' })]))
+          : HttpResponse.json(pageOf([plantRecord()])),
+      ),
+    );
+    renderWithApp(routes, { route: '/plants' });
+    await screen.findByText('Aam');
+    await userEvent.click(screen.getByRole('tab', { name: /want to grow/i }));
+    expect(await screen.findByText('Tomato')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /find crops to grow/i })).toHaveAttribute('href', '/crops');
+  });
+
+  it('no longer offers Crop on the add form: crops come through Want to grow', () => {
+    renderWithApp(routes, { route: '/plants/new' });
+    expect(screen.queryByRole('button', { name: /^crop$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^tree$/i })).toBeInTheDocument();
+  });
+});
+
 describe('plant a replacement', () => {
   it('prefills from the tree it replaces and links them on save', async () => {
     let created: Record<string, unknown> | undefined;

@@ -9,7 +9,8 @@ import { useCreatePlant, usePlant, useResolvePlant, useUpdatePlant } from './api
 import type { PlantDetail, PlantInput } from './schemas';
 
 type Precision = 'YEAR' | 'MONTH_YEAR' | 'EXACT_DATE';
-const KINDS = ['TREE', 'FLOWER', 'CROP'] as const;
+// Crops come through Want to grow (the crop calendar), not this form.
+const KINDS = ['TREE', 'FLOWER'] as const;
 
 interface FormState {
   name: string;

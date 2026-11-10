@@ -2,7 +2,7 @@
 export const queryKeys = {
   plants: {
     all: ['plants'] as const,
-    list: (status: 'active' | 'ended', page: number) => ['plants', 'list', status, page] as const,
+    list: (status: 'active' | 'planned' | 'ended', page: number) => ['plants', 'list', status, page] as const,
     everything: ['plants', 'everything'] as const,
     detail: (id: string) => ['plants', id, 'detail'] as const,
     timelineAll: (id: string) => ['plants', id, 'timeline'] as const,
@@ -18,6 +18,11 @@ export const queryKeys = {
     mineAll: ['tasks', 'mine'] as const,
   },
   guide: ['seasonal', 'guide'] as const,
+  crops: {
+    calendar: ['crops', 'calendar'] as const,
+    places: ['crops', 'places'] as const,
+    rotation: (placeId: string, cropId: string) => ['crops', 'rotation', placeId, cropId] as const,
+  },
   catalogue: { search: (q: string) => ['catalogue', 'search', q] as const },
   media: { url: (key: string) => ['media', 'url', key] as const },
 };

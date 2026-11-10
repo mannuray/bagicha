@@ -161,7 +161,9 @@
       "growing": "Growing",
       "past": "Past trees",
       "pastLine": "{{reason}} · {{date}}",
-      "emptyPast": "No past trees. Trees you mark as ended are kept here."
+      "emptyPast": "No past trees. Trees you mark as ended are kept here.",
+      "planned": "Want to grow",
+      "emptyPlanned": "Nothing on your list yet."
     },
     "stage": {
       "SAPLING": "Sapling",
@@ -253,7 +255,8 @@
     "sowNow": "Good to sow now: {{crops}}",
     "garden": "Your garden",
     "plantsInGarden": "Plants in your garden",
-    "addTree": "Add a tree"
+    "addTree": "Add a tree",
+    "sowNowLink": "Good to sow now: {{crops}}"
   },
   "journal": {
     "title": "Log a Moment",
@@ -483,5 +486,41 @@
     "compare": "Compared with last season",
     "emptyTitle": "No season to review yet",
     "emptyBody": "Log flowering, fruit set and harvest this season to get a review."
+  },
+  "crops": {
+    "title": "What can I sow now?",
+    "intro": "Crops for your region, by when to sow them. Add the ones you'd like to grow, and we'll remind you when to get seeds and sow.",
+    "filter": {
+      "container": "Container-friendly",
+      "beginner": "Easy for beginners",
+      "quick": "Quick harvest"
+    },
+    "section": {
+      "open": "Sow now",
+      "soon": "Coming up",
+      "later": "Later"
+    },
+    "sowWindow": "Sow {{window}}",
+    "opensIn_one": "Opens in {{count}} day · {{window}}",
+    "opensIn_other": "Opens in {{count}} days · {{window}}",
+    "method": {
+      "NURSERY_TRANSPLANT": "Nursery, then transplant",
+      "DIRECT_SOW": "Sow straight in the bed",
+      "TUBER": "Plant seed potatoes",
+      "CLOVE": "Plant cloves",
+      "RHIZOME": "Plant rhizomes"
+    },
+    "firstHarvest": "first harvest in {{min}}–{{max}} days",
+    "guideLine": "{{plants}} · {{container}}",
+    "add": "Add to Want to grow",
+    "onList": "On your list",
+    "find": "Find crops to grow",
+    "stage": {
+      "PLANNED": "Want to grow",
+      "NURSERY": "In the nursery",
+      "IN_GROUND": "In the bed",
+      "HARVESTING": "Harvesting",
+      "RESTING": "Resting until next season"
+    }
   }
 }

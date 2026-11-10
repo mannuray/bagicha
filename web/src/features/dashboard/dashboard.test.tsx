@@ -114,6 +114,28 @@ describe('dashboard', () => {
     expect(within(week).queryByText(/nothing due this week/i)).not.toBeInTheDocument();
   });
 
+  it('syncs crop reminders once per session and skips the tree pack for journey crops', async () => {
+    const calls = baseHandlers({ plants: [plantRecord(), plantRecord({ id: 'c1', name: 'Tomato', crop_id: 'tomato', crop_stage: 'IN_GROUND', record_kind: 'CROP' })] });
+    let syncs = 0;
+    server.use(http.post(`${API}/crops/plan/sync`, () => { syncs += 1; return HttpResponse.json(ok({ created_count: 0 }), { status: 201 }); }));
+    const first = renderWithApp(<DashboardScreen />);
+    await waitFor(() => expect(calls.materialize).toEqual(['p1']));
+    await waitFor(() => expect(syncs).toBe(1));
+    first.unmount();
+    const { TestProviders } = await import('../../test/render');
+    const { render } = await import('@testing-library/react');
+    render(<TestProviders session={first.session}><DashboardScreen /></TestProviders>);
+    await screen.findByRole('heading', { name: /asha/i });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(syncs).toBe(1);
+  });
+
+  it('links "good to sow now" to the crop list', async () => {
+    baseHandlers();
+    renderWithApp(<DashboardScreen />);
+    expect(await screen.findByRole('link', { name: /good to sow now/i })).toHaveAttribute('href', '/crops');
+  });
+
   it('asks for this season’s tasks for every plant, not only the first page', async () => {
     const plants = Array.from({ length: 130 }, (_, i) => plantRecord({ id: `p${i}`, name: `Tree ${i}` }));
     const calls = baseHandlers({ plants });
