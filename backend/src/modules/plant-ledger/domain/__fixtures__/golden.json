@@ -5,7 +5,7 @@
       "observed_fruit_set_at": "2026-03-20T05:00:00.000Z",
       "harvest_started_at": "2026-06-01T05:00:00.000Z",
       "harvest_completed_at": "2026-06-15T05:00:00.000Z",
-      "yield_quantity": 18,
+      "yield_quantity": 60,
       "yield_unit": "kg",
       "yield_quality": "EXCELLENT",
       "flower_drop_level": "UNKNOWN",

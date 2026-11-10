@@ -169,6 +169,32 @@ export function buildRecommendedActions(input: {
 
 export type CycleEntry = Pick<JournalEntry, 'type' | 'metadata' | 'timestamp'>;
 
+/**
+ * The season's yield: every harvest that shares the latest harvest's unit,
+ * summed. Harvests in another unit can't be added, so they are left out.
+ */
+function seasonYield(harvests: CycleEntry[]): {
+  quantity: number | null;
+  unit: string | null;
+} {
+  const amounts = harvests.map((log) => {
+    const m = (log.metadata ?? {}) as Record<string, unknown>;
+    return {
+      value: parseQuantityValue(m.quantity_value ?? m.quantity),
+      unit: parseQuantityUnit(m.quantity_unit ?? m.quantity),
+    };
+  });
+  const unit = amounts.at(-1)?.unit ?? null;
+  const same = amounts.filter(
+    (a) => a.value !== null && a.unit?.toLowerCase() === unit?.toLowerCase(),
+  );
+  if (same.length === 0) return { quantity: null, unit };
+  return {
+    quantity: same.reduce((sum, a) => sum + (a.value ?? 0), 0),
+    unit,
+  };
+}
+
 /** Everything refreshCycleSummary writes to a PlantCycle, computed from its entries (oldest first). */
 export function buildCycleSnapshot(journal_entries: CycleEntry[]) {
   const flowering =
@@ -194,12 +220,7 @@ export function buildCycleSnapshot(journal_entries: CycleEntry[]) {
     | Record<string, unknown>
     | null
     | undefined;
-  const yieldQuantity = parseQuantityValue(
-    latestHarvestMetadata?.quantity_value ?? latestHarvestMetadata?.quantity,
-  );
-  const yieldUnit = parseQuantityUnit(
-    latestHarvestMetadata?.quantity_unit ?? latestHarvestMetadata?.quantity,
-  );
+  const { quantity: yieldQuantity, unit: yieldUnit } = seasonYield(harvestLogs);
   const yieldQuality = parseYieldQuality(latestHarvestMetadata?.quality);
   const stressScore = journal_entries.filter(
     (log) => log.type === LogType.WATERING_STRESS,

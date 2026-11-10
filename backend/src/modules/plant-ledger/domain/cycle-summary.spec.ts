@@ -1,3 +1,4 @@
+import { LogType, Prisma } from '@prisma/client';
 import golden from './__fixtures__/golden.json';
 import { CYCLE_ENTRY_FIXTURES } from './__fixtures__/inputs';
 import { buildCycleSnapshot } from './cycle-summary';
@@ -12,5 +13,47 @@ describe('buildCycleSnapshot (golden: identical to the pre-refactor service)', (
     expect(normalize(snapshot)).toEqual(
       (golden.cycles as Record<string, unknown>)[name],
     );
+  });
+});
+
+describe('buildCycleSnapshot yield: the season total', () => {
+  const harvest = (metadata: Prisma.JsonObject, day: number) => ({
+    type: LogType.HARVEST,
+    metadata,
+    timestamp: new Date(Date.UTC(2026, 5, day)),
+  });
+
+  it('sums every harvest in the latest harvest unit', () => {
+    const s = buildCycleSnapshot([
+      harvest({ quantity_value: 10, quantity_unit: 'kg' }, 1),
+      harvest({ quantity_value: 15, quantity_unit: 'kg' }, 8),
+      harvest({ quantity_value: 5, quantity_unit: 'kg', quality: 'good' }, 15),
+    ]);
+    expect(s.yield_quantity).toBe(30);
+    expect(s.yield_unit).toBe('kg');
+    expect(s.yield_quality).toBe('GOOD');
+  });
+
+  it('leaves out harvests in another unit', () => {
+    const s = buildCycleSnapshot([
+      harvest({ quantity_value: 10, quantity_unit: 'kg' }, 1),
+      harvest({ quantity_value: 3, quantity_unit: 'crates' }, 8),
+      harvest({ quantity_value: 5, quantity_unit: 'kg' }, 15),
+    ]);
+    expect(s.yield_quantity).toBe(15);
+    expect(s.yield_unit).toBe('kg');
+  });
+
+  it('reads the legacy quantity string', () => {
+    const s = buildCycleSnapshot([
+      harvest({ quantity: '4 kg' }, 1),
+      harvest({ quantity_value: 6, quantity_unit: 'kg' }, 8),
+    ]);
+    expect(s.yield_quantity).toBe(10);
+  });
+
+  it('has no yield when no harvest carries an amount', () => {
+    const s = buildCycleSnapshot([harvest({ quality: 'fair' }, 1)]);
+    expect(s.yield_quantity).toBeNull();
   });
 });
