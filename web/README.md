@@ -1,10 +1,113 @@
 # Bagicha web
 
-The Bagicha gardener app (React + Vite). Slice 1: the core loop.
-Full setup and run instructions are completed in the last task of the slice 1 plan.
+The Bagicha gardener app: React 19 + Vite + TypeScript + Tailwind 4, mobile-first, built to be wrapped with Capacitor later.
+Slice 1 is the core loop: **my plants → what to do this week → log what happened → learn for next season.**
+
+Design source: the Stitch project "Bagicha Premium Login" and its "Bagicha Heritage" design system ("The Curated Sanctuary").
+Spec: `../docs/superpowers/specs/2026-11-10-web-slice1-core-loop-design.md` · API contract: `../docs/api-changes-slice0.md`.
+
+## Run it locally
+
+Prerequisites: Node 24, Docker, and the backend running (see `../backend`).
 
 ```bash
-cp .env.example .env.local   # VITE_API_URL → the backend
+# 1. Backend services + API (from ../backend)
+docker compose up -d                        # postgres, redis, minio
+#    backend/.env needs JWT_SECRET, DATABASE_URL and WEB_ORIGINS=http://localhost:5173
+#    optional: AUTH_DEV_OTP_PHONE / AUTH_DEV_OTP_CODE for a fixed local login,
+#              GEMINI_API_KEY + GEMINI_MODEL for scanning (or AI_PROVIDER=fake)
+npm run start:dev                           # http://localhost:3000
+
+# 2. Web app (this folder)
+cp .env.example .env.local                  # VITE_API_URL=http://localhost:3000/api/v1
 npm install
-npm run dev                  # http://localhost:5173
+npm run dev                                 # http://localhost:5173
 ```
+
+Without an SMS provider, the OTP for any phone is logged by the backend at debug level (`LOG_LEVEL=debug`) outside production.
+
+## Scripts
+
+| Script | What it does |
+|---|---|
+| `npm run dev` | Vite dev server on :5173 |
+| `npm run build` | Type-check (`tsc -b`) and production build |
+| `npm run lint` / `lint:fix` | oxlint (read-only / autofix) |
+| `npm test` | Vitest + Testing Library; the network is stubbed with MSW (tests only) |
+| `npm run check:boundaries` | No `console.*`, no `throw new Error`, no MSW or `seasonal/weather` in app code; features import each other only via `index.ts` |
+| `npm run check:cycles` | madge: no import cycles |
+| `npm run e2e` | Playwright: the whole loop at 360 px against the **real backend** (fake AI, throwaway `bagicha_e2e` DB). Needs the docker services up; it starts the backend on :3001 and the app on :5174 itself, and writes screenshots to `test-results/screens/`. |
+
+## Structure
+
+```
+src/
+  app/        routes, providers (API client, session, query cache), error boundary
+  lib/        api-client (envelope + zod + ApiError), token store, i18n, clock, IST dates, query keys
+  ui/         Sanctuary components (Button, TextField, Chip, Surface, Screen, BottomNav, QueryState…)
+  features/   auth · profile · plants · tasks · dashboard · journal · biography · scan · seasonal
+  locales/    en.json — every user-facing string
+```
+
+Each feature exposes an `index.ts`; siblings import only that. Device access sits behind adapters, so a Capacitor build can swap it:
+- `TokenStore`: session token (`localStorage` today).
+- `ImageCompressor` / `ImageOps`: camera photos are resized to ≤1600 px JPEG before upload or scan.
+- `Geolocator`: optional coordinates.
+- `Clock`: time.
+
+## Intentional differences from the Stitch screens
+
+- **Weather card hidden.** The backend's weather is a mock (user decision). Seasonal guidance takes its place on the dashboard.
+- **Health badge is a label, not a percentage.** The backend has no health score. It shows `health_status`, or "Needs attention" after a MEDIUM/HIGH diagnosis in the last 30 days.
+- **Tree Biography has extra sections:** This Season, Upcoming Care, Cycles and a Season review link. The chosen Stitch "Detailed Record" screen had none of them, and the loop needs them.
+- **Location screen:** region cards + district + optional "Use my location", instead of Stitch's GPS-first button. This is the user's decision; there is no reverse geocoding, so location never leaves Bagicha.
+- **No stock photos.** Stitch's hero images are replaced by the forest gradient or the user's own latest photo, so there are no third-party image requests and the app works offline in a wrapper.
+- **No social-login buttons or Terms/Privacy links.** They have no backend yet.
+- Screens Stitch doesn't cover (scan results, season review, onboarding steps beyond location, profile edit) follow the design system: serif headlines, pebble cards, gradient buttons, no divider lines.
+- Hindi can be chosen and is saved; the interface stays English until translations land.
+
+## Web principles review
+
+How `docs/coding-principles.md` §8 applies to this client (spec §6):
+
+**Design**
+- ✅ Single responsibility. Screens compose; data lives in per-feature hooks; rules are pure functions (`thisWeek`, `dueLabel`, `healthLabel`, the image compressor).
+- ✅ Extension points. `ImageOps`, `TokenStore`, `Geolocator` and the region list are swappable without touching callers.
+- ✅ Features import siblings only via `index.ts` (enforced by `check:boundaries`).
+- ✅ No import cycles (enforced by `check:cycles`). `biography` composes plants, tasks, journal and seasonal to keep the graph acyclic.
+- ✅ Dependencies come through context/props (API client, session, compressor, geolocator), never module singletons.
+- n/a Persistence repositories: this is a client.
+
+**API & errors**
+- ✅ One envelope parser.
+- ✅ Every response is validated with zod (`CONTRACT_MISMATCH` on drift).
+- ✅ One `ApiError` with the backend `code`, mapped to i18n messages.
+- ✅ No `throw new Error` in app code.
+- ✅ Every data screen goes through loading / error-with-retry / empty / content.
+- ✅ A 401 anywhere expires the session and clears the cache.
+
+**Testability**
+- ✅ Adapters for device and time access.
+- ✅ Components are tested against the real API client with MSW.
+- ✅ The upload path is tested with real multipart bodies.
+
+**Observability**
+- ✅ No `console.*` outside `lib/report-error.ts`. Errors go through `reportError` (console in dev, a no-op in production for now).
+- n/a OTel spans, server metrics: client.
+
+**Security**
+- ✅ Fails closed on auth: any 401 signs out.
+- ✅ No secrets in the bundle (only `VITE_API_URL`).
+- ✅ Private photos load through owner-checked signed URLs.
+- ✅ Credentials never logged.
+- n/a Rate limits and audit trail are server concerns, already enforced by the backend.
+
+**Scaling**
+- ✅ Every list uses the backend's paging; plants load more on demand.
+- ✅ Signed photo URLs are cached under their expiry.
+- ✅ Double taps are guarded (busy buttons plus in-flight refs) on complete, save and diagnose.
+
+**Habits**
+- ✅ Accessibility: labelled inputs, real buttons, visible focus, 44 px touch targets, AA contrast on surface.
+- ✅ 360 px layout is checked by the e2e run.
+- n/a `/health` and graceful shutdown are backend concerns.

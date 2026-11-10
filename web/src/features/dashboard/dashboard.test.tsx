@@ -42,6 +42,7 @@ describe('dashboard', () => {
     expect(screen.getByText(/days overdue/i)).toBeInTheDocument();
     expect(await screen.findByText(/protect young saplings/i)).toBeInTheDocument();
     expect(calls.weather).toBe(0);
+    expect(screen.getAllByText(/^this week$/i)).toHaveLength(1);
   });
 
   it('asks for this season’s tasks once per plant per session, across remounts', async () => {

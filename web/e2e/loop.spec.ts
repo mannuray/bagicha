@@ -1,25 +1,37 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import path from 'node:path';
 
 const LEAF = path.join(import.meta.dirname, 'fixtures', 'leaf.jpg');
+const SHOTS = path.join(import.meta.dirname, '..', 'test-results', 'screens');
+
+/** Every screen must fit a 360px phone: no sideways scrolling. */
+async function checkScreen(page: Page, name: string) {
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(overflow, `${name} scrolls sideways by ${overflow}px`).toBeLessThanOrEqual(0);
+  await page.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: true });
+}
 
 test('the core loop: sign in → onboard → add a tree → log → scan → complete the task → season review', async ({ page }) => {
   // Sign in with the dev OTP (enabled only outside production).
   await page.goto('/login');
+  await checkScreen(page, '01-login');
   await page.getByLabel(/phone number/i).fill('9999988888');
   await page.getByRole('button', { name: /send code/i }).click();
   await page.getByLabel(/verification code/i).fill('123456');
   await page.getByRole('button', { name: /verify/i }).click();
 
   // Onboarding (fresh database, so it always runs).
+  await checkScreen(page, '02-language');
   await page.getByRole('button', { name: /english/i }).click();
   await page.getByRole('button', { name: /continue/i }).click();
+  await checkScreen(page, '03-region');
   await page.getByRole('button', { name: /east india/i }).click();
   await page.getByLabel(/district/i).fill('Patna');
   await page.getByRole('button', { name: /continue/i }).click();
   await page.getByRole('button', { name: /fruit trees/i }).click();
   await page.getByRole('button', { name: /finish/i }).click();
   await expect(page.getByRole('heading', { name: /good (morning|afternoon|evening)/i })).toBeVisible();
+  await checkScreen(page, '04-dashboard-empty');
 
   // Add a tree via the catalogue.
   await page.getByRole('link', { name: /add a tree/i }).click();
@@ -27,6 +39,7 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await page.getByLabel(/what is it/i).fill('mango');
   await page.getByRole('option').first().click();
   await page.getByLabel(/year planted/i).fill('2015');
+  await checkScreen(page, '05-add-tree');
   await page.getByRole('button', { name: /save tree/i }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Aam' })).toBeVisible();
 
@@ -35,9 +48,11 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await page.getByRole('button', { name: /^flowering$/i }).click();
   await page.getByLabel(/add a photo/i).setInputFiles(LEAF);
   await page.getByLabel(/note/i).fill('Panicles opening');
+  await checkScreen(page, '06-log-moment');
   await page.getByRole('button', { name: /save moment/i }).click();
   await expect(page.getByText('Panicles opening')).toBeVisible();
   await expect(page.locator('ol img').first()).toBeVisible();
+  await checkScreen(page, '07-tree-biography');
 
   // Scan → diagnose (fake AI) → saved to Aam with a follow-up task.
   // Detail and result screens have a back button, not the bottom bar; go via the tab.
@@ -45,15 +60,18 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await page.getByRole('button', { name: /what's wrong/i }).click();
   await page.getByLabel(/which tree/i).selectOption({ label: 'Aam' });
   await page.getByLabel(/take or choose a photo/i).setInputFiles(LEAF);
+  await checkScreen(page, '08-scan');
   await page.getByRole('button', { name: /^diagnose$/i }).click();
   await expect(page.getByRole('heading', { name: /pest/i })).toBeVisible();
   await expect(page.getByText(/saved to aam/i)).toBeVisible();
   await expect(page.getByRole('article', { name: /spray neem oil/i })).toBeVisible();
+  await checkScreen(page, '09-diagnosis');
 
   // Dashboard: the follow-up is due this week; complete it.
   await page.goto('/');
   const task = page.getByRole('article', { name: /spray neem oil/i });
   await expect(task).toBeVisible();
+  await checkScreen(page, '10-dashboard');
   await task.getByRole('button', { name: /complete/i }).click();
   await expect(task).toBeHidden();
 
@@ -62,4 +80,7 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await page.getByRole('link', { name: /aam/i }).click();
   await page.getByRole('link', { name: /season review/i }).click();
   await expect(page.getByRole('heading', { name: /season \d{4}/i })).toBeVisible();
+  await checkScreen(page, '11-season-review');
+  await page.goto('/profile');
+  await checkScreen(page, '12-profile');
 });

@@ -24,7 +24,7 @@ export function DashboardScreen() {
 
   return (
     <Screen nav>
-      <header className="bg-primary-gradient relative overflow-hidden rounded-b-xl px-6 pb-14 pt-12 text-on-primary shadow-[0_10px_40px_rgba(28,28,25,0.06)]">
+      <header className="bg-primary-gradient relative overflow-hidden rounded-b-xl px-6 pb-20 pt-12 text-on-primary shadow-[0_10px_40px_rgba(28,28,25,0.06)]">
         <div className="pebble-large absolute -right-16 -top-10 h-56 w-56 bg-primary-fixed-dim/10" aria-hidden />
         <p className="relative font-label text-sm uppercase tracking-widest text-primary-fixed-dim">
           {[user?.district, guide.data?.season].filter(Boolean).join(' • ')}
@@ -36,8 +36,8 @@ export function DashboardScreen() {
         </h1>
       </header>
 
-      <main className="relative z-10 -mt-6 space-y-8 px-6">
-        <section aria-labelledby="week-heading" className="space-y-3">
+      <main className="relative z-10 -mt-8 space-y-8 px-6">
+        <section aria-labelledby="week-heading" className="space-y-3 rounded-xl bg-surface pt-4">
           <div className="flex items-baseline justify-between">
             <h2 id="week-heading" className="ml-2 font-label text-sm font-bold uppercase tracking-widest text-outline">
               {t('dashboard.thisWeek')}

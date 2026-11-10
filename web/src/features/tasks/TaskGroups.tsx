@@ -32,9 +32,11 @@ export function TaskGroups({
         .filter((s) => s.items.length > 0)
         .map((s) => (
           <section key={s.key} aria-label={t(`tasks.group.${s.key}`)}>
-            <h2 className="mb-3 ml-2 font-label text-sm font-bold uppercase tracking-widest text-outline">
-              {t(`tasks.group.${s.key}`)}
-            </h2>
+            {!limit && (
+              <h2 className="mb-3 ml-2 font-label text-sm font-bold uppercase tracking-widest text-outline">
+                {t(`tasks.group.${s.key}`)}
+              </h2>
+            )}
             <div className="space-y-3">
               {s.items.map((task) => (
                 <TaskCard key={task.id} task={task} now={now} showPlant={showPlant} onError={onError} />
