@@ -1,14 +1,19 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { Button, EmptyState, ErrorState, Icon, LoadingState, Screen } from '../../ui';
+import { Button, cx, EmptyState, ErrorState, Icon, LoadingState, Screen } from '../../ui';
 import { usePlants } from './api';
 import type { Plant } from './schemas';
 
-/** Stitch "Orchard Gallery": every tree as a pebble card, newest first. */
+/** Stitch "Orchard Gallery": growing trees, and past trees on their own tab. */
 export function PlantListScreen() {
   const { t } = useTranslation();
+  const [status, setStatus] = useState<'active' | 'ended'>('active');
   const [pages, setPages] = useState(1);
+  const choose = (next: 'active' | 'ended') => {
+    setStatus(next);
+    setPages(1);
+  };
 
   return (
     <Screen nav>
@@ -26,22 +31,42 @@ export function PlantListScreen() {
         </Link>
       </header>
       <main className="space-y-3 px-4">
+        <div role="tablist" className="flex gap-2">
+          {(['active', 'ended'] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              role="tab"
+              aria-selected={status === s}
+              onClick={() => choose(s)}
+              className={cx(
+                'min-h-11 rounded-full px-5 font-label text-xs font-bold uppercase tracking-wider transition-colors duration-150',
+                status === s ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-primary/70',
+              )}
+            >
+              {t(s === 'active' ? 'plants.list.growing' : 'plants.list.past')}
+            </button>
+          ))}
+        </div>
         {Array.from({ length: pages }, (_, i) => (
-          <PlantPage key={i} page={i + 1} isLast={i + 1 === pages} onMore={() => setPages((p) => p + 1)} />
+          <PlantPage key={`${status}-${i}`} status={status} page={i + 1} isLast={i + 1 === pages} onMore={() => setPages((p) => p + 1)} />
         ))}
       </main>
     </Screen>
   );
 }
 
-function PlantPage({ page, isLast, onMore }: { page: number; isLast: boolean; onMore: () => void }) {
+function PlantPage({ status, page, isLast, onMore }: { status: 'active' | 'ended'; page: number; isLast: boolean; onMore: () => void }) {
   const { t } = useTranslation();
-  const query = usePlants(page);
+  const query = usePlants(page, status);
 
   if (query.isError) return <ErrorState error={query.error} onRetry={() => void query.refetch()} />;
   if (query.isPending) return <LoadingState />;
   const { items, pagination } = query.data;
 
+  if (page === 1 && items.length === 0 && status === 'ended') {
+    return <p className="py-6 text-center font-body text-sm text-on-surface-variant">{t('plants.list.emptyPast')}</p>;
+  }
   if (page === 1 && items.length === 0) {
     return (
       <EmptyState
@@ -71,7 +96,7 @@ function PlantPage({ page, isLast, onMore }: { page: number; isLast: boolean; on
 }
 
 function PlantCard({ plant }: { plant: Plant }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   return (
     <Link
       to={`/plants/${plant.id}`}
@@ -86,7 +111,12 @@ function PlantCard({ plant }: { plant: Plant }) {
           {[plant.species, plant.variety].filter(Boolean).join(' · ')}
         </span>
         <span className="mt-1 block font-label text-[11px] font-bold uppercase tracking-widest text-secondary">
-          {t(`plants.stage.${plant.lifecycle_stage}`)}
+          {plant.ended_at
+            ? t('plants.list.pastLine', {
+                reason: t(`biography.end.reason.${plant.end_reason ?? 'UNKNOWN_CAUSE'}`),
+                date: new Date(plant.ended_at).toLocaleDateString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN', { month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }),
+              })
+            : t(`plants.stage.${plant.lifecycle_stage}`)}
         </span>
       </span>
       <Icon name="chevron_right" className="text-outline" />

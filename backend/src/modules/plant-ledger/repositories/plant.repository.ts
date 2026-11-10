@@ -30,9 +30,13 @@ export type PlantWithAiContext = Prisma.PlantGetPayload<{
   include: typeof aiContextInclude;
 }>;
 
-export type PlantDetail = Prisma.PlantGetPayload<{
-  include: { _count: { select: { journal_entries: true } } };
-}>;
+const detailInclude = {
+  _count: { select: { journal_entries: true } },
+  replaced_by: { select: { id: true, name: true } },
+  replaces: { select: { id: true, name: true } },
+} satisfies Prisma.PlantInclude;
+
+export type PlantDetail = Prisma.PlantGetPayload<{ include: typeof detailInclude }>;
 
 /** Every query is filtered by owner; a miss returns null, never throws. */
 @Injectable()
@@ -55,7 +59,7 @@ export class PlantRepository {
   ): Promise<PlantDetail | null> {
     return this.prisma.plant.findFirst({
       where: { id: plantId, user_id: userId },
-      include: { _count: { select: { journal_entries: true } } },
+      include: detailInclude,
     });
   }
 

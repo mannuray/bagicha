@@ -138,6 +138,69 @@ describe('tree biography', () => {
     expect(within(glance).getByText(/in a container/i)).toBeInTheDocument();
   });
 
+  it('marks a tree as died with a cause and links the recent diagnosis', async () => {
+    handlers();
+    let body: unknown;
+    server.use(
+      http.get(`${API}/ledger/plants/p1/timeline`, () =>
+        HttpResponse.json(pageOf([entry({ id: 'd1', type: 'PEST_DIAGNOSIS', content: 'Mealybugs', timestamp: '2026-11-01T05:00:00Z' })])),
+      ),
+      http.post(`${API}/ledger/plants/p1/end`, async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json(ok(plantRecord({ ended_at: '2026-11-10T06:00:00.000Z', end_reason: 'DISEASE_OR_PEST' })), { status: 201 });
+      }),
+    );
+    renderWithApp(routes, { route: '/plants/p1' });
+    await userEvent.click(await screen.findByRole('button', { name: /mark as ended/i }));
+    const sheet = screen.getByRole('dialog', { name: /mark as ended/i });
+    await userEvent.click(within(sheet).getByRole('button', { name: /disease or pest/i }));
+    expect(within(sheet).getByRole('button', { name: /linked: mealybugs/i })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.type(within(sheet).getByLabelText(/note/i), 'Spread fast');
+    await userEvent.click(within(sheet).getByRole('button', { name: /^save$/i }));
+    await waitFor(() => expect(body).toEqual({ reason: 'DISEASE_OR_PEST', note: 'Spread fast', entry_id: 'd1' }));
+  });
+
+  it('an ended tree is read-only, with a calm banner, restore and replace', async () => {
+    let restored = 0;
+    handlers({ plant: { ended_at: '2026-03-15T06:00:00.000Z', end_reason: 'DISEASE_OR_PEST', end_note: 'Canker' } });
+    server.use(
+      http.post(`${API}/ledger/plants/p1/restore`, () => {
+        restored += 1;
+        return HttpResponse.json(ok(plantRecord()), { status: 201 });
+      }),
+    );
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByText(/died · mar 2026 · disease or pest/i)).toBeInTheDocument();
+    expect(screen.getByText('Canker')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /log a moment/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /this season/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /upcoming care/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /mark as ended/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /sanctuary record/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /plant a replacement/i })).toHaveAttribute('href', '/plants/new?replaces=p1');
+    await userEvent.click(screen.getByRole('button', { name: /restore/i }));
+    await waitFor(() => expect(restored).toBe(1));
+  });
+
+  it('an ended tree has no health badge and its age stops at its end', async () => {
+    handlers({ plant: { ended_at: '2020-06-15T06:00:00.000Z', end_reason: 'WEATHER' } });
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByText(/died · jun 2020 · weather/i)).toBeInTheDocument();
+    expect(screen.getByText(/planted 2015 · 5 years/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^healthy$/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/needs attention/i)).not.toBeInTheDocument();
+  });
+
+  it('links a replaced tree and its replacement both ways', async () => {
+    handlers({ plant: { ended_at: '2026-03-15T06:00:00.000Z', end_reason: 'REPLACED', replaced_by_id: 'p2', replaced_by: { id: 'p2', name: 'Nimbu 2' }, replaces: [] } });
+    const first = renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByRole('link', { name: /replaced by nimbu 2/i })).toHaveAttribute('href', '/plants/p2');
+    first.unmount();
+    handlers({ plant: { replaces: [{ id: 'p0', name: 'Old Nimbu' }] } });
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByRole('link', { name: /replaces old nimbu/i })).toHaveAttribute('href', '/plants/p0');
+  });
+
   it('drops Do now, Botanical Essence and the Cycles section', async () => {
     handlers();
     renderWithApp(routes, { route: '/plants/p1' });

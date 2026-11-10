@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { systemClock } from '../../lib/clock';
-import { ErrorState, Icon, LoadingState, NotInGarden, Screen, isPlantMissing } from '../../ui';
+import { Button, ErrorState, Icon, LoadingState, NotInGarden, Screen, isPlantMissing } from '../../ui';
 import { useTimeline } from '../journal';
 import { usePlant, type PlantDetail } from '../plants';
 import { healthLabel } from './health-label';
 import { AtAGlance } from './sections/AtAGlance';
+import { EndedBanner } from './sections/EndedBanner';
+import { EndSheet } from './sections/EndSheet';
 import { photoKeyOf } from './sections/format';
 import { Hero } from './sections/Hero';
 import { MemoryCard } from './sections/MemoryCard';
@@ -58,27 +61,54 @@ function Biography({ plant }: { plant: PlantDetail }) {
   const now = systemClock.now();
   const health = healthLabel(plant, entries, now);
   const heroKey = entries.map((e) => photoKeyOf(e)).find(Boolean) ?? null;
+  const ended = Boolean(plant.ended_at);
+  const [ending, setEnding] = useState(false);
 
   return (
     <Screen className="pb-28">
       <BackButton />
       <Hero plant={plant} health={health} photoKey={heroKey} now={now} />
       <main className="space-y-7 px-4">
-        <MemoryCard plant={plant} now={now} />
-        <AtAGlance plant={plant} />
-        <ThisSeason plantId={plant.id} />
-        <UpcomingCare plantId={plant.id} now={now} />
+        {plant.replaces.map((old) => (
+          <Link key={old.id} to={`/plants/${old.id}`} className="inline-flex min-h-11 items-center gap-1 font-label text-sm font-bold text-secondary">
+            <Icon name="history" className="text-base" />
+            {t('biography.end.replaces', { name: old.name })}
+          </Link>
+        ))}
+        {ended ? (
+          // An ended tree is a record: its history stays, the growing work goes.
+          <EndedBanner plant={plant} />
+        ) : (
+          <>
+            <MemoryCard plant={plant} now={now} />
+            <AtAGlance plant={plant} />
+            <ThisSeason plantId={plant.id} />
+            <UpcomingCare plantId={plant.id} now={now} />
+          </>
+        )}
         <YearOnYear plantId={plant.id} now={now} />
         <Milestones plant={plant} />
         <SanctuaryRecord plantId={plant.id} />
+        {!ended &&
+          (ending ? (
+            <EndSheet plantId={plant.id} entries={entries} now={now} onClose={() => setEnding(false)} />
+          ) : (
+            <div className="flex justify-center">
+              <Button variant="quiet" onClick={() => setEnding(true)}>
+                {t('biography.end.open')}
+              </Button>
+            </div>
+          ))}
       </main>
-      <Link
-        to={`/plants/${plant.id}/log`}
-        className="bg-primary-gradient fixed bottom-5 right-4 z-50 flex items-center gap-2 rounded-full px-4 py-2.5 text-on-primary shadow-[0_8px_40px_rgba(23,49,36,0.2)] transition-transform hover:scale-95"
-      >
-        <Icon name="add_a_photo" filled />
-        <span className="font-label font-bold tracking-wide">{t('biography.logMoment')}</span>
-      </Link>
+      {!ended && (
+        <Link
+          to={`/plants/${plant.id}/log`}
+          className="bg-primary-gradient fixed bottom-5 right-4 z-50 flex items-center gap-2 rounded-full px-4 py-2.5 text-on-primary shadow-[0_8px_40px_rgba(23,49,36,0.2)] transition-transform hover:scale-95"
+        >
+          <Icon name="add_a_photo" filled />
+          <span className="font-label font-bold tracking-wide">{t('biography.logMoment')}</span>
+        </Link>
+      )}
     </Screen>
   );
 }

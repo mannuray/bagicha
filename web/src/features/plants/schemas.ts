@@ -7,6 +7,8 @@ const nullableOptional = z
   .transform((v) => v ?? null);
 
 const range = z.tuple([z.number(), z.number()]);
+const plantLink = z.object({ id: z.string(), name: z.string() });
+
 export const lifeProfileSchema = z.object({
   first_fruit_months: range,
   productive_until_months: range,
@@ -53,6 +55,8 @@ export const plantDetailSchema = plantSchema.extend({
   first_harvest_at: nullableOptional,
   latest_harvest_at: nullableOptional,
   life_profile: lifeProfileSchema.nullable().optional().transform((v) => v ?? null),
+  replaced_by: plantLink.nullable().optional().transform((v) => v ?? null),
+  replaces: z.array(plantLink).optional().transform((v) => v ?? []),
 });
 export type PlantDetail = z.infer<typeof plantDetailSchema>;
 

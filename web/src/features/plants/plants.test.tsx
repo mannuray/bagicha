@@ -52,6 +52,46 @@ describe('my plants', () => {
   });
 });
 
+describe('past trees', () => {
+  it('lists past trees under their own tab with reason and date', async () => {
+    server.use(
+      http.get(`${API}/ledger/plants`, ({ request }) =>
+        new URL(request.url).searchParams.get('status') === 'ended'
+          ? HttpResponse.json(pageOf([plantRecord({ id: 'p9', name: 'Old Papita', ended_at: '2026-03-15T06:00:00.000Z', end_reason: 'OLD_AGE' })]))
+          : HttpResponse.json(pageOf([plantRecord()])),
+      ),
+    );
+    renderWithApp(routes, { route: '/plants' });
+    expect(await screen.findByText('Aam')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: /past trees/i }));
+    expect(await screen.findByText('Old Papita')).toBeInTheDocument();
+    expect(screen.getByText(/old age · mar 2026/i)).toBeInTheDocument();
+    expect(screen.queryByText('Aam')).not.toBeInTheDocument();
+  });
+});
+
+describe('plant a replacement', () => {
+  it('prefills from the tree it replaces and links them on save', async () => {
+    let created: Record<string, unknown> | undefined;
+    server.use(
+      http.get(`${API}/ledger/plants/p1`, () =>
+        HttpResponse.json(ok({ ...plantRecord({ name: 'Nimbu', species: 'Lemon', variety: 'Kagzi', ended_at: '2026-03-15T06:00:00.000Z' }), _count: { journal_entries: 0 } })),
+      ),
+      http.post(`${API}/ledger/plants`, async ({ request }) => {
+        created = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(ok(plantRecord({ id: 'new1' })), { status: 201 });
+      }),
+      http.post(`${API}/seasonal/plant/new1/materialize-tasks`, () => HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 })),
+    );
+    renderWithApp(routes, { route: '/plants/new?replaces=p1' });
+    await waitFor(() => expect(screen.getByLabelText(/^species/i)).toHaveValue('Lemon'));
+    expect(screen.getByLabelText(/variety/i)).toHaveValue('Kagzi');
+    await userEvent.type(screen.getByLabelText(/tree name/i), 'Nimbu 2');
+    await userEvent.click(screen.getByRole('button', { name: /add to sanctuary/i }));
+    await waitFor(() => expect(created).toMatchObject({ name: 'Nimbu 2', species: 'Lemon', replaces_id: 'p1' }));
+  });
+});
+
 describe('add a plant', () => {
   it('opens as "Start a Legacy" with the kind chips', async () => {
     renderWithApp(routes, { route: '/plants/new' });

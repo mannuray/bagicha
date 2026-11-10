@@ -71,6 +71,10 @@ Each feature exposes an `index.ts`; siblings import only that. Device access sit
   - The Sanctuary Record (grouped by year, filtered on the server).
 
   Stitch's Botanical Essence, big growth rings and the "Do now" list are left out on purpose.
+- **Tree life and loss** (spec `tree-life-and-loss`):
+  - **Life line:** a species life profile (backend) adds "First fruit usually at…", "productive until about…" or "Past the typical productive age · plan a replacement". Containers get no span or nudge.
+  - **Mark as ended:** records Died (with a cause and the recent diagnosis linked) or Removed / Replaced.
+  - **Ended trees:** read-only, listed under **Past trees**, with **Restore** and **Plant a replacement** (the two records link both ways).
 - **Placeholders, marked `TODO(...)` in code:**
   - vitality % (`TODO(vitality)`: no health score yet);
   - push memory reminders (`TODO(push-memory)`: no notification service);

@@ -10,7 +10,8 @@ import { plantAge } from '../plant-age';
 export function Hero({ plant, health, photoKey, now }: { plant: PlantDetail; health: ReturnType<typeof healthLabel>; photoKey: string | null; now: Date }) {
   const { t } = useTranslation();
   const photo = useMediaUrl(photoKey);
-  const age = plantAge(plant.planting_date, plant.planting_date_precision, now);
+  // An ended tree's age stops at its end.
+  const age = plantAge(plant.planting_date, plant.planting_date_precision, plant.ended_at ? new Date(plant.ended_at) : now);
   const ageLine = !age
     ? null
     : age.unit === 'months'
@@ -36,6 +37,7 @@ export function Hero({ plant, health, photoKey, now }: { plant: PlantDetail; hea
         </div>
         {/* TODO(vitality): Stitch shows a "Vitality 94%" score here. It needs a backend
             health score; plants only have a health_status label today, so we show that. */}
+        {!plant.ended_at && (
         <div
           className={cx(
             'glass-panel pebble-large flex min-w-[80px] flex-col items-center justify-center p-3 text-center text-on-primary shadow-[0_8px_32px_rgba(0,0,0,0.12)]',
@@ -45,6 +47,7 @@ export function Hero({ plant, health, photoKey, now }: { plant: PlantDetail; hea
           <Icon name={health.tone === 'attention' ? 'warning' : 'favorite'} filled />
           <span className="mt-1 font-label text-[11px] font-bold uppercase tracking-wider">{health.label ?? t('biography.needsAttention')}</span>
         </div>
+        )}
       </div>
     </header>
   );

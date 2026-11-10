@@ -213,5 +213,8 @@ describe('when a tree ends', () => {
     expect(created.status).toBe(201);
     const old = await a.get(base);
     expect(old.body.data.replaced_by_id).toBe(created.body.data.id);
+    expect(old.body.data.replaced_by).toMatchObject({ id: created.body.data.id, name: 'Nimbu 2' });
+    const fresh = await a.get(`/api/v1/ledger/plants/${created.body.data.id}`);
+    expect(fresh.body.data.replaces).toEqual([{ id, name: 'Nimbu' }]);
   });
 });

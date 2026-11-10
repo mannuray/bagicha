@@ -88,6 +88,24 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await page.getByRole('link', { name: /season review/i }).click();
   await expect(page.getByRole('heading', { name: /season \d{4}/i })).toBeVisible();
   await checkScreen(page, '11-season-review');
+
+  // A lost tree: mark Aam as died of disease, find it under Past trees, then restore it.
+  await page.goBack();
+  await page.getByRole('button', { name: /mark as ended/i }).click();
+  const sheet = page.getByRole('dialog', { name: /mark as ended/i });
+  await sheet.getByRole('button', { name: /disease or pest/i }).click();
+  await sheet.getByRole('button', { name: /^save$/i }).click();
+  await expect(page.getByText(/died · .* · disease or pest/i)).toBeVisible();
+  await expect(page.getByRole('link', { name: /log a moment/i })).toBeHidden();
+  await checkScreen(page, '11b-ended-tree');
+  await page.goto('/plants');
+  await page.getByRole('tab', { name: /past trees/i }).click();
+  await page.getByRole('link', { name: /aam/i }).click();
+  await page.getByRole('button', { name: /restore/i }).click();
+  await expect(page.getByRole('link', { name: /log a moment/i })).toBeVisible();
+  await page.goto('/plants');
+  await expect(page.getByRole('link', { name: /aam/i })).toBeVisible();
+
   await page.goto('/profile');
   await checkScreen(page, '12-profile');
 });

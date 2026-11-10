@@ -81,7 +81,9 @@ function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState 
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const prefill = plantId ? null : params.get('prefill');
+  const replacesId = plantId ? null : params.get('replaces');
   const resolved = useResolvePlant(prefill);
+  const replaced = usePlant(replacesId ?? undefined);
   const create = useCreatePlant();
   const update = useUpdatePlant(plantId ?? '');
   const [form, setForm] = useState<FormState>(initial);
@@ -95,6 +97,15 @@ function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState 
       setForm((f) => ({ ...f, species: f.species || prefill }));
     }
   }, [resolved.data, prefill]);
+
+  // Planting a replacement: start from the species and variety of the tree it replaces
+  // (adjusted once during render, when the old tree arrives).
+  const [prefilledFrom, setPrefilledFrom] = useState<string | null>(null);
+  if (replaced.data && prefilledFrom !== replaced.data.id) {
+    const old = replaced.data;
+    setPrefilledFrom(old.id);
+    setForm((f) => ({ ...f, species: f.species || old.species, variety: f.variety || (old.variety ?? ''), record_kind: old.record_kind }));
+  }
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
   const mutation = plantId ? update : create;
@@ -112,7 +123,10 @@ function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState 
       if (Object.keys(changes).length === 0) return navigate(`/plants/${plantId}`);
       update.mutate(changes, { onSuccess: () => navigate(`/plants/${plantId}`, { replace: true }) });
     } else {
-      create.mutate(toInput(form), { onSuccess: (plant) => navigate(`/plants/${plant.id}`, { replace: true }) });
+      create.mutate(
+        { ...toInput(form), ...(replacesId ? { replaces_id: replacesId } : {}) },
+        { onSuccess: (plant) => navigate(`/plants/${plant.id}`, { replace: true }) },
+      );
     }
   };
 

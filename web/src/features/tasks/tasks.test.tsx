@@ -116,6 +116,13 @@ describe('tasks screen', () => {
     expect(within(closed).getByText(/aam · skipped/i)).toBeInTheDocument();
   });
 
+  it('labels cancelled tasks in closed history', async () => {
+    server.use(http.get(`${API}/ledger/tasks`, () => HttpResponse.json(pageOf([taskRecord({ id: 'x', title: 'Prune lower canopy', status: 'CANCELLED' })]))));
+    renderWithApp(routes, { route: '/tasks' });
+    const closed = await screen.findByRole('region', { name: /closed history/i });
+    expect(within(closed).getByText(/cancelled · tree ended/i)).toBeInTheDocument();
+  });
+
   it('says when nothing is due', async () => {
     server.use(http.get(`${API}/ledger/tasks`, () => HttpResponse.json(pageOf([]))));
     renderWithApp(routes, { route: '/tasks' });

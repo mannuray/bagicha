@@ -157,7 +157,11 @@
       "add": "Add a plant",
       "emptyTitle": "Your garden is waiting",
       "emptyBody": "Add the trees you tend to start their story.",
-      "addFirst": "Add your first tree"
+      "addFirst": "Add your first tree",
+      "growing": "Growing",
+      "past": "Past trees",
+      "pastLine": "{{reason}} · {{date}}",
+      "emptyPast": "No past trees. Trees you mark as ended are kept here."
     },
     "stage": {
       "SAPLING": "Sapling",
@@ -216,7 +220,8 @@
       "completedYesterday": "Completed yesterday",
       "completedDays_one": "Completed {{count}} day ago",
       "completedDays_other": "Completed {{count}} days ago",
-      "skipped": "Skipped"
+      "skipped": "Skipped",
+      "cancelled": "Cancelled · tree ended"
     },
     "refreshSeason": "Refresh this season's tasks",
     "emptyTitle": "Nothing due this week",
@@ -391,7 +396,37 @@
     "avoid": "Avoid",
     "watchFor": "Watch for",
     "upcomingCare": "Upcoming Care",
-    "noEntries": "No moments logged yet."
+    "noEntries": "No moments logged yet.",
+    "end": {
+      "open": "Mark as ended",
+      "title": "Mark as ended",
+      "intro": "Record what happened. Its history stays, and you can restore it later.",
+      "reason": {
+        "DISEASE_OR_PEST": "Disease or pest",
+        "WEATHER": "Weather",
+        "WATER": "Water",
+        "OLD_AGE": "Old age",
+        "UNKNOWN_CAUSE": "Unknown cause",
+        "REMOVED": "Removed",
+        "REPLACED": "Replaced"
+      },
+      "verb": {
+        "died": "Died",
+        "REMOVED": "Removed",
+        "REPLACED": "Replaced"
+      },
+      "date": "Date",
+      "dateHint": "Leave blank for today.",
+      "note": "Note (optional)",
+      "linked": "Linked: {{what}} · {{date}}",
+      "save": "Save",
+      "banner": "{{verb}} · {{date}} · {{reason}}",
+      "bannerShort": "{{verb}} · {{date}}",
+      "replace": "Plant a replacement",
+      "restore": "Restore",
+      "replacedBy": "Replaced by {{name}}",
+      "replaces": "Replaces {{name}}"
+    }
   },
   "scan": {
     "kicker": "Plant doctor",

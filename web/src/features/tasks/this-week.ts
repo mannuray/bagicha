@@ -40,6 +40,7 @@ export function closedTasks(tasks: Task[], limit = 10): Task[] {
 
 export function closedLabel(task: Task, now: Date): { key: string; count?: number } {
   if (task.status === 'SKIPPED') return { key: 'skipped' };
+  if (task.status === 'CANCELLED') return { key: 'cancelled' };
   if (!task.completed_at) return { key: 'completed' };
   const ago = -istDayDiff(now, new Date(task.completed_at));
   if (ago <= 0) return { key: 'completedToday' };
