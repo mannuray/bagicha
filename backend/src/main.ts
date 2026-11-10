@@ -4,7 +4,7 @@ import { configureApp } from './bootstrap';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    rawBody: true,
+    bodyParser: false,
     bufferLogs: true,
   });
   configureApp(app);

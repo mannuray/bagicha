@@ -103,3 +103,9 @@ is built against the "After" column.
 
 **Known, unchanged behaviour flagged for Slice 1**
 - `GET seasonal/weather` always uses pincode `800001`: users have no pincode field (the old code read `req.user.pincode`, which never existed).
+
+## Slice 1
+
+| Endpoint / area | Before | After | Task |
+|---|---|---|---|
+| `POST vision/identify`, `POST vision/diagnose` | default 100 KB JSON limit (phone photos rejected, unhandled 500) | 8 MB JSON limit on `/api/v1/vision/*`; elsewhere 100 KB. Oversized bodies → 413 `PAYLOAD_TOO_LARGE`, malformed JSON → 400 `BAD_REQUEST` (shared envelope) | S1-1 |

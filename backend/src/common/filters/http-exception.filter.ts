@@ -31,6 +31,27 @@ const STATUS_CODES: Record<number, string> = {
   [HttpStatus.TOO_MANY_REQUESTS]: 'RATE_LIMITED',
 };
 
+/** The shared error envelope, for handlers that run outside Nest's filters. */
+export function errorEnvelope(
+  request: Request,
+  code: string,
+  message: string,
+): { success: false; error: ErrorBody } {
+  const header = request.headers['x-request-id'];
+  return {
+    success: false,
+    error: {
+      code,
+      message,
+      request_id: (Array.isArray(header) ? header[0] : header) ?? randomUUID(),
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      details: null,
+      validation_errors: null,
+    },
+  };
+}
+
 type NestErrorResponse = {
   code?: unknown;
   error?: unknown;

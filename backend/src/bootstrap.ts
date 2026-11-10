@@ -3,9 +3,11 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { MonitorService, MonitorValidationPipe } from './common/monitor';
 import { Logger } from 'nestjs-pino';
+import { applyBodyLimits } from './common/http/body-limits';
 
 /** Global app wiring shared by main.ts and the e2e harness. */
 export function configureApp(app: INestApplication): INestApplication {
+  applyBodyLimits(app);
   const logger = app.get(Logger);
   app.useLogger(logger);
   app.useGlobalInterceptors(new TransformInterceptor());
