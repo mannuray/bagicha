@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 
+import { RazorpayWebhookDto } from './dto/razorpay-webhook.dto';
+
 @Injectable()
 export class SubscriptionService {
   constructor(
@@ -28,11 +30,9 @@ export class SubscriptionService {
     };
   }
 
-  async handleWebhook(payload: any) {
-    const { event, payload: data } = payload;
-
-    if (event === 'order.paid') {
-      const userId = data.payment.entity.notes.user_id;
+  async handleWebhook(payload: RazorpayWebhookDto) {
+    if (payload.event === 'order.paid') {
+      const userId = payload.payload.payment.entity.notes.user_id;
       console.log(`[WEBHOOK] Payment successful for user ${userId}`);
 
       // Update user status to Premium

@@ -4,11 +4,13 @@ import {
   Body,
   UseGuards,
   Request,
-  Get,
 } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AuthGuard } from '@nestjs/passport';
+
+import { RazorpaySignatureGuard } from './razorpay-signature.guard';
+import { RazorpayWebhookDto } from './dto/razorpay-webhook.dto';
 
 @Controller('subscription')
 export class SubscriptionController {
@@ -21,7 +23,8 @@ export class SubscriptionController {
   }
 
   @Post('webhook')
-  async handleWebhook(@Body() payload: any) {
+  @UseGuards(RazorpaySignatureGuard)
+  async handleWebhook(@Body() payload: RazorpayWebhookDto) {
     return this.subscriptionService.handleWebhook(payload);
   }
 }
