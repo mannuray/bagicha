@@ -1,5 +1,5 @@
 import { RegionCluster, SeasonWindow } from '@prisma/client';
-import { resolveRegionCluster } from './region-cluster';
+import { regionFor, resolveRegionCluster } from './region-cluster';
 import { resolveSeasonWindow } from './season-window';
 
 describe('resolveSeasonWindow (IST)', () => {
@@ -38,5 +38,22 @@ describe('resolveRegionCluster', () => {
     [null, RegionCluster.NORTH_INDIA],
   ])('%s → %s', (district, cluster) => {
     expect(resolveRegionCluster(district)).toBe(cluster);
+  });
+});
+
+describe('regionFor', () => {
+  it('prefers the region the user chose', () => {
+    expect(
+      regionFor({
+        region_cluster: RegionCluster.HILLS_COOL,
+        district: 'Patna',
+      }),
+    ).toBe(RegionCluster.HILLS_COOL);
+  });
+
+  it('falls back to matching the district when no region is stored', () => {
+    expect(regionFor({ region_cluster: null, district: 'Patna' })).toBe(
+      RegionCluster.EAST_INDIA,
+    );
   });
 });

@@ -205,6 +205,8 @@ model User {
   latitude       Float?
   longitude      Float?
   district       String?
+  /// Agro-climatic region the user picked; seasonal guidance prefers it over matching the district.
+  region_cluster RegionCluster?
   garden_types   String[] @default([])
   language_pref  String   @default("en")
   ranking_points Int      @default(0)

@@ -1,4 +1,12 @@
-import { IsArray, IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
+import { RegionCluster } from '@prisma/client';
+import {
+  IsArray,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsEnum,
+} from 'class-validator';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -16,6 +24,10 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   district?: string | null;
+
+  @IsOptional()
+  @IsEnum(RegionCluster)
+  region_cluster?: RegionCluster | null;
 
   @IsOptional()
   @IsArray()

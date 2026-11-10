@@ -12,6 +12,7 @@ export class UserService {
       latitude: dto.latitude,
       longitude: dto.longitude,
       district: dto.district,
+      region_cluster: dto.region_cluster,
       garden_types: dto.garden_types ?? undefined,
       language_pref: dto.language_pref ?? undefined,
     });

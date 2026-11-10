@@ -32,7 +32,7 @@ import {
   buildTaskTemplates,
   TaskTemplateInput,
 } from './domain/overlay-rules';
-import { resolveRegionCluster } from './domain/region-cluster';
+import { regionFor } from './domain/region-cluster';
 import { resolveSeasonWindow } from './domain/season-window';
 import { OverlayRepository } from './repositories/overlay.repository';
 import { SeasonalPackRepository } from './repositories/seasonal-pack.repository';
@@ -156,7 +156,7 @@ export class SeasonalService implements OnModuleInit {
     user: User,
   ): Promise<SeasonalPack> {
     const cohort = {
-      region_cluster: resolveRegionCluster(user.district),
+      region_cluster: regionFor(user),
       species_family: this.species.resolveSpeciesFamily(plant),
       lifecycle_stage: plant.lifecycle_stage,
       season_window: resolveSeasonWindow(this.clock.now()),

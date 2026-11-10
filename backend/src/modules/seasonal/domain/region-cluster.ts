@@ -1,4 +1,4 @@
-import { RegionCluster } from '@prisma/client';
+import { RegionCluster, User } from '@prisma/client';
 
 const CLUSTERS: Array<[RegionCluster, string[]]> = [
   [RegionCluster.EAST_INDIA, ['malda', 'kolkata', 'patna']],
@@ -19,4 +19,11 @@ export function resolveRegionCluster(
     places.some((p) => name.includes(p)),
   );
   return match ? match[0] : RegionCluster.NORTH_INDIA;
+}
+
+/** The user's chosen region, or a best guess from their district for older profiles. */
+export function regionFor(
+  user: Pick<User, 'region_cluster' | 'district'>,
+): RegionCluster {
+  return user.region_cluster ?? resolveRegionCluster(user.district);
 }
