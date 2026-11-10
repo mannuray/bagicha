@@ -7,6 +7,10 @@ import { UserRepository } from '../user';
 import { RedisService } from '../../common/redis/redis.service';
 import { randomInt } from 'crypto';
 
+const OTP_TTL_SECONDS = 300;
+/** Wrong guesses allowed per issued OTP before it is burned. */
+const MAX_OTP_FAILURES = 5;
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -34,8 +38,8 @@ export class AuthService {
   async requestOtp(phoneNumber: string): Promise<string> {
     const otp = randomInt(100000, 1000000).toString();
 
-    // Store OTP in Redis for 5 minutes
-    await this.redisService.set(`otp:${phoneNumber}`, otp, 300);
+    await this.redisService.set(`otp:${phoneNumber}`, otp, OTP_TTL_SECONDS);
+    await this.redisService.del(`otp_fail:${phoneNumber}`);
 
     // No SMS provider yet: surface the code locally, never in production.
     if (!this.isProduction()) {
@@ -51,15 +55,23 @@ export class AuthService {
     const isMockUser = this.isDevOtp(phoneNumber, otp);
 
     if (!isMockUser && (!storedOtp || storedOtp !== otp)) {
+      // Per-phone guess limit (IP rate limits alone don't stop a distributed brute force).
+      const failures = await this.redisService.incrWithTtl(
+        `otp_fail:${phoneNumber}`,
+        OTP_TTL_SECONDS,
+      );
+      if (failures >= MAX_OTP_FAILURES) {
+        await this.redisService.del(`otp:${phoneNumber}`);
+      }
       throw new UnauthorizedException({
         code: 'AUTH_INVALID_OTP',
         message: 'Invalid or expired OTP',
       });
     }
 
-    // Clear OTP from Redis
     if (!isMockUser) {
       await this.redisService.del(`otp:${phoneNumber}`);
+      await this.redisService.del(`otp_fail:${phoneNumber}`);
     }
 
     // Register or find user

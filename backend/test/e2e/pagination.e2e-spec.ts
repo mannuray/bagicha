@@ -30,7 +30,7 @@ describe('pagination parameters', () => {
       .get(url)
       .set('Authorization', `Bearer ${tokenFor(app, user)}`);
 
-  const BAD = ['page=0', 'page=-3', 'page=abc', 'page_size=10000'];
+  const BAD = ['page=0', 'page=-3', 'page=abc', 'page_size=10000', 'page=1e20'];
 
   describe.each([['/api/v1/ledger/plants'], ['/api/v1/ledger/tasks']])(
     '%s',

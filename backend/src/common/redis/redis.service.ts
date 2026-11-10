@@ -28,6 +28,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return (await this.client.set(key, value, 'EX', ttlSeconds, 'NX')) === 'OK';
   }
 
+  /** INCR key, setting a TTL when the key is new. Returns the new count. */
+  async incrWithTtl(key: string, ttlSeconds: number): Promise<number> {
+    const count = await this.client.incr(key);
+    if (count === 1) await this.client.expire(key, ttlSeconds);
+    return count;
+  }
+
   async ping(): Promise<void> {
     await this.client.ping();
   }

@@ -43,7 +43,7 @@ export class VisionService {
     const diagnosis = mapAiDiagnosis(raw);
 
     if (!dto.plant_id) {
-      return { diagnosis: raw, persisted: false };
+      return { diagnosis, persisted: false };
     }
 
     const saved = await this.diagnoses.finalize(userId, {
@@ -55,7 +55,7 @@ export class VisionService {
       attachments: [{ kind: 'image', source: 'vision_upload' }],
     });
     return {
-      diagnosis: raw,
+      diagnosis,
       persisted: true,
       session_id: saved.session_id,
       outcome_id: saved.outcome_id,

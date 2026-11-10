@@ -172,6 +172,15 @@ export class JournalService {
     return log;
   }
 
+  /** Most recent entries for an owned plant (newest first); empty for anyone else. */
+  recent(
+    userId: string,
+    plantId: string,
+    take: number,
+  ): Promise<JournalEntry[]> {
+    return this.journal.recent(userId, plantId, take);
+  }
+
   async timeline(
     userId: string,
     plantId: string,

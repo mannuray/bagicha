@@ -61,6 +61,8 @@ describe('PaginationQueryDto', () => {
     [{ page: 'abc' }],
     [{ page_size: '10000' }],
     [{ page_size: '0' }],
+    [{ page: '1e20' }],
+    [{ page: '10001' }],
   ])('rejects %p', (raw) => {
     expect(check(raw).errors.length).toBeGreaterThan(0);
   });

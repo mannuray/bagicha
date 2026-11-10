@@ -1,11 +1,24 @@
 import { Type } from 'class-transformer';
 import {
+  IsIn,
+  IsInt,
   IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
+  Min,
   ValidateNested,
 } from 'class-validator';
+
+/** Envelope every Razorpay event shares; the payload shape depends on the event. */
+export class RazorpayWebhookDto {
+  @IsString()
+  @IsNotEmpty()
+  event!: string;
+
+  @IsObject()
+  payload!: Record<string, unknown>;
+}
 
 class RazorpayNotesDto {
   @IsString()
@@ -17,38 +30,57 @@ class RazorpayNotesDto {
   plan_id?: string;
 }
 
-class RazorpayPaymentEntityDto {
+class PaymentEntityDto {
   @IsString()
   @IsNotEmpty()
   id!: string;
 
+  @IsInt()
+  @Min(1)
+  amount!: number;
+
+  @IsIn(['INR'])
+  currency!: string;
+
+  @IsOptional()
   @IsObject()
   @ValidateNested()
   @Type(() => RazorpayNotesDto)
-  notes!: RazorpayNotesDto;
+  notes?: RazorpayNotesDto;
 }
 
-class RazorpayPaymentDto {
+class OrderEntityDto {
+  @IsOptional()
   @IsObject()
   @ValidateNested()
-  @Type(() => RazorpayPaymentEntityDto)
-  entity!: RazorpayPaymentEntityDto;
+  @Type(() => RazorpayNotesDto)
+  notes?: RazorpayNotesDto;
 }
 
-class RazorpayPayloadDto {
+class PaymentWrapperDto {
   @IsObject()
   @ValidateNested()
-  @Type(() => RazorpayPaymentDto)
-  payment!: RazorpayPaymentDto;
+  @Type(() => PaymentEntityDto)
+  entity!: PaymentEntityDto;
 }
 
-export class RazorpayWebhookDto {
-  @IsString()
-  @IsNotEmpty()
-  event!: string;
-
+class OrderWrapperDto {
   @IsObject()
   @ValidateNested()
-  @Type(() => RazorpayPayloadDto)
-  payload!: RazorpayPayloadDto;
+  @Type(() => OrderEntityDto)
+  entity!: OrderEntityDto;
+}
+
+/** `order.paid` payload: the payment, and (when present) the server-created order. */
+export class OrderPaidPayloadDto {
+  @IsObject()
+  @ValidateNested()
+  @Type(() => PaymentWrapperDto)
+  payment!: PaymentWrapperDto;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => OrderWrapperDto)
+  order?: OrderWrapperDto;
 }

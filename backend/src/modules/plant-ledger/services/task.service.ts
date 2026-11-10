@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import {
   Prisma,
   TaskCategory,
@@ -50,6 +51,8 @@ export class TaskService {
   constructor(
     private readonly tasks: TaskRepository,
     private readonly metrics: Metrics,
+    @InjectPinoLogger(TaskService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   /**
@@ -67,12 +70,17 @@ export class TaskService {
     for (const draft of drafts) {
       try {
         results.push(await this.createOne(userId, plantId, draft, tx));
-      } catch (err) {
+      } catch (err: unknown) {
         if (tx) throw err;
+        // Internal details stay in the logs; clients get a stable code.
+        this.logger.error(
+          { err, plantId, sourceKey: draft.sourceKey },
+          'Task creation failed',
+        );
         results.push({
           sourceKey: draft.sourceKey,
           status: 'failed',
-          reason: (err as Error).message,
+          reason: 'TASK_CREATE_FAILED',
         });
       }
     }

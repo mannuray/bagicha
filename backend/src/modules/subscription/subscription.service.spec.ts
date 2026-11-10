@@ -46,7 +46,7 @@ function build(user: Partial<User>) {
   };
   const audit = { record: jest.fn(() => Promise.resolve()) };
   const transactions = { run: (fn: (tx: unknown) => unknown) => fn('tx') };
-  const logger = { info: jest.fn(), warn: jest.fn() };
+  const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const service = new SubscriptionService(
     users as unknown as UserRepository,
     redis as unknown as RedisService,
@@ -59,11 +59,25 @@ function build(user: Partial<User>) {
   return { service, state, audit, users };
 }
 
-const paid = (planId: string, paymentId = 'pay_1'): RazorpayWebhookDto => ({
+const AMOUNTS: Record<string, number> = {
+  PREMIUM_MONTHLY: 29900,
+  PREMIUM_YEARLY: 299900,
+};
+
+const paid = (
+  planId: string,
+  paymentId = 'pay_1',
+  amount = AMOUNTS[planId] ?? 100,
+): RazorpayWebhookDto => ({
   event: 'order.paid',
   payload: {
     payment: {
-      entity: { id: paymentId, notes: { user_id: 'u1', plan_id: planId } },
+      entity: {
+        id: paymentId,
+        amount,
+        currency: 'INR',
+        notes: { user_id: 'u1', plan_id: planId },
+      },
     },
   },
 });
@@ -128,5 +142,51 @@ describe('SubscriptionService.handleWebhook', () => {
       event: 'payment.failed',
     });
     expect(users.updateSubscription).not.toHaveBeenCalled();
+  });
+
+  it('refuses to apply a plan whose price does not match the amount paid', async () => {
+    const { service, state, audit } = build({});
+    const result = await service.handleWebhook(
+      paid('PREMIUM_YEARLY', 'pay_x', 29900),
+    );
+    expect(result).toMatchObject({ received: true });
+    expect(state.subscription_tier).toBe(SubscriptionTier.FREE);
+    expect(audit.record).not.toHaveBeenCalled();
+  });
+
+  it('prefers the order notes (server-set) over the payment notes', async () => {
+    const { service, state } = build({});
+    const body = paid('PREMIUM_YEARLY', 'pay_o', 29900) as any;
+    body.payload.order = {
+      entity: {
+        id: 'order_1',
+        notes: { user_id: 'u1', plan_id: 'PREMIUM_MONTHLY' },
+      },
+    };
+    await service.handleWebhook(body);
+    expect(state.premium_expires_at?.getTime()).toBe(NOW.getTime() + 30 * DAY);
+  });
+
+  it('fails loudly (and lets Razorpay retry) for a paid order with an unknown plan', async () => {
+    const { service, state } = build({});
+    await expect(
+      service.handleWebhook(paid('GOLD', 'pay_u', 100)),
+    ).rejects.toMatchObject({
+      reason: 'INTERNAL_INVARIANT',
+    });
+    expect(state.subscription_tier).toBe(SubscriptionTier.FREE);
+    await expect(
+      service.handleWebhook(paid('GOLD', 'pay_u', 100)),
+    ).rejects.toBeDefined();
+  });
+
+  it('rejects an order.paid payload missing the payment entity', async () => {
+    const { service } = build({});
+    await expect(
+      service.handleWebhook({
+        event: 'order.paid',
+        payload: {},
+      } as RazorpayWebhookDto),
+    ).rejects.toMatchObject({ reason: 'WEBHOOK_PAYLOAD_INVALID' });
   });
 });

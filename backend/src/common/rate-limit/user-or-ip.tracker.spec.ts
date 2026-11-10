@@ -9,9 +9,9 @@ describe('trackerFor', () => {
     expect(trackerFor({ ip: '10.0.0.1' })).toBe('ip:10.0.0.1');
   });
 
-  it('prefers the first forwarded ip when the proxy list is present', () => {
+  it('ignores the client-controlled X-Forwarded-For list (uses req.ip, which honours trust proxy)', () => {
     expect(trackerFor({ ips: ['1.2.3.4', '10.0.0.1'], ip: '10.0.0.1' })).toBe(
-      'ip:1.2.3.4',
+      'ip:10.0.0.1',
     );
   });
 

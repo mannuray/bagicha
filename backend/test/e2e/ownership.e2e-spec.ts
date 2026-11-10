@@ -87,6 +87,13 @@ describe('plant ownership', () => {
       expect(untouched?.status).toBe('OPEN');
     });
 
+    it('rejects a malformed event_at with 422 instead of crashing', async () => {
+      const res = await as(alice)
+        .post('/api/v1/diagnosis/finalize')
+        .send(finalizeBody(alicePlant.id, { event_at: 'junk' }));
+      expect(res.status).toBe(422);
+    });
+
     it('lets the owner finalize a diagnosis', async () => {
       const res = await as(alice)
         .post('/api/v1/diagnosis/finalize')

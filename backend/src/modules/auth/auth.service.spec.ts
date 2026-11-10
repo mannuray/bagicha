@@ -16,6 +16,11 @@ function build(env: Record<string, string | undefined>) {
       store.delete(k);
       return Promise.resolve();
     }),
+    incrWithTtl: jest.fn((k: string) => {
+      const next = Number(store.get(k) ?? '0') + 1;
+      store.set(k, String(next));
+      return Promise.resolve(next);
+    }),
   };
   const user = { id: 'u1', phone_number: PHONE };
   const prisma = {
@@ -109,5 +114,34 @@ describe('AuthService', () => {
       },
     });
     expect(JSON.stringify(event)).not.toContain(otp);
+  });
+
+  it('burns the OTP after 5 wrong guesses, so the right code then fails', async () => {
+    const { service, store } = build({ NODE_ENV: 'development' });
+    await service.requestOtp(PHONE);
+    const otp = store.get(`otp:${PHONE}`) as string;
+    const wrong = otp === '000000' ? '111111' : '000000';
+    for (let i = 0; i < 5; i++) {
+      await expect(service.verifyOtp(PHONE, wrong)).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+    }
+    expect(store.has(`otp:${PHONE}`)).toBe(false);
+    await expect(service.verifyOtp(PHONE, otp)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
+  });
+
+  it('a fresh OTP request resets the failure count', async () => {
+    const { service, store } = build({ NODE_ENV: 'development' });
+    await service.requestOtp(PHONE);
+    for (let i = 0; i < 4; i++) {
+      await service.verifyOtp(PHONE, 'nope').catch(() => undefined);
+    }
+    await service.requestOtp(PHONE);
+    const otp = store.get(`otp:${PHONE}`) as string;
+    await expect(service.verifyOtp(PHONE, otp)).resolves.toMatchObject({
+      access_token: 'token',
+    });
   });
 });

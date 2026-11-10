@@ -4,6 +4,7 @@ import {
   IsBoolean,
   IsEnum,
   IsInt,
+  IsISO8601,
   IsOptional,
   IsString,
   Max,
@@ -29,7 +30,7 @@ export class FinalizeDiagnosisDto implements FinalizeDiagnosisInput {
   session_id?: string;
 
   @IsOptional()
-  @IsString()
+  @IsISO8601()
   event_at?: string;
 
   @IsEnum(DiagnosisIssueType)

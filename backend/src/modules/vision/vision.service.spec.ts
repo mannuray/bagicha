@@ -84,4 +84,22 @@ describe('VisionService.diagnosePlant', () => {
     expect(pipeline.finalize).not.toHaveBeenCalled();
     expect(result).toMatchObject({ persisted: false });
   });
+
+  it('returns the cleaned-up diagnosis, not the raw model JSON', async () => {
+    const { service } = build({
+      generateJson: () =>
+        Promise.resolve({
+          primary_issue: 'pest',
+          reasoning_summary: 'aphids',
+          confidence: 87,
+          recommended_actions: 'spray neem',
+        }),
+    });
+    const result = await service.diagnosePlant('u1', { image_base64: 'abc' });
+    expect(result.diagnosis).toMatchObject({
+      primary_issue: 'PEST',
+      confidence: '87',
+      recommended_actions: ['spray neem'],
+    });
+  });
 });

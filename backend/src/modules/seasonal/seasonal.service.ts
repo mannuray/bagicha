@@ -14,7 +14,7 @@ import { Metrics } from '../../common/observability';
 import { RedisService } from '../../common/redis/redis.service';
 import { addDays, Clock } from '../../common/time';
 import {
-  JournalRepository,
+  JournalService,
   PlantRecordService,
   SeasonalIntelligenceService,
   SpeciesNormalizationService,
@@ -49,7 +49,7 @@ export class SeasonalService implements OnModuleInit {
     private readonly weatherService: WeatherService,
     private readonly redis: RedisService,
     private readonly plants: PlantRecordService,
-    private readonly journal: JournalRepository,
+    private readonly journal: JournalService,
     private readonly tasks: TaskService,
     private readonly users: UserRepository,
     private readonly packs: SeasonalPackRepository,

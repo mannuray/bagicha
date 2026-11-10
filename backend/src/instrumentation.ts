@@ -9,6 +9,7 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK, tracing } from '@opentelemetry/sdk-node';
+import { registerOtelSdk } from './common/observability/otel-handle';
 
 const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
 
@@ -38,9 +39,6 @@ const sdk = new NodeSDK({
 });
 
 sdk.start();
-
-const shutdown = () => {
-  void sdk.shutdown().finally(() => process.exit(0));
-};
-process.once('SIGTERM', shutdown);
-process.once('SIGINT', shutdown);
+// No signal handlers here: Nest owns SIGTERM and flushes the SDK via OtelShutdownHook
+// after requests drain and connections close.
+registerOtelSdk(sdk);

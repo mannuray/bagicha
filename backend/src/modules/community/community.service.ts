@@ -5,7 +5,7 @@ import { Page, PageQuery, toPage, toSkipTake } from '../../common/pagination';
 import { Tx, TransactionRunner } from '../../common/prisma/transaction';
 import { AiProvider } from '../ai';
 import { AuditAction, AuditService } from '../audit';
-import { JournalRepository, PlantRecordService } from '../plant-ledger';
+import { JournalService, PlantRecordService } from '../plant-ledger';
 import { UserRepository } from '../user';
 import { AskAiDto } from './dto/ask-ai.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -125,7 +125,7 @@ export class CommunityService {
     private readonly ai: AiProvider,
     private readonly audit: AuditService,
     private readonly transactions: TransactionRunner,
-    private readonly journal: JournalRepository,
+    private readonly journal: JournalService,
   ) {}
 
   async getFeed(

@@ -106,6 +106,12 @@ export class DiagnosisPipelineService {
 
     const recordedAt = this.clock.now();
     const eventAt = input.event_at ? new Date(input.event_at) : recordedAt;
+    if (Number.isNaN(eventAt.getTime())) {
+      throw new ValidationError(
+        'DIAGNOSIS_EVENT_AT_INVALID',
+        'event_at must be an ISO-8601 date',
+      );
+    }
     const reasoning = input.reasoning_summary?.trim() || 'Diagnosis recorded.';
     const actions = (input.recommended_actions ?? [])
       .map((a) => a.trim())

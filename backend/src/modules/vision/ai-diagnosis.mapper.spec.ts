@@ -53,6 +53,15 @@ describe('mapAiDiagnosis (Review Focus #2: wrong-typed AI output)', () => {
     ).toBe(5);
   });
 
+  it('caps follow_up_days at 60 like the finalize DTO', () => {
+    expect(
+      mapAiDiagnosis({ ...base, follow_up_days: 1e12 }).follow_up_days,
+    ).toBe(60);
+    expect(
+      mapAiDiagnosis({ ...base, follow_up_days: '400' }).follow_up_days,
+    ).toBe(60);
+  });
+
   it('infers the related entry from the issue when the model omits it', () => {
     expect(mapAiDiagnosis({ ...base }).related_event_type).toBe(
       LogType.PEST_DIAGNOSIS,

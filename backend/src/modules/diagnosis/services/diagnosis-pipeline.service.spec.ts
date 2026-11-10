@@ -168,4 +168,12 @@ describe('DiagnosisPipelineService.finalize', () => {
     await service.finalize('u1', input());
     expect(metrics.diagnosisRecorded).toHaveBeenCalledWith('PEST');
   });
+
+  it('rejects an unparseable event_at before writing anything', async () => {
+    const { service, entries } = build();
+    await expect(
+      service.finalize('u1', input({ event_at: 'not-a-date' })),
+    ).rejects.toMatchObject({ reason: 'DIAGNOSIS_EVENT_AT_INVALID' });
+    expect(entries).toHaveLength(0);
+  });
 });

@@ -1,7 +1,7 @@
 import { SubscriptionTier, TaskSource } from '@prisma/client';
 import { FixedClock } from '../../common/time';
 import {
-  JournalRepository,
+  JournalService,
   PlantRecordService,
   SeasonalIntelligenceService,
   SpeciesNormalizationService,
@@ -66,7 +66,7 @@ function build(opts: {
           })),
         ),
       ),
-    } as unknown as JournalRepository,
+    } as unknown as JournalService,
     {
       createTasks: jest.fn((_u: string, _p: string, d: TaskDraft[]) => {
         drafts.push(...d);

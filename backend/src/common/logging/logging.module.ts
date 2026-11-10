@@ -15,7 +15,7 @@ import { isSpanContextValid, trace } from '@opentelemetry/api';
 import { randomUUID } from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 import { LoggerModule } from 'nestjs-pino';
-import pino, { LoggerOptions } from 'pino';
+import { LoggerOptions } from 'pino';
 import { Observable } from 'rxjs';
 import { RequestContext } from './request-context';
 
@@ -29,7 +29,18 @@ export interface LogIdentity {
 export function buildPinoOptions(identity: LogIdentity): LoggerOptions {
   return {
     base: { ...identity },
-    timestamp: pino.stdTimeFunctions.isoTime,
+    messageKey: 'message',
+    timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
+    // Credentials must never reach logs (tokens are valid for 30 days).
+    redact: {
+      paths: [
+        'req.headers.authorization',
+        'req.headers.cookie',
+        'req.headers["x-razorpay-signature"]',
+        'res.headers["set-cookie"]',
+      ],
+      censor: '[redacted]',
+    },
     formatters: {
       level: (label) => ({ level: label }),
     },

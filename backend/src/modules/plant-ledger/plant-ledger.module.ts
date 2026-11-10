@@ -43,8 +43,6 @@ import { TaskService } from './services/task.service';
     TaskService,
     SeasonalIntelligenceService,
     SpeciesNormalizationService,
-    // Read-only history access for diagnosis/seasonal until they move fully behind services.
-    JournalRepository,
   ],
 })
 export class PlantLedgerModule {}

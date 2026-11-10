@@ -18,6 +18,8 @@ describe('Razorpay webhook', () => {
         payment: {
           entity: {
             id: paymentId,
+            amount: 29900,
+            currency: 'INR',
             notes: { user_id: userId, plan_id: 'PREMIUM_MONTHLY' },
           },
         },
@@ -71,5 +73,15 @@ describe('Razorpay webhook', () => {
     expect(after.subscription_tier).toBe('PREMIUM');
     expect(after.premium_expires_at).not.toBeNull();
     expect(after.badge_level).toBe('Seedling');
+  });
+
+  it('acknowledges other signed events without requiring an order payload', async () => {
+    const raw = JSON.stringify({
+      event: 'payment.authorized',
+      payload: { payment: { entity: { id: 'pay_z' } } },
+    });
+    const res = await post(raw, sign(raw));
+    expect(res.status).toBe(201);
+    expect((await reload()).subscription_tier).toBe('FREE');
   });
 });

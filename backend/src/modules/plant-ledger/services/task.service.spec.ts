@@ -36,6 +36,7 @@ function build(existingKeys: string[]) {
   const service = new TaskService(
     repo as unknown as TaskRepository,
     metrics as unknown as Metrics,
+    { error: jest.fn() } as any,
   );
   return { service, repo, metrics, created };
 }
@@ -62,7 +63,12 @@ describe('TaskService.createTasks', () => {
       draft('a'),
       draft('b'),
     ]);
-    expect(results[0]).toMatchObject({ sourceKey: 'a', status: 'failed' });
+    expect(results[0]).toMatchObject({
+      sourceKey: 'a',
+      status: 'failed',
+      reason: 'TASK_CREATE_FAILED',
+    });
+    expect(JSON.stringify(results)).not.toContain('boom');
     expect(results[1]).toMatchObject({ sourceKey: 'b', status: 'created' });
   });
 

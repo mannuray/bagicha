@@ -74,4 +74,12 @@ describe('media download-url ownership', () => {
     const res = await downloadUrl(bob, make(bob.id));
     expect(res.status).toBe(404);
   });
+
+  it('falls back to a 1-hour link when ?expires is not a number', async () => {
+    const key = await upload(alice, 'vision');
+    const res = await downloadUrl(alice, `${key}?expires=abc`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.expires_in_seconds).toBe(3600);
+    expect(res.body.data.url).not.toContain('X-Amz-Expires=NaN');
+  });
 });

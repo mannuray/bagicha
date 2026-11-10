@@ -44,10 +44,10 @@ describe('structured logging', () => {
       service: 'bagicha-backend',
       version: '0.0.1',
       env: 'test',
-      msg: 'Plant created',
+      message: 'Plant created',
       plantId: 'p1',
     });
-    expect(typeof lines[0].time).toBe('string');
+    expect(typeof lines[0].timestamp).toBe('string');
   });
 
   it('adds traceId and spanId inside an active span', () => {
@@ -79,5 +79,27 @@ describe('structured logging', () => {
     const { logger, lines } = capture();
     logger.info('background work');
     expect(lines[0].userId).toBeUndefined();
+  });
+
+  it('never writes bearer tokens, cookies or webhook signatures', () => {
+    const { logger, lines } = capture();
+    logger.info(
+      {
+        req: {
+          headers: {
+            authorization: 'Bearer eyJhbGciOi.secret',
+            cookie: 'session=abc',
+            'x-razorpay-signature': 'deadbeef',
+            'user-agent': 'curl',
+          },
+        },
+      },
+      'request completed',
+    );
+    const raw = JSON.stringify(lines[0]);
+    expect(raw).not.toContain('eyJhbGciOi');
+    expect(raw).not.toContain('session=abc');
+    expect(raw).not.toContain('deadbeef');
+    expect(raw).toContain('curl');
   });
 });

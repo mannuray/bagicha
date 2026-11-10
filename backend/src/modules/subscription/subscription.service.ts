@@ -3,13 +3,22 @@ import { ConfigService } from '@nestjs/config';
 import { SubscriptionTier, User } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { NotFoundError } from '../../common/errors';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
+import {
+  InvariantError,
+  NotFoundError,
+  ValidationError,
+} from '../../common/errors';
 import { TransactionRunner } from '../../common/prisma/transaction';
 import { RedisService } from '../../common/redis/redis.service';
 import { addDays, Clock } from '../../common/time';
 import { AuditAction, AuditService } from '../audit';
 import { UserRepository } from '../user';
-import { RazorpayWebhookDto } from './dto/razorpay-webhook.dto';
+import {
+  OrderPaidPayloadDto,
+  RazorpayWebhookDto,
+} from './dto/razorpay-webhook.dto';
 import { isPlanId, PLANS, PlanId } from './plans';
 
 const WEBHOOK_DEDUPE_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -56,22 +65,42 @@ export class SubscriptionService {
   ): Promise<{ received: true; duplicate?: true }> {
     if (payload.event !== 'order.paid') return { received: true };
 
-    const { id: paymentId, notes } = payload.payload.payment.entity;
-    const dedupeKey = `webhook:razorpay:${paymentId}`;
+    const paid = plainToInstance(OrderPaidPayloadDto, payload.payload);
+    const problems = validateSync(paid);
+    if (problems.length > 0) {
+      throw new ValidationError(
+        'WEBHOOK_PAYLOAD_INVALID',
+        'order.paid payload is missing required fields',
+      );
+    }
+    const payment = paid.payment.entity;
+    // Order notes are set by our server when the order is created; payment notes can come from the client.
+    const notes = paid.order?.entity.notes ?? payment.notes;
+    if (!notes) {
+      throw new ValidationError(
+        'WEBHOOK_PAYLOAD_INVALID',
+        'order.paid has no notes',
+      );
+    }
+
+    const dedupeKey = `webhook:razorpay:${payment.id}`;
     const firstDelivery = await this.redis.setIfAbsent(
       dedupeKey,
       '1',
       WEBHOOK_DEDUPE_TTL_SECONDS,
     );
     if (!firstDelivery) {
-      this.logger.info({ paymentId }, 'Duplicate Razorpay delivery ignored');
+      this.logger.info(
+        { paymentId: payment.id },
+        'Duplicate Razorpay delivery ignored',
+      );
       return { received: true, duplicate: true };
     }
 
     try {
-      await this.applyPurchase(notes.user_id, notes.plan_id, paymentId);
+      await this.applyPurchase(notes.user_id, notes.plan_id, payment);
     } catch (err) {
-      // Let Razorpay's retry apply it.
+      // Let Razorpay's retry apply it (and keep alerting until someone looks).
       await this.redis.del(dedupeKey);
       throw err;
     }
@@ -81,16 +110,29 @@ export class SubscriptionService {
   private async applyPurchase(
     userId: string,
     planIdRaw: string | undefined,
-    paymentId: string,
+    payment: { id: string; amount: number; currency: string },
   ): Promise<void> {
+    const paymentId = payment.id;
     if (!isPlanId(planIdRaw)) {
-      this.logger.warn(
-        { paymentId, planId: planIdRaw },
-        'Paid order has no known plan',
+      // Money was taken for something we can't fulfil: a bug, not bad input.
+      throw new InvariantError('Paid order has no known plan', {
+        paymentId,
+        planId: planIdRaw ?? null,
+      });
+    }
+    const plan = PLANS[planIdRaw];
+    if (payment.amount !== plan.amountPaise) {
+      this.logger.error(
+        {
+          paymentId,
+          planId: planIdRaw,
+          paid: payment.amount,
+          expected: plan.amountPaise,
+        },
+        'Paid amount does not match the plan; not applying',
       );
       return;
     }
-    const plan = PLANS[planIdRaw];
 
     await this.transactions.run(async (tx) => {
       const user = await this.users.findById(userId, tx);

@@ -44,8 +44,9 @@ export class MediaController {
     @Param('key') keyParam: string | string[],
     @Query('expires') expires?: string,
   ) {
-    const seconds = expires
-      ? Math.min(Math.max(parseInt(expires, 10), 60), 86400)
+    const requested = expires ? Number.parseInt(expires, 10) : NaN;
+    const seconds = Number.isFinite(requested)
+      ? Math.min(Math.max(requested, 60), 86400)
       : 3600;
     // Express 5 wildcards arrive as path segments.
     const key = Array.isArray(keyParam) ? keyParam.join('/') : keyParam;

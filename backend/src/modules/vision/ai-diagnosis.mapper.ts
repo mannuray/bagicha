@@ -14,6 +14,8 @@ export type AiDiagnosis = Omit<
 >;
 
 const DEFAULT_FOLLOW_UP_DAYS = 5;
+/** Same ceiling FinalizeDiagnosisDto enforces for human input. */
+const MAX_FOLLOW_UP_DAYS = 60;
 
 const ISSUES = new Set<string>(Object.values(DiagnosisIssueType));
 const SEVERITIES = new Set<string>(Object.values(DiagnosisSeverity));
@@ -112,7 +114,10 @@ export function mapAiDiagnosis(raw: Record<string, unknown>): AiDiagnosis {
     reasoning_summary: summary ?? 'AI diagnosis recorded.',
     recommended_actions: actions,
     needs_follow_up: bool(raw.needs_follow_up) ?? actions.length > 0,
-    follow_up_days: positiveInt(raw.follow_up_days) ?? DEFAULT_FOLLOW_UP_DAYS,
+    follow_up_days: Math.min(
+      positiveInt(raw.follow_up_days) ?? DEFAULT_FOLLOW_UP_DAYS,
+      MAX_FOLLOW_UP_DAYS,
+    ),
     related_event_type: relatedType(raw.related_event_type, primaryIssue),
   };
 }
