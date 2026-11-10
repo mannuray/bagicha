@@ -206,5 +206,53 @@
     "garden": "Your garden",
     "plantsInGarden": "Plants in your garden",
     "addTree": "Add a tree"
+  },
+  "journal": {
+    "title": "Log a Moment",
+    "forPlant": "What happened with {{name}}?",
+    "what": "What happened",
+    "severity": "How bad?",
+    "quantity": "How much?",
+    "note": "Note",
+    "notePlaceholder": "What did you notice?",
+    "when": "When",
+    "whenHint": "Leave blank for today.",
+    "addPhoto": "Add a photo",
+    "photoChosen": "Photo: {{name}}",
+    "save": "Save moment",
+    "types": {
+      "NOTE": "Note",
+      "WATERING": "Watering",
+      "FLOWERING": "Flowering",
+      "FRUIT_SET": "Fruit set",
+      "FLOWER_DROP": "Flower drop",
+      "FRUIT_DROP": "Fruit drop",
+      "HARVEST": "Harvest",
+      "PRUNING": "Pruning",
+      "FEEDING": "Feeding",
+      "TREATMENT": "Treatment",
+      "PHOTO": "Photo",
+      "DIAGNOSIS": "Diagnosis",
+      "PEST_DIAGNOSIS": "Pest found",
+      "WATERING_STRESS": "Water stress",
+      "WEATHER_DAMAGE": "Weather damage",
+      "PLANTING": "Planting"
+    },
+    "severities": {
+      "LOW": "Light",
+      "MEDIUM": "Moderate",
+      "HIGH": "Heavy"
+    },
+    "units": {
+      "kg": "kg",
+      "pieces": "Pieces",
+      "crates": "Crates"
+    },
+    "qualities": {
+      "poor": "Poor",
+      "fair": "Fair",
+      "good": "Good",
+      "excellent": "Excellent"
+    }
   }
 }

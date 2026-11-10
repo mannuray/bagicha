@@ -8,6 +8,7 @@ import { createQueryClient } from '../lib/query-client';
 import type { TokenStore } from '../lib/token-store';
 import { createSessionStore, SessionProvider, type SessionStore, type User } from '../features/auth';
 import { API } from './msw/server';
+import { testFetch } from './node-fetch';
 
 export function memoryTokenStore(initial: string | null = 'test-token'): TokenStore {
   let value = initial;
@@ -59,6 +60,7 @@ export function TestProviders({
     baseUrl: API,
     tokens: session.tokens,
     onUnauthorized: () => session.expire(),
+    fetchImpl: testFetch,
   });
   return (
     <QueryClientProvider client={queryClient}>
