@@ -281,7 +281,8 @@
       "PEST_DIAGNOSIS": "Pest found",
       "WATERING_STRESS": "Water stress",
       "WEATHER_DAMAGE": "Weather damage",
-      "PLANTING": "Planting"
+      "PLANTING": "Planting",
+      "PLANT_ENDED": "Tree ended"
     },
     "severities": {
       "LOW": "Light",

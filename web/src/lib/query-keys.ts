@@ -2,7 +2,7 @@
 export const queryKeys = {
   plants: {
     all: ['plants'] as const,
-    list: (page: number) => ['plants', 'list', page] as const,
+    list: (status: 'active' | 'ended', page: number) => ['plants', 'list', status, page] as const,
     everything: ['plants', 'everything'] as const,
     detail: (id: string) => ['plants', id, 'detail'] as const,
     timelineAll: (id: string) => ['plants', id, 'timeline'] as const,

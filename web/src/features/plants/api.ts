@@ -12,15 +12,17 @@ import {
   plantSchema,
   resolveSchema,
   type PlantInput,
+  type PlantEndReason,
 } from './schemas';
 
 const PAGE_SIZE = 20;
 
-export function usePlants(page: number) {
+/** Growing plants by default; `ended` lists past trees. */
+export function usePlants(page: number, status: 'active' | 'ended' = 'active') {
   const api = useApi();
   return useQuery({
-    queryKey: queryKeys.plants.list(page),
-    queryFn: () => api.getPage('/ledger/plants', plantSchema, { page, page_size: PAGE_SIZE }),
+    queryKey: queryKeys.plants.list(status, page),
+    queryFn: () => api.getPage('/ledger/plants', plantSchema, { page, page_size: PAGE_SIZE, status }),
     placeholderData: keepPreviousData,
   });
 }
@@ -60,6 +62,39 @@ export function useCreatePlant() {
       void client.invalidateQueries({ queryKey: queryKeys.plants.all });
       void client.invalidateQueries({ queryKey: queryKeys.tasks.mineAll });
       void client.invalidateQueries({ queryKey: queryKeys.plants.tasks(plant.id) });
+    },
+  });
+}
+
+export interface EndPlantInput {
+  reason: PlantEndReason;
+  ended_at?: string;
+  note?: string;
+  entry_id?: string;
+}
+
+/** Records that a tree died or was removed; its pending tasks are cancelled. */
+export function useEndPlant(id: string) {
+  const api = useApi();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: EndPlantInput) => api.send('POST', `/ledger/plants/${id}/end`, input, plantSchema),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.plants.all });
+      void client.invalidateQueries({ queryKey: queryKeys.tasks.mineAll });
+    },
+  });
+}
+
+/** Brings an ended tree back to the garden. */
+export function useRestorePlant(id: string) {
+  const api = useApi();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.send('POST', `/ledger/plants/${id}/restore`, {}, plantSchema),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.plants.all });
+      void client.invalidateQueries({ queryKey: queryKeys.tasks.mineAll });
     },
   });
 }

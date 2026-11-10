@@ -6,7 +6,7 @@ export const taskSchema = z.object({
   title: z.string(),
   category: z.string().nullable(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH']),
-  status: z.enum(['PENDING', 'COMPLETED', 'SKIPPED']),
+  status: z.enum(['PENDING', 'COMPLETED', 'SKIPPED', 'CANCELLED']),
   source: z.string(),
   reason: z.string().nullable(),
   due_date: z.string(),
