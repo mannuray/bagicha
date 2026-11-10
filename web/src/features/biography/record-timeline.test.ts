@@ -44,10 +44,10 @@ describe('TIMELINE_FILTERS', () => {
     expect(Object.fromEntries(TIMELINE_FILTERS.map((f) => [f.id, f.types]))).toEqual({
       all: [],
       care: ['WATERING', 'PRUNING', 'FEEDING', 'TREATMENT'],
-      bloom: ['FLOWERING', 'FRUIT_SET', 'FLOWER_DROP', 'FRUIT_DROP'],
+      bloom: ['FLOWERING', 'FRUIT_SET', 'FLOWER_DROP', 'FRUIT_DROP', 'GERMINATION', 'THINNING', 'BOLTING'],
       harvest: ['HARVEST'],
       health: ['PEST_DIAGNOSIS', 'DIAGNOSIS', 'WATERING_STRESS', 'WEATHER_DAMAGE'],
-      notes: ['NOTE', 'PHOTO', 'PLANTING', 'PLANT_ENDED'],
+      notes: ['NOTE', 'PHOTO', 'PLANTING', 'PLANT_ENDED', 'SOWING', 'TRANSPLANTING', 'SEASON_END'],
     });
   });
 });

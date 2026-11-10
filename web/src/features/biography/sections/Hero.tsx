@@ -6,10 +6,12 @@ import type { PlantDetail } from '../../plants';
 import type { healthLabel } from '../health-label';
 import { plantAge } from '../plant-age';
 
-/** Stitch "Sanctuary Window": the tree's own latest photo (or the Stitch mango), name, age and health. */
+/** Stitch "Sanctuary Window": the plant's own latest photo (or, for trees, the Stitch mango), name, age and health. */
 export function Hero({ plant, health, photoKey, now }: { plant: PlantDetail; health: ReturnType<typeof healthLabel>; photoKey: string | null; now: Date }) {
   const { t } = useTranslation();
   const photo = useMediaUrl(photoKey);
+  // Species · variety, unless it only repeats the name (calendar crops are named after their species).
+  const kicker = [plant.species === plant.name ? null : plant.species, plant.variety].filter(Boolean).join(' · ');
   // An ended tree's age stops at its end.
   const age = plantAge(plant.planting_date, plant.planting_date_precision, plant.ended_at ? new Date(plant.ended_at) : now);
   const ageLine = !age
@@ -23,15 +25,13 @@ export function Hero({ plant, health, photoKey, now }: { plant: PlantDetail; hea
     <header className="relative mb-4 h-[260px] w-full overflow-hidden rounded-b-[32px] bg-primary-container">
       {/* The Stitch photo only stands in when the tree has no photo of its own (or it failed),
           never while the tree's own photo is still loading. */}
-      {(photo.data ?? (!photoKey || photo.isError ? treeHero : null)) && (
+      {(photo.data ?? (!plant.crop_id && (!photoKey || photo.isError) ? treeHero : null)) && (
         <img src={photo.data ?? treeHero} alt="" className="absolute inset-0 h-full w-full object-cover" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
       <div className="absolute bottom-5 left-4 right-4 flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <p className="mb-1 font-label text-xs font-bold uppercase tracking-[0.15em] text-secondary-container">
-            {[plant.species, plant.variety].filter(Boolean).join(' · ')}
-          </p>
+          {kicker && <p className="mb-1 font-label text-xs font-bold uppercase tracking-[0.15em] text-secondary-container">{kicker}</p>}
           <h1 className="font-headline text-3xl font-bold leading-none text-on-primary">{plant.name}</h1>
           {ageLine && <p className="mt-1.5 font-body text-sm text-on-primary/85">{ageLine}</p>}
         </div>

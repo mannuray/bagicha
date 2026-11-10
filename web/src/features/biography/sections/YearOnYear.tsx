@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { cx, ErrorState, LoadingState } from '../../../ui';
 import { useAllCycles } from '../../plants';
 import { compareRows, yearOnYear, type Trend } from '../year-on-year';
+import { monthYear } from './format';
 
 const TREND_STYLE: Record<Exclude<Trend, null>, string> = {
   better: 'bg-primary-fixed text-on-primary-fixed-variant',
@@ -11,25 +12,25 @@ const TREND_STYLE: Record<Exclude<Trend, null>, string> = {
 };
 
 /** Yield per season and the latest finished season against the one before. */
-export function YearOnYear({ plantId, now }: { plantId: string; now: Date }) {
+export function YearOnYear({ plantId, now, crop = false }: { plantId: string; now: Date; crop?: boolean }) {
   const { t } = useTranslation();
   const cycles = useAllCycles(plantId);
   return (
-    <section aria-label={t('biography.yearOnYear')} className="space-y-3">
-      <h2 className="font-headline text-xl text-primary">{t('biography.yearOnYear')}</h2>
+    <section aria-label={t(crop ? 'biography.seasons' : 'biography.yearOnYear')} className="space-y-3">
+      <h2 className="font-headline text-xl text-primary">{t(crop ? 'biography.seasons' : 'biography.yearOnYear')}</h2>
       {cycles.isError ? (
         <ErrorState error={cycles.error} onRetry={() => void cycles.refetch()} />
       ) : !cycles.data ? (
         <LoadingState />
       ) : (
-        <Comparison data={yearOnYear(cycles.data, now)} plantId={plantId} />
+        <Comparison data={yearOnYear(cycles.data, now, crop ? 'season' : 'year')} plantId={plantId} />
       )}
     </section>
   );
 }
 
 function Comparison({ data, plantId }: { data: ReturnType<typeof yearOnYear>; plantId: string }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const max = Math.max(0, ...data.years.filter((y) => y.barred).map((y) => y.value ?? 0));
   const shown = (key: string, value: string) =>
     value === '—' || key === 'yield' || key === 'pests' ? value : t(`biography.drop.${value}`, { defaultValue: value });
@@ -38,8 +39,8 @@ function Comparison({ data, plantId }: { data: ReturnType<typeof yearOnYear>; pl
       {data.years.length > 0 && (
         <ul className="space-y-1.5">
           {data.years.map((y) => (
-            <li key={y.year} className="flex items-center gap-3">
-              <span className="w-12 shrink-0 font-label text-xs font-bold text-on-surface-variant">{y.year}</span>
+            <li key={y.key} className="flex items-center gap-3">
+              <span className="w-16 shrink-0 font-label text-xs font-bold text-on-surface-variant">{y.startedAt ? monthYear(y.startedAt, i18n.language) : y.year}</span>
               <span className="h-3 flex-1 overflow-hidden rounded-full bg-surface-container-highest" aria-hidden>
                 {y.barred && max > 0 && <span className="block h-full rounded-full bg-primary" style={{ width: `${((y.value ?? 0) / max) * 100}%` }} />}
               </span>
@@ -54,7 +55,10 @@ function Comparison({ data, plantId }: { data: ReturnType<typeof yearOnYear>; pl
       {data.latest && data.previous ? (
         <div className="space-y-1.5">
           <p className="font-label text-xs font-bold uppercase tracking-widest text-secondary">
-            {t('biography.latestVsPrevious', { latest: data.latest.cycle_year, previous: data.previous.cycle_year })}
+            {t('biography.latestVsPrevious', {
+              latest: data.latest.started_at ? monthYear(data.latest.started_at, i18n.language) : data.latest.cycle_year,
+              previous: data.previous.started_at ? monthYear(data.previous.started_at, i18n.language) : data.previous.cycle_year,
+            })}
           </p>
           {compareRows(data.latest, data.previous).map((row) => (
             <div key={row.key} className="flex items-center justify-between gap-2 font-body text-sm">

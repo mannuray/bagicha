@@ -7,7 +7,11 @@ const DROP_RANK: Record<string, number> = { NONE: 0, LOW: 1, MEDIUM: 2, HIGH: 3 
 export type Trend = 'better' | 'worse' | 'same' | null;
 
 export interface YearRow {
+  /** Stable row key: the year for trees, the cycle id for crop seasons. */
+  key: string;
   year: number;
+  /** A crop season's start (ISO); the UI labels it "Sep 2026". Null for tree years. */
+  startedAt: string | null;
   value: number | null;
   unit: string | null;
   barred: boolean;
@@ -22,17 +26,34 @@ export function isFinished(c: Cycle, now: Date): boolean {
   return c.cycle_year < istParts(now).year;
 }
 
-/** Yield per year (newest first) and the two most recent finished seasons to compare. */
-export function yearOnYear(cycles: Cycle[], now: Date): { unit: string | null; years: YearRow[]; latest: Cycle | null; previous: Cycle | null } {
-  const sorted = [...cycles].sort((a, b) => b.cycle_year - a.cycle_year);
-  const finished = sorted.filter((c) => isFinished(c, now));
+/** A crop season is finished once it has been closed (season end logged). */
+export const isSeasonFinished = (c: Cycle): boolean => c.closed_at !== null;
+
+/**
+ * Yield per year (newest first) and the two most recent finished seasons to compare.
+ * `season` mode is for crops: rows are seasons (several a year), finished when closed.
+ */
+export function yearOnYear(
+  cycles: Cycle[],
+  now: Date,
+  mode: 'year' | 'season' = 'year',
+): { unit: string | null; years: YearRow[]; latest: Cycle | null; previous: Cycle | null } {
+  const done = (c: Cycle) => (mode === 'season' ? isSeasonFinished(c) : isFinished(c, now));
+  const sorted = [...cycles].sort((a, b) =>
+    mode === 'season'
+      ? (b.started_at ?? '').localeCompare(a.started_at ?? '') || b.season_no - a.season_no
+      : b.cycle_year - a.cycle_year,
+  );
+  const finished = sorted.filter(done);
   const unit = finished.find((c) => c.yield_quantity !== null && c.yield_unit)?.yield_unit ?? null;
   const years = sorted.map((c) => ({
+    key: mode === 'season' ? c.id : String(c.cycle_year),
     year: c.cycle_year,
+    startedAt: mode === 'season' ? c.started_at : null,
     value: c.yield_quantity,
     unit: c.yield_unit,
-    barred: c.yield_quantity !== null && unit !== null && c.yield_unit === unit && isFinished(c, now),
-    soFar: !isFinished(c, now),
+    barred: c.yield_quantity !== null && unit !== null && c.yield_unit === unit && done(c),
+    soFar: !done(c),
   }));
   return { unit, years, latest: finished[0] ?? null, previous: finished[1] ?? null };
 }

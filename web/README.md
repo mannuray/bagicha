@@ -75,10 +75,16 @@ Each feature exposes an `index.ts`; siblings import only that. Device access sit
   - **Life line:** a species life profile (backend) adds "First fruit usually at…", "productive until about…" or "Past the typical productive age · plan a replacement". Containers get no span or nudge.
   - **Mark as ended:** records Died (with a cause and the recent diagnosis linked) or Removed / Replaced.
   - **Ended trees:** read-only, listed under **Past trees**, with **Restore** and **Plant a replacement** (the two records link both ways).
+- **Vegetables** (spec `vegetables`):
+  - **What can I sow now?** (`/crops`): the region's crops by sowing window, with filters.
+  - **Want to grow:** your interested list (a My Plants tab). It gives seed and sow reminders from the crop calendar, synced once per session.
+  - **The crop page:** a journey card (start with seeds or bought seedlings, transplant, harvest, end season), how-much-to-plant guidance, named places with a gentle rotation note, and seasons compared by start month.
+  - **Parked ideas:** listed in the spec's §3.
 - **Placeholders, marked `TODO(...)` in code:**
   - vitality % (`TODO(vitality)`: no health score yet);
   - push memory reminders (`TODO(push-memory)`: no notification service);
-  - sustenance score (`TODO(sustenance-score)`: points are never awarded).
+  - sustenance score (`TODO(sustenance-score)`: points are never awarded);
+  - ordering seeds in the app (`TODO(seed-order)` on the get-seeds reminder).
 - **Location screen:** type the district first. A district we know (the same short list as the backend's `region-cluster.ts`, kept equal by a test) sets the region by itself; only an unknown district shows the region cards to pick the closest. "Use my location" is optional and replaces Stitch's GPS-first button. There is no reverse geocoding, so location never leaves Bagicha. A full district, pincode and boundary map is future work.
 - **Stitch photos are bundled, not hot-linked.** The login, dashboard, verification, garden-picker, add-tree, log-a-moment and tree-page (fallback hero) photos live in `src/assets/stitch/` (shrunk to JPEG, about 580 KB in total), so there are no third-party image requests and the app works offline in a wrapper. Stitch's dashboard soil-moisture card is left out because there is no moisture data. Other screens still use the forest gradient, and a tree's page shows the user's own latest photo.
 - **No social-login buttons or Terms/Privacy links.** They have no backend yet.

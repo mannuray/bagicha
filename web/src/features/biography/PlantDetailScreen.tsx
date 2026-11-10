@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { systemClock } from '../../lib/clock';
 import { Button, ErrorState, Icon, LoadingState, NotInGarden, Screen, isPlantMissing } from '../../ui';
+import { JourneyCard } from '../crops';
 import { useTimeline } from '../journal';
 import { usePlant, type PlantDetail } from '../plants';
 import { healthLabel } from './health-label';
@@ -62,6 +63,7 @@ function Biography({ plant }: { plant: PlantDetail }) {
   const health = healthLabel(plant, entries, now);
   const heroKey = entries.map((e) => photoKeyOf(e)).find(Boolean) ?? null;
   const ended = Boolean(plant.ended_at);
+  const crop = Boolean(plant.crop_id);
   const [ending, setEnding] = useState(false);
 
   return (
@@ -78,6 +80,12 @@ function Biography({ plant }: { plant: PlantDetail }) {
         {ended ? (
           // An ended tree is a record: its history stays, the growing work goes.
           <EndedBanner plant={plant} />
+        ) : crop ? (
+          // A calendar crop follows its journey, not the tree sections.
+          <>
+            <JourneyCard plant={plant} />
+            <UpcomingCare plantId={plant.id} now={now} />
+          </>
         ) : (
           <>
             <MemoryCard plant={plant} now={now} />
@@ -86,8 +94,8 @@ function Biography({ plant }: { plant: PlantDetail }) {
             <UpcomingCare plantId={plant.id} now={now} />
           </>
         )}
-        <YearOnYear plantId={plant.id} now={now} />
-        <Milestones plant={plant} />
+        <YearOnYear plantId={plant.id} now={now} crop={crop} />
+        {!crop && <Milestones plant={plant} />}
         <SanctuaryRecord plantId={plant.id} />
         {!ended &&
           (ending ? (

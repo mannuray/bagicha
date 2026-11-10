@@ -429,7 +429,8 @@
       "restore": "Restore",
       "replacedBy": "Replaced by {{name}}",
       "replaces": "Replaces {{name}}"
-    }
+    },
+    "seasons": "Seasons"
   },
   "scan": {
     "kicker": "Plant doctor",
@@ -521,6 +522,38 @@
       "IN_GROUND": "In the bed",
       "HARVESTING": "Harvesting",
       "RESTING": "Resting until next season"
+    },
+    "place": {
+      "where": "Where will it grow?",
+      "add": "+ Add a place",
+      "name": "Place name",
+      "save": "Add",
+      "rotation": "{{crop}} (same family) grew here in {{season}} — try a different family here, and this crop somewhere else."
+    },
+    "start": {
+      "title": "Start growing {{crop}}",
+      "transplantTitle": "Transplant {{crop}}",
+      "seeds": "I have seeds — sow now",
+      "seedlings": "Bought seedlings — transplant now",
+      "later": "Get seeds first (we'll remind you)",
+      "nursery": "Nursery tray",
+      "direct": "Straight in the bed"
+    },
+    "journey": {
+      "title": "Journey",
+      "step": {
+        "planned": "Planned",
+        "seeds": "Seeds",
+        "sown": "Sown",
+        "transplanted": "Transplanted",
+        "harvesting": "Harvesting",
+        "ended": "Season ended"
+      },
+      "guide": "How much: {{plants}} · {{container}} · space {{min}}–{{max}} cm in a bed.",
+      "start": "Start",
+      "transplant": "Log transplant",
+      "harvest": "Log a harvest",
+      "end": "End season"
     }
   }
 }

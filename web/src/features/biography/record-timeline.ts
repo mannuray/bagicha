@@ -5,10 +5,10 @@ import type { JournalEntry } from '../journal';
 export const TIMELINE_FILTERS = [
   { id: 'all', types: [] },
   { id: 'care', types: ['WATERING', 'PRUNING', 'FEEDING', 'TREATMENT'] },
-  { id: 'bloom', types: ['FLOWERING', 'FRUIT_SET', 'FLOWER_DROP', 'FRUIT_DROP'] },
+  { id: 'bloom', types: ['FLOWERING', 'FRUIT_SET', 'FLOWER_DROP', 'FRUIT_DROP', 'GERMINATION', 'THINNING', 'BOLTING'] },
   { id: 'harvest', types: ['HARVEST'] },
   { id: 'health', types: ['PEST_DIAGNOSIS', 'DIAGNOSIS', 'WATERING_STRESS', 'WEATHER_DAMAGE'] },
-  { id: 'notes', types: ['NOTE', 'PHOTO', 'PLANTING', 'PLANT_ENDED'] },
+  { id: 'notes', types: ['NOTE', 'PHOTO', 'PLANTING', 'PLANT_ENDED', 'SOWING', 'TRANSPLANTING', 'SEASON_END'] },
 ] as const satisfies ReadonlyArray<{ id: string; types: readonly string[] }>;
 
 export type TimelineFilter = (typeof TIMELINE_FILTERS)[number];
