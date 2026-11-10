@@ -6,7 +6,7 @@ import { messageFor } from '../../lib/error-messages';
 import { Button, Chip, Icon, Screen, TextField } from '../../ui';
 import { useSession, type RegionCluster } from '../auth';
 import { useUpdateProfile } from './api';
-import { REGIONS } from './regions';
+import { knownRegion, regionById, REGIONS } from './regions';
 
 export function ProfileScreen() {
   const { t } = useTranslation();
@@ -16,12 +16,15 @@ export function ProfileScreen() {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user?.name ?? '');
   const [district, setDistrict] = useState(user?.district ?? '');
-  const [region, setRegion] = useState<RegionCluster | null>(user?.region_cluster ?? null);
+  const [picked, setPicked] = useState<RegionCluster | null>(user?.region_cluster ?? null);
   const [lang, setLang] = useState(user?.language_pref ?? 'en');
   const [needDistrict, setNeedDistrict] = useState(false);
 
   if (!user) return null;
-  const regionLabel = REGIONS.find((r) => r.id === user.region_cluster);
+  const regionLabel = regionById(user.region_cluster);
+  // A district we know decides the region; the chips are only for districts we don't.
+  const known = knownRegion(district);
+  const region = known ?? picked;
 
   const save = (event: FormEvent) => {
     event.preventDefault();
@@ -103,13 +106,6 @@ export function ProfileScreen() {
         ) : (
           <form onSubmit={save} className="space-y-4 rounded-xl bg-surface-container-low p-4">
             <TextField label={t('profile.name')} value={name} onChange={(e) => setName(e.target.value)} />
-            <div className="flex flex-wrap gap-2">
-              {REGIONS.map((r) => (
-                <Chip key={r.id} selected={region === r.id} onClick={() => setRegion(r.id)}>
-                  {t(r.labelKey)}
-                </Chip>
-              ))}
-            </div>
             <TextField
               label={t('profile.district')}
               value={district}
@@ -119,6 +115,27 @@ export function ProfileScreen() {
                 setNeedDistrict(false);
               }}
             />
+            {known ? (
+              <p className="flex items-center gap-2 font-body text-sm text-primary">
+                <Icon name="check_circle" filled className="text-base" />
+                {t('onboarding.region.known', { district: district.trim(), region: t(regionById(known)?.labelKey ?? '') })}
+              </p>
+            ) : (
+              district.trim() && (
+                <fieldset className="space-y-2">
+                  <legend className="mb-2 font-body text-sm text-on-surface-variant">
+                    {t('onboarding.region.unknown', { district: district.trim() })}
+                  </legend>
+                  <div className="flex flex-wrap gap-2">
+                    {REGIONS.map((r) => (
+                      <Chip key={r.id} selected={picked === r.id} onClick={() => setPicked(r.id)}>
+                        {t(r.labelKey)}
+                      </Chip>
+                    ))}
+                  </div>
+                </fieldset>
+              )
+            )}
             <div className="flex gap-2">
               <Chip selected={lang === 'en'} onClick={() => setLang('en')}>English</Chip>
               <Chip selected={lang === 'hi'} onClick={() => setLang('hi')}>हिन्दी</Chip>

@@ -7,21 +7,24 @@ import { isProfileComplete, useSession, type RegionCluster } from '../auth';
 import { useUpdateProfile, type ProfileChanges } from './api';
 import { useGeolocator, type Coordinates } from './geolocation';
 import { OnboardingLayout } from './OnboardingLayout';
-import { REGIONS } from './regions';
+import { knownRegion, regionById, REGIONS } from './regions';
 
 type GeoState = 'idle' | 'locating' | 'added' | 'unavailable';
 
-/** Stitch "Locate Your Sanctuary", adapted: pick a region, type the district, GPS optional. */
+/** Stitch "Locate Your Sanctuary", adapted: type the district; a known one sets the region, otherwise pick the closest. GPS optional. */
 export function RegionScreen({ onDone }: { onDone?: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const geolocator = useGeolocator();
   const { user } = useSession();
   const update = useUpdateProfile();
-  const [region, setRegion] = useState<RegionCluster | null>(user?.region_cluster ?? null);
+  const [picked, setPicked] = useState<RegionCluster | null>(user?.region_cluster ?? null);
   const [district, setDistrict] = useState(user?.district ?? '');
   const [coords, setCoords] = useState<Coordinates | null>(null);
   const [geo, setGeo] = useState<GeoState>('idle');
+  const known = knownRegion(district);
+  const region = known ?? picked;
+  const autoRegion = regionById(known);
 
   const locate = async () => {
     setGeo('locating');
@@ -42,33 +45,42 @@ export function RegionScreen({ onDone }: { onDone?: () => void }) {
 
   return (
     <OnboardingLayout step={2} icon="location_on" title={t('onboarding.region.title')} subtitle={t('onboarding.region.subtitle')}>
-      <fieldset className="mb-3 space-y-3">
-        <legend className="mb-3 font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-          {t('onboarding.region.pick')}
-        </legend>
-        {REGIONS.map((r) => (
-          <button
-            key={r.id}
-            type="button"
-            aria-pressed={region === r.id}
-            onClick={() => setRegion(r.id)}
-            className={cx(
-              'flex min-h-12 w-full flex-col items-start rounded-xl px-5 py-3 text-left transition-colors',
-              region === r.id ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface',
-            )}
-          >
-            <span className="font-headline text-lg">{t(r.labelKey)}</span>
-            <span className="font-body text-xs opacity-80">{t(r.examplesKey)}</span>
-          </button>
-        ))}
-      </fieldset>
       <TextField
         label={t('onboarding.region.district')}
         value={district}
         onChange={(e) => setDistrict(e.target.value)}
         autoComplete="address-level2"
-        className="mb-4"
+        className="mb-3"
       />
+      {autoRegion ? (
+        <p className="mb-4 flex items-center gap-2 rounded-xl bg-primary px-4 py-3 font-body text-sm text-on-primary">
+          <Icon name="check_circle" filled />
+          {t('onboarding.region.known', { district: district.trim(), region: t(autoRegion.labelKey) })}
+        </p>
+      ) : (
+        district.trim() && (
+          <fieldset className="mb-4 space-y-2">
+            <legend className="mb-2 font-body text-sm text-on-surface-variant">
+              {t('onboarding.region.unknown', { district: district.trim() })}
+            </legend>
+            {REGIONS.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                aria-pressed={picked === r.id}
+                onClick={() => setPicked(r.id)}
+                className={cx(
+                  'flex min-h-12 w-full flex-col items-start rounded-xl px-4 py-2.5 text-left transition-colors',
+                  picked === r.id ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface',
+                )}
+              >
+                <span className="font-headline text-base">{t(r.labelKey)}</span>
+                <span className="font-body text-xs opacity-80">{t(r.examplesKey)}</span>
+              </button>
+            ))}
+          </fieldset>
+        )
+      )}
       <div className="mb-4 flex flex-col items-center gap-2">
         <Button variant="tertiary" busy={geo === 'locating'} onClick={() => void locate()}>
           <Icon name="my_location" />

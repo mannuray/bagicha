@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -12,6 +14,7 @@ import {
   LanguageScreen,
   ProfileScreen,
   REGIONS,
+  knownRegion,
   RegionScreen,
   type Geolocator,
 } from '.';
@@ -56,6 +59,23 @@ describe('regions', () => {
   it('lists exactly the backend clusters', () => {
     expect(REGIONS.map((r) => r.id).sort()).toEqual([...REGION_CLUSTERS].sort());
   });
+
+  it('knows a district’s region, case- and spacing-insensitively, and nothing else', () => {
+    expect(knownRegion('Patna')).toBe('EAST_INDIA');
+    expect(knownRegion('  patna district ')).toBe('EAST_INDIA');
+    expect(knownRegion('Kochi')).toBe('COASTAL_HUMID');
+    expect(knownRegion('Muzaffarpur')).toBeNull();
+    expect(knownRegion('')).toBeNull();
+  });
+
+  it('knows exactly the places the backend knows', () => {
+    const source = readFileSync(resolve(__dirname, '../../../../backend/src/modules/seasonal/domain/region-cluster.ts'), 'utf8');
+    const backend = Object.fromEntries(
+      [...source.matchAll(/RegionCluster\.(\w+), \[([^\]]*)\]/g)].map(([, id, list]) => [id, [...list.matchAll(/'([^']+)'/g)].map((m) => m[1])]),
+    );
+    expect(Object.keys(backend)).toHaveLength(7);
+    expect(Object.fromEntries(REGIONS.map((r) => [r.id, [...r.places]]))).toEqual(backend);
+  });
 });
 
 describe('onboarding', () => {
@@ -67,8 +87,8 @@ describe('onboarding', () => {
     await userEvent.click(screen.getByRole('button', { name: /continue/i }));
 
     await screen.findByRole('heading', { name: /locate your sanctuary/i });
-    await userEvent.click(screen.getByRole('button', { name: /east india/i }));
     await userEvent.type(screen.getByLabelText(/district/i), 'Patna');
+    expect(screen.getByText(/east india/i)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /continue/i }));
 
     await screen.findByRole('heading', { name: /green blueprint/i });
@@ -96,19 +116,31 @@ describe('onboarding', () => {
       ),
     );
     renderWithApp(<Onboarding geo={denied} />, { route: '/onboarding/region', user: testUser({ region_cluster: null }) });
-    await userEvent.click(screen.getByRole('button', { name: /east india/i }));
     await userEvent.click(screen.getByRole('button', { name: /continue/i }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(/^\/$/));
   });
 
-  it('needs a region and a district before continuing', async () => {
+  it('a known district picks its region by itself: no region cards to tap', async () => {
     renderWithApp(<Onboarding geo={denied} />, { route: '/onboarding/region', user: incomplete });
     const next = screen.getByRole('button', { name: /continue/i });
     expect(next).toBeDisabled();
-    await userEvent.click(screen.getByRole('button', { name: /east india/i }));
-    expect(next).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /coastal/i })).not.toBeInTheDocument();
     await userEvent.type(screen.getByLabelText(/district/i), 'Patna');
+    expect(screen.queryByRole('button', { name: /coastal/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/east india/i)).toBeInTheDocument();
     expect(next).toBeEnabled();
+  });
+
+  it('an unknown district shows the region cards and needs a pick', async () => {
+    const bodies = captureUpdates();
+    renderWithApp(<Onboarding geo={denied} />, { route: '/onboarding/region', user: incomplete });
+    await userEvent.type(screen.getByLabelText(/district/i), 'Muzaffarpur');
+    const next = screen.getByRole('button', { name: /continue/i });
+    expect(next).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: /east india/i }));
+    await userEvent.click(next);
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0]).toEqual({ region_cluster: 'EAST_INDIA', district: 'Muzaffarpur' });
   });
 
   it('still continues when location is denied, sending no coordinates', async () => {
@@ -116,7 +148,6 @@ describe('onboarding', () => {
     renderWithApp(<Onboarding geo={denied} />, { route: '/onboarding/region', user: incomplete });
     await userEvent.click(screen.getByRole('button', { name: /use my location/i }));
     expect(await screen.findByText(/couldn't get your location/i)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /hills/i }));
     await userEvent.type(screen.getByLabelText(/district/i), 'Shimla');
     await userEvent.click(screen.getByRole('button', { name: /continue/i }));
     await waitFor(() => expect(bodies).toHaveLength(1));
@@ -129,7 +160,6 @@ describe('onboarding', () => {
     renderWithApp(<Onboarding geo={allowed} />, { route: '/onboarding/region', user: incomplete });
     await userEvent.click(screen.getByRole('button', { name: /use my location/i }));
     await screen.findByText(/location added/i);
-    await userEvent.click(screen.getByRole('button', { name: /east india/i }));
     await userEvent.type(screen.getByLabelText(/district/i), 'Patna');
     await userEvent.click(screen.getByRole('button', { name: /continue/i }));
     await waitFor(() => expect(bodies).toHaveLength(1));
@@ -182,6 +212,16 @@ describe('profile', () => {
     renderWithApp(<Onboarding />, { route: '/profile' });
     await userEvent.click(screen.getByRole('button', { name: /language/i }));
     expect(screen.getByLabelText(/^district/i)).toHaveValue('Patna');
+  });
+
+  it('saving the profile corrects a region that contradicts a known district', async () => {
+    const bodies = captureUpdates();
+    renderWithApp(<Onboarding />, { route: '/profile', user: testUser({ district: 'patna', region_cluster: 'COASTAL_HUMID' }) });
+    await userEvent.click(screen.getByRole('button', { name: /edit details/i }));
+    expect(screen.queryByRole('button', { name: /coastal/i })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^save$/i }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0]).toMatchObject({ region_cluster: 'EAST_INDIA', district: 'patna' });
   });
 
   it('will not save a blank district from the profile (it would send the user back to onboarding)', async () => {

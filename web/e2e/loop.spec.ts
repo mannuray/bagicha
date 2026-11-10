@@ -25,8 +25,8 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await page.getByRole('button', { name: /english/i }).click();
   await page.getByRole('button', { name: /continue/i }).click();
   await checkScreen(page, '03-region');
-  await page.getByRole('button', { name: /east india/i }).click();
   await page.getByLabel(/district/i).fill('Patna');
+  await expect(page.getByText(/east india/i)).toBeVisible();
   await page.getByRole('button', { name: /continue/i }).click();
   await page.getByRole('button', { name: /fruit trees/i }).click();
   await page.getByRole('button', { name: /start gardening/i }).click();
@@ -49,7 +49,7 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await page.getByLabel(/add a photo/i).setInputFiles(LEAF);
   await page.getByLabel(/note/i).fill('Panicles opening');
   await checkScreen(page, '06-log-moment');
-  await page.getByRole('button', { name: /save moment/i }).click();
+  await page.getByRole('button', { name: /save to biography/i }).click();
   await expect(page.getByText('Panicles opening')).toBeVisible();
   await expect(page.locator('ol img').first()).toBeVisible();
   await checkScreen(page, '07-tree-biography');

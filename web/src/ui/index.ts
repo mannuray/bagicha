@@ -12,3 +12,4 @@ export { EmptyState, ErrorState, LoadingState, QueryState } from './StateViews';
 export type { QueryLike } from './StateViews';
 export { cx } from './cx';
 export { NotInGarden, isPlantMissing } from './NotInGarden';
+export { Pill } from './Pill';

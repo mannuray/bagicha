@@ -1,8 +1,8 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
-import { Button, cx, ErrorState, Icon, LoadingState, NotInGarden, Screen, TextField, TopBar, isPlantMissing } from '../../ui';
+import { Button, ErrorState, Icon, LoadingState, NotInGarden, Pill, Screen, TextField, TopBar, isPlantMissing } from '../../ui';
 import saplingPhoto from '../../assets/stitch/add-tree-sapling.jpg';
 import { CataloguePicker } from './CataloguePicker';
 import { useCreatePlant, usePlant, useResolvePlant, useUpdatePlant } from './api';
@@ -189,19 +189,3 @@ function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState 
   );
 }
 
-/** Stitch's uppercase choice pill. */
-function Pill({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: ReactNode }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onClick}
-      className={cx(
-        'min-h-11 rounded-full px-5 font-label text-xs font-bold uppercase tracking-wider transition-all duration-300',
-        selected ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-variant',
-      )}
-    >
-      {children}
-    </button>
-  );
-}

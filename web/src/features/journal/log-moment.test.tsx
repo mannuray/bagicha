@@ -40,6 +40,17 @@ function plantHandler() {
 }
 
 describe('log a moment', () => {
+  it('is the Stitch sheet: leaf photo behind, kicker, the tree, and a way back', async () => {
+    plantHandler();
+    const { container } = renderWithApp(screenTree, { route: '/plants/p1/log' });
+    expect(await screen.findByRole('heading', { name: /log a moment/i })).toBeInTheDocument();
+    expect(screen.getByText(/add to the legacy timeline/i)).toBeInTheDocument();
+    expect(await screen.findByText(/for aam/i)).toBeInTheDocument();
+    expect(container.querySelector('img[src*="moment-leaves"]')).not.toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: /close/i }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/plants/p1');
+  });
+
   it('saves a harvest with quantity, unit and quality', async () => {
     plantHandler();
     let body: Record<string, unknown> | undefined;
@@ -54,7 +65,7 @@ describe('log a moment', () => {
     await userEvent.type(screen.getByLabelText(/how much/i), '12');
     await userEvent.click(screen.getByRole('button', { name: /^good$/i }));
     await userEvent.type(screen.getByLabelText(/note/i), 'Sweet this year');
-    await userEvent.click(screen.getByRole('button', { name: /save moment/i }));
+    await userEvent.click(screen.getByRole('button', { name: /save to biography/i }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/plants/p1'));
     expect(body).toEqual({
       type: 'HARVEST',
@@ -81,7 +92,7 @@ describe('log a moment', () => {
     renderWithApp(screenTree, { route: '/plants/p1/log' });
     await userEvent.click(await screen.findByRole('button', { name: /^flowering$/i }));
     await userEvent.upload(screen.getByLabelText(/add a photo/i), new File(['x'], 'leaf.jpg', { type: 'image/jpeg' }));
-    await userEvent.dblClick(screen.getByRole('button', { name: /save moment/i }));
+    await userEvent.dblClick(screen.getByRole('button', { name: /save to biography/i }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/plants/p1'));
     expect(uploads).toBe(1);
     expect(posts).toHaveLength(1);
@@ -101,7 +112,7 @@ describe('log a moment', () => {
     renderWithApp(screenTree, { route: '/plants/p1/log' });
     await userEvent.type(await screen.findByLabelText(/note/i), 'New leaves');
     await userEvent.upload(screen.getByLabelText(/add a photo/i), new File(['x'], 'leaf.jpg', { type: 'image/jpeg' }));
-    await userEvent.click(screen.getByRole('button', { name: /save moment/i }));
+    await userEvent.click(screen.getByRole('button', { name: /save to biography/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent(/too large/i);
     expect(screen.getByLabelText(/note/i)).toHaveValue('New leaves');
     expect(posts).toBe(0);
@@ -112,7 +123,7 @@ describe('log a moment', () => {
     server.use(http.post(`${API}/ledger/plants/p1/journal`, () => HttpResponse.json(fail('UNAUTHORIZED'), { status: 401 })));
     const first = renderWithApp(screenTree, { route: '/plants/p1/log' });
     await userEvent.type(await screen.findByLabelText(/note/i), 'Mango flowers opening');
-    await userEvent.click(screen.getByRole('button', { name: /save moment/i }));
+    await userEvent.click(screen.getByRole('button', { name: /save to biography/i }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/login'));
     first.unmount();
 
