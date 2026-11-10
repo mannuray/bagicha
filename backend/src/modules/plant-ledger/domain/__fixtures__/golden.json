@@ -1,0 +1,105 @@
+{
+  "cycles": {
+    "healthy": {
+      "observed_flowering_at": "2026-02-10T05:00:00.000Z",
+      "observed_fruit_set_at": "2026-03-20T05:00:00.000Z",
+      "harvest_started_at": "2026-06-01T05:00:00.000Z",
+      "harvest_completed_at": "2026-06-15T05:00:00.000Z",
+      "yield_quantity": 18,
+      "yield_unit": "kg",
+      "yield_quality": "EXCELLENT",
+      "flower_drop_level": "UNKNOWN",
+      "fruit_drop_level": "UNKNOWN",
+      "stress_score": 0,
+      "pest_pressure_score": 0,
+      "treatment_count": 0,
+      "cycle_summary": "Flowering was recorded fruit set was observed and 2 harvest events were logged.",
+      "recommended_next_cycle_actions": []
+    },
+    "heavyDropWithPests": {
+      "observed_flowering_at": "2026-02-01T05:00:00.000Z",
+      "observed_fruit_set_at": null,
+      "harvest_started_at": "2026-06-10T05:00:00.000Z",
+      "harvest_completed_at": "2026-06-10T05:00:00.000Z",
+      "yield_quantity": 5,
+      "yield_unit": null,
+      "yield_quality": "POOR",
+      "flower_drop_level": "HIGH",
+      "fruit_drop_level": "MEDIUM",
+      "stress_score": 2,
+      "pest_pressure_score": 2,
+      "treatment_count": 1,
+      "cycle_summary": "Flowering was recorded but fruit set was not confirmed and 1 harvest event was logged with high drop pressure during the cycle while 2 stress and 2 pest signals were recorded.",
+      "recommended_next_cycle_actions": [
+        "Inspect flowering closely next cycle and confirm fruit set early.",
+        "Track flower drop severity early and stabilize watering during bloom.",
+        "Watch fruit retention next cycle and log drop before harvest declines.",
+        "Plan moisture checks around flowering and fruit-development windows."
+      ]
+    },
+    "empty": {
+      "observed_flowering_at": null,
+      "observed_fruit_set_at": null,
+      "harvest_started_at": null,
+      "harvest_completed_at": null,
+      "yield_quantity": null,
+      "yield_unit": null,
+      "yield_quality": "UNKNOWN",
+      "flower_drop_level": "UNKNOWN",
+      "fruit_drop_level": "UNKNOWN",
+      "stress_score": 0,
+      "pest_pressure_score": 0,
+      "treatment_count": 0,
+      "cycle_summary": "No flowering record was added.",
+      "recommended_next_cycle_actions": [
+        "Keep recording flowering, fruit set, and harvest to compare the next cycle properly."
+      ]
+    }
+  },
+  "mitigation": {
+    "healthy": {
+      "summary": "Cycle 2026 does not show a clear failure pattern against 2025, so the next step is to keep logging key milestones more consistently.",
+      "likely_issues": [],
+      "what_to_change": [],
+      "watch_early": [],
+      "priority_actions": [
+        "Review this cycle before the next flowering window starts.",
+        "Compare the next cycle against the last successful harvest, not just current symptoms."
+      ]
+    },
+    "heavyDropWithPests": {
+      "summary": "Cycle 2026 shows signals that can be improved before the next cycle, using 2025 as the comparison baseline.",
+      "likely_issues": [
+        "Flowering was recorded but fruit set was not confirmed.",
+        "Flower drop was high and likely reduced conversion to fruit set.",
+        "Fruit drop was medium and likely weakened harvest outcome.",
+        "Water or weather stress signals were recorded 2 time(s) this cycle."
+      ],
+      "what_to_change": [
+        "Confirm fruit set early next cycle instead of waiting until harvest time to assess outcome.",
+        "Stabilize watering and moisture checks before flowering and during early fruit development.",
+        "Start pest scouting earlier and follow diagnosis journal_entries with a same-cycle treatment or inspection.",
+        "Track flower drop as soon as bloom starts so intervention is not delayed."
+      ],
+      "watch_early": [
+        "Early leaf wilt, dry soil, and repeated watering stress signals.",
+        "Recurring pest symptoms before flowering and fruit set.",
+        "Flower drop in the first bloom window.",
+        "Fruit drop shortly after set."
+      ],
+      "priority_actions": [
+        "Review this cycle before the next flowering window starts.",
+        "Set one moisture-check task before bloom and one during early fruit development.",
+        "Schedule an early pest inspection instead of waiting for visible damage.",
+        "Log flower-to-fruit conversion explicitly next cycle to catch weak set earlier."
+      ]
+    },
+    "empty": {
+      "summary": "Not enough cycle history yet to generate a mitigation plan.",
+      "likely_issues": [],
+      "what_to_change": [],
+      "watch_early": [],
+      "priority_actions": []
+    }
+  }
+}
