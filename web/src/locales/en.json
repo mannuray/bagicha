@@ -1,6 +1,9 @@
 {
   "app": {
-    "name": "Bagicha"
+    "name": "Bagicha",
+    "reload": "Reload",
+    "notFound": "Page not found",
+    "home": "Go home"
   },
   "common": {
     "retry": "Try again",
