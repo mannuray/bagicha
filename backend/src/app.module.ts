@@ -21,6 +21,7 @@ import { UserModule } from './modules/user/user.module';
 import { validateEnv } from './config/env.validation';
 import { LoggingModule } from './common/logging/logging.module';
 import { ObservabilityModule } from './common/observability';
+import { ClockModule } from './common/time';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ObservabilityModule } from './common/observability';
     }),
     LoggingModule,
     ObservabilityModule,
+    ClockModule,
     MonitorModule,
     PrismaModule,
     RedisModule,
