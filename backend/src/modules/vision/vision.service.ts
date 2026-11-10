@@ -10,12 +10,12 @@ import { SeasonalIntelligenceService } from '../plant-ledger/services/seasonal-i
 import { SpeciesNormalizationService } from '../plant-ledger/services/species-normalization.service';
 import { DiagnosisPipelineService } from '../diagnosis/services/diagnosis-pipeline.service';
 import { VisionRequestDto } from './dto/vision-request.dto';
-import { GeminiService } from './services/gemini.service';
+import { AiProvider } from '../ai';
 
 @Injectable()
 export class VisionService {
   constructor(
-    private readonly geminiService: GeminiService,
+    private readonly ai: AiProvider,
     private readonly prisma: PrismaService,
     private readonly seasonalIntelligenceService: SeasonalIntelligenceService,
     private readonly speciesNormalizationService: SpeciesNormalizationService,
@@ -30,11 +30,11 @@ export class VisionService {
       Format: JSON only.
     `;
 
-    const response = await this.geminiService.analyzeImage(
-      this.toImagePart(dto.image_base64),
+    return this.ai.generateJson({
+      feature: 'identify',
       prompt,
-    );
-    return this.geminiService.parseJsonResponse(response);
+      image: this.toImage(dto.image_base64),
+    });
   }
 
   async diagnosePlant(userId: string, dto: VisionRequestDto) {
@@ -68,14 +68,11 @@ export class VisionService {
       ${dto.note ?? 'No extra note provided'}
     `;
 
-    const response = await this.geminiService.analyzeImage(
-      this.toImagePart(dto.image_base64),
+    const parsed = await this.ai.generateJson({
+      feature: 'diagnose',
       prompt,
-    );
-    const parsed = this.geminiService.parseJsonResponse(response) as Record<
-      string,
-      unknown
-    >;
+      image: this.toImage(dto.image_base64),
+    });
 
     if (!dto.plant_id) {
       return {
@@ -248,12 +245,10 @@ export class VisionService {
     };
   }
 
-  private toImagePart(imageBase64: string) {
+  private toImage(imageBase64: string) {
     return {
-      inlineData: {
-        data: imageBase64.split(',')[1] || imageBase64,
-        mimeType: 'image/jpeg',
-      },
+      data: imageBase64.split(',')[1] || imageBase64,
+      mimeType: 'image/jpeg',
     };
   }
 

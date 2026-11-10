@@ -21,3 +21,4 @@ is built against the "After" column.
 | `PUT ledger/plants/:id/tasks/:taskId` | task view without plant fields | same view plus `plant_id`, `tree_name`, `record_kind` (additive) | 15 |
 | unknown task id on `PUT ledger/plants/:id/tasks/:taskId` | 404 `NOT_FOUND` | 404 `TASK_NOT_FOUND` | 15 |
 | lifecycle task generation (background) | mango prune due 9 months out (shared Date mutated); retries duplicated tasks | prune due in 3 months, feed in 6; retries skip existing tasks (`lifecycle:{plant}:{stage}:{type}` key) | 15 |
+| AI routes (`vision/*`, `community/ask-ai`) when unconfigured | silently called Gemini with `'MOCK_KEY'` and hard-coded `gemini-1.5-flash` | 502 `AI_NOT_CONFIGURED` unless `GEMINI_API_KEY` **and** `GEMINI_MODEL` are set; provider failure → 502 `AI_PROVIDER_ERROR`; unusable output → 502 `AI_RESPONSE_INVALID` (was `{raw_text, error}` passed through) | 16 |

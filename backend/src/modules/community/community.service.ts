@@ -5,7 +5,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { AskAiDto } from './dto/ask-ai.dto';
 import { ReportTargetDto } from './dto/report-target.dto';
-import { GeminiService } from '../vision/services/gemini.service';
+import { AiProvider } from '../ai';
 
 const HIDE_REPORT_THRESHOLD = 3;
 const MAX_KNOWLEDGE_SNIPPETS = 3;
@@ -85,7 +85,7 @@ const STOPWORDS = new Set([
 export class CommunityService {
   constructor(
     private prisma: PrismaService,
-    private geminiService: GeminiService,
+    private ai: AiProvider,
   ) {}
 
   async getFeed(userId: string, district?: string, page = 1, pageSize = 20) {
@@ -250,8 +250,7 @@ Return strict JSON:
 { "answer": string, "citations": string[] }
     `.trim();
 
-    const response = await this.geminiService.generateText(prompt);
-    return this.geminiService.parseJsonResponse(response);
+    return this.ai.generateJson({ feature: 'ask_ai', prompt });
   }
 
   // --- helpers ---
