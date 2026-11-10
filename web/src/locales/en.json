@@ -57,5 +57,73 @@
       "resend": "Resend code",
       "newCode": "Get a new code"
     }
+  },
+  "onboarding": {
+    "step": "Step {{step}} of {{total}}",
+    "language": {
+      "title": "Choose Your Language",
+      "subtitle": "Pick the language you're most comfortable with.",
+      "englishForNow": "Hindi is on its way — the app shows English for now, and we'll switch when it's ready."
+    },
+    "region": {
+      "title": "Locate Your Sanctuary",
+      "subtitle": "Your region decides which season's care your trees get.",
+      "pick": "Your region",
+      "district": "District",
+      "useLocation": "Use my location",
+      "locationAdded": "Location added.",
+      "locationUnavailable": "We couldn't get your location — that's fine, your region is enough."
+    },
+    "garden": {
+      "title": "What Grows in Your Garden?",
+      "subtitle": "Choose everything you tend. You can change this later.",
+      "finish": "Finish",
+      "types": {
+        "trees": "Fruit trees",
+        "veggies": "Vegetables",
+        "flowers": "Flowers"
+      }
+    }
+  },
+  "regions": {
+    "NORTH_INDIA": {
+      "label": "North India",
+      "examples": "Delhi, Lucknow, Chandigarh"
+    },
+    "EAST_INDIA": {
+      "label": "East India",
+      "examples": "Malda, Kolkata, Patna"
+    },
+    "WEST_INDIA": {
+      "label": "West India",
+      "examples": "Mumbai, Pune, Surat"
+    },
+    "CENTRAL_INDIA": {
+      "label": "Central India",
+      "examples": "Bhopal, Indore, Raipur"
+    },
+    "SOUTH_DECCAN": {
+      "label": "South Deccan",
+      "examples": "Chennai, Hyderabad, Bengaluru"
+    },
+    "COASTAL_HUMID": {
+      "label": "Coastal & humid",
+      "examples": "Goa, Kochi, coastal districts"
+    },
+    "HILLS_COOL": {
+      "label": "Hills & cool",
+      "examples": "Shimla, Dehradun, Gangtok"
+    }
+  },
+  "profile": {
+    "kicker": "Your sanctuary",
+    "title": "Profile",
+    "noName": "Gardener",
+    "region": "Region",
+    "district": "District",
+    "language": "Language",
+    "name": "Name",
+    "edit": "Edit details",
+    "signOut": "Sign out"
   }
 }
