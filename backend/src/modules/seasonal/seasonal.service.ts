@@ -63,7 +63,10 @@ export class SeasonalService {
 
   async getTreeIntelligence(userId: string, treeId: string) {
     const treeRecord = await this.getTreeRecord(userId, treeId);
-    const seasonalPack = await this.getOrCreateSeasonalPack(treeRecord.plant, treeRecord.user);
+    const seasonalPack = await this.getOrCreateSeasonalPack(
+      treeRecord.plant,
+      treeRecord.user,
+    );
     const personalizedOverlay = await this.getOrRefreshPersonalizedOverlay(
       treeRecord.plant,
       treeRecord.user,
@@ -73,30 +76,49 @@ export class SeasonalService {
 
     return {
       seasonal_pack: this.serializeSeasonalPack(seasonalPack),
-      personalized_overlay: personalizedOverlay ? this.serializeOverlay(personalizedOverlay) : null,
+      personalized_overlay: personalizedOverlay
+        ? this.serializeOverlay(personalizedOverlay)
+        : null,
       is_paid_user: this.isPaidUser(treeRecord.user),
     };
   }
 
   async materializeTasksForTree(userId: string, treeId: string) {
-    const treeIntelligence = (await this.getTreeIntelligence(userId, treeId)) as TreeIntelligenceResult;
+    const treeIntelligence = (await this.getTreeIntelligence(
+      userId,
+      treeId,
+    )) as TreeIntelligenceResult;
 
     const createdTasks: Task[] = [];
-    const baseTemplates = this.asTaskTemplates(treeIntelligence.seasonal_pack.task_templates);
+    const baseTemplates = this.asTaskTemplates(
+      treeIntelligence.seasonal_pack.task_templates,
+    );
     for (const template of baseTemplates) {
-      const task = await this.createTaskIfMissing(treeId, TaskSource.SEASONAL_PACK, template, {
-        seasonal_pack_id: treeIntelligence.seasonal_pack.id,
-      });
+      const task = await this.createTaskIfMissing(
+        treeId,
+        TaskSource.SEASONAL_PACK,
+        template,
+        {
+          seasonal_pack_id: treeIntelligence.seasonal_pack.id,
+        },
+      );
       if (task) createdTasks.push(task);
     }
 
     const overlayTemplates = treeIntelligence.personalized_overlay
-      ? this.asTaskTemplates(treeIntelligence.personalized_overlay.personalized_tasks)
+      ? this.asTaskTemplates(
+          treeIntelligence.personalized_overlay.personalized_tasks,
+        )
       : [];
     for (const template of overlayTemplates) {
-      const task = await this.createTaskIfMissing(treeId, TaskSource.PERSONALIZED_OVERLAY, template, {
-        personalized_overlay_id: treeIntelligence.personalized_overlay?.id,
-      });
+      const task = await this.createTaskIfMissing(
+        treeId,
+        TaskSource.PERSONALIZED_OVERLAY,
+        template,
+        {
+          personalized_overlay_id: treeIntelligence.personalized_overlay?.id,
+        },
+      );
       if (task) createdTasks.push(task);
     }
 
@@ -138,7 +160,8 @@ export class SeasonalService {
 
   private async getOrCreateSeasonalPack(plant: Plant, user: User) {
     const regionCluster = this.resolveRegionCluster(user);
-    const speciesFamily = this.speciesNormalizationService.resolveSpeciesFamily(plant);
+    const speciesFamily =
+      this.speciesNormalizationService.resolveSpeciesFamily(plant);
     const seasonWindow = this.resolveSeasonWindow(new Date());
 
     const existing = await this.prisma.seasonalPack.findUnique({
@@ -155,7 +178,10 @@ export class SeasonalService {
 
     if (existing) return existing;
 
-    const inferred = this.seasonalIntelligenceService.inferTreeSeasonalState(plant, user);
+    const inferred = this.seasonalIntelligenceService.inferTreeSeasonalState(
+      plant,
+      user,
+    );
 
     return this.prisma.seasonalPack.create({
       data: {
@@ -171,7 +197,9 @@ export class SeasonalService {
         do_now: inferred.do_now,
         avoid_now: inferred.avoid_now,
         watch_for: inferred.watch_for,
-        task_templates: this.buildTaskTemplates(inferred) as unknown as Prisma.InputJsonValue,
+        task_templates: this.buildTaskTemplates(
+          inferred,
+        ) as unknown as Prisma.InputJsonValue,
         basis: inferred.basis,
       },
     });
@@ -180,7 +208,11 @@ export class SeasonalService {
   private async getOrRefreshPersonalizedOverlay(
     plant: Plant,
     user: User,
-    journal_entries: Array<{ content: string | null; metadata: Prisma.JsonValue | null; timestamp: Date }>,
+    journal_entries: Array<{
+      content: string | null;
+      metadata: Prisma.JsonValue | null;
+      timestamp: Date;
+    }>,
     seasonalPack: SeasonalPack,
   ) {
     if (!this.isPaidUser(user)) {
@@ -197,7 +229,11 @@ export class SeasonalService {
       orderBy: { updated_at: 'desc' },
     });
 
-    const overlayPayload = this.buildPersonalizedOverlay(plant, journal_entries, seasonalPack);
+    const overlayPayload = this.buildPersonalizedOverlay(
+      plant,
+      journal_entries,
+      seasonalPack,
+    );
     if (!overlayPayload) {
       return existing;
     }
@@ -253,18 +289,29 @@ export class SeasonalService {
 
   private buildPersonalizedOverlay(
     plant: Plant,
-    journal_entries: Array<{ content: string | null; metadata: Prisma.JsonValue | null; timestamp: Date }>,
+    journal_entries: Array<{
+      content: string | null;
+      metadata: Prisma.JsonValue | null;
+      timestamp: Date;
+    }>,
     seasonalPack: SeasonalPack,
   ) {
-    const drynessDetected = journal_entries.some((log) => this.logSuggestsDryness(log.content, log.metadata));
+    const drynessDetected = journal_entries.some((log) =>
+      this.logSuggestsDryness(log.content, log.metadata),
+    );
     if (!drynessDetected) {
       return null;
     }
 
     return {
       adjusted_phase: `${seasonalPack.current_phase}_with_dryness_attention`,
-      priority_actions: ['Water the plant today', 'Recheck leaf stress after watering'],
-      suppressed_actions: ['Do not defer irrigation until the next normal checkpoint'],
+      priority_actions: [
+        'Water the plant today',
+        'Recheck leaf stress after watering',
+      ],
+      suppressed_actions: [
+        'Do not defer irrigation until the next normal checkpoint',
+      ],
       personalized_tasks: [
         {
           key: 'water_tree_today',
@@ -283,7 +330,8 @@ export class SeasonalService {
           reason: 'Confirm recovery after dryness intervention',
         },
       ],
-      reasoning_summary: 'Recent journal_entries indicate dryness or water stress, so irrigation support is needed immediately.',
+      reasoning_summary:
+        'Recent journal_entries indicate dryness or water stress, so irrigation support is needed immediately.',
       expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000),
       refreshed_at: new Date(),
     };
@@ -317,7 +365,9 @@ export class SeasonalService {
         source_key: template.key,
         reason: template.reason,
         metadata: template as unknown as Prisma.InputJsonValue,
-        due_date: new Date(Date.now() + Math.max(template.due_in_days, 0) * 24 * 60 * 60 * 1000),
+        due_date: new Date(
+          Date.now() + Math.max(template.due_in_days, 0) * 24 * 60 * 60 * 1000,
+        ),
         seasonal_pack_id: refs.seasonal_pack_id,
         personalized_overlay_id: refs.personalized_overlay_id,
       },
@@ -326,25 +376,53 @@ export class SeasonalService {
 
   private resolveRegionCluster(user: User): RegionCluster {
     const district = (user.district || '').toLowerCase();
-    if (district.includes('malda') || district.includes('kolkata') || district.includes('patna')) {
+    if (
+      district.includes('malda') ||
+      district.includes('kolkata') ||
+      district.includes('patna')
+    ) {
       return RegionCluster.EAST_INDIA;
     }
-    if (district.includes('delhi') || district.includes('lucknow') || district.includes('chandigarh')) {
+    if (
+      district.includes('delhi') ||
+      district.includes('lucknow') ||
+      district.includes('chandigarh')
+    ) {
       return RegionCluster.NORTH_INDIA;
     }
-    if (district.includes('mumbai') || district.includes('pune') || district.includes('surat')) {
+    if (
+      district.includes('mumbai') ||
+      district.includes('pune') ||
+      district.includes('surat')
+    ) {
       return RegionCluster.WEST_INDIA;
     }
-    if (district.includes('bhopal') || district.includes('indore') || district.includes('raipur')) {
+    if (
+      district.includes('bhopal') ||
+      district.includes('indore') ||
+      district.includes('raipur')
+    ) {
       return RegionCluster.CENTRAL_INDIA;
     }
-    if (district.includes('chennai') || district.includes('hyderabad') || district.includes('bengaluru')) {
+    if (
+      district.includes('chennai') ||
+      district.includes('hyderabad') ||
+      district.includes('bengaluru')
+    ) {
       return RegionCluster.SOUTH_DECCAN;
     }
-    if (district.includes('coast') || district.includes('goa') || district.includes('kochi')) {
+    if (
+      district.includes('coast') ||
+      district.includes('goa') ||
+      district.includes('kochi')
+    ) {
       return RegionCluster.COASTAL_HUMID;
     }
-    if (district.includes('shimla') || district.includes('dehradun') || district.includes('gangtok')) {
+    if (
+      district.includes('shimla') ||
+      district.includes('dehradun') ||
+      district.includes('gangtok')
+    ) {
       return RegionCluster.HILLS_COOL;
     }
     return RegionCluster.NORTH_INDIA;
@@ -363,9 +441,20 @@ export class SeasonalService {
     return user.badge_level === 'Rooted';
   }
 
-  private logSuggestsDryness(content: string | null, metadata: Prisma.JsonValue | null): boolean {
-    const haystack = `${content || ''} ${metadata ? JSON.stringify(metadata) : ''}`.toLowerCase();
-    return ['dry', 'dryness', 'water stress', 'wilting', 'thirsty', 'soil dry'].some((term) => haystack.includes(term));
+  private logSuggestsDryness(
+    content: string | null,
+    metadata: Prisma.JsonValue | null,
+  ): boolean {
+    const haystack =
+      `${content || ''} ${metadata ? JSON.stringify(metadata) : ''}`.toLowerCase();
+    return [
+      'dry',
+      'dryness',
+      'water stress',
+      'wilting',
+      'thirsty',
+      'soil dry',
+    ].some((term) => haystack.includes(term));
   }
 
   private asTaskTemplates(value: Prisma.JsonValue | null): TaskTemplateInput[] {
@@ -383,9 +472,12 @@ export class SeasonalService {
       acc.push({
         key: record.key,
         title: record.title,
-        category: typeof record.category === 'string' ? record.category : 'inspection',
-        priority: typeof record.priority === 'string' ? record.priority : 'medium',
-        due_in_days: typeof record.due_in_days === 'number' ? record.due_in_days : 0,
+        category:
+          typeof record.category === 'string' ? record.category : 'inspection',
+        priority:
+          typeof record.priority === 'string' ? record.priority : 'medium',
+        due_in_days:
+          typeof record.due_in_days === 'number' ? record.due_in_days : 0,
         reason: typeof record.reason === 'string' ? record.reason : undefined,
       });
       return acc;

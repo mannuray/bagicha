@@ -14,7 +14,13 @@ import { SeasonalIntelligenceService } from './services/seasonal-intelligence.se
     }),
   ],
   controllers: [PlantLedgerController],
-  providers: [PlantLedgerService, LifecycleService, SpeciesNormalizationService, SeasonalIntelligenceService, TaskProcessor],
+  providers: [
+    PlantLedgerService,
+    LifecycleService,
+    SpeciesNormalizationService,
+    SeasonalIntelligenceService,
+    TaskProcessor,
+  ],
   exports: [SeasonalIntelligenceService, SpeciesNormalizationService],
 })
 export class PlantLedgerModule {}

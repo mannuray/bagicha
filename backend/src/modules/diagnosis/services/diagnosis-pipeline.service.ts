@@ -28,7 +28,9 @@ export class DiagnosisPipelineService {
     private readonly speciesNormalization: SpeciesNormalizationService,
   ) {}
 
-  async finalize(input: FinalizeDiagnosisDto): Promise<FinalizeDiagnosisResult> {
+  async finalize(
+    input: FinalizeDiagnosisDto,
+  ): Promise<FinalizeDiagnosisResult> {
     if (input.subject_type !== DiagnosisSubjectType.TREE) {
       throw new NotFoundException(
         `Subject type ${input.subject_type} not supported yet.`,
@@ -45,14 +47,14 @@ export class DiagnosisPipelineService {
     const eventAt = input.event_at ? new Date(input.event_at) : new Date();
     const recordedAt = new Date();
     const cycleYear = this.resolveCycleYear(plant, eventAt);
-    const reasoningSummary = input.reasoning_summary?.trim() ||
-      'Diagnosis recorded.';
+    const reasoningSummary =
+      input.reasoning_summary?.trim() || 'Diagnosis recorded.';
     const actions = (input.recommended_actions ?? [])
       .map((a) => a.trim())
       .filter((a) => a.length > 0)
       .slice(0, MAX_TASKS_FROM_DIAGNOSIS);
     const needsFollowUp = input.needs_follow_up ?? actions.length > 0;
-    const followUpDays = needsFollowUp ? input.follow_up_days ?? 5 : null;
+    const followUpDays = needsFollowUp ? (input.follow_up_days ?? 5) : null;
     const relatedEventType = this.resolveRelatedEventType(
       input.related_event_type,
       input.primary_issue,
@@ -87,8 +89,8 @@ export class DiagnosisPipelineService {
               subject_id: input.subject_id,
               plant_id: plant.id,
               status: DiagnosisStatus.RESOLVED,
-              messages: (input.messages ?? this.synthesizeMessages(input)) as
-                Prisma.InputJsonValue,
+              messages: (input.messages ??
+                this.synthesizeMessages(input)) as Prisma.InputJsonValue,
               attachments: attachments as Prisma.InputJsonValue,
               started_at: recordedAt,
               closed_at: recordedAt,
@@ -167,7 +169,7 @@ export class DiagnosisPipelineService {
         for (let index = 0; index < actions.length; index++) {
           const action = actions[index];
           const dueOffsetDays =
-            index === 0 ? followUpDays ?? 5 : (followUpDays ?? 5) + index * 2;
+            index === 0 ? (followUpDays ?? 5) : (followUpDays ?? 5) + index * 2;
           const task = await tx.task.create({
             data: {
               plant_id: plant.id,

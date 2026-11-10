@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePlantDto } from './dto/create-plant.dto';
 import { AddLogDto } from './dto/add-log.dto';
@@ -45,7 +49,10 @@ export class PlantLedgerService {
     );
     const initialStage =
       createPlantDto.lifecycle_stage ??
-      this.lifecycleService.calculateStage(parsedPlantingDate.date, createPlantDto.species);
+      this.lifecycleService.calculateStage(
+        parsedPlantingDate.date,
+        createPlantDto.species,
+      );
     const manualStage = !!createPlantDto.lifecycle_stage;
 
     const plant = await this.prisma.plant.create({
@@ -97,7 +104,10 @@ export class PlantLedgerService {
     if (plant.user_id !== userId) throw new ForbiddenException('Access denied');
 
     if (!plant.lifecycle_stage_manual) {
-      const currentStage = this.lifecycleService.calculateStage(plant.planting_date, plant.species);
+      const currentStage = this.lifecycleService.calculateStage(
+        plant.planting_date,
+        plant.species,
+      );
 
       if (currentStage !== plant.lifecycle_stage) {
         await this.prisma.plant.update({
@@ -118,11 +128,16 @@ export class PlantLedgerService {
     return plant;
   }
 
-  async updatePlant(userId: string, treeId: string, updatePlantDto: UpdatePlantDto) {
+  async updatePlant(
+    userId: string,
+    treeId: string,
+    updatePlantDto: UpdatePlantDto,
+  ) {
     const plant = await this.getPlantDetail(userId, treeId);
 
     const parsedPlantingDate =
-      updatePlantDto.planting_date === undefined && updatePlantDto.planting_date_precision === undefined
+      updatePlantDto.planting_date === undefined &&
+      updatePlantDto.planting_date_precision === undefined
         ? {
             date: plant.planting_date,
             precision: plant.planting_date_precision,
@@ -170,7 +185,9 @@ export class PlantLedgerService {
     const plant = await this.getPlantDetail(userId, treeId);
 
     return this.prisma.$transaction(async (tx) => {
-      const eventAt = addLogDto.event_at ? new Date(addLogDto.event_at) : new Date();
+      const eventAt = addLogDto.event_at
+        ? new Date(addLogDto.event_at)
+        : new Date();
       const cycleYear = this.resolveCycleYear(plant, eventAt);
       const cycle = await tx.plantCycle.upsert({
         where: {
@@ -199,7 +216,13 @@ export class PlantLedgerService {
 
       await this.syncTreeMilestonesFromLog(tx, plant, log.type, log.timestamp);
       await this.refreshCycleSummary(tx, plant.id, cycle.id);
-      await this.createFollowUpTaskForLog(tx, plant.id, cycle.id, plant.name, log);
+      await this.createFollowUpTaskForLog(
+        tx,
+        plant.id,
+        cycle.id,
+        plant.name,
+        log,
+      );
 
       return log;
     });
@@ -310,11 +333,7 @@ export class PlantLedgerService {
           },
         },
       },
-      orderBy: [
-        { status: 'asc' },
-        { due_date: 'asc' },
-        { created_at: 'desc' },
-      ],
+      orderBy: [{ status: 'asc' }, { due_date: 'asc' }, { created_at: 'desc' }],
       take: 20,
     });
 
@@ -352,11 +371,7 @@ export class PlantLedgerService {
           },
         },
       },
-      orderBy: [
-        { status: 'asc' },
-        { due_date: 'asc' },
-        { created_at: 'desc' },
-      ],
+      orderBy: [{ status: 'asc' }, { due_date: 'asc' }, { created_at: 'desc' }],
       take: 30,
     });
 
@@ -376,7 +391,12 @@ export class PlantLedgerService {
       where: {
         plant_id: treeId,
         type: {
-          in: [LogType.DIAGNOSIS, LogType.PEST_DIAGNOSIS, LogType.TREATMENT, LogType.WATERING_STRESS],
+          in: [
+            LogType.DIAGNOSIS,
+            LogType.PEST_DIAGNOSIS,
+            LogType.TREATMENT,
+            LogType.WATERING_STRESS,
+          ],
         },
       },
       orderBy: { timestamp: 'desc' },
@@ -400,13 +420,41 @@ export class PlantLedgerService {
     const latest = cycles[0] ?? null;
     const previous = cycles[1] ?? null;
 
-    const likelyIssues = this.rankLikelyIssues(latest, previous, recentHealthLogs, latestCycleTasks, latestCycleLogs);
-    const whatToChange = this.buildWhatToChange(latest, previous, recentHealthLogs, latestCycleTasks, latestCycleLogs);
-    const watchEarly = this.buildWatchEarly(latest, recentHealthLogs, latestCycleLogs);
-    const priorityActions = this.buildPriorityActions(latest, previous, recentHealthLogs, latestCycleTasks, latestCycleLogs);
-    const completedTasks = latestCycleTasks.filter((task) => task.status === TaskStatus.COMPLETED).length;
-    const skippedTasks = latestCycleTasks.filter((task) => task.status === TaskStatus.SKIPPED).length;
-    const pendingTasks = latestCycleTasks.filter((task) => task.status === TaskStatus.PENDING).length;
+    const likelyIssues = this.rankLikelyIssues(
+      latest,
+      previous,
+      recentHealthLogs,
+      latestCycleTasks,
+      latestCycleLogs,
+    );
+    const whatToChange = this.buildWhatToChange(
+      latest,
+      previous,
+      recentHealthLogs,
+      latestCycleTasks,
+      latestCycleLogs,
+    );
+    const watchEarly = this.buildWatchEarly(
+      latest,
+      recentHealthLogs,
+      latestCycleLogs,
+    );
+    const priorityActions = this.buildPriorityActions(
+      latest,
+      previous,
+      recentHealthLogs,
+      latestCycleTasks,
+      latestCycleLogs,
+    );
+    const completedTasks = latestCycleTasks.filter(
+      (task) => task.status === TaskStatus.COMPLETED,
+    ).length;
+    const skippedTasks = latestCycleTasks.filter(
+      (task) => task.status === TaskStatus.SKIPPED,
+    ).length;
+    const pendingTasks = latestCycleTasks.filter(
+      (task) => task.status === TaskStatus.PENDING,
+    ).length;
 
     return {
       cycle_year: latest?.cycle_year ?? null,
@@ -421,7 +469,12 @@ export class PlantLedgerService {
     };
   }
 
-  async updateTaskStatus(userId: string, treeId: string, taskId: string, status: TaskStatus) {
+  async updateTaskStatus(
+    userId: string,
+    treeId: string,
+    taskId: string,
+    status: TaskStatus,
+  ) {
     await this.getPlantDetail(userId, treeId);
 
     const task = await this.prisma.task.findUnique({
@@ -487,12 +540,21 @@ export class PlantLedgerService {
     }
 
     const normalized = input.trim();
-    const precision = requestedPrecision ?? this.inferPlantingDatePrecision(normalized);
+    const precision =
+      requestedPrecision ?? this.inferPlantingDatePrecision(normalized);
 
     if (precision === PlantingDatePrecision.YEAR) {
       const year = Number(normalized);
-      if (!Number.isInteger(year) || year < 1900 || year > new Date().getFullYear() + 1) {
-        return { date: null, precision: PlantingDatePrecision.UNKNOWN, input: normalized };
+      if (
+        !Number.isInteger(year) ||
+        year < 1900 ||
+        year > new Date().getFullYear() + 1
+      ) {
+        return {
+          date: null,
+          precision: PlantingDatePrecision.UNKNOWN,
+          input: normalized,
+        };
       }
       return {
         date: new Date(Date.UTC(year, 0, 1)),
@@ -504,13 +566,21 @@ export class PlantLedgerService {
     if (precision === PlantingDatePrecision.MONTH_YEAR) {
       const match = normalized.match(/^(\d{4})-(\d{1,2})$/);
       if (!match) {
-        return { date: null, precision: PlantingDatePrecision.UNKNOWN, input: normalized };
+        return {
+          date: null,
+          precision: PlantingDatePrecision.UNKNOWN,
+          input: normalized,
+        };
       }
 
       const year = Number(match[1]);
       const month = Number(match[2]);
       if (month < 1 || month > 12) {
-        return { date: null, precision: PlantingDatePrecision.UNKNOWN, input: normalized };
+        return {
+          date: null,
+          precision: PlantingDatePrecision.UNKNOWN,
+          input: normalized,
+        };
       }
 
       return {
@@ -522,7 +592,11 @@ export class PlantLedgerService {
 
     const parsed = new Date(normalized);
     if (Number.isNaN(parsed.getTime())) {
-      return { date: null, precision: PlantingDatePrecision.UNKNOWN, input: normalized };
+      return {
+        date: null,
+        precision: PlantingDatePrecision.UNKNOWN,
+        input: normalized,
+      };
     }
 
     return {
@@ -544,7 +618,10 @@ export class PlantLedgerService {
     return PlantingDatePrecision.EXACT_DATE;
   }
 
-  private resolveCycleYear(plant: Pick<Plant, 'name' | 'species' | 'variety'>, referenceDate = new Date()): number {
+  private resolveCycleYear(
+    plant: Pick<Plant, 'name' | 'species' | 'variety'>,
+    referenceDate = new Date(),
+  ): number {
     const family = this.speciesNormalizationService.resolveSpeciesFamily(plant);
     const month = referenceDate.getUTCMonth() + 1;
     const cycleStartMonth = this.getCycleStartMonth(family);
@@ -600,15 +677,25 @@ export class PlantLedgerService {
     }
   }
 
-  private async refreshCycleSummary(tx: Prisma.TransactionClient, treeId: string, cycleId: string) {
+  private async refreshCycleSummary(
+    tx: Prisma.TransactionClient,
+    treeId: string,
+    cycleId: string,
+  ) {
     const journal_entries = await tx.journalEntry.findMany({
       where: { plant_id: treeId, plant_cycle_id: cycleId },
       orderBy: { timestamp: 'asc' },
     });
 
-    const flowering = journal_entries.find((log) => log.type === LogType.FLOWERING)?.timestamp ?? null;
-    const fruitSet = journal_entries.find((log) => log.type === LogType.FRUIT_SET)?.timestamp ?? null;
-    const harvestLogs = journal_entries.filter((log) => log.type === LogType.HARVEST);
+    const flowering =
+      journal_entries.find((log) => log.type === LogType.FLOWERING)
+        ?.timestamp ?? null;
+    const fruitSet =
+      journal_entries.find((log) => log.type === LogType.FRUIT_SET)
+        ?.timestamp ?? null;
+    const harvestLogs = journal_entries.filter(
+      (log) => log.type === LogType.HARVEST,
+    );
     const flowerDropLevel = this.maxDropLevel(
       journal_entries
         .filter((log) => log.type === LogType.FLOWER_DROP)
@@ -619,7 +706,10 @@ export class PlantLedgerService {
         .filter((log) => log.type === LogType.FRUIT_DROP)
         .map((log) => this.parseDropLevel(log.metadata, 'severity')),
     );
-    const latestHarvestMetadata = harvestLogs.at(-1)?.metadata as Record<string, unknown> | null | undefined;
+    const latestHarvestMetadata = harvestLogs.at(-1)?.metadata as
+      | Record<string, unknown>
+      | null
+      | undefined;
     const yieldQuantity = this.parseQuantityValue(
       latestHarvestMetadata?.quantity_value ?? latestHarvestMetadata?.quantity,
     );
@@ -627,9 +717,15 @@ export class PlantLedgerService {
       latestHarvestMetadata?.quantity_unit ?? latestHarvestMetadata?.quantity,
     );
     const yieldQuality = this.parseYieldQuality(latestHarvestMetadata?.quality);
-    const stressScore = journal_entries.filter((log) => log.type === LogType.WATERING_STRESS).length;
-    const pestPressureScore = journal_entries.filter((log) => log.type === LogType.PEST_DIAGNOSIS).length;
-    const treatmentCount = journal_entries.filter((log) => log.type === LogType.TREATMENT).length;
+    const stressScore = journal_entries.filter(
+      (log) => log.type === LogType.WATERING_STRESS,
+    ).length;
+    const pestPressureScore = journal_entries.filter(
+      (log) => log.type === LogType.PEST_DIAGNOSIS,
+    ).length;
+    const treatmentCount = journal_entries.filter(
+      (log) => log.type === LogType.TREATMENT,
+    ).length;
 
     const summary = this.buildCycleSummary({
       flowering,
@@ -674,7 +770,9 @@ export class PlantLedgerService {
   }
 
   private parseDropLevel(metadata: unknown, key: string): DropLevel {
-    const value = (metadata as Record<string, unknown> | null | undefined)?.[key];
+    const value = (metadata as Record<string, unknown> | null | undefined)?.[
+      key
+    ];
     if (typeof value !== 'string') return DropLevel.UNKNOWN;
     switch (value.toUpperCase()) {
       case 'LOW':
@@ -699,7 +797,10 @@ export class PlantLedgerService {
       [DropLevel.UNKNOWN]: -1,
     };
 
-    return levels.reduce((current, level) => (rank[level] > rank[current] ? level : current), DropLevel.UNKNOWN);
+    return levels.reduce(
+      (current, level) => (rank[level] > rank[current] ? level : current),
+      DropLevel.UNKNOWN,
+    );
   }
 
   private parseQuantityValue(quantity: unknown): number | null {
@@ -747,27 +848,34 @@ export class PlantLedgerService {
     const parts: string[] = [];
 
     if (input.flowering) {
-      parts.push('Flowering was recorded')
+      parts.push('Flowering was recorded');
     } else {
-      parts.push('No flowering record was added')
+      parts.push('No flowering record was added');
     }
 
     if (input.fruitSet) {
-      parts.push('fruit set was observed')
+      parts.push('fruit set was observed');
     } else if (input.flowering) {
-      parts.push('but fruit set was not confirmed')
+      parts.push('but fruit set was not confirmed');
     }
 
     if (input.harvestCount > 0) {
-      parts.push(`and ${input.harvestCount} harvest event${input.harvestCount > 1 ? 's were' : ' was'} logged`)
+      parts.push(
+        `and ${input.harvestCount} harvest event${input.harvestCount > 1 ? 's were' : ' was'} logged`,
+      );
     }
 
-    if (input.flowerDropLevel === DropLevel.HIGH || input.fruitDropLevel === DropLevel.HIGH) {
-      parts.push('with high drop pressure during the cycle')
+    if (
+      input.flowerDropLevel === DropLevel.HIGH ||
+      input.fruitDropLevel === DropLevel.HIGH
+    ) {
+      parts.push('with high drop pressure during the cycle');
     }
 
     if (input.stressScore > 0 || input.pestPressureScore > 0) {
-      parts.push(`while ${input.stressScore} stress and ${input.pestPressureScore} pest signals were recorded`)
+      parts.push(
+        `while ${input.stressScore} stress and ${input.pestPressureScore} pest signals were recorded`,
+      );
     }
 
     return `${parts.join(' ')}.`;
@@ -786,27 +894,45 @@ export class PlantLedgerService {
     const actions: string[] = [];
 
     if (input.flowering && !input.fruitSet) {
-      actions.push('Inspect flowering closely next cycle and confirm fruit set early.');
+      actions.push(
+        'Inspect flowering closely next cycle and confirm fruit set early.',
+      );
     }
 
-    if (input.flowerDropLevel === DropLevel.MEDIUM || input.flowerDropLevel === DropLevel.HIGH) {
-      actions.push('Track flower drop severity early and stabilize watering during bloom.');
+    if (
+      input.flowerDropLevel === DropLevel.MEDIUM ||
+      input.flowerDropLevel === DropLevel.HIGH
+    ) {
+      actions.push(
+        'Track flower drop severity early and stabilize watering during bloom.',
+      );
     }
 
-    if (input.fruitDropLevel === DropLevel.MEDIUM || input.fruitDropLevel === DropLevel.HIGH) {
-      actions.push('Watch fruit retention next cycle and log drop before harvest declines.');
+    if (
+      input.fruitDropLevel === DropLevel.MEDIUM ||
+      input.fruitDropLevel === DropLevel.HIGH
+    ) {
+      actions.push(
+        'Watch fruit retention next cycle and log drop before harvest declines.',
+      );
     }
 
     if (input.stressScore > 0) {
-      actions.push('Plan moisture checks around flowering and fruit-development windows.');
+      actions.push(
+        'Plan moisture checks around flowering and fruit-development windows.',
+      );
     }
 
     if (input.pestPressureScore > 0 && input.treatmentCount === 0) {
-      actions.push('Add a follow-up treatment or inspection plan when pests are recorded.');
+      actions.push(
+        'Add a follow-up treatment or inspection plan when pests are recorded.',
+      );
     }
 
     if (input.harvestCount === 0) {
-      actions.push('Keep recording flowering, fruit set, and harvest to compare the next cycle properly.');
+      actions.push(
+        'Keep recording flowering, fruit set, and harvest to compare the next cycle properly.',
+      );
     }
 
     return actions.slice(0, 4);
@@ -859,7 +985,9 @@ export class PlantLedgerService {
           origin_log_type: log.type,
           origin_log_content: log.content,
         } as Prisma.InputJsonValue,
-        due_date: new Date(log.timestamp.getTime() + followUp.dueInDays * 24 * 60 * 60 * 1000),
+        due_date: new Date(
+          log.timestamp.getTime() + followUp.dueInDays * 24 * 60 * 60 * 1000,
+        ),
       },
     });
   }
@@ -900,7 +1028,8 @@ export class PlantLedgerService {
           category: TaskCategory.INSPECTION,
           priority: TaskPriority.MEDIUM,
           title: `Recheck treatment outcome on ${treeName}`,
-          reason: 'Treatment was applied and the plant should be checked for recovery.',
+          reason:
+            'Treatment was applied and the plant should be checked for recovery.',
           dueInDays: 3,
         };
       default:
@@ -911,13 +1040,28 @@ export class PlantLedgerService {
   private buildTaskSourceSummary(task: {
     source: string;
     metadata?: Prisma.JsonValue | null;
-    seasonal_pack?: { current_phase: string | null; upcoming_phase: string | null } | null;
-    personalized_overlay?: { reasoning_summary: string | null; adjusted_phase: string | null } | null;
+    seasonal_pack?: {
+      current_phase: string | null;
+      upcoming_phase: string | null;
+    } | null;
+    personalized_overlay?: {
+      reasoning_summary: string | null;
+      adjusted_phase: string | null;
+    } | null;
   }): string | null {
     if (task.source === 'MANUAL') {
-      const metadata = task.metadata as Record<string, unknown> | null | undefined;
-      const originType = typeof metadata?.origin_log_type === 'string' ? metadata.origin_log_type : null;
-      const originContent = typeof metadata?.origin_log_content === 'string' ? metadata.origin_log_content : null;
+      const metadata = task.metadata as
+        | Record<string, unknown>
+        | null
+        | undefined;
+      const originType =
+        typeof metadata?.origin_log_type === 'string'
+          ? metadata.origin_log_type
+          : null;
+      const originContent =
+        typeof metadata?.origin_log_content === 'string'
+          ? metadata.origin_log_content
+          : null;
       if (originType && originContent) {
         return `Created from ${originType.toLowerCase().replace(/_/g, ' ')} log: ${originContent}`;
       }
@@ -937,8 +1081,14 @@ export class PlantLedgerService {
     }
 
     if (task.source === 'SEASONAL_PACK') {
-      const currentPhase = task.seasonal_pack?.current_phase?.replace(/_/g, ' ');
-      const upcomingPhase = task.seasonal_pack?.upcoming_phase?.replace(/_/g, ' ');
+      const currentPhase = task.seasonal_pack?.current_phase?.replace(
+        /_/g,
+        ' ',
+      );
+      const upcomingPhase = task.seasonal_pack?.upcoming_phase?.replace(
+        /_/g,
+        ' ',
+      );
       if (currentPhase && upcomingPhase) {
         return `Seasonal guidance for ${currentPhase}, with ${upcomingPhase} coming next.`;
       }
@@ -962,8 +1112,14 @@ export class PlantLedgerService {
     plant_cycle_id: string | null;
     plant_cycle?: { cycle_year: number } | null;
     plant?: { id: string; name: string; record_kind: string } | null;
-    seasonal_pack?: { current_phase: string | null; upcoming_phase: string | null } | null;
-    personalized_overlay?: { reasoning_summary: string | null; adjusted_phase: string | null } | null;
+    seasonal_pack?: {
+      current_phase: string | null;
+      upcoming_phase: string | null;
+    } | null;
+    personalized_overlay?: {
+      reasoning_summary: string | null;
+      adjusted_phase: string | null;
+    } | null;
   }) {
     return {
       id: task.id,
@@ -1012,42 +1168,74 @@ export class PlantLedgerService {
       issues.push('Flowering was recorded but fruit set was not confirmed.');
     }
 
-    if (latest.flower_drop_level === DropLevel.HIGH || latest.flower_drop_level === DropLevel.MEDIUM) {
-      issues.push(`Flower drop was ${latest.flower_drop_level.toLowerCase()} and likely reduced conversion to fruit set.`);
+    if (
+      latest.flower_drop_level === DropLevel.HIGH ||
+      latest.flower_drop_level === DropLevel.MEDIUM
+    ) {
+      issues.push(
+        `Flower drop was ${latest.flower_drop_level.toLowerCase()} and likely reduced conversion to fruit set.`,
+      );
     }
 
-    if (latest.fruit_drop_level === DropLevel.HIGH || latest.fruit_drop_level === DropLevel.MEDIUM) {
-      issues.push(`Fruit drop was ${latest.fruit_drop_level.toLowerCase()} and likely weakened harvest outcome.`);
+    if (
+      latest.fruit_drop_level === DropLevel.HIGH ||
+      latest.fruit_drop_level === DropLevel.MEDIUM
+    ) {
+      issues.push(
+        `Fruit drop was ${latest.fruit_drop_level.toLowerCase()} and likely weakened harvest outcome.`,
+      );
     }
 
     if ((latest.stress_score ?? 0) > 0) {
-      issues.push(`Water or weather stress signals were recorded ${latest.stress_score} time(s) this cycle.`);
+      issues.push(
+        `Water or weather stress signals were recorded ${latest.stress_score} time(s) this cycle.`,
+      );
     }
 
     if ((latest.pest_pressure_score ?? 0) > 0) {
-      issues.push(`Pest pressure was recorded ${latest.pest_pressure_score} time(s) this cycle.`);
+      issues.push(
+        `Pest pressure was recorded ${latest.pest_pressure_score} time(s) this cycle.`,
+      );
     }
 
     if (previous && (latest.stress_score ?? 0) > (previous.stress_score ?? 0)) {
-      issues.push('Stress pressure increased compared with the previous cycle.');
+      issues.push(
+        'Stress pressure increased compared with the previous cycle.',
+      );
     }
 
-    if (previous && (latest.pest_pressure_score ?? 0) > (previous.pest_pressure_score ?? 0)) {
+    if (
+      previous &&
+      (latest.pest_pressure_score ?? 0) > (previous.pest_pressure_score ?? 0)
+    ) {
       issues.push('Pest pressure increased compared with the previous cycle.');
     }
 
-    if (journal_entries.some((log) => log.type === LogType.DIAGNOSIS || log.type === LogType.PEST_DIAGNOSIS)) {
-      issues.push('Recent diagnosis activity suggests unresolved health stress may still be affecting recovery.');
+    if (
+      journal_entries.some(
+        (log) =>
+          log.type === LogType.DIAGNOSIS || log.type === LogType.PEST_DIAGNOSIS,
+      )
+    ) {
+      issues.push(
+        'Recent diagnosis activity suggests unresolved health stress may still be affecting recovery.',
+      );
     }
 
     const harvestLossCategory = this.extractHarvestLossCategory(cycleLogs);
     if (harvestLossCategory) {
-      issues.push(`Harvest loss was linked to ${harvestLossCategory.replace(/_/g, ' ').toLowerCase()}.`);
+      issues.push(
+        `Harvest loss was linked to ${harvestLossCategory.replace(/_/g, ' ').toLowerCase()}.`,
+      );
     }
 
-    const skippedTasks = tasks.filter((task) => task.status === TaskStatus.SKIPPED).length;
+    const skippedTasks = tasks.filter(
+      (task) => task.status === TaskStatus.SKIPPED,
+    ).length;
     if (skippedTasks > 0) {
-      issues.push(`${skippedTasks} cycle task(s) were skipped, which may have reduced early intervention.`);
+      issues.push(
+        `${skippedTasks} cycle task(s) were skipped, which may have reduced early intervention.`,
+      );
     }
 
     return Array.from(new Set(issues)).slice(0, 4);
@@ -1074,36 +1262,67 @@ export class PlantLedgerService {
     if (!latest) return actions;
 
     if (latest.observed_flowering_at && !latest.observed_fruit_set_at) {
-      actions.push('Confirm fruit set early next cycle instead of waiting until harvest time to assess outcome.');
+      actions.push(
+        'Confirm fruit set early next cycle instead of waiting until harvest time to assess outcome.',
+      );
     }
     if ((latest.stress_score ?? 0) > 0) {
-      actions.push('Stabilize watering and moisture checks before flowering and during early fruit development.');
+      actions.push(
+        'Stabilize watering and moisture checks before flowering and during early fruit development.',
+      );
     }
     if ((latest.pest_pressure_score ?? 0) > 0) {
-      actions.push('Start pest scouting earlier and follow diagnosis journal_entries with a same-cycle treatment or inspection.');
+      actions.push(
+        'Start pest scouting earlier and follow diagnosis journal_entries with a same-cycle treatment or inspection.',
+      );
     }
-    if (latest.flower_drop_level === DropLevel.HIGH || latest.flower_drop_level === DropLevel.MEDIUM) {
-      actions.push('Track flower drop as soon as bloom starts so intervention is not delayed.');
+    if (
+      latest.flower_drop_level === DropLevel.HIGH ||
+      latest.flower_drop_level === DropLevel.MEDIUM
+    ) {
+      actions.push(
+        'Track flower drop as soon as bloom starts so intervention is not delayed.',
+      );
     }
-    if (latest.fruit_drop_level === DropLevel.HIGH || latest.fruit_drop_level === DropLevel.MEDIUM) {
-      actions.push('Inspect fruit retention earlier and log drop severity before the harvest window is affected.');
+    if (
+      latest.fruit_drop_level === DropLevel.HIGH ||
+      latest.fruit_drop_level === DropLevel.MEDIUM
+    ) {
+      actions.push(
+        'Inspect fruit retention earlier and log drop severity before the harvest window is affected.',
+      );
     }
-    if (previous?.harvest_completed_at != null && latest.observed_fruit_set_at == null) {
-      actions.push('Use last cycle as a benchmark and review what changed before flowering this year.');
+    if (
+      previous?.harvest_completed_at != null &&
+      latest.observed_fruit_set_at == null
+    ) {
+      actions.push(
+        'Use last cycle as a benchmark and review what changed before flowering this year.',
+      );
     }
     if (journal_entries.some((log) => log.type === LogType.TREATMENT)) {
-      actions.push('Recheck treatment outcomes consistently so the next cycle starts from a cleaner health baseline.');
+      actions.push(
+        'Recheck treatment outcomes consistently so the next cycle starts from a cleaner health baseline.',
+      );
     }
     if (tasks.some((task) => task.status === TaskStatus.SKIPPED)) {
-      actions.push('Avoid skipping early-cycle tasks next time, especially inspection and treatment follow-ups.');
+      actions.push(
+        'Avoid skipping early-cycle tasks next time, especially inspection and treatment follow-ups.',
+      );
     }
     const harvestLossCategory = this.extractHarvestLossCategory(cycleLogs);
     if (harvestLossCategory === 'CRACKING') {
-      actions.push('Prepare rain and irrigation stability around harvest to reduce cracking losses.');
+      actions.push(
+        'Prepare rain and irrigation stability around harvest to reduce cracking losses.',
+      );
     } else if (harvestLossCategory === 'PEST_DAMAGE') {
-      actions.push('Protect the harvest earlier with pest checks before fruit quality starts dropping.');
+      actions.push(
+        'Protect the harvest earlier with pest checks before fruit quality starts dropping.',
+      );
     } else if (harvestLossCategory === 'ROT') {
-      actions.push('Reduce post-rain disease pressure and inspect fruit quality earlier in the harvest window.');
+      actions.push(
+        'Reduce post-rain disease pressure and inspect fruit quality earlier in the harvest window.',
+      );
     }
 
     return Array.from(new Set(actions)).slice(0, 4);
@@ -1123,25 +1342,35 @@ export class PlantLedgerService {
     if (!latest) return watch;
 
     if ((latest.stress_score ?? 0) > 0) {
-      watch.push('Early leaf wilt, dry soil, and repeated watering stress signals.')
+      watch.push(
+        'Early leaf wilt, dry soil, and repeated watering stress signals.',
+      );
     }
     if ((latest.pest_pressure_score ?? 0) > 0) {
-      watch.push('Recurring pest symptoms before flowering and fruit set.')
+      watch.push('Recurring pest symptoms before flowering and fruit set.');
     }
-    if (latest.flower_drop_level === DropLevel.HIGH || latest.flower_drop_level === DropLevel.MEDIUM) {
-      watch.push('Flower drop in the first bloom window.')
+    if (
+      latest.flower_drop_level === DropLevel.HIGH ||
+      latest.flower_drop_level === DropLevel.MEDIUM
+    ) {
+      watch.push('Flower drop in the first bloom window.');
     }
-    if (latest.fruit_drop_level === DropLevel.HIGH || latest.fruit_drop_level === DropLevel.MEDIUM) {
-      watch.push('Fruit drop shortly after set.')
+    if (
+      latest.fruit_drop_level === DropLevel.HIGH ||
+      latest.fruit_drop_level === DropLevel.MEDIUM
+    ) {
+      watch.push('Fruit drop shortly after set.');
     }
     if (journal_entries.some((log) => log.type === LogType.DIAGNOSIS)) {
-      watch.push('Any repeat of the last diagnosis symptoms before the cycle stabilizes.')
+      watch.push(
+        'Any repeat of the last diagnosis symptoms before the cycle stabilizes.',
+      );
     }
     const harvestLossCategory = this.extractHarvestLossCategory(cycleLogs);
     if (harvestLossCategory === 'BIRD_DAMAGE') {
-      watch.push('Early bird damage signs close to harvest maturity.')
+      watch.push('Early bird damage signs close to harvest maturity.');
     } else if (harvestLossCategory === 'WEATHER_DAMAGE') {
-      watch.push('Rain, wind, or heat events close to fruit maturity.')
+      watch.push('Rain, wind, or heat events close to fruit maturity.');
     }
 
     return Array.from(new Set(watch)).slice(0, 4);
@@ -1167,22 +1396,37 @@ export class PlantLedgerService {
 
     actions.push('Review this cycle before the next flowering window starts.');
     if ((latest.stress_score ?? 0) > 0) {
-      actions.push('Set one moisture-check task before bloom and one during early fruit development.');
+      actions.push(
+        'Set one moisture-check task before bloom and one during early fruit development.',
+      );
     }
-    if ((latest.pest_pressure_score ?? 0) > 0 || journal_entries.some((log) => log.type === LogType.PEST_DIAGNOSIS)) {
-      actions.push('Schedule an early pest inspection instead of waiting for visible damage.');
+    if (
+      (latest.pest_pressure_score ?? 0) > 0 ||
+      journal_entries.some((log) => log.type === LogType.PEST_DIAGNOSIS)
+    ) {
+      actions.push(
+        'Schedule an early pest inspection instead of waiting for visible damage.',
+      );
     }
     if (latest.observed_flowering_at && !latest.observed_fruit_set_at) {
-      actions.push('Log flower-to-fruit conversion explicitly next cycle to catch weak set earlier.');
+      actions.push(
+        'Log flower-to-fruit conversion explicitly next cycle to catch weak set earlier.',
+      );
     }
     if (previous?.harvest_completed_at != null) {
-      actions.push('Compare the next cycle against the last successful harvest, not just current symptoms.');
+      actions.push(
+        'Compare the next cycle against the last successful harvest, not just current symptoms.',
+      );
     }
     if (tasks.some((task) => task.status === TaskStatus.PENDING)) {
-      actions.push('Close or review pending cycle tasks before the next flowering window opens.');
+      actions.push(
+        'Close or review pending cycle tasks before the next flowering window opens.',
+      );
     }
     if (this.extractHarvestLossCategory(cycleLogs)) {
-      actions.push('Log harvest loss causes with more detail next cycle so mitigation stays specific.');
+      actions.push(
+        'Log harvest loss causes with more detail next cycle so mitigation stays specific.',
+      );
     }
 
     return Array.from(new Set(actions)).slice(0, 4);
@@ -1209,13 +1453,18 @@ export class PlantLedgerService {
   }
 
   private extractHarvestLossCategory(
-    journal_entries: Array<{ type: LogType; metadata: Prisma.JsonValue | null }>,
+    journal_entries: Array<{
+      type: LogType;
+      metadata: Prisma.JsonValue | null;
+    }>,
   ): string | null {
     const harvestMetadata = journal_entries
       .filter((log) => log.type === LogType.HARVEST)
       .map((log) => log.metadata as Record<string, unknown> | null | undefined)
       .find((metadata) => typeof metadata?.loss_category === 'string');
 
-    return typeof harvestMetadata?.loss_category === 'string' ? harvestMetadata.loss_category : null;
+    return typeof harvestMetadata?.loss_category === 'string'
+      ? harvestMetadata.loss_category
+      : null;
   }
 }

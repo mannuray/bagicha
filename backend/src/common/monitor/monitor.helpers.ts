@@ -1,11 +1,7 @@
-import {
-  ExecutionContext,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { ExecutionContext, Inject, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Observable, from, of, lastValueFrom } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { MonitorContext } from './monitor.context';
 import { MonitorService } from './monitor.service';
 import type { MonitorEvent } from './monitor.types';
@@ -17,7 +13,9 @@ import type { MonitorEvent } from './monitor.types';
  */
 @Injectable()
 export class MonitorJwtAuthGuard extends AuthGuard('jwt') {
-  constructor(@Inject(MonitorService) private readonly monitor: MonitorService) {
+  constructor(
+    @Inject(MonitorService) private readonly monitor: MonitorService,
+  ) {
     super();
   }
 
@@ -47,7 +45,7 @@ export class MonitorJwtAuthGuard extends AuthGuard('jwt') {
         time: new Date(now).toISOString(),
         service: this.monitor.serviceName,
         environment: this.monitor.environment,
-        trace_id: ctx?.trace_id ?? `auth-${uuidv4()}`,
+        trace_id: ctx?.trace_id ?? `auth-${randomUUID()}`,
         log_type: ctx ? 'request' : 'system',
         flow_step: 'auth',
         msg: status === 'ok' ? 'auth ok' : 'auth failed',
@@ -100,10 +98,11 @@ export async function wrapFetch(
       time: new Date(now).toISOString(),
       service: monitor.serviceName,
       environment: monitor.environment,
-      trace_id: ctx?.trace_id ?? `external-${uuidv4()}`,
+      trace_id: ctx?.trace_id ?? `external-${randomUUID()}`,
       log_type: ctx ? 'request' : 'system',
       flow_step: 'external',
-      msg: status === 'ok' ? `external ${target} ok` : `external ${target} failed`,
+      msg:
+        status === 'ok' ? `external ${target} ok` : `external ${target} failed`,
       duration_ms: now - start,
       ...(ctx?.request_id ? { request_id: ctx.request_id } : {}),
       ...(ctx?.span_id ? { parent_span_id: ctx.span_id } : {}),

@@ -34,7 +34,7 @@ export class MarketplaceService {
 
   async buyItem(userId: string, itemId: string) {
     console.log(`[MARKETPLACE] User ${userId} buying item ${itemId}`);
-    
+
     // Logic to trigger delivery or add to ledger
     return {
       success: true,

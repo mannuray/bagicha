@@ -22,7 +22,9 @@ export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
   @Post('images')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_BYTES } }))
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_BYTES } }),
+  )
   async uploadImage(
     @Request() req,
     @Body('kind') kindRaw: string,
@@ -34,8 +36,13 @@ export class MediaController {
   }
 
   @Get('download-url/*')
-  async getDownloadUrl(@Param('0') key: string, @Query('expires') expires?: string) {
-    const seconds = expires ? Math.min(Math.max(parseInt(expires, 10), 60), 86400) : 3600;
+  async getDownloadUrl(
+    @Param('0') key: string,
+    @Query('expires') expires?: string,
+  ) {
+    const seconds = expires
+      ? Math.min(Math.max(parseInt(expires, 10), 60), 86400)
+      : 3600;
     const url = await this.mediaService.getDownloadUrl(key, seconds);
     return { success: true, data: { url, expires_in_seconds: seconds } };
   }

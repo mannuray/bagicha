@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { CommunityService } from './community.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -18,7 +27,12 @@ export class CommunityController {
     @Query('page') page: number = 1,
     @Query('page_size') pageSize: number = 20,
   ) {
-    return this.communityService.getFeed(req.user.id, district, Number(page), Number(pageSize));
+    return this.communityService.getFeed(
+      req.user.id,
+      district,
+      Number(page),
+      Number(pageSize),
+    );
   }
 
   @Post('posts')
@@ -27,7 +41,11 @@ export class CommunityController {
   }
 
   @Post('posts/:id/comments')
-  async addComment(@Request() req, @Param('id') id: string, @Body() dto: CreateCommentDto) {
+  async addComment(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: CreateCommentDto,
+  ) {
     return this.communityService.addComment(req.user.id, id, dto);
   }
 
@@ -37,12 +55,20 @@ export class CommunityController {
   }
 
   @Post('posts/:id/report')
-  async reportPost(@Request() req, @Param('id') id: string, @Body() dto: ReportTargetDto) {
+  async reportPost(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: ReportTargetDto,
+  ) {
     return this.communityService.reportPost(req.user.id, id, dto);
   }
 
   @Post('comments/:id/report')
-  async reportComment(@Request() req, @Param('id') id: string, @Body() dto: ReportTargetDto) {
+  async reportComment(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: ReportTargetDto,
+  ) {
     return this.communityService.reportComment(req.user.id, id, dto);
   }
 }

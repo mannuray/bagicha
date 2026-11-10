@@ -19,6 +19,10 @@ export class PlantsController {
       language?: string;
     },
   ) {
-    return this.plantsService.resolve(body.query || '', body.region_cluster, body.language);
+    return this.plantsService.resolve(
+      body.query || '',
+      body.region_cluster,
+      body.language,
+    );
   }
 }

@@ -28,8 +28,8 @@ export class WeatherService {
       temp: mockTemp,
       condition: mockTemp > 40 ? 'Sunny & Harsh' : 'Sunny',
       is_extreme: isExtreme,
-      alert_message: isExtreme 
-        ? `Extreme heat detected (${mockTemp}°C). Please deep-water your citrus and mango trees tonight.` 
+      alert_message: isExtreme
+        ? `Extreme heat detected (${mockTemp}°C). Please deep-water your citrus and mango trees tonight.`
         : undefined,
     };
   }
@@ -37,7 +37,7 @@ export class WeatherService {
   async getSeasonalSuggestions(district: string) {
     // Simple seasonal mapping for India
     const month = new Date().getMonth(); // 0-11
-    
+
     if (month >= 2 && month <= 5) {
       return {
         season: 'Summer',

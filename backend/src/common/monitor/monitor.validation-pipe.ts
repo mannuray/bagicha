@@ -5,7 +5,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import type { ValidationPipeOptions } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { MonitorContext } from './monitor.context';
 import { MonitorService } from './monitor.service';
 import type { MonitorEvent } from './monitor.types';
@@ -24,7 +24,10 @@ export class MonitorValidationPipe extends ValidationPipe {
     super(options);
   }
 
-  async transform(value: unknown, metadata: ArgumentMetadata): Promise<unknown> {
+  async transform(
+    value: unknown,
+    metadata: ArgumentMetadata,
+  ): Promise<unknown> {
     const start = Date.now();
     let status: 'ok' | 'error' = 'ok';
     let errorType: string | undefined;
@@ -32,7 +35,8 @@ export class MonitorValidationPipe extends ValidationPipe {
       return await super.transform(value, metadata);
     } catch (error) {
       status = 'error';
-      errorType = error instanceof Error ? error.constructor.name : 'ValidationError';
+      errorType =
+        error instanceof Error ? error.constructor.name : 'ValidationError';
       throw error;
     } finally {
       const ctx = MonitorContext.get();
@@ -41,7 +45,7 @@ export class MonitorValidationPipe extends ValidationPipe {
         time: new Date(now).toISOString(),
         service: this.monitor.serviceName,
         environment: this.monitor.environment,
-        trace_id: ctx?.trace_id ?? `validation-${uuidv4()}`,
+        trace_id: ctx?.trace_id ?? `validation-${randomUUID()}`,
         log_type: ctx ? 'request' : 'system',
         flow_step: 'validation',
         msg:

@@ -44,18 +44,32 @@ export class MediaService implements OnModuleInit {
     const port = parseInt(this.config.get<string>('MEDIA_PORT', '9000'), 10);
     const useSSL = this.config.get<string>('MEDIA_USE_SSL', 'false') === 'true';
     const accessKey = this.config.get<string>('MINIO_ROOT_USER', 'minioadmin');
-    const secretKey = this.config.get<string>('MINIO_ROOT_PASSWORD', 'minioadmin');
+    const secretKey = this.config.get<string>(
+      'MINIO_ROOT_PASSWORD',
+      'minioadmin',
+    );
     this.publicBaseUrl = this.config.get<string>(
       'MEDIA_PUBLIC_BASE_URL',
       `${useSSL ? 'https' : 'http'}://${endPoint}:${port}`,
     );
 
-    this.client = new MinioClient({ endPoint, port, useSSL, accessKey, secretKey });
+    this.client = new MinioClient({
+      endPoint,
+      port,
+      useSSL,
+      accessKey,
+      secretKey,
+    });
     await this.ensureBucket();
   }
 
   async uploadImage(
-    file: { buffer: Buffer; mimetype: string; size: number; originalname: string },
+    file: {
+      buffer: Buffer;
+      mimetype: string;
+      size: number;
+      originalname: string;
+    },
     kind: MediaKind,
     ownerId: string,
   ): Promise<MediaUploadResult> {
@@ -68,7 +82,9 @@ export class MediaService implements OnModuleInit {
       );
     }
     if (!file.mimetype.startsWith('image/')) {
-      throw new BadRequestException(`Unsupported content-type: ${file.mimetype}`);
+      throw new BadRequestException(
+        `Unsupported content-type: ${file.mimetype}`,
+      );
     }
 
     const processed = await sharp(file.buffer, { failOn: 'error' })
@@ -84,14 +100,22 @@ export class MediaService implements OnModuleInit {
       .toBuffer({ resolveWithObject: true });
 
     const key = this.buildKey(kind, ownerId);
-    await this.client.putObject(this.bucket, key, processed.data, processed.data.length, {
-      'Content-Type': 'image/jpeg',
-      'x-amz-meta-owner-id': ownerId,
-      'x-amz-meta-kind': kind,
-    });
+    await this.client.putObject(
+      this.bucket,
+      key,
+      processed.data,
+      processed.data.length,
+      {
+        'Content-Type': 'image/jpeg',
+        'x-amz-meta-owner-id': ownerId,
+        'x-amz-meta-kind': kind,
+      },
+    );
 
     const isPublic = PUBLIC_PREFIXES.has(kind);
-    const url = isPublic ? this.buildPublicUrl(key) : await this.getDownloadUrl(key);
+    const url = isPublic
+      ? this.buildPublicUrl(key)
+      : await this.getDownloadUrl(key);
 
     return {
       key,
@@ -121,13 +145,17 @@ export class MediaService implements OnModuleInit {
   }
 
   private async ensureBucket() {
-    const exists = await this.client.bucketExists(this.bucket).catch(() => false);
+    const exists = await this.client
+      .bucketExists(this.bucket)
+      .catch(() => false);
     if (!exists) {
       await this.client.makeBucket(this.bucket);
       this.logger.log(`Created MinIO bucket "${this.bucket}"`);
     }
     // Make `posts/*` (and any future PUBLIC_PREFIXES) public-readable.
-    const publicPrefixes = Array.from(PUBLIC_PREFIXES).map((k) => MEDIA_PREFIXES[k]);
+    const publicPrefixes = Array.from(PUBLIC_PREFIXES).map(
+      (k) => MEDIA_PREFIXES[k],
+    );
     const policy = {
       Version: '2012-10-17',
       Statement: publicPrefixes.map((p) => ({
@@ -140,7 +168,9 @@ export class MediaService implements OnModuleInit {
     try {
       await this.client.setBucketPolicy(this.bucket, JSON.stringify(policy));
     } catch (err) {
-      this.logger.warn(`Failed to set bucket policy: ${(err as Error).message}`);
+      this.logger.warn(
+        `Failed to set bucket policy: ${(err as Error).message}`,
+      );
     }
   }
 }

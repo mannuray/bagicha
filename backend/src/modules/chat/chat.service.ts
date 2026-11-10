@@ -7,7 +7,9 @@ export class ChatService {
   constructor(private prisma: PrismaService) {}
 
   async sendMessage(userId: string, dto: SendMessageDto) {
-    const receiver = await this.prisma.user.findUnique({ where: { id: dto.receiver_id } });
+    const receiver = await this.prisma.user.findUnique({
+      where: { id: dto.receiver_id },
+    });
     if (!receiver) throw new NotFoundException('Receiver not found');
 
     return this.prisma.message.create({

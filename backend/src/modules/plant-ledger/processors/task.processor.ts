@@ -11,8 +11,10 @@ export class TaskProcessor extends WorkerHost {
 
   async process(job: Job<any, any, string>): Promise<any> {
     const { plant_id, lifecycle_stage, species } = job.data;
-    
-    console.log(`[PROCESSOR] Generating perennial tasks for ${species} in ${lifecycle_stage} stage (ID: ${plant_id})`);
+
+    console.log(
+      `[PROCESSOR] Generating perennial tasks for ${species} in ${lifecycle_stage} stage (ID: ${plant_id})`,
+    );
 
     const tasks_to_create: any[] = [];
     const now = new Date();
@@ -25,7 +27,7 @@ export class TaskProcessor extends WorkerHost {
         due_date: new Date(now.setMonth(now.getMonth() + 6)), // Next deep feed
         status: TaskStatus.PENDING,
       });
-      
+
       tasks_to_create.push({
         plant_id,
         type: TaskType.PRUNE,

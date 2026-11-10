@@ -30,12 +30,17 @@ export class VisionService {
       Format: JSON only.
     `;
 
-    const response = await this.geminiService.analyzeImage(this.toImagePart(dto.image_base64), prompt);
+    const response = await this.geminiService.analyzeImage(
+      this.toImagePart(dto.image_base64),
+      prompt,
+    );
     return this.geminiService.parseJsonResponse(response);
   }
 
   async diagnosePlant(dto: VisionRequestDto) {
-    const treeContext = dto.plant_id ? await this.buildTreeContext(dto.plant_id) : null;
+    const treeContext = dto.plant_id
+      ? await this.buildTreeContext(dto.plant_id)
+      : null;
     const prompt = `
       Analyze this plant image for horticultural diagnosis.
       Use the image as the main evidence, but also use the supplied plant history and seasonal context when available.
@@ -63,8 +68,14 @@ export class VisionService {
       ${dto.note ?? 'No extra note provided'}
     `;
 
-    const response = await this.geminiService.analyzeImage(this.toImagePart(dto.image_base64), prompt);
-    const parsed = this.geminiService.parseJsonResponse(response) as Record<string, unknown>;
+    const response = await this.geminiService.analyzeImage(
+      this.toImagePart(dto.image_base64),
+      prompt,
+    );
+    const parsed = this.geminiService.parseJsonResponse(response) as Record<
+      string,
+      unknown
+    >;
 
     if (!dto.plant_id) {
       return {
@@ -84,7 +95,10 @@ export class VisionService {
     };
   }
 
-  private async persistTreeDiagnosis(dto: VisionRequestDto, diagnosis: Record<string, unknown>) {
+  private async persistTreeDiagnosis(
+    dto: VisionRequestDto,
+    diagnosis: Record<string, unknown>,
+  ) {
     const primaryIssue = this.mapDiagnosisIssue(diagnosis.primary_issue);
     const severity = this.mapDiagnosisSeverity(diagnosis.severity);
     const actions = this.toStringArray(diagnosis.recommended_actions);
@@ -97,7 +111,8 @@ export class VisionService {
       this.toOptionalString(diagnosis.identification) ??
       'AI diagnosis recorded.';
     const followUpDays = this.toPositiveInt(diagnosis.follow_up_days) ?? 5;
-    const needsFollowUp = this.toBoolean(diagnosis.needs_follow_up) ?? actions.length > 0;
+    const needsFollowUp =
+      this.toBoolean(diagnosis.needs_follow_up) ?? actions.length > 0;
     const relatedEventType = this.mapRelatedLogType(
       this.toOptionalString(diagnosis.related_event_type),
       primaryIssue,
@@ -150,7 +165,13 @@ export class VisionService {
         journal_entries: {
           where: {
             type: {
-              in: [LogType.DIAGNOSIS, LogType.PEST_DIAGNOSIS, LogType.TREATMENT, LogType.WATERING_STRESS, LogType.HARVEST],
+              in: [
+                LogType.DIAGNOSIS,
+                LogType.PEST_DIAGNOSIS,
+                LogType.TREATMENT,
+                LogType.WATERING_STRESS,
+                LogType.HARVEST,
+              ],
             },
           },
           orderBy: { timestamp: 'desc' },
@@ -169,8 +190,13 @@ export class VisionService {
 
     if (!plant) return null;
 
-    const seasonalState = this.seasonalIntelligenceService.inferTreeSeasonalState(plant, plant.user);
-    const speciesFamily = this.speciesNormalizationService.resolveSpeciesFamily(plant);
+    const seasonalState =
+      this.seasonalIntelligenceService.inferTreeSeasonalState(
+        plant,
+        plant.user,
+      );
+    const speciesFamily =
+      this.speciesNormalizationService.resolveSpeciesFamily(plant);
 
     return {
       plant: {
@@ -266,7 +292,10 @@ export class VisionService {
     }
   }
 
-  private mapRelatedLogType(value: string | null, primaryIssue: DiagnosisIssueType): LogType {
+  private mapRelatedLogType(
+    value: string | null,
+    primaryIssue: DiagnosisIssueType,
+  ): LogType {
     const normalized = value?.toUpperCase();
     switch (normalized) {
       case 'PEST_DIAGNOSIS':
@@ -299,7 +328,6 @@ export class VisionService {
     }
   }
 
-
   private toStringArray(value: unknown): string[] {
     if (!Array.isArray(value)) return [];
     return value
@@ -308,11 +336,14 @@ export class VisionService {
   }
 
   private toOptionalString(value: unknown): string | null {
-    return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+    return typeof value === 'string' && value.trim().length > 0
+      ? value.trim()
+      : null;
   }
 
   private toPositiveInt(value: unknown): number | null {
-    if (typeof value === 'number' && Number.isFinite(value) && value > 0) return Math.round(value);
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0)
+      return Math.round(value);
     if (typeof value === 'string') {
       const parsed = Number.parseInt(value, 10);
       return Number.isFinite(parsed) && parsed > 0 ? parsed : null;

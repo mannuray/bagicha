@@ -5,5 +5,9 @@
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
-  }
+  },
+  "setupFiles": ["<rootDir>/e2e/load-env.ts"],
+  "globalSetup": "<rootDir>/e2e/global-setup.ts",
+  "testTimeout": 30000,
+  "maxWorkers": 1
 }

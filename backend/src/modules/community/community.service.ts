@@ -10,13 +10,75 @@ import { GeminiService } from '../vision/services/gemini.service';
 const HIDE_REPORT_THRESHOLD = 3;
 const MAX_KNOWLEDGE_SNIPPETS = 3;
 const STOPWORDS = new Set([
-  'the', 'a', 'an', 'and', 'or', 'but', 'is', 'are', 'was', 'were', 'be', 'been',
-  'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should',
-  'could', 'may', 'might', 'can', 'shall', 'of', 'in', 'on', 'at', 'to', 'for',
-  'with', 'by', 'from', 'about', 'as', 'this', 'that', 'these', 'those', 'i',
-  'my', 'me', 'we', 'us', 'our', 'you', 'your', 'it', 'its', 'they', 'them',
-  'their', 'what', 'why', 'how', 'when', 'where', 'who', 'which', 'plant',
-  'tree', 'flower', 'crop', 'help', 'please', 'kindly',
+  'the',
+  'a',
+  'an',
+  'and',
+  'or',
+  'but',
+  'is',
+  'are',
+  'was',
+  'were',
+  'be',
+  'been',
+  'being',
+  'have',
+  'has',
+  'had',
+  'do',
+  'does',
+  'did',
+  'will',
+  'would',
+  'should',
+  'could',
+  'may',
+  'might',
+  'can',
+  'shall',
+  'of',
+  'in',
+  'on',
+  'at',
+  'to',
+  'for',
+  'with',
+  'by',
+  'from',
+  'about',
+  'as',
+  'this',
+  'that',
+  'these',
+  'those',
+  'i',
+  'my',
+  'me',
+  'we',
+  'us',
+  'our',
+  'you',
+  'your',
+  'it',
+  'its',
+  'they',
+  'them',
+  'their',
+  'what',
+  'why',
+  'how',
+  'when',
+  'where',
+  'who',
+  'which',
+  'plant',
+  'tree',
+  'flower',
+  'crop',
+  'help',
+  'please',
+  'kindly',
 ]);
 
 @Injectable()
@@ -98,28 +160,42 @@ export class CommunityService {
     const post = await this.prisma.post.findUnique({ where: { id: postId } });
     if (!post) throw new NotFoundException(`Post ${postId} not found`);
 
-    return this.recordReport(ReportTargetType.POST, postId, userId, dto.reason, async (count) => {
-      if (count >= HIDE_REPORT_THRESHOLD && !post.is_hidden) {
-        await this.prisma.post.update({
-          where: { id: postId },
-          data: { is_hidden: true },
-        });
-      }
-    });
+    return this.recordReport(
+      ReportTargetType.POST,
+      postId,
+      userId,
+      dto.reason,
+      async (count) => {
+        if (count >= HIDE_REPORT_THRESHOLD && !post.is_hidden) {
+          await this.prisma.post.update({
+            where: { id: postId },
+            data: { is_hidden: true },
+          });
+        }
+      },
+    );
   }
 
   async reportComment(userId: string, commentId: string, dto: ReportTargetDto) {
-    const comment = await this.prisma.comment.findUnique({ where: { id: commentId } });
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+    });
     if (!comment) throw new NotFoundException(`Comment ${commentId} not found`);
 
-    return this.recordReport(ReportTargetType.COMMENT, commentId, userId, dto.reason, async (count) => {
-      if (count >= HIDE_REPORT_THRESHOLD && !comment.is_hidden) {
-        await this.prisma.comment.update({
-          where: { id: commentId },
-          data: { is_hidden: true },
-        });
-      }
-    });
+    return this.recordReport(
+      ReportTargetType.COMMENT,
+      commentId,
+      userId,
+      dto.reason,
+      async (count) => {
+        if (count >= HIDE_REPORT_THRESHOLD && !comment.is_hidden) {
+          await this.prisma.comment.update({
+            where: { id: commentId },
+            data: { is_hidden: true },
+          });
+        }
+      },
+    );
   }
 
   async askAi(userId: string, dto: AskAiDto) {
@@ -136,7 +212,10 @@ export class CommunityService {
       if (plant) {
         plantSpeciesFamily = plant.species_family;
         const recentEvents = plant.journal_entries
-          .map((j) => `${j.type.toLowerCase()}${j.content ? `: ${j.content}` : ''}`)
+          .map(
+            (j) =>
+              `${j.type.toLowerCase()}${j.content ? `: ${j.content}` : ''}`,
+          )
           .join('; ');
         plantContext = `User is asking about their ${plant.species}${
           plant.variety ? ` (${plant.variety})` : ''
@@ -147,7 +226,10 @@ export class CommunityService {
     }
 
     // 2. Pull expert-verified comments scoped to the topic.
-    const knowledgeBase = await this.fetchRelevantKnowledge(dto.question, plantSpeciesFamily);
+    const knowledgeBase = await this.fetchRelevantKnowledge(
+      dto.question,
+      plantSpeciesFamily,
+    );
 
     // 3. Build prompt and call Gemini.
     const prompt = `
@@ -181,7 +263,11 @@ Return strict JSON:
     onCount: (count: number) => Promise<void>,
   ) {
     const existing = await this.prisma.report.findFirst({
-      where: { target_type: type, target_id: targetId, reporter_id: reporterId },
+      where: {
+        target_type: type,
+        target_id: targetId,
+        reporter_id: reporterId,
+      },
     });
     if (existing) {
       // Idempotent: a user can only report a target once. Keep their first reason.
@@ -208,7 +294,10 @@ Return strict JSON:
     return { success: true, pending_reports: count };
   }
 
-  private async fetchRelevantKnowledge(question: string, speciesFamily: string | null): Promise<string> {
+  private async fetchRelevantKnowledge(
+    question: string,
+    speciesFamily: string | null,
+  ): Promise<string> {
     const keywords = this.tokenize(question);
     if (keywords.length === 0 && !speciesFamily) {
       return '';
@@ -232,12 +321,15 @@ Return strict JSON:
     const scored = candidates
       .filter((c) => c.post && !c.post.is_hidden)
       .map((c) => {
-        const haystack = `${c.post!.content} ${c.content}`.toLowerCase();
+        const haystack = `${c.post.content} ${c.content}`.toLowerCase();
         const keywordHits = keywords.reduce(
           (acc, kw) => acc + (haystack.includes(kw) ? 1 : 0),
           0,
         );
-        const familyHit = speciesFamily && haystack.includes(speciesFamily.toLowerCase()) ? 2 : 0;
+        const familyHit =
+          speciesFamily && haystack.includes(speciesFamily.toLowerCase())
+            ? 2
+            : 0;
         return { comment: c, score: keywordHits + familyHit };
       })
       .filter((entry) => entry.score > 0)
@@ -249,7 +341,7 @@ Return strict JSON:
     return scored
       .map(
         (entry, idx) =>
-          `[${idx + 1}] Topic: ${this.truncate(entry.comment.post!.content, 160)}\n    Verified answer: ${this.truncate(entry.comment.content, 240)}`,
+          `[${idx + 1}] Topic: ${this.truncate(entry.comment.post.content, 160)}\n    Verified answer: ${this.truncate(entry.comment.content, 240)}`,
       )
       .join('\n');
   }

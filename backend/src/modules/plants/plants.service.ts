@@ -66,7 +66,9 @@ export class PlantsService implements OnModuleInit {
         match: null,
         confidence: 'low' as ResolveConfidence,
         matched_alias: null,
-        alternatives: rest.slice(0, 3).map(({ entry }) => this.toSearchItem(entry)),
+        alternatives: rest
+          .slice(0, 3)
+          .map(({ entry }) => this.toSearchItem(entry)),
       };
     }
 
@@ -77,7 +79,9 @@ export class PlantsService implements OnModuleInit {
       },
       confidence: this.scoreToConfidence(best.score),
       matched_alias: best.matchedAlias,
-      alternatives: rest.slice(0, 3).map(({ entry }) => this.toSearchItem(entry)),
+      alternatives: rest
+        .slice(0, 3)
+        .map(({ entry }) => this.toSearchItem(entry)),
     };
   }
 
@@ -209,7 +213,9 @@ export class PlantsService implements OnModuleInit {
       data: seeds.map((seed) => ({
         ...seed,
         variety: seed.variety ?? null,
-        languages: seed.languages ? (seed.languages as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
+        languages: seed.languages
+          ? (seed.languages as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
         regions: seed.regions ?? [],
         confidence_weight: seed.confidence_weight ?? 0.5,
       })),
@@ -227,10 +233,23 @@ export class PlantsService implements OnModuleInit {
 
     return entries
       .map((entry) => {
-        const scored = this.scoreEntry(entry, query, normalizedRegion, normalizedLanguage);
+        const scored = this.scoreEntry(
+          entry,
+          query,
+          normalizedRegion,
+          normalizedLanguage,
+        );
         return scored ? { entry, ...scored } : null;
       })
-      .filter((item): item is { entry: PlantCatalogEntry; score: number; matchedAlias: string | null } => !!item)
+      .filter(
+        (
+          item,
+        ): item is {
+          entry: PlantCatalogEntry;
+          score: number;
+          matchedAlias: string | null;
+        } => !!item,
+      )
       .sort((left, right) => right.score - left.score);
   }
 
@@ -259,7 +278,9 @@ export class PlantsService implements OnModuleInit {
       } else if (displayName.includes(query) || query.includes(displayName)) {
         score = 0.82;
       } else {
-        const partialAlias = allAliases.find((alias) => alias.includes(query) || query.includes(alias));
+        const partialAlias = allAliases.find(
+          (alias) => alias.includes(query) || query.includes(alias),
+        );
         if (partialAlias) {
           score = 0.76;
           matchedAlias = partialAlias;
@@ -279,7 +300,10 @@ export class PlantsService implements OnModuleInit {
       return null;
     }
 
-    if (regionCluster && entry.regions.some((region) => this.normalize(region) === regionCluster)) {
+    if (
+      regionCluster &&
+      entry.regions.some((region) => this.normalize(region) === regionCluster)
+    ) {
       score += 0.04;
     }
 
@@ -298,12 +322,22 @@ export class PlantsService implements OnModuleInit {
       return 0;
     }
 
-    const intersection = [...leftTokens].filter((token) => rightTokens.has(token)).length;
+    const intersection = [...leftTokens].filter((token) =>
+      rightTokens.has(token),
+    ).length;
     return intersection / Math.max(leftTokens.size, rightTokens.size);
   }
 
-  private languageAliases(entry: PlantCatalogEntry, language: string): string[] {
-    if (!entry.languages || typeof entry.languages !== 'object' || Array.isArray(entry.languages) || !language) {
+  private languageAliases(
+    entry: PlantCatalogEntry,
+    language: string,
+  ): string[] {
+    if (
+      !entry.languages ||
+      typeof entry.languages !== 'object' ||
+      Array.isArray(entry.languages) ||
+      !language
+    ) {
       return [];
     }
 

@@ -1,8 +1,12 @@
-import { Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -14,19 +18,19 @@ export class AuthService {
 
   async requestOtp(phoneNumber: string): Promise<string> {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    
+
     // Store OTP in Redis for 5 minutes
     await this.redisService.set(`otp:${phoneNumber}`, otp, 300);
-    
+
     // Log OTP for development (later integrate with SMS provider)
     console.log(`[AUTH] OTP for ${phoneNumber}: ${otp}`);
-    
+
     return 'OTP sent successfully';
   }
 
   async verifyOtp(phoneNumber: string, otp: string) {
     const storedOtp = await this.redisService.get(`otp:${phoneNumber}`);
-    
+
     // BACKDOOR for testing with mock data
     const isMockUser = phoneNumber === '+916202042225' && otp === '123456';
 
@@ -51,7 +55,7 @@ export class AuthService {
       user = await this.prisma.user.create({
         data: {
           phone_number: phoneNumber,
-          id: uuidv4(),
+          id: randomUUID(),
         },
       });
     }

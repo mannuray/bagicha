@@ -13,7 +13,10 @@ export class GeminiService {
     this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
   }
 
-  async analyzeImage(imagePart: { inlineData: { data: string; mimeType: string } }, prompt: string): Promise<string> {
+  async analyzeImage(
+    imagePart: { inlineData: { data: string; mimeType: string } },
+    prompt: string,
+  ): Promise<string> {
     try {
       const parts: any[] = [prompt];
       if (imagePart.inlineData.data) {

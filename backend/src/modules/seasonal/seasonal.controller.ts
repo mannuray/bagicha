@@ -1,4 +1,11 @@
-import { Controller, Get, UseGuards, Request, Param, Post } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Request,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { SeasonalService } from './seasonal.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -10,7 +17,9 @@ export class SeasonalController {
   @Get('weather')
   async getWeather(@Request() req) {
     // Uses the user's pincode from their profile
-    return this.seasonalService.getLocalizedWeather(req.user.pincode || '800001');
+    return this.seasonalService.getLocalizedWeather(
+      req.user.pincode || '800001',
+    );
   }
 
   @Get('guide')

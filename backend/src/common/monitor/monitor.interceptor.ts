@@ -60,7 +60,13 @@ export class MonitorInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap({
         next: () => {
-          this.emitTerminal(ctx, request, route, response.statusCode, 'response');
+          this.emitTerminal(
+            ctx,
+            request,
+            route,
+            response.statusCode,
+            'response',
+          );
         },
         error: (error: unknown) => {
           const status =
@@ -92,7 +98,9 @@ export class MonitorInterceptor implements NestInterceptor {
       ...(ctx.span_id ? { span_id: ctx.span_id } : {}),
       ...(route ? { route } : {}),
       ...((ctx as { parent_span_id?: string }).parent_span_id
-        ? { parent_span_id: (ctx as { parent_span_id?: string }).parent_span_id }
+        ? {
+            parent_span_id: (ctx as { parent_span_id?: string }).parent_span_id,
+          }
         : {}),
     };
     this.monitorService.emit(event);

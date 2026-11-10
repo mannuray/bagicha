@@ -1,4 +1,14 @@
-import { Controller, Post, Get, Body, Param, UseGuards, Request, Query, Put } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  Query,
+  Put,
+} from '@nestjs/common';
 import { PlantLedgerService } from './plant-ledger.service';
 import { CreatePlantDto } from './dto/create-plant.dto';
 import { AddLogDto } from './dto/add-log.dto';
@@ -32,12 +42,20 @@ export class PlantLedgerController {
   }
 
   @Put('plants/:id')
-  async updatePlant(@Request() req, @Param('id') id: string, @Body() updatePlantDto: UpdatePlantDto) {
+  async updatePlant(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() updatePlantDto: UpdatePlantDto,
+  ) {
     return this.plantLedgerService.updatePlant(req.user.id, id, updatePlantDto);
   }
 
   @Post('plants/:id/journal')
-  async addLog(@Request() req, @Param('id') id: string, @Body() addLogDto: AddLogDto) {
+  async addLog(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() addLogDto: AddLogDto,
+  ) {
     return this.plantLedgerService.addLog(req.user.id, id, addLogDto);
   }
 
@@ -48,7 +66,12 @@ export class PlantLedgerController {
     @Query('page') page: number = 1,
     @Query('page_size') pageSize: number = 20,
   ) {
-    const result = await this.plantLedgerService.getTimeline(req.user.id, id, Number(page), Number(pageSize));
+    const result = await this.plantLedgerService.getTimeline(
+      req.user.id,
+      id,
+      Number(page),
+      Number(pageSize),
+    );
     // Since our Success Interceptor handles the structure, we return the data + pagination.
     // However, the interceptor expects 'data', so we return it in a specific way that the interceptor can handle
     // for pagination cases if needed. For now, we return it as an object.
@@ -82,6 +105,11 @@ export class PlantLedgerController {
     @Param('taskId') taskId: string,
     @Body() updateTaskStatusDto: UpdateTaskStatusDto,
   ) {
-    return this.plantLedgerService.updateTaskStatus(req.user.id, id, taskId, updateTaskStatusDto.status);
+    return this.plantLedgerService.updateTaskStatus(
+      req.user.id,
+      id,
+      taskId,
+      updateTaskStatusDto.status,
+    );
   }
 }
