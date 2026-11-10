@@ -9,6 +9,8 @@ export interface Env {
   RAZORPAY_KEY_ID?: string;
   RAZORPAY_WEBHOOK_SECRET?: string;
   OTEL_EXPORTER_OTLP_ENDPOINT?: string;
+  OTEL_SERVICE_NAME?: string;
+  LOG_LEVEL?: string;
   [key: string]: unknown;
 }
 

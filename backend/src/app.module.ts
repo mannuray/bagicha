@@ -20,6 +20,7 @@ import { PlantsModule } from './modules/plants/plants.module';
 import { UserModule } from './modules/user/user.module';
 import { validateEnv } from './config/env.validation';
 import { LoggingModule } from './common/logging/logging.module';
+import { ObservabilityModule } from './common/observability';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { LoggingModule } from './common/logging/logging.module';
       }),
     }),
     LoggingModule,
+    ObservabilityModule,
     MonitorModule,
     PrismaModule,
     RedisModule,

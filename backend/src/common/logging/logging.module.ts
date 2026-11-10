@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { trace } from '@opentelemetry/api';
+import { isSpanContextValid, trace } from '@opentelemetry/api';
 import { randomUUID } from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 import { LoggerModule } from 'nestjs-pino';
@@ -36,7 +36,7 @@ export function buildPinoOptions(identity: LogIdentity): LoggerOptions {
     mixin() {
       const fields: Record<string, string> = {};
       const spanContext = trace.getActiveSpan()?.spanContext();
-      if (spanContext) {
+      if (spanContext && isSpanContextValid(spanContext)) {
         fields.traceId = spanContext.traceId;
         fields.spanId = spanContext.spanId;
       }
