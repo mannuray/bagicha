@@ -13,3 +13,4 @@ is built against the "After" column.
 | `POST auth/verify-otp` | hard-coded `+916202042225`/`123456` worked in every environment | only when `AUTH_DEV_OTP_PHONE`/`AUTH_DEV_OTP_CODE` are set **and** `NODE_ENV !== production` (set both in local `.env` to keep the mock-data login) | 5 |
 | startup | JWT signed with fallback secret `bagicha-secret-key-2026` if unset | app refuses to start without `JWT_SECRET` (and `DATABASE_URL`) | 5 |
 | `POST auth/request-otp` | OTP from `Math.random`, printed with `console.log` | `crypto.randomInt`; logged at debug only outside production | 5 |
+| rate limits (all routes) | none | 429 `RATE_LIMITED` with `details.bucket`. Buckets (shared per user when signed in, else per IP): `auth` 5/min (request-otp, verify-otp), `ai` 20/h (vision identify/diagnose, community ask-ai, diagnosis finalize), `upload` 30/h (media images), `catalogue` 60/min (plants search/resolve); everything else 300/min per route. Fails open if Redis is down. | 10 |

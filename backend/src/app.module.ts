@@ -22,6 +22,7 @@ import { validateEnv } from './config/env.validation';
 import { LoggingModule } from './common/logging/logging.module';
 import { ObservabilityModule } from './common/observability';
 import { ClockModule } from './common/time';
+import { RateLimitModule } from './common/rate-limit';
 
 @Module({
   imports: [
@@ -32,7 +33,7 @@ import { ClockModule } from './common/time';
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         connection: {
           host: configService.get<string>('REDIS_HOST', 'localhost'),
           port: configService.get<number>('REDIS_PORT', 6379),
@@ -42,6 +43,7 @@ import { ClockModule } from './common/time';
     LoggingModule,
     ObservabilityModule,
     ClockModule,
+    RateLimitModule,
     MonitorModule,
     PrismaModule,
     RedisModule,

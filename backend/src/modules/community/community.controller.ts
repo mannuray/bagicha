@@ -14,6 +14,7 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { AskAiDto } from './dto/ask-ai.dto';
 import { ReportTargetDto } from './dto/report-target.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimit } from '../../common/rate-limit';
 
 @Controller('community')
 @UseGuards(AuthGuard('jwt'))
@@ -50,6 +51,7 @@ export class CommunityController {
   }
 
   @Post('ask-ai')
+  @RateLimit('ai')
   async askAi(@Request() req, @Body() dto: AskAiDto) {
     return this.communityService.askAi(req.user.id, dto);
   }

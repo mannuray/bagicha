@@ -15,6 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { MediaService } from './media.service';
 import { MAX_UPLOAD_BYTES, MEDIA_KINDS, MediaKind } from './media.config';
+import { RateLimit } from '../../common/rate-limit';
 
 @Controller('media')
 @UseGuards(AuthGuard('jwt'))
@@ -22,6 +23,7 @@ export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
   @Post('images')
+  @RateLimit('upload')
   @UseInterceptors(
     FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_BYTES } }),
   )
