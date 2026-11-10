@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { VisionService } from './vision.service';
 import { VisionController } from './vision.controller';
 import { AiModule } from '../ai';
-import { PlantLedgerModule } from '../plant-ledger/plant-ledger.module';
-import { DiagnosisModule } from '../diagnosis/diagnosis.module';
+import { PlantLedgerModule } from '../plant-ledger';
+import { DiagnosisModule } from '../diagnosis';
 
 @Module({
   imports: [AiModule, PlantLedgerModule, DiagnosisModule],
