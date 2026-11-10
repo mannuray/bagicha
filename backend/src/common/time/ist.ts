@@ -24,3 +24,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export function addDays(date: Date, days: number): Date {
   return new Date(date.getTime() + days * DAY_MS);
 }
+
+/** Calendar months in UTC (day-of-month overflow rolls forward, like Date#setMonth). */
+export function addMonths(date: Date, months: number): Date {
+  const next = new Date(date.getTime());
+  next.setUTCMonth(next.getUTCMonth() + months);
+  return next;
+}

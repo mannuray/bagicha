@@ -2,7 +2,6 @@ import {
   DropLevel,
   JournalEntry,
   LogType,
-  Prisma,
   YieldQuality,
 } from '@prisma/client';
 

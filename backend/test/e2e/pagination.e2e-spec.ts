@@ -32,11 +32,18 @@ describe('pagination parameters', () => {
 
   const BAD = ['page=0', 'page=-3', 'page=abc', 'page_size=10000'];
 
-  // Switched on by the tasks that wire PaginationQueryDto into each route.
   describe.each([['/api/v1/ledger/plants'], ['/api/v1/ledger/tasks']])(
     '%s',
     (url) => {
-      it.todo(`rejects ${BAD.join(', ')} with 422 (Task 15)`);
+      it.each(BAD)('rejects ?%s with 422', async (query) => {
+        const res = await get(`${url}?${query}`);
+        expect(res.status).toBe(422);
+        expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      });
+
+      it('accepts the maximum page size', async () => {
+        expect((await get(`${url}?page_size=100`)).status).toBe(200);
+      });
     },
   );
 

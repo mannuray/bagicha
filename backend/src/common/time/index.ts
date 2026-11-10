@@ -1,2 +1,2 @@
 export { Clock, ClockModule, FixedClock, SystemClock } from './clock';
-export { addDays, istMonth, istYear } from './ist';
+export { addDays, addMonths, istMonth, istYear } from './ist';

@@ -1,0 +1,249 @@
+import { InjectQueue } from '@nestjs/bullmq';
+import { Injectable } from '@nestjs/common';
+import { Plant } from '@prisma/client';
+import { Queue } from 'bullmq';
+import { NotFoundError } from '../../../common/errors';
+import {
+  Page,
+  PageQuery,
+  toPage,
+  toSkipTake,
+} from '../../../common/pagination';
+import { Clock } from '../../../common/time';
+import { parsePlantingDate } from '../domain/planting-date';
+import { CreatePlantDto } from '../dto/create-plant.dto';
+import { UpdatePlantDto } from '../dto/update-plant.dto';
+import {
+  TASK_GENERATION_QUEUE,
+  TaskGenerationJob,
+} from '../processors/task.processor';
+import { PlantDetail, PlantRepository } from '../repositories/plant.repository';
+import { LifecycleService } from './lifecycle.service';
+import {
+  SeasonalIntelligenceService,
+  TreeSeasonalState,
+} from './seasonal-intelligence.service';
+import { SpeciesNormalizationService } from './species-normalization.service';
+
+const plantNotFound = () =>
+  new NotFoundError('PLANT_NOT_FOUND', 'Plant not found');
+
+/** Plant records: CRUD, lifecycle stage upkeep, and read models other modules need. */
+@Injectable()
+export class PlantRecordService {
+  constructor(
+    private readonly plants: PlantRepository,
+    private readonly lifecycle: LifecycleService,
+    private readonly seasonalIntelligence: SeasonalIntelligenceService,
+    private readonly species: SpeciesNormalizationService,
+    private readonly clock: Clock,
+    @InjectQueue(TASK_GENERATION_QUEUE) private readonly taskQueue: Queue,
+  ) {}
+
+  /** The owner's plant, or 404. No side effects — for other modules. */
+  async getOwnedOrThrow(userId: string, plantId: string): Promise<Plant> {
+    const plant = await this.plants.findOwned(userId, plantId);
+    if (!plant) throw plantNotFound();
+    return plant;
+  }
+
+  /**
+   * The owner's plant (with journal count), recomputing an automatic lifecycle
+   * stage first. Ledger routes read plants through this, as before the split.
+   */
+  async getDetail(userId: string, plantId: string): Promise<PlantDetail> {
+    const plant = await this.plants.findOwnedDetail(userId, plantId);
+    if (!plant) throw plantNotFound();
+    if (!plant.lifecycle_stage_manual) {
+      const stage = this.lifecycle.calculateStage(
+        plant.planting_date,
+        plant.species,
+      );
+      if (stage !== plant.lifecycle_stage) {
+        await this.plants.updateOwned(userId, plant.id, {
+          lifecycle_stage: stage,
+        });
+        await this.enqueueTaskGeneration(
+          userId,
+          plant.id,
+          stage,
+          plant.species,
+        );
+        plant.lifecycle_stage = stage;
+      }
+    }
+    return plant;
+  }
+
+  async list(userId: string, q: PageQuery): Promise<Page<Plant>> {
+    const { rows, total } = await this.plants.listOwned(userId, toSkipTake(q));
+    return toPage(rows, total, q);
+  }
+
+  async create(userId: string, dto: CreatePlantDto): Promise<Plant> {
+    const planting = parsePlantingDate(
+      dto.planting_date,
+      dto.planting_date_precision,
+      this.clock,
+    );
+    const stage =
+      dto.lifecycle_stage ??
+      this.lifecycle.calculateStage(planting.date, dto.species);
+
+    const plant = await this.plants.create(userId, {
+      name: dto.name,
+      species: dto.species,
+      variety: dto.variety,
+      record_kind: dto.record_kind,
+      type: dto.type,
+      growth_habit: dto.growth_habit,
+      record_pattern: dto.record_pattern,
+      planting_date: planting.date,
+      planting_date_precision: planting.precision,
+      planting_date_input: planting.input,
+      lifecycle_stage: stage,
+      lifecycle_stage_manual: !!dto.lifecycle_stage,
+    });
+    await this.enqueueTaskGeneration(
+      userId,
+      plant.id,
+      plant.lifecycle_stage,
+      plant.species,
+    );
+    return plant;
+  }
+
+  async update(
+    userId: string,
+    plantId: string,
+    dto: UpdatePlantDto,
+  ): Promise<Plant> {
+    const plant = await this.getDetail(userId, plantId);
+    const planting =
+      dto.planting_date === undefined &&
+      dto.planting_date_precision === undefined
+        ? {
+            date: plant.planting_date,
+            precision: plant.planting_date_precision,
+            input: plant.planting_date_input,
+          }
+        : parsePlantingDate(
+            dto.planting_date,
+            dto.planting_date_precision ?? undefined,
+            this.clock,
+          );
+    const species = dto.species ?? plant.species;
+    const stage =
+      dto.lifecycle_stage ??
+      this.lifecycle.calculateStage(planting.date, species);
+
+    const updated = await this.plants.updateOwned(userId, plantId, {
+      name: dto.name ?? undefined,
+      species: dto.species ?? undefined,
+      variety: dto.variety ?? undefined,
+      record_kind: dto.record_kind ?? undefined,
+      type: dto.type ?? undefined,
+      growth_habit: dto.growth_habit ?? undefined,
+      record_pattern: dto.record_pattern ?? undefined,
+      planting_date: planting.date,
+      planting_date_precision: planting.precision,
+      planting_date_input: planting.input,
+      lifecycle_stage: stage,
+      lifecycle_stage_manual: !!dto.lifecycle_stage,
+    });
+    if (!updated) throw plantNotFound();
+    await this.enqueueTaskGeneration(
+      userId,
+      updated.id,
+      updated.lifecycle_stage,
+      updated.species,
+    );
+    return updated;
+  }
+
+  async getSeasonalState(
+    userId: string,
+    plantId: string,
+  ): Promise<TreeSeasonalState> {
+    await this.getDetail(userId, plantId);
+    const plant = await this.plants.findOwnedWithOwnerLocation(userId, plantId);
+    if (!plant) throw plantNotFound();
+    const { user, ...fields } = plant;
+    return this.seasonalIntelligence.inferTreeSeasonalState(fields, user);
+  }
+
+  /** Plant history and season context sent to the AI for diagnosis. */
+  async getContextForAi(userId: string, plantId: string) {
+    const plant = await this.plants.findOwnedWithContext(userId, plantId);
+    if (!plant) throw plantNotFound();
+    return {
+      plant: {
+        id: plant.id,
+        name: plant.name,
+        species_family: this.species.resolveSpeciesFamily(plant),
+        species: plant.species,
+        variety: plant.variety,
+        lifecycle_stage: plant.lifecycle_stage,
+        health_status: plant.health_status,
+      },
+      location: {
+        district: plant.user.district,
+        latitude: plant.user.latitude,
+        longitude: plant.user.longitude,
+      },
+      seasonal_state: this.seasonalIntelligence.inferTreeSeasonalState(
+        plant,
+        plant.user,
+      ),
+      recent_cycles: plant.cycles.map((cycle) => ({
+        cycle_year: cycle.cycle_year,
+        yield_quantity: cycle.yield_quantity,
+        yield_unit: cycle.yield_unit,
+        yield_quality: cycle.yield_quality,
+        flower_drop_level: cycle.flower_drop_level,
+        fruit_drop_level: cycle.fruit_drop_level,
+        stress_score: cycle.stress_score,
+        pest_pressure_score: cycle.pest_pressure_score,
+        cycle_summary: cycle.cycle_summary,
+      })),
+      recent_logs: plant.journal_entries.map((log) => ({
+        type: log.type,
+        content: log.content,
+        metadata: log.metadata,
+        timestamp: log.timestamp,
+      })),
+      recent_diagnoses: plant.diagnosis_outcomes.map((outcome) => ({
+        primary_issue: outcome.primary_issue,
+        severity: outcome.severity,
+        confidence: outcome.confidence,
+        reasoning_summary: outcome.reasoning_summary,
+        event_at: outcome.event_at,
+      })),
+      open_tasks: plant.tasks.map((task) => ({
+        title: task.title,
+        type: task.type,
+        status: task.status,
+        due_date: task.due_date,
+      })),
+    };
+  }
+
+  private async enqueueTaskGeneration(
+    userId: string,
+    plantId: string,
+    lifecycleStage: string,
+    species: string,
+  ): Promise<void> {
+    const job: TaskGenerationJob = {
+      user_id: userId,
+      plant_id: plantId,
+      lifecycle_stage: lifecycleStage,
+      species,
+    };
+    await this.taskQueue.add('generate', job);
+  }
+}
+
+export type PlantAiContext = Awaited<
+  ReturnType<PlantRecordService['getContextForAi']>
+>;

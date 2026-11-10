@@ -69,6 +69,15 @@ export class PlantRepository {
     });
   }
 
+  findOwnedWithOwnerLocation(userId: string, plantId: string) {
+    return this.prisma.plant.findFirst({
+      where: { id: plantId, user_id: userId },
+      include: {
+        user: { select: { district: true, latitude: true, longitude: true } },
+      },
+    });
+  }
+
   async listOwned(userId: string, page: SkipTake): Promise<Rows<Plant>> {
     const where = { user_id: userId };
     const [rows, total] = await Promise.all([
