@@ -47,6 +47,14 @@ export class CycleRepository {
     });
   }
 
+  /** A crop's season that has started and not closed. */
+  openSeason(plantId: string, tx?: Tx): Promise<PlantCycle | null> {
+    return this.db(tx).plantCycle.findFirst({
+      where: { plant_id: plantId, started_at: { not: null }, closed_at: null },
+      orderBy: { started_at: 'desc' },
+    });
+  }
+
   async listForPlant(
     userId: string,
     plantId: string,

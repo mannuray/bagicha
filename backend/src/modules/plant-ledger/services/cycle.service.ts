@@ -60,6 +60,20 @@ export class CycleService {
   ) {}
 
   /** The plant's cycle for `eventAt`, created if missing. The caller has already checked ownership. */
+  /**
+   * The cycle a recorded entry (e.g. a diagnosis) belongs to: a journey crop's
+   * open season (or none — such entries never open a season), else the yearly cycle.
+   */
+  async cycleForRecorded(
+    userId: string,
+    plant: Plant,
+    eventAt: Date,
+    tx?: Tx,
+  ): Promise<PlantCycle | null> {
+    if (!plant.crop_id) return this.ensureCycle(userId, plant, eventAt, tx);
+    return this.cycles.openSeason(plant.id, tx);
+  }
+
   async ensureCycle(
     userId: string,
     plant: Plant,

@@ -34,7 +34,10 @@ function build() {
     getOwnedOrThrow: jest.fn(() => Promise.resolve(plant)),
     assertGrowing: jest.fn(() => Promise.resolve(plant)),
   };
-  const cycles = { ensureCycle: jest.fn(() => Promise.resolve({ id: 'c1' })) };
+  const cycles = {
+    ensureCycle: jest.fn(() => Promise.resolve({ id: 'c1' })),
+    cycleForRecorded: jest.fn(() => Promise.resolve({ id: 'c1' })),
+  };
   const journal = {
     recordEntry: jest.fn((_u: string, _p: string, e: { type: LogType }) => {
       entries.push(e);

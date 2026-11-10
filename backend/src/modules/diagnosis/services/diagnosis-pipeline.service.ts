@@ -130,7 +130,12 @@ export class DiagnosisPipelineService {
     const symptoms = input.symptoms ?? [];
 
     const result = await this.transactions.run(async (tx) => {
-      const cycle = await this.cycles.ensureCycle(userId, plant, eventAt, tx);
+      const cycle = await this.cycles.cycleForRecorded(
+        userId,
+        plant,
+        eventAt,
+        tx,
+      );
       const sessionId = await this.openOrResolveSession(
         tx,
         userId,
@@ -182,7 +187,7 @@ export class DiagnosisPipelineService {
           }),
           eventAt,
           recordedAt,
-          plantCycleId: cycle.id,
+          plantCycleId: cycle?.id ?? null,
           diagnosisOutcomeId: outcome.id,
         },
         tx,
@@ -206,7 +211,7 @@ export class DiagnosisPipelineService {
             }),
             eventAt,
             recordedAt,
-            plantCycleId: cycle.id,
+            plantCycleId: cycle?.id ?? null,
             diagnosisOutcomeId: outcome.id,
           },
           tx,
@@ -236,7 +241,7 @@ export class DiagnosisPipelineService {
                   eventAt,
                   index === 0 ? base : base + index * 2,
                 ),
-                plantCycleId: cycle.id,
+                plantCycleId: cycle?.id ?? null,
                 diagnosisOutcomeId: outcome.id,
               };
             })

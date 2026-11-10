@@ -281,4 +281,205 @@ describe('crops', () => {
       expect(res.body.data).toEqual({ results: [], created_count: 0 });
     });
   });
+  describe('the planting journey', () => {
+    type Task = {
+      id: string;
+      title: string;
+      status: string;
+      due_date: string;
+      source: string;
+    };
+    const tasksOf = async (a: ReturnType<typeof as>, id: string) =>
+      (await a.get(`/api/v1/ledger/plants/${id}/tasks`)).body.data as Task[];
+    const plantOf = async (a: ReturnType<typeof as>, id: string) =>
+      (await a.get(`/api/v1/ledger/plants/${id}`)).body.data;
+    const log = (
+      a: ReturnType<typeof as>,
+      id: string,
+      type: string,
+      metadata?: object,
+    ) =>
+      a.post(`/api/v1/ledger/plants/${id}/journal`, {
+        type,
+        ...(metadata ? { metadata } : {}),
+      });
+
+    it('nursery crop: sowing opens a season in the nursery; transplanting moves it to the bed', async () => {
+      const a = as(alice);
+      const tomato = (await a.post('/api/v1/crops/plan', { crop_id: 'tomato' }))
+        .body.data;
+      await a.post('/api/v1/crops/plan/sync');
+      expect(
+        (await log(a, tomato.id, 'SOWING', { method: 'NURSERY' })).status,
+      ).toBe(201);
+      expect((await plantOf(a, tomato.id)).crop_stage).toBe('NURSERY');
+      let tasks = await tasksOf(a, tomato.id);
+      expect(
+        tasks
+          .filter((t) => /seeds|^sow/i.test(t.title))
+          .every((t) => t.status === 'COMPLETED'),
+      ).toBe(true);
+      const germ = tasks.find((t) => /come up/i.test(t.title))!;
+      expect(istDate(germ.due_date)).toBe('2026-10-20');
+      expect(tasks.find((t) => /transplant/i.test(t.title))).toBeTruthy();
+      expect(tasks.find((t) => /ready to pick/i.test(t.title))).toBeTruthy();
+      const cycles = (await a.get(`/api/v1/ledger/plants/${tomato.id}/cycles`))
+        .body.data;
+      expect(cycles[0]).toMatchObject({ season_no: 1, closed_at: null });
+
+      clock.set('2026-11-08T06:00:00Z');
+      await log(a, tomato.id, 'TRANSPLANTING');
+      expect((await plantOf(a, tomato.id)).crop_stage).toBe('IN_GROUND');
+      tasks = await tasksOf(a, tomato.id);
+      expect(tasks.find((t) => /transplant/i.test(t.title))?.status).toBe(
+        'COMPLETED',
+      );
+      expect(istDate(tasks.find((t) => /stake/i.test(t.title))!.due_date)).toBe(
+        '2026-11-28',
+      );
+    });
+
+    it('direct crop: sows straight into a place, with thinning and no transplant', async () => {
+      const a = as(alice);
+      const bag = (
+        await a.post('/api/v1/garden/places', {
+          name: 'Terrace bag',
+          kind: 'GROW_BAG',
+        })
+      ).body.data;
+      const palak = (await a.post('/api/v1/crops/plan', { crop_id: 'palak' }))
+        .body.data;
+      await log(a, palak.id, 'SOWING', { method: 'DIRECT', place_id: bag.id });
+      expect((await plantOf(a, palak.id)).crop_stage).toBe('IN_GROUND');
+      const tasks = await tasksOf(a, palak.id);
+      expect(tasks.find((t) => /thin/i.test(t.title))).toBeTruthy();
+      expect(tasks.find((t) => /transplant/i.test(t.title))).toBeUndefined();
+      expect(tasks.find((t) => /another row/i.test(t.title))).toBeTruthy();
+      const cycles = (await a.get(`/api/v1/ledger/plants/${palak.id}/cycles`))
+        .body.data;
+      expect(cycles[0].place_id).toBe(bag.id);
+      expect(
+        (
+          await log(a, palak.id, 'SOWING', {
+            method: 'DIRECT',
+            place_id: 'not-mine',
+          })
+        ).status,
+      ).toBe(201); // open season: place ignored
+    });
+
+    it('bought seedlings: transplanting from planned skips the earlier steps', async () => {
+      const a = as(alice);
+      const brinjal = (
+        await a.post('/api/v1/crops/plan', { crop_id: 'brinjal' })
+      ).body.data;
+      clock.set('2026-10-20T06:00:00Z');
+      await a.post('/api/v1/crops/plan/sync');
+      await log(a, brinjal.id, 'TRANSPLANTING');
+      expect((await plantOf(a, brinjal.id)).crop_stage).toBe('IN_GROUND');
+      const tasks = await tasksOf(a, brinjal.id);
+      expect(
+        tasks.filter((t) => /seeds|^sow/i.test(t.title)).map((t) => t.status),
+      ).toEqual(['COMPLETED', 'COMPLETED']);
+    });
+
+    it('a first log of harvest opens a season and totals the yield', async () => {
+      const a = as(alice);
+      const okra = (await a.post('/api/v1/crops/plan', { crop_id: 'okra' }))
+        .body.data;
+      await log(a, okra.id, 'HARVEST', {
+        quantity_value: 1.5,
+        quantity_unit: 'kg',
+      });
+      await log(a, okra.id, 'HARVEST', {
+        quantity_value: 2,
+        quantity_unit: 'kg',
+      });
+      expect((await plantOf(a, okra.id)).crop_stage).toBe('HARVESTING');
+      const cycles = (await a.get(`/api/v1/ledger/plants/${okra.id}/cycles`))
+        .body.data;
+      expect(cycles).toHaveLength(1);
+      expect(cycles[0].yield_quantity).toBe(3.5);
+    });
+
+    it('a second sowing in an open season is a succession row, not a step back', async () => {
+      const a = as(alice);
+      const palak = (await a.post('/api/v1/crops/plan', { crop_id: 'palak' }))
+        .body.data;
+      await log(a, palak.id, 'SOWING', { method: 'DIRECT' });
+      await log(a, palak.id, 'HARVEST');
+      const before = (await tasksOf(a, palak.id)).filter((t) =>
+        /come up/i.test(t.title),
+      ).length;
+      clock.set('2026-10-26T06:00:00Z');
+      await log(a, palak.id, 'SOWING', { method: 'DIRECT' });
+      expect((await plantOf(a, palak.id)).crop_stage).toBe('HARVESTING');
+      const tasks = await tasksOf(a, palak.id);
+      expect(tasks.filter((t) => /come up/i.test(t.title))).toHaveLength(
+        before,
+      );
+      expect(
+        tasks.filter(
+          (t) => /another row/i.test(t.title) && t.status === 'COMPLETED',
+        ).length,
+      ).toBeGreaterThan(0);
+    });
+
+    it('season end rests the crop, closes the season and cancels leftover steps; a new season numbers on', async () => {
+      const a = as(alice);
+      const palak = (await a.post('/api/v1/crops/plan', { crop_id: 'palak' }))
+        .body.data;
+      await log(a, palak.id, 'SOWING', { method: 'DIRECT' });
+      await log(a, palak.id, 'SEASON_END');
+      expect((await plantOf(a, palak.id)).crop_stage).toBe('RESTING');
+      const tasks = await tasksOf(a, palak.id);
+      expect(tasks.filter((t) => t.status === 'PENDING')).toHaveLength(0);
+      let cycles = (await a.get(`/api/v1/ledger/plants/${palak.id}/cycles`))
+        .body.data;
+      expect(cycles[0].closed_at).toEqual(expect.any(String));
+      const planned = await a.get('/api/v1/ledger/plants?status=planned');
+      expect(planned.body.data.map((p: { id: string }) => p.id)).toContain(
+        palak.id,
+      );
+      clock.set('2026-11-05T06:00:00Z');
+      await log(a, palak.id, 'SOWING', { method: 'DIRECT' });
+      cycles = (await a.get(`/api/v1/ledger/plants/${palak.id}/cycles`)).body
+        .data;
+      expect(cycles.map((c: { season_no: number }) => c.season_no)).toEqual([
+        2, 1,
+      ]);
+    });
+
+    it('a note on a planned crop opens no season, so it can still be removed', async () => {
+      const a = as(alice);
+      const palak = (await a.post('/api/v1/crops/plan', { crop_id: 'palak' }))
+        .body.data;
+      expect((await log(a, palak.id, 'NOTE')).status).toBe(201);
+      expect(
+        (await a.get(`/api/v1/ledger/plants/${palak.id}/cycles`)).body.data,
+      ).toHaveLength(0);
+      expect((await a.del(`/api/v1/crops/plan/${palak.id}`)).status).toBe(204);
+    });
+
+    it('refuses a place that is not the user’s when opening a season', async () => {
+      const a = as(alice);
+      const bobsBag = (
+        await as(bob).post('/api/v1/garden/places', {
+          name: 'Bob bag',
+          kind: 'GROW_BAG',
+        })
+      ).body.data;
+      const palak = (await a.post('/api/v1/crops/plan', { crop_id: 'palak' }))
+        .body.data;
+      expect(
+        (
+          await log(a, palak.id, 'SOWING', {
+            method: 'DIRECT',
+            place_id: bobsBag.id,
+          })
+        ).status,
+      ).toBe(404);
+      expect((await plantOf(a, palak.id)).crop_stage).toBe('PLANNED');
+    });
+  });
 });

@@ -19,6 +19,7 @@ import { followUpTemplateFor } from '../domain/follow-up-templates';
 import { JournalRepository } from '../repositories/journal.repository';
 import { PlantRepository } from '../repositories/plant.repository';
 import { CycleService } from './cycle.service';
+import { CropJourneyService } from './crop-journey.service';
 import { TaskService } from './task.service';
 
 export interface NewJournalEntry {
@@ -35,7 +36,7 @@ export interface RecordedJournalEntry {
   metadata?: Prisma.InputJsonValue;
   eventAt: Date;
   recordedAt: Date;
-  plantCycleId: string;
+  plantCycleId: string | null;
   diagnosisOutcomeId?: string | null;
 }
 
@@ -63,6 +64,7 @@ export class JournalService {
     private readonly plants: PlantRepository,
     private readonly cycles: CycleService,
     private readonly tasks: TaskService,
+    private readonly cropJourney: CropJourneyService,
     private readonly transactions: TransactionRunner,
     private readonly clock: Clock,
   ) {}
@@ -94,7 +96,21 @@ export class JournalService {
     if (!plant) throw new NotFoundError('PLANT_NOT_FOUND', 'Plant not found');
 
     const eventAt = entry.eventAt ?? this.clock.now();
-    const cycle = await this.cycles.ensureCycle(userId, plant, eventAt, tx);
+    // Journey crops have seasons opened by planting; everything else keeps yearly cycles.
+    const season = plant.crop_id
+      ? await this.cropJourney.seasonFor(
+          tx,
+          userId,
+          plant,
+          entry.type,
+          entry.metadata,
+          eventAt,
+        )
+      : {
+          cycle: await this.cycles.ensureCycle(userId, plant, eventAt, tx),
+          opened: false,
+        };
+    const cycle = season.cycle;
     const log = await this.journal.create(
       userId,
       plant.id,
@@ -102,7 +118,7 @@ export class JournalService {
         type: entry.type,
         content: entry.content,
         metadata: entry.metadata,
-        plant_cycle_id: cycle.id,
+        plant_cycle_id: cycle?.id ?? null,
         timestamp: eventAt,
       },
       tx,
@@ -113,7 +129,16 @@ export class JournalService {
     if (Object.keys(milestones).length > 0) {
       await this.plants.updateOwned(userId, plant.id, milestones, tx);
     }
-    await this.cycles.refreshSummary(userId, plant.id, cycle.id, tx);
+    if (cycle) await this.cycles.refreshSummary(userId, plant.id, cycle.id, tx);
+    if (plant.crop_id)
+      await this.cropJourney.afterEntry(
+        tx,
+        userId,
+        plant,
+        log,
+        cycle,
+        season.opened,
+      );
 
     const followUp = followUpTemplateFor(plant.name, log.type);
     if (followUp) {
@@ -135,7 +160,7 @@ export class JournalService {
               origin_log_content: log.content,
             },
             dueDate: addDays(log.timestamp, followUp.dueInDays),
-            plantCycleId: cycle.id,
+            plantCycleId: cycle?.id ?? null,
           },
         ],
         tx,
