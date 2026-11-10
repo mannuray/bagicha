@@ -311,6 +311,26 @@
       "months_other": "Planted {{year}} · {{count}} months"
     },
     "glance": "At a glance",
+    "life": {
+      "beforeFruit": "First fruit usually at {{range}}",
+      "productive": "{{age}} · productive until about {{range}}",
+      "productiveContainer": "{{age}} · bearing",
+      "past": "Past the typical productive age ({{range}}) · plan a replacement",
+      "range_months": "{{min}}–{{max}} months",
+      "range_years": "{{min}}–{{max}} years",
+      "age_years_one": "{{count}} year",
+      "age_years_other": "{{count}} years",
+      "age_months_one": "{{count}} month",
+      "age_months_other": "{{count}} months",
+      "container": "In a container, productive life is usually shorter; refresh the soil every 2–3 years.",
+      "note": {
+        "banana": "Each stem fruits once; keep 1–2 suckers to follow it.",
+        "papaya": "Replace papaya every 2–3 years; yields fall after that.",
+        "grape": "Yields depend on pruning every year.",
+        "coconut": "Dwarf types fruit sooner than tall ones.",
+        "moringa": "Cut it back every year to keep the pods within reach."
+      }
+    },
     "now": "Now: {{current}}",
     "next": "Next: {{next}}",
     "yearOnYear": "Year on year",

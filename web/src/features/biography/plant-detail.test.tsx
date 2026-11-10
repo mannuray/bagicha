@@ -99,6 +99,45 @@ describe('tree biography', () => {
     expect(await within(glance).findByText(/now: flowering/i)).toBeInTheDocument();
   });
 
+  it('tells an old papaya it is past its productive age and suggests a replacement', async () => {
+    handlers({
+      plant: {
+        name: 'Papita', species: 'Papaya', species_family: 'papaya', planting_date: '2022-06-01T00:00:00.000Z', planting_date_precision: 'MONTH_YEAR',
+        life_profile: { first_fruit_months: [8, 12], productive_until_months: [24, 36], lifespan_months: [48, 72], note_key: 'papaya' },
+      },
+    });
+    renderWithApp(routes, { route: '/plants/p1' });
+    const glance = await screen.findByRole('region', { name: /at a glance/i });
+    expect(await within(glance).findByText(/past the typical productive age \(2–3 years\)/i)).toBeInTheDocument();
+    expect(within(glance).getByText(/plan a replacement/i)).toBeInTheDocument();
+    expect(within(glance).getByText(/replace papaya every 2–3 years/i)).toBeInTheDocument();
+  });
+
+  it('gives a mango its age and productive span, and a rose no life line', async () => {
+    handlers({ plant: { life_profile: { first_fruit_months: [36, 60], productive_until_months: [480, 720], lifespan_months: [720, 1200], note_key: null } } });
+    const first = renderWithApp(routes, { route: '/plants/p1' });
+    const glance = await screen.findByRole('region', { name: /at a glance/i });
+    expect(await within(glance).findByText(/11 years · productive until about 40–60 years/i)).toBeInTheDocument();
+    first.unmount();
+    handlers({ plant: { species: 'Rose', species_family: null, life_profile: null } });
+    renderWithApp(routes, { route: '/plants/p1' });
+    const roseGlance = await screen.findByRole('region', { name: /at a glance/i });
+    expect(within(roseGlance).queryByText(/productive|first fruit/i)).not.toBeInTheDocument();
+  });
+
+  it('in a pot, shows the first-fruit line only, with the container note', async () => {
+    handlers({
+      plant: {
+        planted_context: 'POT', planting_date: '2026-01-01T00:00:00.000Z', planting_date_precision: 'MONTH_YEAR',
+        life_profile: { first_fruit_months: [36, 60], productive_until_months: [480, 720], lifespan_months: [720, 1200], note_key: null },
+      },
+    });
+    renderWithApp(routes, { route: '/plants/p1' });
+    const glance = await screen.findByRole('region', { name: /at a glance/i });
+    expect(await within(glance).findByText(/first fruit usually at 3–5 years/i)).toBeInTheDocument();
+    expect(within(glance).getByText(/in a container/i)).toBeInTheDocument();
+  });
+
   it('drops Do now, Botanical Essence and the Cycles section', async () => {
     handlers();
     renderWithApp(routes, { route: '/plants/p1' });

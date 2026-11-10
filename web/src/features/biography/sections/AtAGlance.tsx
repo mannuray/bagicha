@@ -2,7 +2,9 @@ import { useTranslation } from 'react-i18next';
 import { cx, ErrorState, LoadingState } from '../../../ui';
 import type { PlantDetail } from '../../plants';
 import { usePlantIntelligence } from '../../seasonal';
+import { systemClock } from '../../../lib/clock';
 import { STAGES } from '../growth-stage';
+import { lifeLine } from '../life-line';
 import { humanize } from './format';
 
 /** Lifelong stage (a 5-step track) next to this season's phase, so the two read as different things. */
@@ -25,6 +27,7 @@ export function AtAGlance({ plant }: { plant: PlantDetail }) {
           </li>
         ))}
       </ol>
+      <LifeLineText plant={plant} />
       {intel.isError ? (
         <ErrorState error={intel.error} onRetry={() => void intel.refetch()} />
       ) : !pack ? (
@@ -37,5 +40,36 @@ export function AtAGlance({ plant }: { plant: PlantDetail }) {
         </p>
       )}
     </section>
+  );
+}
+
+/** Where the tree is in a typical life for its species (spec: tree-life-and-loss §2.5). */
+function LifeLineText({ plant }: { plant: PlantDetail }) {
+  const { t } = useTranslation();
+  const line = lifeLine(plant, systemClock.now());
+  if (!line) return null;
+  const range = line.range ? t(`biography.life.range_${line.range.unit}`, { min: line.range.min, max: line.range.max }) : '';
+  const age = t(`biography.life.age_${line.age.unit}`, { count: line.age.count });
+  const text =
+    line.phase === 'beforeFruit'
+      ? t('biography.life.beforeFruit', { range })
+      : line.phase === 'past'
+        ? t('biography.life.past', { range })
+        : line.range
+          ? t('biography.life.productive', { age, range })
+          : t('biography.life.productiveContainer', { age });
+  return (
+    <div className="space-y-1">
+      <p
+        className={cx(
+          'font-body text-sm',
+          line.phase === 'past' ? 'rounded-lg bg-secondary-container/25 px-3 py-2 text-on-secondary-fixed-variant' : 'text-on-surface',
+        )}
+      >
+        {text}
+      </p>
+      {line.noteKey && <p className="font-body text-xs text-on-surface-variant">{t(`biography.life.note.${line.noteKey}`)}</p>}
+      {line.container && <p className="font-body text-xs text-on-surface-variant">{t('biography.life.container')}</p>}
+    </div>
   );
 }
