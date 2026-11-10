@@ -9,6 +9,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { CommunityService } from './community.service';
+import { FeedQueryDto } from './dto/feed-query.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { AskAiDto } from './dto/ask-ai.dto';
@@ -22,18 +23,8 @@ export class CommunityController {
   constructor(private readonly communityService: CommunityService) {}
 
   @Get('feed')
-  async getFeed(
-    @Request() req,
-    @Query('district') district?: string,
-    @Query('page') page: number = 1,
-    @Query('page_size') pageSize: number = 20,
-  ) {
-    return this.communityService.getFeed(
-      req.user.id,
-      district,
-      Number(page),
-      Number(pageSize),
-    );
+  getFeed(@Request() req: { user: { id: string } }, @Query() q: FeedQueryDto) {
+    return this.communityService.getFeed(req.user.id, q.district, q);
   }
 
   @Post('posts')

@@ -1,11 +1,23 @@
 import { Module } from '@nestjs/common';
-import { CommunityService } from './community.service';
-import { CommunityController } from './community.controller';
 import { AiModule } from '../ai';
+import { PlantLedgerModule } from '../plant-ledger';
+import { UserModule } from '../user';
+import { CommunityController } from './community.controller';
+import { CommunityService } from './community.service';
+import { CommentRepository } from './repositories/comment.repository';
+import { ExpertRepository } from './repositories/expert.repository';
+import { PostRepository } from './repositories/post.repository';
+import { ReportRepository } from './repositories/report.repository';
 
 @Module({
-  imports: [AiModule],
+  imports: [AiModule, PlantLedgerModule, UserModule],
   controllers: [CommunityController],
-  providers: [CommunityService],
+  providers: [
+    CommunityService,
+    PostRepository,
+    CommentRepository,
+    ReportRepository,
+    ExpertRepository,
+  ],
 })
 export class CommunityModule {}

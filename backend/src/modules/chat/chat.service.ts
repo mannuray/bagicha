@@ -1,50 +1,31 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
+import { NotFoundError } from '../../common/errors';
+import { PageQuery, toPage, toSkipTake } from '../../common/pagination';
 import { SendMessageDto } from './dto/send-message.dto';
+import { MessageRepository } from './message.repository';
 
 @Injectable()
 export class ChatService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly messages: MessageRepository) {}
 
   async sendMessage(userId: string, dto: SendMessageDto) {
-    const receiver = await this.prisma.user.findUnique({
-      where: { id: dto.receiver_id },
-    });
-    if (!receiver) throw new NotFoundException('Receiver not found');
-
-    return this.prisma.message.create({
-      data: {
-        ...dto,
-        sender_id: userId,
-      },
-    });
+    if (!(await this.messages.userExists(dto.receiver_id))) {
+      throw new NotFoundError('RECEIVER_NOT_FOUND', 'Receiver not found');
+    }
+    return this.messages.create({ ...dto, sender_id: userId });
   }
 
-  async getInbox(userId: string) {
-    // Fetches the last message from each conversation
-    // This is a simplified version for the MVP
-    return this.prisma.message.findMany({
-      where: {
-        OR: [{ sender_id: userId }, { receiver_id: userId }],
-      },
-      orderBy: { created_at: 'desc' },
-      distinct: ['sender_id', 'receiver_id'], // This might need more complex logic for true inbox
-      include: {
-        sender: { select: { id: true, name: true } },
-        receiver: { select: { id: true, name: true } },
-      },
-    });
+  async getInbox(userId: string, q: PageQuery) {
+    const { rows, total } = await this.messages.inbox(userId, toSkipTake(q));
+    return toPage(rows, total, q);
   }
 
-  async getMessages(userId: string, otherUserId: string) {
-    return this.prisma.message.findMany({
-      where: {
-        OR: [
-          { sender_id: userId, receiver_id: otherUserId },
-          { sender_id: otherUserId, receiver_id: userId },
-        ],
-      },
-      orderBy: { created_at: 'asc' },
-    });
+  async getMessages(userId: string, otherUserId: string, q: PageQuery) {
+    const { rows, total } = await this.messages.conversation(
+      userId,
+      otherUserId,
+      toSkipTake(q),
+    );
+    return toPage(rows, total, q);
   }
 }

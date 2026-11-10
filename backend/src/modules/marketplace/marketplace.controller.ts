@@ -16,12 +16,12 @@ export class MarketplaceController {
   constructor(private readonly marketplaceService: MarketplaceService) {}
 
   @Get('items')
-  async getItems() {
+  getItems() {
     return this.marketplaceService.getItems();
   }
 
   @Post('buy')
-  async buyItem(@Request() req, @Body() dto: BuyItemDto) {
+  buyItem(@Request() req: { user: { id: string } }, @Body() dto: BuyItemDto) {
     return this.marketplaceService.buyItem(req.user.id, dto.item_id);
   }
 }

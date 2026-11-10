@@ -1,29 +1,25 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { PlantsService } from './plants.service';
 import { RateLimit } from '../../common/rate-limit';
+import { ResolvePlantDto } from './dto/resolve-plant.dto';
+import { SearchPlantsDto } from './dto/search-plants.dto';
+import { PlantsService } from './plants.service';
 
+/** Public plant catalogue (used during onboarding, before or around sign-in). */
 @Controller('plants')
 export class PlantsController {
   constructor(private readonly plantsService: PlantsService) {}
 
   @Get('search')
   @RateLimit('catalogue')
-  async search(@Query('q') query: string) {
-    return this.plantsService.search(query || '');
+  search(@Query() q: SearchPlantsDto) {
+    return this.plantsService.search(q.q ?? '', q);
   }
 
   @Post('resolve')
   @RateLimit('catalogue')
-  async resolve(
-    @Body()
-    body: {
-      query: string;
-      region_cluster?: string;
-      language?: string;
-    },
-  ) {
+  resolve(@Body() body: ResolvePlantDto) {
     return this.plantsService.resolve(
-      body.query || '',
+      body.query,
       body.region_cluster,
       body.language,
     );

@@ -31,3 +31,10 @@ is built against the "After" column.
 | `POST seasonal/plant/:id/materialize-tasks` | `{created_count, created_tasks:[…]}` | `{results:[{sourceKey, status: created\|skipped\|failed, taskId?, reason?}], created_count}` | 20 |
 | season window / seasonal guide | server-local month | IST month (flips at IST midnight on the 1st) | 20 |
 | weather job | always re-fetched on retry | skips when the pincode is already cached | 20 |
+| `GET community/feed` | `?page`/`?page_size` unvalidated | validated (`page` ≥1, `page_size` 1–100) → bad values 422 | 21 |
+| `GET chat/inbox`, `GET chat/messages/:userId` | bare arrays, unbounded | `data` + `pagination` (default 20/page); conversation oldest-first | 21 |
+| `GET plants/search` | `data: {items: [top 8]}` | `data: [...]` + `pagination` (default 20/page, ranked) | 21 |
+| `POST plants/resolve` | body unvalidated | `query` required (≤100 chars), `region_cluster` must be a known cluster (either case), `language` ≤10 chars → else 422 | 21 |
+| `POST media/images`, `GET media/download-url/*key` | `{success, data}` double-wrapped inside the envelope | plain envelope `data` | 21 |
+| `POST community/posts/:id/report`, `…/comments/:id/report` | report row only | report + `COMMUNITY_REPORT_FILED` audit row in one transaction (repeat reports write nothing) | 21 |
+| `POST chat/messages` unknown receiver | 404 `NOT_FOUND` | 404 `RECEIVER_NOT_FOUND` | 21 |

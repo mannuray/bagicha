@@ -48,7 +48,10 @@ describe('pagination parameters', () => {
   );
 
   describe('/api/v1/community/feed', () => {
-    it.todo(`rejects ${BAD.join(', ')} with 422 (Task 21)`);
+    it.each(BAD)('rejects ?%s with 422', async (query) => {
+      const res = await get(`/api/v1/community/feed?${query}`);
+      expect(res.status).toBe(422);
+    });
   });
 
   it('keeps the harness wired', async () => {

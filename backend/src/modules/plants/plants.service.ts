@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PlantCatalogEntry, Prisma } from '@prisma/client';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Page, PageQuery, toPage } from '../../common/pagination';
+import { CatalogRepository } from './catalog.repository';
 
 type ResolveConfidence = 'high' | 'medium' | 'low';
 
@@ -18,28 +19,28 @@ interface PlantSeed {
 
 @Injectable()
 export class PlantsService implements OnModuleInit {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly catalog: CatalogRepository) {}
 
   async onModuleInit() {
     await this.bootstrapCatalog();
   }
 
-  async search(rawQuery: string) {
+  async search(
+    rawQuery: string,
+    q: PageQuery,
+  ): Promise<Page<ReturnType<PlantsService['toSearchItem']>>> {
     const query = this.normalize(rawQuery);
-    if (!query) {
-      return { items: [] };
-    }
+    if (!query) return toPage([], 0, q);
 
-    const entries = await this.prisma.plantCatalogEntry.findMany({
-      where: { active: true },
-      orderBy: [{ confidence_weight: 'desc' }, { display_name: 'asc' }],
-    });
-
-    const ranked = this.rankEntries(entries, query);
-
-    return {
-      items: ranked.slice(0, 8).map(({ entry }) => this.toSearchItem(entry)),
-    };
+    const ranked = this.rankEntries(await this.catalog.listActive(), query);
+    const start = (q.page - 1) * q.page_size;
+    return toPage(
+      ranked
+        .slice(start, start + q.page_size)
+        .map(({ entry }) => this.toSearchItem(entry)),
+      ranked.length,
+      q,
+    );
   }
 
   async resolve(rawQuery: string, regionCluster?: string, language?: string) {
@@ -53,11 +54,7 @@ export class PlantsService implements OnModuleInit {
       };
     }
 
-    const entries = await this.prisma.plantCatalogEntry.findMany({
-      where: { active: true },
-      orderBy: [{ confidence_weight: 'desc' }, { display_name: 'asc' }],
-    });
-
+    const entries = await this.catalog.listActive();
     const ranked = this.rankEntries(entries, query, regionCluster, language);
     const [best, ...rest] = ranked;
 
@@ -86,7 +83,8 @@ export class PlantsService implements OnModuleInit {
   }
 
   private async bootstrapCatalog() {
-    const count = await this.prisma.plantCatalogEntry.count();
+    // Safe to run on every boot: seeds only an empty catalogue.
+    const count = await this.catalog.count();
     if (count > 0) {
       return;
     }
@@ -209,8 +207,8 @@ export class PlantsService implements OnModuleInit {
       },
     ];
 
-    await this.prisma.plantCatalogEntry.createMany({
-      data: seeds.map((seed) => ({
+    await this.catalog.createMany(
+      seeds.map((seed) => ({
         ...seed,
         variety: seed.variety ?? null,
         languages: seed.languages
@@ -219,7 +217,7 @@ export class PlantsService implements OnModuleInit {
         regions: seed.regions ?? [],
         confidence_weight: seed.confidence_weight ?? 0.5,
       })),
-    });
+    );
   }
 
   private rankEntries(
@@ -351,7 +349,7 @@ export class PlantsService implements OnModuleInit {
       .map((item) => this.normalize(item));
   }
 
-  private toSearchItem(entry: PlantCatalogEntry) {
+  toSearchItem(entry: PlantCatalogEntry) {
     return {
       id: entry.id,
       display_name: entry.display_name,

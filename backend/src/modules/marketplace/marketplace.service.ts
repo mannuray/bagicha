@@ -1,16 +1,14 @@
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class MarketplaceService {
   constructor(
-    private prisma: PrismaService,
     @InjectPinoLogger(MarketplaceService.name)
     private readonly logger: PinoLogger,
   ) {}
 
-  async getItems() {
+  getItems() {
     // For MVP, returning a static list of items
     return [
       {
@@ -37,7 +35,7 @@ export class MarketplaceService {
     ];
   }
 
-  async buyItem(userId: string, itemId: string) {
+  buyItem(userId: string, itemId: string) {
     this.logger.info({ userId, itemId }, 'Mock marketplace purchase');
 
     // Logic to trigger delivery or add to ledger

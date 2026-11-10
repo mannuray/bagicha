@@ -1,3 +1,4 @@
+import { withSpan } from '../../common/observability';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import {
   BadRequestException,
@@ -44,6 +45,14 @@ export class MediaService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
+    await withSpan(
+      'minio.ensureBucket',
+      { bucket: this.config.get<string>('MEDIA_BUCKET', MEDIA_BUCKET_DEFAULT) },
+      () => this.init(),
+    );
+  }
+
+  private async init() {
     this.bucket = this.config.get<string>('MEDIA_BUCKET', MEDIA_BUCKET_DEFAULT);
     const endPoint = this.config.get<string>('MEDIA_ENDPOINT', 'localhost');
     const port = parseInt(this.config.get<string>('MEDIA_PORT', '9000'), 10);
@@ -105,16 +114,18 @@ export class MediaService implements OnModuleInit {
       .toBuffer({ resolveWithObject: true });
 
     const key = this.buildKey(kind, ownerId);
-    await this.client.putObject(
-      this.bucket,
-      key,
-      processed.data,
-      processed.data.length,
-      {
-        'Content-Type': 'image/jpeg',
-        'x-amz-meta-owner-id': ownerId,
-        'x-amz-meta-kind': kind,
-      },
+    await withSpan('minio.putObject', { bucket: this.bucket }, () =>
+      this.client.putObject(
+        this.bucket,
+        key,
+        processed.data,
+        processed.data.length,
+        {
+          'Content-Type': 'image/jpeg',
+          'x-amz-meta-owner-id': ownerId,
+          'x-amz-meta-kind': kind,
+        },
+      ),
     );
 
     const isPublic = PUBLIC_PREFIXES.has(kind);
@@ -152,7 +163,9 @@ export class MediaService implements OnModuleInit {
     key: string,
     expirySeconds = 60 * 60,
   ): Promise<string> {
-    return this.client.presignedGetObject(this.bucket, key, expirySeconds);
+    return withSpan('minio.presignedGetObject', { bucket: this.bucket }, () =>
+      this.client.presignedGetObject(this.bucket, key, expirySeconds),
+    );
   }
 
   private buildKey(kind: MediaKind, ownerId: string): string {

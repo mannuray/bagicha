@@ -3,14 +3,14 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuditAction, AuditService } from '../audit';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../../prisma/prisma.service';
+import { UserRepository } from '../user';
 import { RedisService } from '../../common/redis/redis.service';
-import { randomInt, randomUUID } from 'crypto';
+import { randomInt } from 'crypto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaService,
+    private users: UserRepository,
     private redisService: RedisService,
     private jwtService: JwtService,
     private config: ConfigService,
@@ -63,19 +63,9 @@ export class AuthService {
     }
 
     // Register or find user
-    let user = await this.prisma.user.findUnique({
-      where: { phone_number: phoneNumber },
-    });
-
-    const isNewUser = !user;
-    if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          phone_number: phoneNumber,
-          id: randomUUID(),
-        },
-      });
-    }
+    const existing = await this.users.findByPhone(phoneNumber);
+    const isNewUser = !existing;
+    const user = existing ?? (await this.users.createWithPhone(phoneNumber));
 
     await this.audit.record({
       actorUserId: user.id,

@@ -1,14 +1,25 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ReportTargetType } from '@prisma/client';
-import { PrismaService } from '../../prisma/prisma.service';
-import { CreatePostDto } from './dto/create-post.dto';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { AskAiDto } from './dto/ask-ai.dto';
-import { ReportTargetDto } from './dto/report-target.dto';
+import { NotFoundError } from '../../common/errors';
+import { Page, PageQuery, toPage, toSkipTake } from '../../common/pagination';
+import { Tx, TransactionRunner } from '../../common/prisma/transaction';
 import { AiProvider } from '../ai';
+import { AuditAction, AuditService } from '../audit';
+import { JournalRepository, PlantRecordService } from '../plant-ledger';
+import { UserRepository } from '../user';
+import { AskAiDto } from './dto/ask-ai.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { CreatePostDto } from './dto/create-post.dto';
+import { ReportTargetDto } from './dto/report-target.dto';
+import { CommentRepository } from './repositories/comment.repository';
+import { ExpertRepository } from './repositories/expert.repository';
+import { FeedPost, PostRepository } from './repositories/post.repository';
+import { ReportRepository } from './repositories/report.repository';
 
 const HIDE_REPORT_THRESHOLD = 3;
 const MAX_KNOWLEDGE_SNIPPETS = 3;
+const KNOWLEDGE_POOL_SIZE = 50;
+const AUDIT_EXCERPT_CHARS = 200;
 const STOPWORDS = new Set([
   'the',
   'a',
@@ -81,158 +92,122 @@ const STOPWORDS = new Set([
   'kindly',
 ]);
 
+function tokenize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 3 && !STOPWORDS.has(w));
+}
+
+function truncate(text: string, max: number): string {
+  if (text.length <= max) return text;
+  return text.slice(0, max - 1).trimEnd() + '…';
+}
+
+interface ReportTarget {
+  type: ReportTargetType;
+  id: string;
+  content: string;
+  isHidden: boolean;
+  hide: (tx: Tx) => Promise<void>;
+}
+
 @Injectable()
 export class CommunityService {
   constructor(
-    private prisma: PrismaService,
-    private ai: AiProvider,
+    private readonly posts: PostRepository,
+    private readonly comments: CommentRepository,
+    private readonly reports: ReportRepository,
+    private readonly experts: ExpertRepository,
+    private readonly users: UserRepository,
+    private readonly plants: PlantRecordService,
+    private readonly ai: AiProvider,
+    private readonly audit: AuditService,
+    private readonly transactions: TransactionRunner,
+    private readonly journal: JournalRepository,
   ) {}
 
-  async getFeed(userId: string, district?: string, page = 1, pageSize = 20) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    const targetDistrict = district || user?.district;
-
-    const where = {
-      is_hidden: false,
-      ...(targetDistrict ? { district: targetDistrict } : {}),
-    };
-
-    const posts = await this.prisma.post.findMany({
-      where,
-      include: {
-        author: {
-          select: { id: true, name: true, badge_level: true },
-        },
-        _count: {
-          select: { comments: { where: { is_hidden: false } } },
-        },
-      },
-      orderBy: { created_at: 'desc' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
-
-    const totalItems = await this.prisma.post.count({ where });
-
-    return {
-      items: posts,
-      pagination: {
-        page,
-        page_size: pageSize,
-        total_items: totalItems,
-        total_pages: Math.ceil(totalItems / pageSize),
-        has_next: page * pageSize < totalItems,
-        has_previous: page > 1,
-      },
-    };
+  async getFeed(
+    userId: string,
+    district: string | undefined,
+    q: PageQuery,
+  ): Promise<Page<FeedPost>> {
+    const targetDistrict =
+      district || (await this.users.findById(userId))?.district;
+    const { rows, total } = await this.posts.listVisible(
+      targetDistrict,
+      toSkipTake(q),
+    );
+    return toPage(rows, total, q);
   }
 
   async createPost(userId: string, dto: CreatePostDto) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    return this.prisma.post.create({
-      data: {
-        content: dto.content,
-        plant_id: dto.plant_id,
-        is_alert: dto.is_alert ?? false,
-        image_urls: dto.image_urls ?? [],
-        author_id: userId,
-        district: user?.district,
-      },
+    const user = await this.users.findById(userId);
+    return this.posts.create({
+      content: dto.content,
+      plant_id: dto.plant_id,
+      is_alert: dto.is_alert ?? false,
+      image_urls: dto.image_urls ?? [],
+      author_id: userId,
+      district: user?.district,
     });
   }
 
   async addComment(userId: string, postId: string, dto: CreateCommentDto) {
-    const expert = await this.prisma.expertVerification.findUnique({
-      where: { user_id: userId },
-    });
-
-    return this.prisma.comment.create({
-      data: {
-        ...dto,
-        post_id: postId,
-        author_id: userId,
-        is_expert_verified: expert?.status === 'APPROVED',
-      },
+    return this.comments.create({
+      ...dto,
+      post_id: postId,
+      author_id: userId,
+      is_expert_verified: await this.experts.isApprovedExpert(userId),
     });
   }
 
   async reportPost(userId: string, postId: string, dto: ReportTargetDto) {
-    const post = await this.prisma.post.findUnique({ where: { id: postId } });
-    if (!post) throw new NotFoundException(`Post ${postId} not found`);
-
-    return this.recordReport(
-      ReportTargetType.POST,
-      postId,
-      userId,
-      dto.reason,
-      async (count) => {
-        if (count >= HIDE_REPORT_THRESHOLD && !post.is_hidden) {
-          await this.prisma.post.update({
-            where: { id: postId },
-            data: { is_hidden: true },
-          });
-        }
-      },
-    );
+    const post = await this.posts.findById(postId);
+    if (!post) throw new NotFoundError('POST_NOT_FOUND', 'Post not found');
+    return this.recordReport(userId, dto.reason, {
+      type: ReportTargetType.POST,
+      id: post.id,
+      content: post.content,
+      isHidden: post.is_hidden,
+      hide: (tx) => this.posts.hide(post.id, tx),
+    });
   }
 
   async reportComment(userId: string, commentId: string, dto: ReportTargetDto) {
-    const comment = await this.prisma.comment.findUnique({
-      where: { id: commentId },
+    const comment = await this.comments.findById(commentId);
+    if (!comment)
+      throw new NotFoundError('COMMENT_NOT_FOUND', 'Comment not found');
+    return this.recordReport(userId, dto.reason, {
+      type: ReportTargetType.COMMENT,
+      id: comment.id,
+      content: comment.content,
+      isHidden: comment.is_hidden,
+      hide: (tx) => this.comments.hide(comment.id, tx),
     });
-    if (!comment) throw new NotFoundException(`Comment ${commentId} not found`);
-
-    return this.recordReport(
-      ReportTargetType.COMMENT,
-      commentId,
-      userId,
-      dto.reason,
-      async (count) => {
-        if (count >= HIDE_REPORT_THRESHOLD && !comment.is_hidden) {
-          await this.prisma.comment.update({
-            where: { id: commentId },
-            data: { is_hidden: true },
-          });
-        }
-      },
-    );
   }
 
   async askAi(userId: string, dto: AskAiDto) {
-    // 1. Fetch the user's plant context if requested.
     let plantContext = '';
-    let plantSpeciesFamily: string | null = null;
+    let speciesFamily: string | null = null;
     if (dto.plant_id) {
-      const plant = await this.prisma.plant.findFirst({
-        where: { id: dto.plant_id, user_id: userId },
-        include: {
-          journal_entries: { take: 5, orderBy: { timestamp: 'desc' } },
-        },
-      });
-      if (!plant) throw new NotFoundException('Plant not found');
-      {
-        plantSpeciesFamily = plant.species_family;
-        const recentEvents = plant.journal_entries
-          .map(
-            (j) =>
-              `${j.type.toLowerCase()}${j.content ? `: ${j.content}` : ''}`,
-          )
-          .join('; ');
-        plantContext = `User is asking about their ${plant.species}${
-          plant.variety ? ` (${plant.variety})` : ''
-        } ${plant.record_kind.toLowerCase()} in ${plant.lifecycle_stage.toLowerCase()} stage.${
-          recentEvents ? ` Recent journal: ${recentEvents}` : ''
-        }`;
-      }
+      const plant = await this.plants.getOwnedOrThrow(userId, dto.plant_id);
+      const recent = await this.journal.recent(userId, plant.id, 5);
+      speciesFamily = plant.species_family;
+      const recentEvents = recent
+        .map(
+          (j) => `${j.type.toLowerCase()}${j.content ? `: ${j.content}` : ''}`,
+        )
+        .join('; ');
+      plantContext = `User is asking about their ${plant.species}${
+        plant.variety ? ` (${plant.variety})` : ''
+      } ${plant.record_kind.toLowerCase()} in ${plant.lifecycle_stage.toLowerCase()} stage.${
+        recentEvents ? ` Recent journal: ${recentEvents}` : ''
+      }`;
     }
 
-    // 2. Pull expert-verified comments scoped to the topic.
-    const knowledgeBase = await this.fetchRelevantKnowledge(
-      dto.question,
-      plantSpeciesFamily,
-    );
-
-    // 3. Build prompt and call Gemini.
+    const knowledge = await this.relevantKnowledge(dto.question, speciesFamily);
     const prompt = `
 You are the Bagicha AI plant assistant for Indian gardeners and small orchards.
 
@@ -240,7 +215,7 @@ Plant context:
 ${plantContext || '(no specific plant context provided)'}
 
 Expert community knowledge (topic-relevant snippets only — may be empty):
-${knowledgeBase || '(no relevant verified community knowledge)'}
+${knowledge || '(no relevant verified community knowledge)'}
 
 Question: ${dto.question}
 
@@ -253,71 +228,65 @@ Return strict JSON:
     return this.ai.generateJson({ feature: 'ask_ai', prompt });
   }
 
-  // --- helpers ---
-
-  private async recordReport(
-    type: ReportTargetType,
-    targetId: string,
+  /** One report per user per target; the report and its audit row commit together. */
+  private recordReport(
     reporterId: string,
     reason: string | undefined,
-    onCount: (count: number) => Promise<void>,
+    target: ReportTarget,
   ) {
-    const existing = await this.prisma.report.findFirst({
-      where: {
-        target_type: type,
-        target_id: targetId,
-        reporter_id: reporterId,
-      },
-    });
-    if (existing) {
-      // Idempotent: a user can only report a target once. Keep their first reason.
-      const count = await this.prisma.report.count({
-        where: { target_type: type, target_id: targetId, status: 'PENDING' },
-      });
-      await onCount(count);
-      return { success: true, already_reported: true };
-    }
+    return this.transactions.run(async (tx) => {
+      const existing = await this.reports.findByReporter(
+        target.type,
+        target.id,
+        reporterId,
+        tx,
+      );
+      if (!existing) {
+        const trimmedReason = reason?.trim() || null;
+        await this.reports.create(
+          {
+            target_type: target.type,
+            target_id: target.id,
+            reporter_id: reporterId,
+            reason: trimmedReason,
+          },
+          tx,
+        );
+        await this.audit.record(
+          {
+            actorUserId: reporterId,
+            action: AuditAction.COMMUNITY_REPORT_FILED,
+            targetType: target.type,
+            targetId: target.id,
+            snapshot: {
+              target_type: target.type,
+              target_id: target.id,
+              reason: trimmedReason,
+              reporter_id: reporterId,
+              content_excerpt: target.content.slice(0, AUDIT_EXCERPT_CHARS),
+            },
+          },
+          tx,
+        );
+      }
 
-    await this.prisma.report.create({
-      data: {
-        target_type: type,
-        target_id: targetId,
-        reporter_id: reporterId,
-        reason: reason?.trim() || null,
-      },
+      const count = await this.reports.countPending(target.type, target.id, tx);
+      if (count >= HIDE_REPORT_THRESHOLD && !target.isHidden)
+        await target.hide(tx);
+      return existing
+        ? { success: true, already_reported: true }
+        : { success: true, pending_reports: count };
     });
-    const count = await this.prisma.report.count({
-      where: { target_type: type, target_id: targetId, status: 'PENDING' },
-    });
-    await onCount(count);
-
-    return { success: true, pending_reports: count };
   }
 
-  private async fetchRelevantKnowledge(
+  private async relevantKnowledge(
     question: string,
     speciesFamily: string | null,
-  ): Promise<string> {
-    const keywords = this.tokenize(question);
-    if (keywords.length === 0 && !speciesFamily) {
-      return '';
-    }
+  ) {
+    const keywords = tokenize(question);
+    if (keywords.length === 0 && !speciesFamily) return '';
 
-    // Pull a small candidate pool of expert-verified comments and their parent posts.
-    const candidates = await this.prisma.comment.findMany({
-      where: {
-        is_expert_verified: true,
-        is_hidden: false,
-      },
-      include: {
-        post: {
-          select: { id: true, content: true, is_hidden: true },
-        },
-      },
-      orderBy: { created_at: 'desc' },
-      take: 50,
-    });
-
+    const candidates = await this.comments.recentVerified(KNOWLEDGE_POOL_SIZE);
     const scored = candidates
       .filter((c) => c.post && !c.post.is_hidden)
       .map((c) => {
@@ -336,26 +305,11 @@ Return strict JSON:
       .sort((a, b) => b.score - a.score)
       .slice(0, MAX_KNOWLEDGE_SNIPPETS);
 
-    if (scored.length === 0) return '';
-
     return scored
       .map(
         (entry, idx) =>
-          `[${idx + 1}] Topic: ${this.truncate(entry.comment.post.content, 160)}\n    Verified answer: ${this.truncate(entry.comment.content, 240)}`,
+          `[${idx + 1}] Topic: ${truncate(entry.comment.post.content, 160)}\n    Verified answer: ${truncate(entry.comment.content, 240)}`,
       )
       .join('\n');
-  }
-
-  private tokenize(text: string): string[] {
-    return text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter((w) => w.length >= 3 && !STOPWORDS.has(w));
-  }
-
-  private truncate(text: string, max: number): string {
-    if (text.length <= max) return text;
-    return text.slice(0, max - 1).trimEnd() + '…';
   }
 }

@@ -34,7 +34,7 @@ export class MediaController {
   ) {
     const kind = this.parseKind(kindRaw);
     const result = await this.mediaService.uploadImage(file, kind, req.user.id);
-    return { success: true, data: result };
+    return result;
   }
 
   @Get('download-url/*key')
@@ -53,7 +53,7 @@ export class MediaController {
       key,
       seconds,
     );
-    return { success: true, data: { url, expires_in_seconds: seconds } };
+    return { url, expires_in_seconds: seconds };
   }
 
   private parseKind(raw: string | undefined): MediaKind {

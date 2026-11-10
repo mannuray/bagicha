@@ -19,10 +19,8 @@ function build(env: Record<string, string | undefined>) {
   };
   const user = { id: 'u1', phone_number: PHONE };
   const prisma = {
-    user: {
-      findUnique: jest.fn(() => Promise.resolve(user)),
-      create: jest.fn(() => Promise.resolve(user)),
-    },
+    findByPhone: jest.fn(() => Promise.resolve(user)),
+    createWithPhone: jest.fn(() => Promise.resolve(user)),
   };
   const jwt = { sign: jest.fn(() => 'token') };
   const audit = { record: jest.fn(() => Promise.resolve()) };
