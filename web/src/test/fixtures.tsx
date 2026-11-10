@@ -42,3 +42,23 @@ export const pageOf = <T,>(items: T[], over: Record<string, unknown> = {}) => ({
 
 export const ok = (data: unknown) => ({ success: true, data });
 export const fail = (code: string, message = code) => ({ success: false, error: { code, message } });
+
+export const taskRecord = (over: Record<string, unknown> = {}) => ({
+  id: 't1',
+  type: 'TREAT',
+  title: 'Plan pest response for Aam',
+  category: 'TREATMENT',
+  priority: 'HIGH',
+  status: 'PENDING',
+  source: 'MANUAL',
+  reason: 'A pest diagnosis was logged.',
+  due_date: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+  completed_at: null,
+  plant_id: 'p1',
+  tree_name: 'Aam',
+  record_kind: 'TREE',
+  plant_cycle_id: 'c1',
+  cycle_year: 2026,
+  source_summary: 'Created from pest diagnosis log: mealybugs',
+  ...over,
+});

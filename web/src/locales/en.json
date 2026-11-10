@@ -170,5 +170,28 @@
       "dateHint": "Leave blank if you're not sure.",
       "save": "Save tree"
     }
+  },
+  "tasks": {
+    "title": "The Daily Path",
+    "plantTitle": "Care for this tree",
+    "complete": "Complete",
+    "skip": "Skip",
+    "refreshSeason": "Refresh this season's tasks",
+    "emptyTitle": "Nothing due this week",
+    "emptyBody": "Your garden is in good hands. New care appears here as the season turns.",
+    "emptyPlantBody": "No care is due for this tree right now.",
+    "group": {
+      "overdue": "Overdue",
+      "week": "This week",
+      "later": "Later"
+    },
+    "due": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "inDays_one": "In {{count}} day",
+      "inDays_other": "In {{count}} days",
+      "overdue_one": "{{count}} day overdue",
+      "overdue_other": "{{count}} days overdue"
+    }
   }
 }
