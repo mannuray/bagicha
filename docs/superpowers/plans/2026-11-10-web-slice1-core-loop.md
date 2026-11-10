@@ -47,7 +47,7 @@ The five inputs no main test covers that are most likely to bite a real user. Ea
 
 ## Phase A: Backend changes the loop needs
 
-### Task B1: Larger request body for scan routes
+### Task 1 (B1): Larger request body for scan routes
 
 **Files:**
 - Create: `backend/src/common/http/body-limits.ts`
@@ -71,7 +71,7 @@ The five inputs no main test covers that are most likely to bite a real user. Ea
 - [ ] **Step 4:** Run `npm run test:e2e`. Expected: PASS (whole suite).
 - [ ] **Step 5:** Add a row to `docs/api-changes-slice0.md` under "## Slice 1", then commit: `feat(api): 8 MB JSON limit on vision routes for scans`.
 
-### Task B2: CORS for the web app
+### Task 2 (B2): CORS for the web app
 
 **Files:**
 - Modify: `backend/src/bootstrap.ts`, `backend/src/config/env.validation.ts` (`WEB_ORIGINS?: string`), `backend/.env.test.example`, `backend/.env` (local: `WEB_ORIGINS=http://localhost:5173`)
@@ -89,7 +89,7 @@ The five inputs no main test covers that are most likely to bite a real user. Ea
 - [ ] **Step 4:** Run `npm test && npm run test:e2e`. Expected: PASS.
 - [ ] **Step 5:** Add the doc row, then commit: `feat(api): CORS allow-list from WEB_ORIGINS`.
 
-### Task B3: Test-only fake AI provider
+### Task 3 (B3): Test-only fake AI provider
 
 **Files:**
 - Create: `backend/src/modules/ai/fake-ai.provider.ts`
@@ -114,7 +114,7 @@ The five inputs no main test covers that are most likely to bite a real user. Ea
 - [ ] **Step 4:** Run `npm test`. Expected: PASS.
 - [ ] **Step 5:** Add the doc row (dev/test only), then commit: `feat(ai): AI_PROVIDER=fake for end-to-end runs (refused in production)`.
 
-### Task B4: Stored region on the profile
+### Task 4 (B4): Stored region on the profile
 
 **Files:**
 - Modify: `backend/prisma/schema.prisma` (`User.region_cluster RegionCluster?`), `backend/src/modules/user/dto/update-profile.dto.ts`, `backend/src/modules/user/user.service.ts`, `backend/src/modules/seasonal/domain/region-cluster.ts`, `backend/src/modules/seasonal/seasonal.service.ts`
@@ -141,7 +141,7 @@ The five inputs no main test covers that are most likely to bite a real user. Ea
 
 ## Phase B: Web foundation
 
-### Task W1: Scaffold `web/` with the design tokens and quality gates
+### Task 5 (W1): Scaffold `web/` with the design tokens and quality gates
 
 **Files:**
 - Create:
@@ -169,7 +169,7 @@ The five inputs no main test covers that are most likely to bite a real user. Ea
 - [ ] **Step 5:** Run `npm run build && npm run lint && npm test && npm run check:boundaries && npm run check:cycles`. Expected: all pass. Remove the temporary file.
 - [ ] **Step 6:** Commit: `feat(web): scaffold Vite React app with Sanctuary tokens and quality gates`.
 
-### Task W2: API client, errors, session token, i18n, query setup
+### Task 6 (W2): API client, errors, session token, i18n, query setup
 
 **Files:**
 - Create in `web/src/lib/`:
@@ -231,7 +231,7 @@ export const queryKeys = { me, plants: { list(page), detail(id), timeline(id,pag
 - [ ] **Step 4:** Run `npm test`. Expected: PASS.
 - [ ] **Step 5:** Commit: `feat(web): typed API client, errors, token store, i18n and query setup`.
 
-### Task W3: Shared UI components
+### Task 7 (W3): Shared UI components
 
 **Files:**
 - Create in `web/src/ui/`: `Button.tsx`, `TextField.tsx`, `Chip.tsx`, `Surface.tsx`, `Pebble.tsx`, `Icon.tsx`, `Screen.tsx`, `TopBar.tsx`, `BottomNav.tsx`, `StateViews.tsx`, `index.ts`
@@ -263,7 +263,7 @@ export const queryKeys = { me, plants: { list(page), detail(id), timeline(id,pag
 
 Every domain lives in `web/src/features/<domain>/` with `api.ts` (zod schemas + hooks), screens, and `index.ts`. Screens get MSW-backed tests for loading, error with retry, empty (if a list) and success.
 
-### Task W4: Auth (splash, login, OTP, session, route guards)
+### Task 8 (W4): Auth (splash, login, OTP, session, route guards)
 
 **Stitch:**
 - Splash `…/files/29e9e546959544beab8a96ede12f5e81`
@@ -298,7 +298,7 @@ All under `projects/7116397477334778532`.
 - [ ] **Step 4:** Run `npm test`. Expected: PASS.
 - [ ] **Step 5:** Commit: `feat(web): phone OTP sign-in, session and route guards`.
 
-### Task W5: Onboarding and Profile
+### Task 9 (W5): Onboarding and Profile
 
 **Stitch:**
 - Select Language `…/files/71d46b9176094fcdbd176f0bdaef6d52`
@@ -331,7 +331,7 @@ All under `projects/7116397477334778532`.
 - [ ] **Step 4:** Run `npm test`. Expected: PASS.
 - [ ] **Step 5:** Commit: `feat(web): onboarding (language, region, garden) and profile`.
 
-### Task W6: Plants (list, add/edit, catalogue search)
+### Task 10 (W6): Plants (list, add/edit, catalogue search)
 
 **Stitch:**
 - Orchard Gallery `…/files/fcffcaf39d1b48299625676b45bc71c1`
@@ -363,7 +363,7 @@ All under `projects/7116397477334778532`.
 - [ ] **Step 4:** Run `npm test`. Expected: PASS.
 - [ ] **Step 5:** Commit: `feat(web): my plants list and add/edit with catalogue search`.
 
-### Task W7: Tasks (Daily Path, complete/skip)
+### Task 11 (W7): Tasks (Daily Path, complete/skip)
 
 **Stitch:** The Daily Path `…/files/6f6215547040447094c11fb91842ac7f`
 
@@ -390,7 +390,7 @@ All under `projects/7116397477334778532`.
 - [ ] **Step 4:** Run `npm test`. Expected: PASS.
 - [ ] **Step 5:** Commit: `feat(web): this week's tasks with complete and skip`.
 
-### Task W8: Dashboard
+### Task 12 (W8): Dashboard
 
 **Stitch:** Home Dashboard – Bagicha Sanctuary `…/files/e6f049af4f2348de9e674b6a43c4c35c`. The weather card is omitted and the seasonal guidance card takes its place.
 
@@ -423,7 +423,7 @@ All under `projects/7116397477334778532`.
 - [ ] **Step 4:** Run `npm test`. Expected: PASS.
 - [ ] **Step 5:** Commit: `feat(web): dashboard with this week's tasks and seasonal guidance`.
 
-### Task W9: Images and media (compression, upload, signed URLs)
+### Task 13 (W9): Images and media (compression, upload, signed URLs)
 
 **Files:**
 - Create in `web/src/features/journal/`: `image-compressor.ts`, `media-api.ts`
@@ -450,7 +450,7 @@ All under `projects/7116397477334778532`.
 - [ ] **Step 4:** Run `npm test`. Expected: PASS.
 - [ ] **Step 5:** Commit: `feat(web): image compression, uploads and signed media URLs`.
 
-### Task W10: Log a Moment
+### Task 14 (W10): Log a Moment
 
 **Stitch:** Log a Moment – Quick Entry `…/files/0d4f112b875a49158e7ec774bd1bf83d`
 
@@ -480,7 +480,7 @@ All under `projects/7116397477334778532`.
 - [ ] **Step 4:** Run `npm test`. Expected: PASS.
 - [ ] **Step 5:** Commit: `feat(web): log a moment with photo, drafts and harvest details`.
 
-### Task W11: Plant detail ("Tree Biography")
+### Task 15 (W11): Plant detail ("Tree Biography")
 
 **Stitch:** Tree Biography – Detailed Record `…/files/c0ced4e7624f48fa84a5aaf694ec8172`, extended per spec §5 with the sections This season, Upcoming care and Cycles, and a link to Season review.
 
@@ -516,7 +516,7 @@ All under `projects/7116397477334778532`.
 - [ ] **Step 4:** Run `npm test`. Expected: PASS.
 - [ ] **Step 5:** Commit: `feat(web): tree biography with this season, care, timeline and cycles`.
 
-### Task W12: Scan (identify and diagnose)
+### Task 16 (W12): Scan (identify and diagnose)
 
 **Stitch:** Vision Scan `…/files/be7195adccf44bedaf52498188731bd8`. There are no Stitch result screens; follow the design system.
 
@@ -547,7 +547,7 @@ All under `projects/7116397477334778532`.
 - [ ] **Step 4:** Run `npm test`. Expected: PASS.
 - [ ] **Step 5:** Commit: `feat(web): scan to identify or diagnose, saved to the tree`.
 
-### Task W13: Season review
+### Task 17 (W13): Season review
 
 There is no Stitch screen; follow the design system (serif headline, pebble cards, no dividers).
 
@@ -575,7 +575,7 @@ There is no Stitch screen; follow the design system (serif headline, pebble card
 - [ ] **Step 4:** Run `npm test`. Expected: PASS.
 - [ ] **Step 5:** Commit: `feat(web): season review from the mitigation plan`.
 
-### Task W14: App shell and routing
+### Task 18 (W14): App shell and routing
 
 **Files:**
 - Create: `web/src/app/App.tsx`, `web/src/app/routes.tsx`, `web/src/app/providers.tsx`, `web/src/app/ErrorBoundary.tsx`
@@ -603,7 +603,7 @@ There is no Stitch screen; follow the design system (serif headline, pebble card
 - [ ] **Step 4:** Run `npm run build && npm test && npm run check:boundaries && npm run check:cycles`. Expected: all pass.
 - [ ] **Step 5:** Commit: `feat(web): app shell, routing and error boundary`.
 
-### Task W15: End-to-end loop against the real backend
+### Task 19 (W15): End-to-end loop against the real backend
 
 **Files:**
 - Create: `web/playwright.config.ts`, `web/e2e/loop.spec.ts`, `web/e2e/fixtures/leaf.jpg` (a small real photo), `web/scripts/e2e-backend.sh`
@@ -628,7 +628,7 @@ There is no Stitch screen; follow the design system (serif headline, pebble card
 - [ ] **Step 3:** Run `npm run e2e`. Expected: PASS.
 - [ ] **Step 4:** Commit: `test(web): end-to-end core loop against the real backend`.
 
-### Task W16: Final verification and docs
+### Task 20 (W16): Final verification and docs
 
 **Files:**
 - Modify: `web/README.md` (prereqs, env, `npm run dev`, how to run against the local backend, how to run e2e), `docs/api-changes-slice0.md` (Slice 1 section complete)
