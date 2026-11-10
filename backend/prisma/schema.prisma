@@ -116,6 +116,22 @@ enum TaskType {
   TREAT
 }
 
+enum CropStage {
+  PLANNED
+  NURSERY
+  IN_GROUND
+  HARVESTING
+  RESTING
+}
+
+enum GardenPlaceKind {
+  BED
+  GROW_BAG
+  POT
+  CONTAINER
+  GROUND
+}
+
 enum PlantEndReason {
   DISEASE_OR_PEST
   WEATHER
@@ -169,6 +185,7 @@ enum TaskCategory {
 
 enum TaskSource {
   SYSTEM
+  CROP_PLAN
   SEASONAL_PACK
   PERSONALIZED_OVERLAY
   MANUAL
@@ -239,6 +256,7 @@ model User {
   personalized_overlays PersonalizedOverlay[]
 
   @@map("users")
+  garden_places GardenPlace[]
 }
 
 model PlantCatalogEntry {
@@ -290,6 +308,9 @@ model Plant {
   /// The journal entry (e.g. a diagnosis) that explains the loss.
   end_entry_id      String?
   replaced_by_id    String?
+  /// Key into the crop calendar; null for trees, flowers and older crop records.
+  crop_id           String?
+  crop_stage        CropStage?
   created_at        DateTime       @default(now())
   updated_at        DateTime       @updatedAt
 
@@ -388,14 +409,20 @@ model PlantCycle {
   treatment_count                Int          @default(0)
   cycle_summary                  String?
   recommended_next_cycle_actions Json?
+  /// Crops can have more than one season a year; trees always use 1.
+  season_no                      Int          @default(1)
+  started_at                     DateTime?
+  closed_at                      DateTime?
+  place_id                       String?
   created_at                     DateTime     @default(now())
   updated_at                     DateTime     @updatedAt
 
+  place GardenPlace? @relation(fields: [place_id], references: [id], onDelete: SetNull)
   plant Plant @relation(fields: [plant_id], references: [id])
   journal_entries JournalEntry[]
   tasks Task[]
 
-  @@unique([plant_id, cycle_year], name: "plant_cycle_year")
+  @@unique([plant_id, cycle_year, season_no], name: "plant_cycle_season")
   @@index([plant_id, cycle_year])
   @@map("tree_cycles")
 }
@@ -607,4 +634,20 @@ model AuditEvent {
   @@index([target_type, target_id])
   @@index([actor_user_id, created_at])
   @@map("audit_events")
+}
+
+/// A named bed, grow-bag or pot in the user's garden.
+model GardenPlace {
+  id          String          @id @default(uuid())
+  user_id     String
+  name        String
+  kind        GardenPlaceKind
+  created_at  DateTime        @default(now())
+  archived_at DateTime?
+
+  user   User         @relation(fields: [user_id], references: [id])
+  cycles PlantCycle[]
+
+  @@index([user_id])
+  @@map("garden_places")
 }

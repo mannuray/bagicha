@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { Clock } from '../../common/time';
+import { NotFoundError } from '../../common/errors';
 import {
   CROPS,
   climateGroupFor,
+  GardenPlaceRepository,
   windowStatus,
   type CropInfo,
 } from '../plant-ledger';
+import { CreatePlaceDto, UpdatePlaceDto } from './dto/place.dto';
 import { regionFor } from '../seasonal';
 
 const MONTHS = [
@@ -37,7 +40,36 @@ function windowLabel(
 /** The vegetable side of the garden: the calendar, want-to-grow and places. */
 @Injectable()
 export class CropsService {
-  constructor(private readonly clock: Clock) {}
+  constructor(
+    private readonly clock: Clock,
+    private readonly placesRepo: GardenPlaceRepository,
+  ) {}
+
+  places(userId: string) {
+    return this.placesRepo.listActive(userId);
+  }
+
+  createPlace(userId: string, dto: CreatePlaceDto) {
+    return this.placesRepo.create(userId, {
+      name: dto.name.trim(),
+      kind: dto.kind,
+    });
+  }
+
+  async updatePlace(userId: string, id: string, dto: UpdatePlaceDto) {
+    const updated = await this.placesRepo.updateOwned(userId, id, {
+      name: dto.name?.trim(),
+      kind: dto.kind,
+      archived_at:
+        dto.archived === undefined
+          ? undefined
+          : dto.archived
+            ? this.clock.now()
+            : null,
+    });
+    if (!updated) throw new NotFoundError('PLACE_NOT_FOUND', 'Place not found');
+    return updated;
+  }
 
   /** Every crop with its sowing status for the user's region. */
   calendar(user: User) {

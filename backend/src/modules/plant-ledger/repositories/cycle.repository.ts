@@ -34,7 +34,14 @@ export class CycleRepository {
     });
     if (!plant) return null;
     return db.plantCycle.upsert({
-      where: { plant_cycle_year: { plant_id: plantId, cycle_year: cycleYear } },
+      // Trees have one cycle per year (season 1); crop seasons are opened by the journey.
+      where: {
+        plant_cycle_season: {
+          plant_id: plantId,
+          cycle_year: cycleYear,
+          season_no: 1,
+        },
+      },
       create: { plant_id: plantId, cycle_year: cycleYear },
       update: {},
     });
@@ -50,7 +57,7 @@ export class CycleRepository {
       this.prisma.plantCycle.findMany({
         where,
         include: withRecentEntries,
-        orderBy: { cycle_year: 'desc' },
+        orderBy: [{ cycle_year: 'desc' }, { season_no: 'desc' }],
         ...page,
       }),
       this.prisma.plantCycle.count({ where }),
@@ -61,7 +68,7 @@ export class CycleRepository {
   latestTwo(userId: string, plantId: string): Promise<PlantCycle[]> {
     return this.prisma.plantCycle.findMany({
       where: { plant_id: plantId, plant: { user_id: userId } },
-      orderBy: { cycle_year: 'desc' },
+      orderBy: [{ cycle_year: 'desc' }, { season_no: 'desc' }],
       take: 2,
     });
   }

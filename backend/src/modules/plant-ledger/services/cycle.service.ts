@@ -21,6 +21,10 @@ function toCycleView(cycle: CycleWithRecentEntries) {
   return {
     id: cycle.id,
     cycle_year: cycle.cycle_year,
+    season_no: cycle.season_no,
+    started_at: cycle.started_at,
+    closed_at: cycle.closed_at,
+    place_id: cycle.place_id,
     observed_flowering_at: cycle.observed_flowering_at,
     observed_fruit_set_at: cycle.observed_fruit_set_at,
     harvest_started_at: cycle.harvest_started_at,

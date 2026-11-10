@@ -35,3 +35,4 @@ export type {
   CropInfo,
   WindowStatus,
 } from './domain/crop-calendar';
+export { GardenPlaceRepository } from './repositories/garden-place.repository';

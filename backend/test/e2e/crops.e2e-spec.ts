@@ -85,4 +85,70 @@ describe('crops', () => {
       expect(res.body.data.crops).not.toContain('Okra');
     });
   });
+  describe('garden places', () => {
+    it('creates, lists, renames and archives places, owner-scoped', async () => {
+      const a = as(alice);
+      const bag = await a.post('/api/v1/garden/places', {
+        name: 'Terrace bag 3',
+        kind: 'GROW_BAG',
+      });
+      expect(bag.status).toBe(201);
+      expect(bag.body.data).toMatchObject({
+        name: 'Terrace bag 3',
+        kind: 'GROW_BAG',
+        archived_at: null,
+      });
+      await a.post('/api/v1/garden/places', { name: 'Back bed', kind: 'BED' });
+      const list = await a.get('/api/v1/garden/places');
+      expect(list.body.data.map((p: { name: string }) => p.name)).toEqual([
+        'Back bed',
+        'Terrace bag 3',
+      ]);
+      const renamed = await a.put(`/api/v1/garden/places/${bag.body.data.id}`, {
+        name: 'Terrace bag A',
+      });
+      expect(renamed.body.data.name).toBe('Terrace bag A');
+      await a.put(`/api/v1/garden/places/${bag.body.data.id}`, {
+        archived: true,
+      });
+      const after = await a.get('/api/v1/garden/places');
+      expect(after.body.data.map((p: { name: string }) => p.name)).toEqual([
+        'Back bed',
+      ]);
+      expect(
+        (
+          await as(bob).put(`/api/v1/garden/places/${bag.body.data.id}`, {
+            name: 'Mine',
+          })
+        ).status,
+      ).toBe(404);
+      expect(
+        (
+          await a.post('/api/v1/garden/places', {
+            name: 'X',
+            kind: 'SPACESHIP',
+          })
+        ).status,
+      ).toBe(422);
+    });
+  });
+
+  it('tree cycles carry a season number', async () => {
+    const a = as(alice);
+    const plant = await a.post('/api/v1/ledger/plants', {
+      name: 'Aam',
+      species: 'Mango',
+    });
+    await a.post(`/api/v1/ledger/plants/${plant.body.data.id}/journal`, {
+      type: 'FLOWERING',
+    });
+    const cycles = await a.get(
+      `/api/v1/ledger/plants/${plant.body.data.id}/cycles`,
+    );
+    expect(cycles.body.data[0]).toMatchObject({
+      season_no: 1,
+      closed_at: null,
+      place_id: null,
+    });
+  });
 });
