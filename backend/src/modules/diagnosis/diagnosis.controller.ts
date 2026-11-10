@@ -4,6 +4,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -17,8 +18,8 @@ export class DiagnosisController {
 
   @Post('finalize')
   @HttpCode(HttpStatus.OK)
-  async finalize(@Body() dto: FinalizeDiagnosisDto) {
-    const result = await this.pipeline.finalize(dto);
+  async finalize(@Request() req, @Body() dto: FinalizeDiagnosisDto) {
+    const result = await this.pipeline.finalize(req.user.id, dto);
     return { success: true, data: result };
   }
 }

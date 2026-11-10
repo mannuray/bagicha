@@ -203,13 +203,14 @@ export class CommunityService {
     let plantContext = '';
     let plantSpeciesFamily: string | null = null;
     if (dto.plant_id) {
-      const plant = await this.prisma.plant.findUnique({
-        where: { id: dto.plant_id },
+      const plant = await this.prisma.plant.findFirst({
+        where: { id: dto.plant_id, user_id: userId },
         include: {
           journal_entries: { take: 5, orderBy: { timestamp: 'desc' } },
         },
       });
-      if (plant) {
+      if (!plant) throw new NotFoundException('Plant not found');
+      {
         plantSpeciesFamily = plant.species_family;
         const recentEvents = plant.journal_entries
           .map(

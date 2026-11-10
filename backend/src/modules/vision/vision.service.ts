@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   DiagnosisIssueType,
@@ -22,7 +22,7 @@ export class VisionService {
     private readonly diagnosisPipeline: DiagnosisPipelineService,
   ) {}
 
-  async identifyPlant(dto: VisionRequestDto) {
+  async identifyPlant(_userId: string, dto: VisionRequestDto) {
     const prompt = `
       Identify this plant species.
       Be specific and provide results in a structured JSON format.
@@ -37,9 +37,9 @@ export class VisionService {
     return this.geminiService.parseJsonResponse(response);
   }
 
-  async diagnosePlant(dto: VisionRequestDto) {
+  async diagnosePlant(userId: string, dto: VisionRequestDto) {
     const treeContext = dto.plant_id
-      ? await this.buildTreeContext(dto.plant_id)
+      ? await this.buildTreeContext(userId, dto.plant_id)
       : null;
     const prompt = `
       Analyze this plant image for horticultural diagnosis.
@@ -84,7 +84,7 @@ export class VisionService {
       };
     }
 
-    const persisted = await this.persistTreeDiagnosis(dto, parsed);
+    const persisted = await this.persistTreeDiagnosis(userId, dto, parsed);
     return {
       diagnosis: parsed,
       persisted: true,
@@ -96,6 +96,7 @@ export class VisionService {
   }
 
   private async persistTreeDiagnosis(
+    userId: string,
     dto: VisionRequestDto,
     diagnosis: Record<string, unknown>,
   ) {
@@ -119,7 +120,7 @@ export class VisionService {
     );
     const attachments = [{ kind: 'image', source: 'vision_upload' }];
 
-    const result = await this.diagnosisPipeline.finalize({
+    const result = await this.diagnosisPipeline.finalize(userId, {
       subject_type: DiagnosisSubjectType.TREE,
       subject_id: dto.plant_id!,
       event_at: dto.event_at,
@@ -147,9 +148,9 @@ export class VisionService {
     };
   }
 
-  private async buildTreeContext(treeId: string) {
-    const plant = await this.prisma.plant.findUnique({
-      where: { id: treeId },
+  private async buildTreeContext(userId: string, treeId: string) {
+    const plant = await this.prisma.plant.findFirst({
+      where: { id: treeId, user_id: userId },
       include: {
         user: {
           select: {
@@ -188,7 +189,7 @@ export class VisionService {
       },
     });
 
-    if (!plant) return null;
+    if (!plant) throw new NotFoundException('Plant not found');
 
     const seasonalState =
       this.seasonalIntelligenceService.inferTreeSeasonalState(

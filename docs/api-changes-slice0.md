@@ -6,3 +6,5 @@ is built against the "After" column.
 
 | Endpoint / area | Before | After | Task |
 |---|---|---|---|
+| `POST vision/diagnose` | unknown/unowned `plant_id` → diagnosed without context (200/201) | 404 | 2 |
+| `POST diagnosis/finalize`, `POST vision/diagnose`, `POST community/ask-ai` | any signed-in user could read/write another user's plant (or resolve their session) | 404 unless the caller owns the plant (and the session belongs to it) | 2 |

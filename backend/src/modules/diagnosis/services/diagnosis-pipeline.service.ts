@@ -29,6 +29,7 @@ export class DiagnosisPipelineService {
   ) {}
 
   async finalize(
+    userId: string,
     input: FinalizeDiagnosisDto,
   ): Promise<FinalizeDiagnosisResult> {
     if (input.subject_type !== DiagnosisSubjectType.TREE) {
@@ -37,11 +38,22 @@ export class DiagnosisPipelineService {
       );
     }
 
-    const plant = await this.prisma.plant.findUnique({
-      where: { id: input.subject_id },
+    const plant = await this.prisma.plant.findFirst({
+      where: { id: input.subject_id, user_id: userId },
     });
     if (!plant) {
       throw new NotFoundException(`Plant ${input.subject_id} not found.`);
+    }
+    if (input.session_id) {
+      const ownedSession = await this.prisma.diagnosisSession.findFirst({
+        where: { id: input.session_id, plant_id: plant.id },
+        select: { id: true },
+      });
+      if (!ownedSession) {
+        throw new NotFoundException(
+          `Diagnosis session ${input.session_id} not found.`,
+        );
+      }
     }
 
     const eventAt = input.event_at ? new Date(input.event_at) : new Date();
