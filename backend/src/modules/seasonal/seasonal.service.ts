@@ -1,554 +1,211 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import {
-  LifecycleStage,
   PersonalizedOverlay,
-  Prisma,
-  RegionCluster,
-  SeasonalPack,
-  SeasonWindow,
-  TaskCategory,
-  TaskPriority,
-  TaskSource,
-  TaskStatus,
-  Task,
-  TaskType,
   Plant,
+  Prisma,
+  SeasonalPack,
+  TaskSource,
   User,
 } from '@prisma/client';
-import { WeatherService } from './services/weather.service';
+import { Queue } from 'bullmq';
+import { NotFoundError } from '../../common/errors';
+import { Metrics } from '../../common/observability';
 import { RedisService } from '../../common/redis/redis.service';
-import { PrismaService } from '../../prisma/prisma.service';
-import { SeasonalIntelligenceService } from '../plant-ledger/services/seasonal-intelligence.service';
-import { SpeciesNormalizationService } from '../plant-ledger/services/species-normalization.service';
+import { addDays, Clock } from '../../common/time';
+import {
+  JournalRepository,
+  PlantRecordService,
+  SeasonalIntelligenceService,
+  SpeciesNormalizationService,
+  TaskCreationResult,
+  TaskDraft,
+  TaskService,
+  taskCategoryFromCategory,
+  taskPriorityFrom,
+  taskTypeFromCategory,
+} from '../plant-ledger';
+import { isPremium, UserRepository } from '../user';
+import {
+  asTaskTemplates,
+  buildPersonalizedOverlay,
+  buildTaskTemplates,
+  TaskTemplateInput,
+} from './domain/overlay-rules';
+import { resolveRegionCluster } from './domain/region-cluster';
+import { resolveSeasonWindow } from './domain/season-window';
+import { OverlayRepository } from './repositories/overlay.repository';
+import { SeasonalPackRepository } from './repositories/seasonal-pack.repository';
+import { WeatherService } from './services/weather.service';
 
-interface TaskTemplateInput {
-  key: string;
-  title: string;
-  category: string;
-  priority: string;
-  due_in_days: number;
-  reason?: string;
-}
-
-interface TreeIntelligenceResult {
-  seasonal_pack: SeasonalPack;
-  personalized_overlay: PersonalizedOverlay | null;
-  is_paid_user: boolean;
-}
+export const WEATHER_QUEUE = 'weather-checks';
+const PACK_VERSION = 1;
+const RECENT_ENTRIES_FOR_OVERLAY = 10;
 
 @Injectable()
-export class SeasonalService {
+export class SeasonalService implements OnModuleInit {
   constructor(
-    @InjectQueue('weather-checks') private weatherQueue: Queue,
-    private weatherService: WeatherService,
-    private redisService: RedisService,
-    private prisma: PrismaService,
-    private seasonalIntelligenceService: SeasonalIntelligenceService,
-    private speciesNormalizationService: SpeciesNormalizationService,
+    @InjectQueue(WEATHER_QUEUE) private readonly weatherQueue: Queue,
+    private readonly weatherService: WeatherService,
+    private readonly redis: RedisService,
+    private readonly plants: PlantRecordService,
+    private readonly journal: JournalRepository,
+    private readonly tasks: TaskService,
+    private readonly users: UserRepository,
+    private readonly packs: SeasonalPackRepository,
+    private readonly overlays: OverlayRepository,
+    private readonly seasonalIntelligence: SeasonalIntelligenceService,
+    private readonly species: SpeciesNormalizationService,
+    private readonly clock: Clock,
+    private readonly metrics: Metrics,
   ) {}
 
-  async getLocalizedWeather(pincode: string) {
-    const cached = await this.redisService.get(`weather:${pincode}`);
-    if (cached) return JSON.parse(cached);
+  onModuleInit(): void {
+    this.metrics.registerQueueDepth(WEATHER_QUEUE, async () => {
+      const counts = await this.weatherQueue.getJobCounts(
+        'waiting',
+        'active',
+        'delayed',
+      );
+      return (
+        (counts.waiting ?? 0) + (counts.active ?? 0) + (counts.delayed ?? 0)
+      );
+    });
+  }
 
+  async getLocalizedWeather(pincode: string) {
+    const cached = await this.redis.get(`weather:${pincode}`);
+    if (cached) return JSON.parse(cached) as unknown;
     await this.weatherQueue.add('check', { pincode });
     return this.weatherService.getWeather(pincode);
   }
 
-  async getSeasonalGuide(district: string) {
+  getSeasonalGuide(district: string) {
     return this.weatherService.getSeasonalSuggestions(district);
   }
 
-  async getTreeIntelligence(userId: string, treeId: string) {
-    const treeRecord = await this.getTreeRecord(userId, treeId);
-    const seasonalPack = await this.getOrCreateSeasonalPack(
-      treeRecord.plant,
-      treeRecord.user,
-    );
-    const personalizedOverlay = await this.getOrRefreshPersonalizedOverlay(
-      treeRecord.plant,
-      treeRecord.user,
-      treeRecord.journal_entries,
-      seasonalPack,
-    );
-
-    return {
-      seasonal_pack: this.serializeSeasonalPack(seasonalPack),
-      personalized_overlay: personalizedOverlay
-        ? this.serializeOverlay(personalizedOverlay)
-        : null,
-      is_paid_user: this.isPaidUser(treeRecord.user),
-    };
-  }
-
-  async materializeTasksForTree(userId: string, treeId: string) {
-    const treeIntelligence = (await this.getTreeIntelligence(
+  async getTreeIntelligence(userId: string, plantId: string) {
+    const { pack, overlay, premium } = await this.loadIntelligence(
       userId,
-      treeId,
-    )) as TreeIntelligenceResult;
-
-    const createdTasks: Task[] = [];
-    const baseTemplates = this.asTaskTemplates(
-      treeIntelligence.seasonal_pack.task_templates,
+      plantId,
     );
-    for (const template of baseTemplates) {
-      const task = await this.createTaskIfMissing(
-        treeId,
-        TaskSource.SEASONAL_PACK,
-        template,
-        {
-          seasonal_pack_id: treeIntelligence.seasonal_pack.id,
-        },
-      );
-      if (task) createdTasks.push(task);
-    }
-
-    const overlayTemplates = treeIntelligence.personalized_overlay
-      ? this.asTaskTemplates(
-          treeIntelligence.personalized_overlay.personalized_tasks,
-        )
-      : [];
-    for (const template of overlayTemplates) {
-      const task = await this.createTaskIfMissing(
-        treeId,
-        TaskSource.PERSONALIZED_OVERLAY,
-        template,
-        {
-          personalized_overlay_id: treeIntelligence.personalized_overlay?.id,
-        },
-      );
-      if (task) createdTasks.push(task);
-    }
-
     return {
-      created_count: createdTasks.length,
-      created_tasks: createdTasks.map((task) => ({
-        id: task.id,
-        title: task.title,
-        due_date: task.due_date,
-        source: task.source,
-        reason: task.reason,
-      })),
+      seasonal_pack: pack,
+      personalized_overlay: overlay,
+      is_paid_user: premium,
     };
   }
 
-  private async getTreeRecord(userId: string, treeId: string) {
-    const plant = await this.prisma.plant.findFirst({
-      where: { id: treeId, user_id: userId },
-      include: {
-        user: true,
-        journal_entries: {
-          orderBy: { timestamp: 'desc' },
-          take: 10,
-        },
-      },
+  /** Turns current guidance into tasks; already-pending tasks are reported as skipped. */
+  async materializeTasksForTree(
+    userId: string,
+    plantId: string,
+  ): Promise<{ results: TaskCreationResult[]; created_count: number }> {
+    const { pack, overlay } = await this.loadIntelligence(userId, plantId);
+    const now = this.clock.now();
+    const toDraft = (
+      template: TaskTemplateInput,
+      source: TaskSource,
+      refs: Pick<TaskDraft, 'seasonalPackId' | 'personalizedOverlayId'>,
+    ): TaskDraft => ({
+      type: taskTypeFromCategory(template.category),
+      category: taskCategoryFromCategory(template.category),
+      priority: taskPriorityFrom(template.priority),
+      title: template.title,
+      source,
+      sourceKey: template.key,
+      reason: template.reason,
+      metadata: template as unknown as Prisma.InputJsonValue,
+      dueDate: addDays(now, Math.max(template.due_in_days, 0)),
+      ...refs,
     });
 
-    if (!plant) {
-      throw new NotFoundException('Plant not found');
-    }
-
-    const { user, journal_entries, ...treeFields } = plant;
+    const drafts = [
+      ...asTaskTemplates(pack.task_templates).map((t) =>
+        toDraft(t, TaskSource.SEASONAL_PACK, { seasonalPackId: pack.id }),
+      ),
+      ...(overlay
+        ? asTaskTemplates(overlay.personalized_tasks).map((t) =>
+            toDraft(t, TaskSource.PERSONALIZED_OVERLAY, {
+              personalizedOverlayId: overlay.id,
+            }),
+          )
+        : []),
+    ];
+    const results = await this.tasks.createTasks(userId, plantId, drafts);
     return {
-      plant: treeFields as Plant,
-      user,
-      journal_entries,
+      results,
+      created_count: results.filter((r) => r.status === 'created').length,
     };
   }
 
-  private async getOrCreateSeasonalPack(plant: Plant, user: User) {
-    const regionCluster = this.resolveRegionCluster(user);
-    const speciesFamily =
-      this.speciesNormalizationService.resolveSpeciesFamily(plant);
-    const seasonWindow = this.resolveSeasonWindow(new Date());
-
-    const existing = await this.prisma.seasonalPack.findUnique({
-      where: {
-        seasonal_pack_cohort_version: {
-          region_cluster: regionCluster,
-          species_family: speciesFamily,
-          lifecycle_stage: plant.lifecycle_stage,
-          season_window: seasonWindow,
-          pack_version: 1,
-        },
-      },
-    });
-
-    if (existing) return existing;
-
-    const inferred = this.seasonalIntelligenceService.inferTreeSeasonalState(
-      plant,
-      user,
-    );
-
-    return this.prisma.seasonalPack.create({
-      data: {
-        region_cluster: regionCluster,
-        species_family: speciesFamily,
-        lifecycle_stage: plant.lifecycle_stage,
-        season_window: seasonWindow,
-        pack_version: 1,
-        model_version: 'bootstrap_rules_v1',
-        current_phase: inferred.current_phase,
-        upcoming_phase: inferred.upcoming_phase,
-        confidence: inferred.confidence,
-        do_now: inferred.do_now,
-        avoid_now: inferred.avoid_now,
-        watch_for: inferred.watch_for,
-        task_templates: this.buildTaskTemplates(
-          inferred,
-        ) as unknown as Prisma.InputJsonValue,
-        basis: inferred.basis,
-      },
-    });
+  private async loadIntelligence(userId: string, plantId: string) {
+    const plant = await this.plants.getOwnedOrThrow(userId, plantId);
+    const user = await this.users.findById(userId);
+    if (!user) throw new NotFoundError('USER_NOT_FOUND', 'User not found');
+    const premium = isPremium(user, this.clock.now());
+    const pack = await this.getOrCreatePack(plant, user);
+    const overlay = premium
+      ? await this.getOrRefreshOverlay(userId, plant, pack)
+      : null;
+    return { pack, overlay, premium };
   }
 
-  private async getOrRefreshPersonalizedOverlay(
+  private async getOrCreatePack(
     plant: Plant,
     user: User,
-    journal_entries: Array<{
-      content: string | null;
-      metadata: Prisma.JsonValue | null;
-      timestamp: Date;
-    }>,
-    seasonalPack: SeasonalPack,
-  ) {
-    if (!this.isPaidUser(user)) {
-      return null;
-    }
+  ): Promise<SeasonalPack> {
+    const cohort = {
+      region_cluster: resolveRegionCluster(user.district),
+      species_family: this.species.resolveSpeciesFamily(plant),
+      lifecycle_stage: plant.lifecycle_stage,
+      season_window: resolveSeasonWindow(this.clock.now()),
+      pack_version: PACK_VERSION,
+    };
+    const existing = await this.packs.findCohort(cohort);
+    if (existing) return existing;
 
-    const existing = await this.prisma.personalizedOverlay.findFirst({
-      where: {
-        user_id: user.id,
-        plant_id: plant.id,
-        seasonal_pack_id: seasonalPack.id,
-        OR: [{ expires_at: null }, { expires_at: { gt: new Date() } }],
-      },
-      orderBy: { updated_at: 'desc' },
-    });
-
-    const overlayPayload = this.buildPersonalizedOverlay(
+    const inferred = this.seasonalIntelligence.inferTreeSeasonalState(
       plant,
-      journal_entries,
-      seasonalPack,
+      user,
     );
-    if (!overlayPayload) {
-      return existing;
-    }
-
-    if (existing) {
-      return this.prisma.personalizedOverlay.update({
-        where: { id: existing.id },
-        data: overlayPayload,
-      });
-    }
-
-    return this.prisma.personalizedOverlay.create({
-      data: {
-        user_id: user.id,
-        plant_id: plant.id,
-        seasonal_pack_id: seasonalPack.id,
-        ...overlayPayload,
-      },
+    return this.packs.create({
+      ...cohort,
+      model_version: 'bootstrap_rules_v1',
+      current_phase: inferred.current_phase,
+      upcoming_phase: inferred.upcoming_phase,
+      confidence: inferred.confidence,
+      do_now: inferred.do_now,
+      avoid_now: inferred.avoid_now,
+      watch_for: inferred.watch_for,
+      task_templates: buildTaskTemplates(
+        inferred,
+      ) as unknown as Prisma.InputJsonValue,
+      basis: inferred.basis,
     });
   }
 
-  private buildTaskTemplates(inferred: {
-    do_now: string[];
-    watch_for: string[];
-    next_checkpoint_days: number;
-  }): TaskTemplateInput[] {
-    const templates: TaskTemplateInput[] = [];
-
-    if (inferred.do_now[0]) {
-      templates.push({
-        key: 'seasonal_primary_action',
-        title: inferred.do_now[0],
-        category: 'inspection',
-        priority: 'high',
-        due_in_days: inferred.next_checkpoint_days,
-        reason: 'Primary seasonal action from cohort guidance',
-      });
-    }
-
-    if (inferred.watch_for[0]) {
-      templates.push({
-        key: 'seasonal_watch_risk',
-        title: `Watch for ${inferred.watch_for[0]}`,
-        category: 'observation',
-        priority: 'medium',
-        due_in_days: inferred.next_checkpoint_days,
-        reason: 'Risk monitoring from cohort guidance',
-      });
-    }
-
-    return templates;
-  }
-
-  private buildPersonalizedOverlay(
+  private async getOrRefreshOverlay(
+    userId: string,
     plant: Plant,
-    journal_entries: Array<{
-      content: string | null;
-      metadata: Prisma.JsonValue | null;
-      timestamp: Date;
-    }>,
-    seasonalPack: SeasonalPack,
-  ) {
-    const drynessDetected = journal_entries.some((log) =>
-      this.logSuggestsDryness(log.content, log.metadata),
+    pack: SeasonalPack,
+  ): Promise<PersonalizedOverlay | null> {
+    const now = this.clock.now();
+    const existing = await this.overlays.findActive(
+      userId,
+      plant.id,
+      pack.id,
+      now,
     );
-    if (!drynessDetected) {
-      return null;
-    }
-
-    return {
-      adjusted_phase: `${seasonalPack.current_phase}_with_dryness_attention`,
-      priority_actions: [
-        'Water the plant today',
-        'Recheck leaf stress after watering',
-      ],
-      suppressed_actions: [
-        'Do not defer irrigation until the next normal checkpoint',
-      ],
-      personalized_tasks: [
-        {
-          key: 'water_tree_today',
-          title: 'Water the plant today',
-          category: 'watering',
-          priority: 'high',
-          due_in_days: 0,
-          reason: `Dryness signal detected for ${plant.name}`,
-        },
-        {
-          key: 'recheck_dryness_response',
-          title: 'Recheck the plant after watering',
-          category: 'inspection',
-          priority: 'medium',
-          due_in_days: 2,
-          reason: 'Confirm recovery after dryness intervention',
-        },
-      ],
-      reasoning_summary:
-        'Recent journal_entries indicate dryness or water stress, so irrigation support is needed immediately.',
-      expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000),
-      refreshed_at: new Date(),
-    };
-  }
-
-  private async createTaskIfMissing(
-    treeId: string,
-    source: TaskSource,
-    template: TaskTemplateInput,
-    refs: { seasonal_pack_id?: string; personalized_overlay_id?: string },
-  ) {
-    const existing = await this.prisma.task.findFirst({
-      where: {
-        plant_id: treeId,
-        source,
-        source_key: template.key,
-        status: TaskStatus.PENDING,
-      },
-    });
-
-    if (existing) return null;
-
-    return this.prisma.task.create({
-      data: {
-        plant_id: treeId,
-        type: this.mapTaskType(template.category),
-        title: template.title,
-        category: this.mapTaskCategory(template.category),
-        priority: this.mapTaskPriority(template.priority),
-        source,
-        source_key: template.key,
-        reason: template.reason,
-        metadata: template as unknown as Prisma.InputJsonValue,
-        due_date: new Date(
-          Date.now() + Math.max(template.due_in_days, 0) * 24 * 60 * 60 * 1000,
-        ),
-        seasonal_pack_id: refs.seasonal_pack_id,
-        personalized_overlay_id: refs.personalized_overlay_id,
-      },
-    });
-  }
-
-  private resolveRegionCluster(user: User): RegionCluster {
-    const district = (user.district || '').toLowerCase();
-    if (
-      district.includes('malda') ||
-      district.includes('kolkata') ||
-      district.includes('patna')
-    ) {
-      return RegionCluster.EAST_INDIA;
-    }
-    if (
-      district.includes('delhi') ||
-      district.includes('lucknow') ||
-      district.includes('chandigarh')
-    ) {
-      return RegionCluster.NORTH_INDIA;
-    }
-    if (
-      district.includes('mumbai') ||
-      district.includes('pune') ||
-      district.includes('surat')
-    ) {
-      return RegionCluster.WEST_INDIA;
-    }
-    if (
-      district.includes('bhopal') ||
-      district.includes('indore') ||
-      district.includes('raipur')
-    ) {
-      return RegionCluster.CENTRAL_INDIA;
-    }
-    if (
-      district.includes('chennai') ||
-      district.includes('hyderabad') ||
-      district.includes('bengaluru')
-    ) {
-      return RegionCluster.SOUTH_DECCAN;
-    }
-    if (
-      district.includes('coast') ||
-      district.includes('goa') ||
-      district.includes('kochi')
-    ) {
-      return RegionCluster.COASTAL_HUMID;
-    }
-    if (
-      district.includes('shimla') ||
-      district.includes('dehradun') ||
-      district.includes('gangtok')
-    ) {
-      return RegionCluster.HILLS_COOL;
-    }
-    return RegionCluster.NORTH_INDIA;
-  }
-
-  private resolveSeasonWindow(now: Date): SeasonWindow {
-    const month = now.getMonth() + 1;
-    if (month === 1 || month === 2) return SeasonWindow.LATE_WINTER;
-    if (month === 3 || month === 4) return SeasonWindow.SPRING;
-    if (month === 5 || month === 6) return SeasonWindow.SUMMER;
-    if (month >= 7 && month <= 9) return SeasonWindow.MONSOON;
-    return SeasonWindow.POST_MONSOON;
-  }
-
-  private isPaidUser(user: User): boolean {
-    return user.badge_level === 'Rooted';
-  }
-
-  private logSuggestsDryness(
-    content: string | null,
-    metadata: Prisma.JsonValue | null,
-  ): boolean {
-    const haystack =
-      `${content || ''} ${metadata ? JSON.stringify(metadata) : ''}`.toLowerCase();
-    return [
-      'dry',
-      'dryness',
-      'water stress',
-      'wilting',
-      'thirsty',
-      'soil dry',
-    ].some((term) => haystack.includes(term));
-  }
-
-  private asTaskTemplates(value: Prisma.JsonValue | null): TaskTemplateInput[] {
-    if (!Array.isArray(value)) return [];
-    return value.reduce<TaskTemplateInput[]>((acc, item) => {
-      if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        return acc;
-      }
-
-      const record = item as Record<string, unknown>;
-      if (typeof record.key !== 'string' || typeof record.title !== 'string') {
-        return acc;
-      }
-
-      acc.push({
-        key: record.key,
-        title: record.title,
-        category:
-          typeof record.category === 'string' ? record.category : 'inspection',
-        priority:
-          typeof record.priority === 'string' ? record.priority : 'medium',
-        due_in_days:
-          typeof record.due_in_days === 'number' ? record.due_in_days : 0,
-        reason: typeof record.reason === 'string' ? record.reason : undefined,
-      });
-      return acc;
-    }, []);
-  }
-
-  private mapTaskType(category: string): TaskType {
-    switch (category.toLowerCase()) {
-      case 'watering':
-        return TaskType.WATER;
-      case 'pruning':
-        return TaskType.PRUNE;
-      case 'feeding':
-        return TaskType.FEED;
-      case 'harvest':
-        return TaskType.HARVEST;
-      case 'treatment':
-        return TaskType.TREAT;
-      case 'observation':
-        return TaskType.OBSERVE;
-      default:
-        return TaskType.INSPECT;
-    }
-  }
-
-  private mapTaskCategory(category: string): TaskCategory {
-    switch (category.toLowerCase()) {
-      case 'watering':
-        return TaskCategory.WATERING;
-      case 'pruning':
-        return TaskCategory.PRUNING;
-      case 'feeding':
-        return TaskCategory.FEEDING;
-      case 'harvest':
-        return TaskCategory.HARVEST;
-      case 'treatment':
-        return TaskCategory.TREATMENT;
-      case 'observation':
-        return TaskCategory.OBSERVATION;
-      default:
-        return TaskCategory.INSPECTION;
-    }
-  }
-
-  private mapTaskPriority(priority: string): TaskPriority {
-    switch (priority.toLowerCase()) {
-      case 'low':
-        return TaskPriority.LOW;
-      case 'high':
-        return TaskPriority.HIGH;
-      default:
-        return TaskPriority.MEDIUM;
-    }
-  }
-
-  private serializeSeasonalPack(pack: SeasonalPack) {
-    return {
-      ...pack,
-      do_now: pack.do_now,
-      avoid_now: pack.avoid_now,
-      watch_for: pack.watch_for,
-      task_templates: pack.task_templates,
-    };
-  }
-
-  private serializeOverlay(overlay: PersonalizedOverlay) {
-    return {
-      ...overlay,
-      priority_actions: overlay.priority_actions,
-      suppressed_actions: overlay.suppressed_actions,
-      personalized_tasks: overlay.personalized_tasks,
-    };
+    const entries = await this.journal.recent(
+      userId,
+      plant.id,
+      RECENT_ENTRIES_FOR_OVERLAY,
+    );
+    const payload = buildPersonalizedOverlay(plant, entries, pack, now);
+    if (!payload) return existing;
+    return existing
+      ? this.overlays.update(userId, existing.id, payload)
+      : this.overlays.create(userId, plant.id, pack.id, payload);
   }
 }

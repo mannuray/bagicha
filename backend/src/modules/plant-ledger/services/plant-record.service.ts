@@ -1,8 +1,9 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Plant } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { NotFoundError } from '../../../common/errors';
+import { Metrics } from '../../../common/observability';
 import {
   Page,
   PageQuery,
@@ -30,7 +31,7 @@ const plantNotFound = () =>
 
 /** Plant records: CRUD, lifecycle stage upkeep, and read models other modules need. */
 @Injectable()
-export class PlantRecordService {
+export class PlantRecordService implements OnModuleInit {
   constructor(
     private readonly plants: PlantRepository,
     private readonly lifecycle: LifecycleService,
@@ -38,7 +39,19 @@ export class PlantRecordService {
     private readonly species: SpeciesNormalizationService,
     private readonly clock: Clock,
     @InjectQueue(TASK_GENERATION_QUEUE) private readonly taskQueue: Queue,
+    private readonly metrics: Metrics,
   ) {}
+
+  onModuleInit(): void {
+    this.metrics.registerQueueDepth(TASK_GENERATION_QUEUE, async () => {
+      const c = await this.taskQueue.getJobCounts(
+        'waiting',
+        'active',
+        'delayed',
+      );
+      return (c.waiting ?? 0) + (c.active ?? 0) + (c.delayed ?? 0);
+    });
+  }
 
   /** The owner's plant, or 404. No side effects — for other modules. */
   async getOwnedOrThrow(userId: string, plantId: string): Promise<Plant> {

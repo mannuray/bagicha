@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { withSpan } from '../../../common/observability';
+import { Clock, istMonth } from '../../../common/time';
 
 export interface WeatherData {
   temp: number;
@@ -10,33 +12,38 @@ export interface WeatherData {
 
 @Injectable()
 export class WeatherService {
-  constructor(private configService: ConfigService) {}
+  constructor(
+    private configService: ConfigService,
+    private readonly clock: Clock,
+  ) {}
 
   /**
    * Fetches weather data for a specific pincode.
    * Currently mocked, but designed to integrate with OpenWeatherMap or similar.
    */
   async getWeather(pincode: string): Promise<WeatherData> {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    return withSpan('weather.fetch', { pincode }, async () => {
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // Mock logic for Indian context (e.g., Bihar/UP heatwaves)
-    const mockTemp = 32 + Math.floor(Math.random() * 15); // 32°C to 47°C
-    const isExtreme = mockTemp > 42;
+      // Mock logic for Indian context (e.g., Bihar/UP heatwaves)
+      const mockTemp = 32 + Math.floor(Math.random() * 15); // 32°C to 47°C
+      const isExtreme = mockTemp > 42;
 
-    return {
-      temp: mockTemp,
-      condition: mockTemp > 40 ? 'Sunny & Harsh' : 'Sunny',
-      is_extreme: isExtreme,
-      alert_message: isExtreme
-        ? `Extreme heat detected (${mockTemp}°C). Please deep-water your citrus and mango trees tonight.`
-        : undefined,
-    };
+      return {
+        temp: mockTemp,
+        condition: mockTemp > 40 ? 'Sunny & Harsh' : 'Sunny',
+        is_extreme: isExtreme,
+        alert_message: isExtreme
+          ? `Extreme heat detected (${mockTemp}°C). Please deep-water your citrus and mango trees tonight.`
+          : undefined,
+      };
+    });
   }
 
-  async getSeasonalSuggestions(district: string) {
+  getSeasonalSuggestions(_district: string) {
     // Simple seasonal mapping for India
-    const month = new Date().getMonth(); // 0-11
+    const month = istMonth(this.clock.now()) - 1; // 0-11
 
     if (month >= 2 && month <= 5) {
       return {

@@ -1,22 +1,28 @@
-import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { SeasonalService } from './seasonal.service';
-import { SeasonalController } from './seasonal.controller';
-import { WeatherService } from './services/weather.service';
+import { Module } from '@nestjs/common';
+import { PlantLedgerModule } from '../plant-ledger';
+import { UserModule } from '../user';
 import { WeatherProcessor } from './processors/weather.processor';
-import { PrismaModule } from '../../prisma/prisma.module';
-import { PlantLedgerModule } from '../plant-ledger/plant-ledger.module';
+import { OverlayRepository } from './repositories/overlay.repository';
+import { SeasonalPackRepository } from './repositories/seasonal-pack.repository';
+import { SeasonalController } from './seasonal.controller';
+import { SeasonalService, WEATHER_QUEUE } from './seasonal.service';
+import { WeatherService } from './services/weather.service';
 
 @Module({
   imports: [
-    PrismaModule,
     PlantLedgerModule,
-    BullModule.registerQueue({
-      name: 'weather-checks',
-    }),
+    UserModule,
+    BullModule.registerQueue({ name: WEATHER_QUEUE }),
   ],
   controllers: [SeasonalController],
-  providers: [SeasonalService, WeatherService, WeatherProcessor],
+  providers: [
+    SeasonalService,
+    WeatherService,
+    WeatherProcessor,
+    SeasonalPackRepository,
+    OverlayRepository,
+  ],
   exports: [SeasonalService],
 })
 export class SeasonalModule {}

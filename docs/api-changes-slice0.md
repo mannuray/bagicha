@@ -28,3 +28,6 @@ is built against the "After" column.
 | `POST subscription/create-order` | any `plan_id` string | `plan_id` must be `PREMIUM_MONTHLY` or `PREMIUM_YEARLY` (else 422); response adds `notes: {user_id, plan_id}` | 19 |
 | `POST subscription/webhook` (`order.paid`) | set `badge_level='Rooted'`, every delivery | +30/+365 days from the later of now/current expiry (lifetime stays lifetime); same `payment.entity.id` applied once (`{received:true, duplicate:true}`); audited `SUBSCRIPTION_CHANGED` | 19 |
 | seasonal personalization (paid-only overlay) | gated on `badge_level === 'Rooted'` | gated on `isPremium(user, now)` (wired in Task 20) | 19 |
+| `POST seasonal/plant/:id/materialize-tasks` | `{created_count, created_tasks:[…]}` | `{results:[{sourceKey, status: created\|skipped\|failed, taskId?, reason?}], created_count}` | 20 |
+| season window / seasonal guide | server-local month | IST month (flips at IST midnight on the 1st) | 20 |
+| weather job | always re-fetched on retry | skips when the pincode is already cached | 20 |
