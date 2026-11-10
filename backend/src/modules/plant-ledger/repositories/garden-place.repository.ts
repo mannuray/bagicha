@@ -45,4 +45,17 @@ export class GardenPlaceRepository {
     });
     return count === 0 ? null : this.findOwned(userId, id);
   }
+
+  /** The most recent season in this place that ended on or after `since`, with its crop. */
+  lastClosedSeason(placeId: string, since: Date) {
+    return this.prisma.plantCycle.findFirst({
+      where: { place_id: placeId, closed_at: { gte: since } },
+      orderBy: { closed_at: 'desc' },
+      select: {
+        started_at: true,
+        closed_at: true,
+        plant: { select: { crop_id: true } },
+      },
+    });
+  }
 }

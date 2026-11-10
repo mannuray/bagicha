@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Request,
   Res,
   UseGuards,
@@ -74,5 +75,14 @@ export class CropsController {
   @Post('crops/plan/sync')
   sync(@Request() req: AuthedRequest) {
     return this.crops.sync(req.user);
+  }
+
+  @Get('garden/places/:id/rotation')
+  rotation(
+    @Request() req: AuthedRequest,
+    @Param('id') id: string,
+    @Query('crop_id') cropId: string,
+  ) {
+    return this.crops.rotation(req.user.id, id, cropId ?? '');
   }
 }

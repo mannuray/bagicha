@@ -482,4 +482,55 @@ describe('crops', () => {
       expect((await plantOf(a, palak.id)).crop_stage).toBe('PLANNED');
     });
   });
+  describe('rotation', () => {
+    it('warns when the same family grew in a place within the last year', async () => {
+      const a = as(alice);
+      const bag = (
+        await a.post('/api/v1/garden/places', {
+          name: 'Bag A',
+          kind: 'GROW_BAG',
+        })
+      ).body.data;
+      clock.set('2026-10-20T06:00:00Z');
+      const potato = (await a.post('/api/v1/crops/plan', { crop_id: 'potato' }))
+        .body.data;
+      await a.post(`/api/v1/ledger/plants/${potato.id}/journal`, {
+        type: 'SOWING',
+        metadata: { place_id: bag.id },
+      });
+      clock.set('2027-02-20T06:00:00Z');
+      await a.post(`/api/v1/ledger/plants/${potato.id}/journal`, {
+        type: 'SEASON_END',
+      });
+      clock.set('2027-09-10T06:00:00Z');
+      const tomato = await a.get(
+        `/api/v1/garden/places/${bag.id}/rotation?crop_id=tomato`,
+      );
+      expect(tomato.status).toBe(200);
+      expect(tomato.body.data).toMatchObject({
+        conflict: true,
+        last: {
+          crop_id: 'potato',
+          family: 'SOLANACEAE',
+          season_label: 'Oct 2026',
+        },
+      });
+      const beans = await a.get(
+        `/api/v1/garden/places/${bag.id}/rotation?crop_id=french_beans`,
+      );
+      expect(beans.body.data.conflict).toBe(false);
+      expect(
+        (
+          await as(bob).get(
+            `/api/v1/garden/places/${bag.id}/rotation?crop_id=tomato`,
+          )
+        ).status,
+      ).toBe(404);
+      clock.set('2028-03-01T06:00:00Z');
+      expect(
+        (await a.get(`/api/v1/garden/places/${bag.id}/rotation?crop_id=tomato`))
+          .body.data,
+      ).toEqual({ conflict: false, last: null });
+    });
+  });
 });

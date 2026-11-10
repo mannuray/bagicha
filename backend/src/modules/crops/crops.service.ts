@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { Clock } from '../../common/time';
-import { NotFoundError } from '../../common/errors';
+import { NotFoundError, ValidationError } from '../../common/errors';
 import {
   CROPS,
   climateGroupFor,
   CropPlanService,
+  cropById,
   GardenPlaceRepository,
   windowStatus,
   type CropInfo,
@@ -53,6 +54,33 @@ export class CropsService {
 
   removeFromPlan(userId: string, plantId: string) {
     return this.plan.remove(userId, plantId);
+  }
+
+  /**
+   * Gentle rotation hint: the same botanical family grew here in a season that
+   * ended within the last 12 months. Never blocks.
+   */
+  async rotation(userId: string, placeId: string, cropId: string) {
+    const place = await this.placesRepo.findOwned(userId, placeId);
+    if (!place) throw new NotFoundError('PLACE_NOT_FOUND', 'Place not found');
+    const crop = cropById(cropId);
+    if (!crop) throw new ValidationError('VALIDATION_ERROR', 'Unknown crop');
+    const since = new Date(
+      this.clock.now().getTime() - 365 * 24 * 60 * 60 * 1000,
+    );
+    const season = await this.placesRepo.lastClosedSeason(placeId, since);
+    const previous = cropById(season?.plant.crop_id);
+    if (!season || !previous) return { conflict: false, last: null };
+    const started = season.started_at ?? season.closed_at ?? new Date();
+    return {
+      conflict: previous.family === crop.family,
+      last: {
+        crop_id: previous.id,
+        crop_name: previous.name,
+        family: previous.family,
+        season_label: monthLabel(started),
+      },
+    };
   }
 
   /** Seed and sow reminders for the user's region; the dashboard calls this once a session. */
@@ -108,4 +136,10 @@ export class CropsService {
       };
     });
   }
+}
+
+/** "Oct 2026" for a season start, in IST. */
+function monthLabel(d: Date): string {
+  const ist = new Date(d.getTime() + 5.5 * 60 * 60 * 1000);
+  return `${MONTHS[ist.getUTCMonth()]} ${ist.getUTCFullYear()}`;
 }
