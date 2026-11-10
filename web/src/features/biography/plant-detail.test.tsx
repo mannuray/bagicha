@@ -160,6 +160,26 @@ describe('tree biography', () => {
     await waitFor(() => expect(body).toEqual({ reason: 'DISEASE_OR_PEST', note: 'Spread fast', entry_id: 'd1' }));
   });
 
+  it('picking today in the morning is not "in the future": it sends no date, and the field stops at today', async () => {
+    handlers();
+    let body: Record<string, unknown> | undefined;
+    server.use(
+      http.post(`${API}/ledger/plants/p1/end`, async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(ok(plantRecord({ ended_at: '2026-11-10T06:00:00.000Z', end_reason: 'WEATHER' })), { status: 201 });
+      }),
+    );
+    renderWithApp(routes, { route: '/plants/p1' });
+    await userEvent.click(await screen.findByRole('button', { name: /mark as ended/i }));
+    const sheet = screen.getByRole('dialog', { name: /mark as ended/i });
+    await userEvent.click(within(sheet).getByRole('button', { name: /weather/i }));
+    const date = within(sheet).getByLabelText(/^date/i);
+    expect(date).toHaveAttribute('max', '2026-11-10');
+    await userEvent.type(date, '2026-11-10');
+    await userEvent.click(within(sheet).getByRole('button', { name: /^save$/i }));
+    await waitFor(() => expect(body).toEqual({ reason: 'WEATHER' }));
+  });
+
   it('an ended tree is read-only, with a calm banner, restore and replace', async () => {
     let restored = 0;
     handlers({ plant: { ended_at: '2026-03-15T06:00:00.000Z', end_reason: 'DISEASE_OR_PEST', end_note: 'Canker' } });

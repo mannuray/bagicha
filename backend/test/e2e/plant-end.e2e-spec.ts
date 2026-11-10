@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
+import { TaskRepository } from '../../src/modules/plant-ledger/repositories/task.repository';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
 import { withFakeAi } from './fakes';
@@ -219,5 +220,57 @@ describe('when a tree ends', () => {
     });
     const fresh = await a.get(`/api/v1/ledger/plants/${created.body.data.id}`);
     expect(fresh.body.data.replaces).toEqual([{ id, name: 'Nimbu' }]);
+  });
+  it('refuses to save a diagnosis to an ended tree through diagnosis/finalize', async () => {
+    const { a, id, base } = await plantWithTask();
+    await a.post(`${base}/end`, { reason: 'DISEASE_OR_PEST' });
+    const before = await prisma.journalEntry.count({ where: { plant_id: id } });
+    const res = await a.post('/api/v1/diagnosis/finalize', {
+      subject_type: 'TREE',
+      subject_id: id,
+      primary_issue: 'PEST',
+      severity: 'MEDIUM',
+      reasoning_summary: 'Aphids',
+      recommended_actions: ['Spray neem'],
+    });
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('PLANT_ENDED');
+    expect(await prisma.journalEntry.count({ where: { plant_id: id } })).toBe(
+      before,
+    );
+  });
+
+  it('no task can be created on an ended tree, even by a job queued earlier', async () => {
+    const { a, id, base } = await plantWithTask();
+    await a.post(`${base}/end`, { reason: 'OLD_AGE' });
+    const created = await app.get(TaskRepository).create(alice.id, id, {
+      type: 'WATER',
+      category: 'WATERING',
+      priority: 'MEDIUM',
+      title: 'Ghost',
+      source: 'MANUAL',
+      source_key: 'ghost',
+      due_date: new Date(),
+    } as never);
+    expect(created).toBeNull();
+  });
+
+  it('editing a tree never moves its stage backwards', async () => {
+    const a = as(alice);
+    const plant = await a.post('/api/v1/ledger/plants', {
+      name: 'Aam',
+      species: 'Mango',
+      planting_date: '2021-05',
+    });
+    const id = plant.body.data.id as string;
+    await prisma.plant.update({
+      where: { id },
+      data: { lifecycle_stage: 'MATURE_BEARING' },
+    });
+    const renamed = await a.put(`/api/v1/ledger/plants/${id}`, {
+      name: 'Bada Aam',
+    });
+    expect(renamed.status).toBe(200);
+    expect(renamed.body.data.lifecycle_stage).toBe('MATURE_BEARING');
   });
 });

@@ -47,7 +47,7 @@ describe('TIMELINE_FILTERS', () => {
       bloom: ['FLOWERING', 'FRUIT_SET', 'FLOWER_DROP', 'FRUIT_DROP'],
       harvest: ['HARVEST'],
       health: ['PEST_DIAGNOSIS', 'DIAGNOSIS', 'WATERING_STRESS', 'WEATHER_DAMAGE'],
-      notes: ['NOTE', 'PHOTO', 'PLANTING'],
+      notes: ['NOTE', 'PHOTO', 'PLANTING', 'PLANT_ENDED'],
     });
   });
 });

@@ -30,7 +30,10 @@ function build() {
   const drafts: TaskDraft[] = [];
   const entries: Array<{ type: LogType }> = [];
   const plant = { id: 'p1', name: 'Aam', user_id: 'u1' };
-  const plants = { getOwnedOrThrow: jest.fn(() => Promise.resolve(plant)) };
+  const plants = {
+    getOwnedOrThrow: jest.fn(() => Promise.resolve(plant)),
+    assertGrowing: jest.fn(() => Promise.resolve(plant)),
+  };
   const cycles = { ensureCycle: jest.fn(() => Promise.resolve({ id: 'c1' })) };
   const journal = {
     recordEntry: jest.fn((_u: string, _p: string, e: { type: LogType }) => {

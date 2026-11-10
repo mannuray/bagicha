@@ -111,7 +111,11 @@ export class TaskRepository {
     });
   }
 
-  /** Returns null (and writes nothing) unless the user owns the plant. */
+  /**
+   * Returns null (and writes nothing) unless the user owns the plant and it is
+   * still growing. The one choke point for every task source, including jobs
+   * queued before the tree ended.
+   */
   async create(
     userId: string,
     plantId: string,
@@ -120,7 +124,7 @@ export class TaskRepository {
   ): Promise<Task | null> {
     const db = this.db(tx);
     const plant = await db.plant.findFirst({
-      where: { id: plantId, user_id: userId },
+      where: { id: plantId, user_id: userId, ended_at: null },
       select: { id: true },
     });
     if (!plant) return null;

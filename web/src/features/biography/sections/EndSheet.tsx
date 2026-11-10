@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { messageFor } from '../../../lib/error-messages';
+import { istParts } from '../../../lib/ist';
 import { Button, Pill, TextField } from '../../../ui';
 import type { JournalEntry } from '../../journal';
 import { useEndPlant, type PlantEndReason } from '../../plants';
@@ -19,12 +20,16 @@ export function EndSheet({ plantId, entries, now, onClose }: { plantId: string; 
   const [note, setNote] = useState('');
   const [linked, setLinked] = useState(true);
 
+  const parts = istParts(now);
+  const today = `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`;
+
   const save = () => {
     if (!reason) return;
     end.mutate(
       {
         reason,
-        ...(date ? { ended_at: new Date(`${date}T12:00:00+05:30`).toISOString() } : {}),
+        // Today (or blank) means "now" on the server; an earlier day is pinned to its IST noon.
+        ...(date && date !== today ? { ended_at: new Date(`${date}T12:00:00+05:30`).toISOString() } : {}),
         ...(note.trim() ? { note: note.trim() } : {}),
         ...(diagnosis && linked ? { entry_id: diagnosis.id } : {}),
       },
@@ -53,7 +58,7 @@ export function EndSheet({ plantId, entries, now, onClose }: { plantId: string; 
           })}
         </Pill>
       )}
-      <TextField label={t('biography.end.date')} type="date" value={date} onChange={(e) => setDate(e.target.value)} hint={t('biography.end.dateHint')} />
+      <TextField label={t('biography.end.date')} type="date" max={today} value={date} onChange={(e) => setDate(e.target.value)} hint={t('biography.end.dateHint')} />
       <div className="flex flex-col gap-1.5">
         <label htmlFor="end-note" className="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">
           {t('biography.end.note')}

@@ -8,7 +8,7 @@ export const TIMELINE_FILTERS = [
   { id: 'bloom', types: ['FLOWERING', 'FRUIT_SET', 'FLOWER_DROP', 'FRUIT_DROP'] },
   { id: 'harvest', types: ['HARVEST'] },
   { id: 'health', types: ['PEST_DIAGNOSIS', 'DIAGNOSIS', 'WATERING_STRESS', 'WEATHER_DAMAGE'] },
-  { id: 'notes', types: ['NOTE', 'PHOTO', 'PLANTING'] },
+  { id: 'notes', types: ['NOTE', 'PHOTO', 'PLANTING', 'PLANT_ENDED'] },
 ] as const satisfies ReadonlyArray<{ id: string; types: readonly string[] }>;
 
 export type TimelineFilter = (typeof TIMELINE_FILTERS)[number];

@@ -198,14 +198,23 @@ export class PlantRecordService implements OnModuleInit {
             this.clock,
           );
     const species = dto.species ?? plant.species;
+    // Only a corrected planting date or species may recompute freely; any other
+    // edit (a rename) must never move an automatic stage backwards.
+    const ageInputsChanged =
+      dto.planting_date !== undefined ||
+      dto.planting_date_precision !== undefined ||
+      (dto.species !== undefined && dto.species !== plant.species);
+    const computed = this.lifecycle.calculateStage({
+      ...plant,
+      planting_date: planting.date,
+      species,
+      species_family: dto.species ? null : plant.species_family,
+    });
     const stage =
       dto.lifecycle_stage ??
-      this.lifecycle.calculateStage({
-        ...plant,
-        planting_date: planting.date,
-        species,
-        species_family: dto.species ? null : plant.species_family,
-      });
+      (ageInputsChanged
+        ? computed
+        : laterStage(plant.lifecycle_stage, computed));
 
     const updated = await this.plants.updateOwned(userId, plantId, {
       name: dto.name ?? undefined,

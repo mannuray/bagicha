@@ -102,7 +102,8 @@ export class DiagnosisPipelineService {
         `Subject type ${input.subject_type} is not supported yet`,
       );
     }
-    const plant = await this.plants.getOwnedOrThrow(userId, input.subject_id);
+    // A diagnosis grows the record, so an ended tree can't take one.
+    const plant = await this.plants.assertGrowing(userId, input.subject_id);
 
     const recordedAt = this.clock.now();
     const eventAt = input.event_at ? new Date(input.event_at) : recordedAt;
