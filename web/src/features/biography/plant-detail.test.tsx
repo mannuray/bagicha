@@ -82,6 +82,15 @@ describe('tree biography', () => {
     expect(container.querySelector('header img[src*="tree-hero"]')).not.toBeNull();
   });
 
+  it('does not flash the Stitch photo while the tree\'s own photo is loading', async () => {
+    handlers();
+    server.use(http.get(`${API}/media/download-url/*`, () => new Promise(() => {})));
+    const { container } = renderWithApp(routes, { route: '/plants/p1' });
+    await screen.findByRole('heading', { level: 1, name: 'Aam' });
+    await screen.findByText('First note');
+    expect(container.querySelector('header img[src*="tree-hero"]')).toBeNull();
+  });
+
   it('shows stage and season phase as separate things', async () => {
     handlers();
     renderWithApp(routes, { route: '/plants/p1' });
@@ -103,8 +112,8 @@ describe('tree biography', () => {
   it('compares this year with last and links the season review', async () => {
     handlers({
       cycles: [
-        cycleRecord({ id: 'c26', cycle_year: 2026, harvest_started_at: '2026-06-01T00:00:00Z', yield_quantity: 40, yield_unit: 'kg' }),
-        cycleRecord({ id: 'c25', cycle_year: 2025, yield_quantity: 30, yield_unit: 'kg' }),
+        cycleRecord({ id: 'c25', cycle_year: 2025, harvest_started_at: '2025-06-01T00:00:00Z', yield_quantity: 40, yield_unit: 'kg' }),
+        cycleRecord({ id: 'c24', cycle_year: 2024, yield_quantity: 30, yield_unit: 'kg' }),
       ],
     });
     renderWithApp(routes, { route: '/plants/p1' });
@@ -199,7 +208,8 @@ describe('tree biography', () => {
     expect(screen.queryByText(/ago this month/i)).not.toBeInTheDocument();
     const milestones = await screen.findByRole('region', { name: /milestones/i });
     const planted = within(milestones).getByText(/^planted$/i).closest('li') as HTMLElement;
-    expect(within(planted).getByText(/not yet|unknown/i)).toBeInTheDocument();
+    expect(within(planted).getByText(/date unknown/i)).toBeInTheDocument();
+    expect(within(planted).queryByText(/not yet/i)).not.toBeInTheDocument();
   });
 
   it.each(['/plants/p1', '/plants/p1/tasks', '/plants/p1/log'])(

@@ -14,9 +14,12 @@ export interface YearRow {
   soFar: boolean;
 }
 
-/** A season can be compared once its year is over or a harvest has been logged. */
+/**
+ * A season can be compared once its year is over. A first pick in May isn't the
+ * season, so the current year stays "so far" and is never marked better or worse.
+ */
 export function isFinished(c: Cycle, now: Date): boolean {
-  return c.cycle_year < istParts(now).year || c.harvest_started_at !== null;
+  return c.cycle_year < istParts(now).year;
 }
 
 /** Yield per year (newest first) and the two most recent finished seasons to compare. */

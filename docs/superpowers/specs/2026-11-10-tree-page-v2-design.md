@@ -91,13 +91,13 @@ Everything uses the Stitch "Botanical Record" look: serif headings, pebble cards
 ## 5. Decisions
 
 ### 5.1 Backend change (small)
-- `GET /ledger/plants/:id/timeline` accepts an optional `types` query: a comma-separated list of `LogType` values, validated against the enum. An unknown value returns 400 `VALIDATION_FAILED`.
+- `GET /ledger/plants/:id/timeline` accepts an optional `types` query: a comma-separated list of `LogType` values, validated against the enum. An unknown value returns 422 `VALIDATION_ERROR`, the app's existing validation convention.
 - The default (no `types`) behaves exactly as today. Paging is unchanged.
 - Add an entry to `docs/api-changes-slice0.md`.
 
 ### 5.1b Backend change: yearly yield is the season total
 - Today `cycle-summary.ts` stores the **latest** harvest's quantity as the cycle yield.
-- It becomes the **sum of all HARVEST entries in the cycle that share the latest harvest's unit**. Harvests in other units are left out of the sum; quality stays the latest harvest's.
+- It becomes the **sum of all HARVEST entries in the cycle that share the unit of the latest harvest that has an amount**. Harvests in other units are left out of the sum; quality stays the latest harvest's.
 - Stored cycles pick this up the next time their summary is recalculated. There is no backfill, because nothing is deployed yet.
 
 ### 5.2 Decided by the user
@@ -110,8 +110,8 @@ Everything uses the Stitch "Botanical Record" look: serif headings, pebble cards
 - The hero fallback is the Stitch mango photo, bundled like the other Stitch photos.
 - Comparison "better/worse": higher yield is better; lower drop level or pest pressure is better.
 - **Which cycles are compared** (from the builder check):
-  - Only *finished* seasons are compared: a cycle whose year is before the current IST year, or one with a harvest logged.
-  - The current year with no harvest yet is listed as "so far", with no bar and no comparison.
+  - Only *finished* seasons are compared: a cycle whose year is before the current IST year. A harvest logged this year does **not** finish the season, because a first pick isn't the season total (changed after the final review).
+  - The current year is listed as "so far", showing its yield so far, with no bar and no comparison.
   - "Latest vs previous" compares the two most recent finished seasons.
   - The Season review link stays on the latest cycle, as the existing screen works.
 - **Missing values:**

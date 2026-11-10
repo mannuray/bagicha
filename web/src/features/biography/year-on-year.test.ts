@@ -7,10 +7,23 @@ const NOW = new Date('2026-11-10T06:00:00Z');
 const cycle = (over: Record<string, unknown>) => cycleRecord(over) as unknown as Cycle;
 
 describe('isFinished', () => {
-  it('counts a past year or a harvested season as finished', () => {
+  it('counts only past years as finished, so a partial season is never judged', () => {
     expect(isFinished(cycle({ cycle_year: 2025 }), NOW)).toBe(true);
     expect(isFinished(cycle({ cycle_year: 2026 }), NOW)).toBe(false);
-    expect(isFinished(cycle({ cycle_year: 2026, harvest_started_at: '2026-06-01T00:00:00Z' }), NOW)).toBe(true);
+    expect(isFinished(cycle({ cycle_year: 2026, harvest_started_at: '2026-06-01T00:00:00Z', yield_quantity: 10, yield_unit: 'kg' }), NOW)).toBe(false);
+  });
+
+  it('shows the current year\'s harvest so far without comparing it', () => {
+    const y = yearOnYear(
+      [
+        cycle({ id: 'now', cycle_year: 2026, harvest_started_at: '2026-05-01T00:00:00Z', yield_quantity: 10, yield_unit: 'kg' }),
+        cycle({ id: 'last', cycle_year: 2025, yield_quantity: 60, yield_unit: 'kg' }),
+      ],
+      NOW,
+    );
+    expect(y.years[0]).toMatchObject({ year: 2026, value: 10, soFar: true, barred: false });
+    expect(y.latest?.id).toBe('last');
+    expect(y.previous).toBeNull();
   });
 });
 

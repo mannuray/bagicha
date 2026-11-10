@@ -20,7 +20,11 @@ export function Hero({ plant, health, photoKey, now }: { plant: PlantDetail; hea
         : t('biography.age.years', { count: age.count, year: age.year });
   return (
     <header className="relative mb-4 h-[260px] w-full overflow-hidden rounded-b-[32px] bg-primary-container">
-      <img src={photo.data ?? treeHero} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      {/* The Stitch photo only stands in when the tree has no photo of its own (or it failed),
+          never while the tree's own photo is still loading. */}
+      {(photo.data ?? (!photoKey || photo.isError ? treeHero : null)) && (
+        <img src={photo.data ?? treeHero} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
       <div className="absolute bottom-5 left-4 right-4 flex items-end justify-between gap-3">
         <div className="min-w-0">

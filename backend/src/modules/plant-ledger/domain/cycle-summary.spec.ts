@@ -57,3 +57,28 @@ describe('buildCycleSnapshot yield: the season total', () => {
     expect(s.yield_quantity).toBeNull();
   });
 });
+
+describe('buildCycleSnapshot yield: a harvest without an amount', () => {
+  it('keeps the season total when the last harvest only notes quality', () => {
+    const at = (day: number) => new Date(Date.UTC(2026, 5, day));
+    const s = buildCycleSnapshot([
+      {
+        type: LogType.HARVEST,
+        metadata: { quantity_value: 10, quantity_unit: 'kg' },
+        timestamp: at(1),
+      },
+      {
+        type: LogType.HARVEST,
+        metadata: { quantity_value: 15, quantity_unit: 'kg' },
+        timestamp: at(8),
+      },
+      {
+        type: LogType.HARVEST,
+        metadata: { quality: 'good' },
+        timestamp: at(15),
+      },
+    ]);
+    expect(s.yield_quantity).toBe(25);
+    expect(s.yield_unit).toBe('kg');
+  });
+});

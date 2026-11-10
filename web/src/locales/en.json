@@ -342,6 +342,7 @@
       "latestHarvest": "Latest harvest"
     },
     "notYet": "Not yet",
+    "dateUnknown": "Date unknown",
     "record": "The Sanctuary Record",
     "filter": {
       "all": "All",

@@ -184,7 +184,8 @@ function seasonYield(harvests: CycleEntry[]): {
       unit: parseQuantityUnit(m.quantity_unit ?? m.quantity),
     };
   });
-  const unit = amounts.at(-1)?.unit ?? null;
+  // The latest harvest that has an amount: a quality-only note must not hide the season.
+  const unit = amounts.filter((a) => a.value !== null).at(-1)?.unit ?? null;
   const same = amounts.filter(
     (a) => a.value !== null && a.unit?.toLowerCase() === unit?.toLowerCase(),
   );

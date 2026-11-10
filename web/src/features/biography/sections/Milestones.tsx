@@ -25,7 +25,9 @@ export function Milestones({ plant }: { plant: PlantDetail }) {
           >
             <Icon name={m.at ? 'check_circle' : 'radio_button_unchecked'} filled={Boolean(m.at)} className={cx('text-lg', m.at ? 'text-primary' : 'text-outline')} />
             <span className="font-label text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">{t(`biography.milestone.${m.key}`)}</span>
-            <span className="font-body text-sm text-on-surface">{m.at ? (m.label ?? monthYear(m.at, i18n.language)) : t('biography.notYet')}</span>
+            <span className="font-body text-sm text-on-surface">
+              {m.at ? (m.label ?? monthYear(m.at, i18n.language)) : m.key === 'planted' ? t('biography.dateUnknown') : t('biography.notYet')}
+            </span>
           </li>
         ))}
       </ol>
