@@ -53,9 +53,20 @@ describe('my plants', () => {
 });
 
 describe('add a plant', () => {
+  it('opens as "Start a Legacy" with the kind chips', async () => {
+    renderWithApp(routes, { route: '/plants/new' });
+    expect(screen.getByRole('heading', { name: /start a legacy/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^tree$/i })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('shows the Stitch sapling photo in the header', () => {
+    const { container } = renderWithApp(routes, { route: '/plants/new' });
+    expect(container.querySelector('img[src*="add-tree-sapling"]')).not.toBeNull();
+  });
+
   it('requires a name and species', async () => {
     renderWithApp(routes, { route: '/plants/new' });
-    await userEvent.click(screen.getByRole('button', { name: /save tree/i }));
+    await userEvent.click(screen.getByRole('button', { name: /add to sanctuary/i }));
     expect(screen.getByText(/give your tree a name/i)).toBeInTheDocument();
   });
 
@@ -78,11 +89,11 @@ describe('add a plant', () => {
       }),
     );
     renderWithApp(routes, { route: '/plants/new' });
-    await userEvent.type(screen.getByLabelText(/^name/i), 'Aam');
-    await userEvent.type(screen.getByLabelText(/what is it/i), 'lang');
+    await userEvent.type(screen.getByLabelText(/tree name/i), 'Aam');
+    await userEvent.type(screen.getByLabelText(/^species/i), 'lang');
     await userEvent.click(await screen.findByRole('option', { name: /mango \(langra\)/i }));
     await userEvent.type(screen.getByLabelText(/year planted/i), '2015');
-    await userEvent.click(screen.getByRole('button', { name: /save tree/i }));
+    await userEvent.click(screen.getByRole('button', { name: /add to sanctuary/i }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/plants/new1'));
     expect(created).toMatchObject({
       name: 'Aam',
@@ -109,7 +120,7 @@ describe('add a plant', () => {
       ),
     );
     renderWithApp(routes, { route: '/plants/new?prefill=Mango' });
-    await waitFor(() => expect(screen.getByLabelText(/what is it/i)).toHaveValue('Mango'));
+    await waitFor(() => expect(screen.getByLabelText(/^species/i)).toHaveValue('Mango'));
   });
 
   it('edits only the changed fields', async () => {
@@ -122,11 +133,11 @@ describe('add a plant', () => {
       }),
     );
     renderWithApp(routes, { route: '/plants/p1/edit' });
-    const name = await screen.findByLabelText(/^name/i);
+    const name = await screen.findByLabelText(/tree name/i);
     await waitFor(() => expect(name).toHaveValue('Aam'));
     await userEvent.clear(name);
     await userEvent.type(name, 'Old Aam');
-    await userEvent.click(screen.getByRole('button', { name: /save tree/i }));
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
     await waitFor(() => expect(sent).toEqual({ name: 'Old Aam' }));
   });
 

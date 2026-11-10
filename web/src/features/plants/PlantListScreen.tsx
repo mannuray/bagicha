@@ -12,10 +12,10 @@ export function PlantListScreen() {
 
   return (
     <Screen nav>
-      <header className="flex items-end justify-between px-6 pb-6 pt-10">
+      <header className="flex items-end justify-between px-4 pb-4 pt-6">
         <div>
           <p className="font-label text-xs font-bold uppercase tracking-widest text-secondary">{t('plants.list.kicker')}</p>
-          <h1 className="font-headline text-4xl text-primary">{t('plants.list.title')}</h1>
+          <h1 className="font-headline text-2xl text-primary">{t('plants.list.title')}</h1>
         </div>
         <Link
           to="/plants/new"
@@ -25,7 +25,7 @@ export function PlantListScreen() {
           <Icon name="add" />
         </Link>
       </header>
-      <main className="space-y-3 px-6">
+      <main className="space-y-3 px-4">
         {Array.from({ length: pages }, (_, i) => (
           <PlantPage key={i} page={i + 1} isLast={i + 1 === pages} onMore={() => setPages((p) => p + 1)} />
         ))}
@@ -48,7 +48,7 @@ function PlantPage({ page, isLast, onMore }: { page: number; isLast: boolean; on
         title={t('plants.list.emptyTitle')}
         body={t('plants.list.emptyBody')}
         action={
-          <Link to="/plants/new" className="bg-primary-gradient inline-flex min-h-11 items-center rounded-full px-6 font-label text-sm font-bold text-on-primary">
+          <Link to="/plants/new" className="bg-primary-gradient inline-flex min-h-11 items-center rounded-full px-4 font-label text-sm font-bold text-on-primary">
             {t('plants.list.addFirst')}
           </Link>
         }
@@ -75,13 +75,13 @@ function PlantCard({ plant }: { plant: Plant }) {
   return (
     <Link
       to={`/plants/${plant.id}`}
-      className="flex items-center gap-4 rounded-xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container"
+      className="flex items-center gap-3 rounded-xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container"
     >
-      <span className="pebble-large flex h-16 w-16 shrink-0 items-center justify-center bg-primary-gradient text-on-primary">
+      <span className="pebble-large flex h-12 w-12 shrink-0 items-center justify-center bg-primary-gradient text-on-primary">
         <Icon name={plant.record_kind === 'TREE' ? 'park' : plant.record_kind === 'FLOWER' ? 'local_florist' : 'grass'} filled />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-headline text-xl text-primary">{plant.name}</span>
+        <span className="block truncate font-headline text-lg text-primary">{plant.name}</span>
         <span className="block truncate font-body text-sm text-on-surface-variant">
           {[plant.species, plant.variety].filter(Boolean).join(' · ')}
         </span>

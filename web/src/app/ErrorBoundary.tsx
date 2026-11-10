@@ -21,12 +21,12 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
   render() {
     if (!this.state.failed) return this.props.children;
     return (
-      <div role="alert" className="mx-auto flex min-h-dvh max-w-[480px] flex-col items-center justify-center gap-6 bg-surface px-8 text-center">
-        <h1 className="font-headline text-3xl text-primary">{i18n.t('errors.generic')}</h1>
+      <div role="alert" className="mx-auto flex min-h-dvh max-w-[480px] flex-col items-center justify-center gap-4 bg-surface px-5 text-center">
+        <h1 className="font-headline text-2xl text-primary">{i18n.t('errors.generic')}</h1>
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="bg-primary-gradient min-h-11 rounded-full px-6 font-label text-sm font-bold text-on-primary"
+          className="bg-primary-gradient min-h-11 rounded-full px-4 font-label text-sm font-bold text-on-primary"
         >
           {i18n.t('app.reload')}
         </button>

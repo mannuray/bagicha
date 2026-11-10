@@ -21,7 +21,7 @@ export function LanguageScreen() {
 
   return (
     <OnboardingLayout step={1} icon="translate" title={t('onboarding.language.title')} subtitle={t('onboarding.language.subtitle')}>
-      <div className="mb-6 space-y-3">
+      <div className="mb-3 space-y-3">
         {LANGUAGES.map((l) => (
           <button
             key={l.code}
@@ -29,12 +29,12 @@ export function LanguageScreen() {
             aria-pressed={lang === l.code}
             onClick={() => setLang(l.code)}
             className={cx(
-              'flex min-h-14 w-full items-center justify-between rounded-xl px-6 py-4 text-left transition-colors',
+              'flex min-h-12 w-full items-center justify-between rounded-xl px-4 py-3 text-left transition-colors',
               lang === l.code ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface',
             )}
           >
             <span>
-              <span className="block font-headline text-xl">{l.native}</span>
+              <span className="block font-headline text-lg">{l.native}</span>
               {l.native !== l.english && <span className="font-body text-sm opacity-80">{l.english}</span>}
             </span>
             {lang === l.code && <Icon name="check_circle" filled />}
@@ -42,7 +42,7 @@ export function LanguageScreen() {
         ))}
       </div>
       {lang !== 'en' && (
-        <p className="mb-6 rounded-xl bg-secondary-fixed px-4 py-3 font-body text-sm text-on-secondary-fixed">
+        <p className="mb-3 rounded-xl bg-secondary-fixed px-4 py-3 font-body text-sm text-on-secondary-fixed">
           {t('onboarding.language.englishForNow')}
         </p>
       )}

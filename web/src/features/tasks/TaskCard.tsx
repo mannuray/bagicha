@@ -34,8 +34,8 @@ export function TaskCard({
         task.priority === 'HIGH' && 'shadow-[inset_4px_0_0_var(--color-secondary)]',
       )}
     >
-      <div className="flex items-start gap-4">
-        <span className="pebble-small mt-1 h-8 w-8 shrink-0 bg-surface-container-lowest" aria-hidden />
+      <div className="flex items-start gap-3">
+        <span className="pebble-small mt-0.5 h-6 w-6 shrink-0 bg-surface-container-lowest" aria-hidden />
         <div className="min-w-0 flex-1">
           <p className="font-body text-base font-medium text-on-surface">{task.title}</p>
           <p className="font-body text-sm text-outline">
@@ -49,7 +49,7 @@ export function TaskCard({
           {messageFor(update.error)}
         </p>
       )}
-      <div className="mt-3 flex justify-end gap-2">
+      <div className="mt-2 flex justify-end gap-1">
         <Button variant="tertiary" disabled={update.isPending} onClick={() => act('SKIPPED')}>
           {t('tasks.skip')}
         </Button>

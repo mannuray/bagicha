@@ -51,6 +51,13 @@ describe('dashboard', () => {
     expect(screen.getAllByText(/^this week$/i)).toHaveLength(1);
   });
 
+  it('shows the Stitch orchard photo behind the greeting', async () => {
+    baseHandlers();
+    const { container } = renderWithApp(<DashboardScreen />);
+    await screen.findByRole('heading', { name: /asha/i });
+    expect(container.querySelector('header img[src*="dashboard-orchard"]')).not.toBeNull();
+  });
+
   it('asks for this season’s tasks once per plant per session, across remounts', async () => {
     const calls = baseHandlers({ plants: [plantRecord(), plantRecord({ id: 'p2', name: 'Nimbu' })] });
     const first = renderWithApp(<DashboardScreen />);
@@ -74,6 +81,13 @@ describe('dashboard', () => {
     renderWithApp(<DashboardScreen />);
     expect(screen.queryByText(/nothing due this week/i)).not.toBeInTheDocument();
     expect(await screen.findByText(/nothing due this week/i)).toBeInTheDocument();
+  });
+
+  it('an empty garden shows "nothing due" instead of spinning', async () => {
+    baseHandlers({ tasks: [], plants: [] });
+    renderWithApp(<DashboardScreen />);
+    const week = await screen.findByRole('region', { name: /this week/i });
+    expect(await within(week).findByText(/nothing due this week/i)).toBeInTheDocument();
   });
 
   it('a tasks error offers retry while the guide still shows', async () => {

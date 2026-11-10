@@ -52,11 +52,11 @@ export function ScanScreen() {
 
   return (
     <Screen nav>
-      <header className="px-6 pb-6 pt-10">
+      <header className="px-4 pb-4 pt-6">
         <p className="font-label text-xs font-bold uppercase tracking-widest text-secondary">{t('scan.kicker')}</p>
-        <h1 className="font-headline text-4xl text-primary">{t('scan.title')}</h1>
+        <h1 className="font-headline text-2xl text-primary">{t('scan.title')}</h1>
       </header>
-      <form onSubmit={(e) => void submit(e)} className="space-y-6 px-6" noValidate>
+      <form onSubmit={(e) => void submit(e)} className="space-y-4 px-4" noValidate>
         <div className="grid grid-cols-2 gap-3">
           {(['diagnose', 'identify'] as const).map((m) => (
             <button
@@ -65,7 +65,7 @@ export function ScanScreen() {
               aria-pressed={mode === m}
               onClick={() => setMode(m)}
               className={cx(
-                'flex min-h-24 flex-col items-center justify-center gap-2 rounded-xl p-4 text-center transition-colors',
+                'flex min-h-20 flex-col items-center justify-center gap-2 rounded-xl p-4 text-center transition-colors',
                 mode === m ? 'bg-primary-gradient text-on-primary' : 'bg-surface-container-low text-primary',
               )}
             >
@@ -76,8 +76,8 @@ export function ScanScreen() {
         </div>
 
         {mode === 'diagnose' && (
-          <div className="space-y-4">
-            <div className="flex flex-col gap-2">
+          <div className="space-y-3">
+            <div className="flex flex-col gap-1.5">
               <label htmlFor="scan-tree" className="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                 {t('scan.whichTree')}
               </label>
@@ -88,7 +88,7 @@ export function ScanScreen() {
                   setPlantId(e.target.value);
                   setNeedTree(false);
                 }}
-                className="ghost-border min-h-12 rounded-lg bg-surface-container px-4 font-body text-base text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="ghost-border min-h-11 rounded-lg bg-surface-container px-3.5 font-body text-base text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
                 <option value="">{t('scan.chooseTree')}</option>
                 {plants.data?.map((p) => (
@@ -104,8 +104,8 @@ export function ScanScreen() {
           </div>
         )}
 
-        <label htmlFor="scan-photo" className="pebble-large flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-3 bg-surface-container-low text-primary">
-          <Icon name="photo_camera" filled className="text-5xl" />
+        <label htmlFor="scan-photo" className="pebble-large flex h-40 w-full cursor-pointer flex-col items-center justify-center gap-3 bg-surface-container-low text-primary">
+          <Icon name="photo_camera" filled className="text-3xl" />
           <span className="font-label text-sm font-bold">{photo ? photo.name : t('scan.takePhoto')}</span>
         </label>
         <input id="scan-photo" type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />

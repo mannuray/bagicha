@@ -4,11 +4,14 @@ import { useApi } from '../../lib/api';
 import { useSession } from './session';
 import { verifyResponseSchema } from './schemas';
 
+/** `dev_otp` comes back only from a local backend with AUTH_EXPOSE_OTP=true (never production). */
+const requestOtpSchema = z.object({ message: z.string(), dev_otp: z.string().optional() });
+
 export function useRequestOtp() {
   const api = useApi();
   return useMutation({
     mutationFn: (phone: string) =>
-      api.send('POST', '/auth/request-otp', { phone_number: phone }, z.string()),
+      api.send('POST', '/auth/request-otp', { phone_number: phone }, requestOtpSchema),
   });
 }
 

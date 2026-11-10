@@ -21,12 +21,12 @@ export function IdentifyResultScreen() {
       {result && (
         <div className="space-y-4">
           <div className="text-center">
-            <h2 className="font-headline text-4xl text-primary">{result.common_name ?? t('scan.unknownPlant')}</h2>
+            <h2 className="font-headline text-2xl text-primary">{result.common_name ?? t('scan.unknownPlant')}</h2>
             {result.scientific_name && <p className="font-body italic text-on-surface-variant">{result.scientific_name}</p>}
           </div>
-          {result.description && <Surface className="p-5 font-body text-sm text-on-surface">{result.description}</Surface>}
+          {result.description && <Surface className="p-4 font-body text-sm text-on-surface">{result.description}</Surface>}
           {care && (
-            <Surface className="space-y-1 p-5 font-body text-sm text-on-surface">
+            <Surface className="space-y-1 p-4 font-body text-sm text-on-surface">
               {typeof care === 'string'
                 ? care
                 : Object.entries(care).map(([k, v]) => (

@@ -42,7 +42,7 @@ export function LogMomentScreen() {
   return (
     <Screen>
       <TopBar title={t('journal.title')} />
-      <main className="px-6 pb-16 pt-6">
+      <main className="px-4 pb-10 pt-4">
         {plant.isError ? (
           isPlantMissing(plant.error) ? <NotInGarden /> : <ErrorState error={plant.error} onRetry={() => void plant.refetch()} />
         ) : plant.data ? (
@@ -94,8 +94,8 @@ function MomentForm({ plantId, plantName }: { plantId: string; plantName: string
   };
 
   return (
-    <form onSubmit={(e) => void submit(e)} className="space-y-6" noValidate>
-      <p className="font-headline text-2xl text-primary">{t('journal.forPlant', { name: plantName })}</p>
+    <form onSubmit={(e) => void submit(e)} className="space-y-4" noValidate>
+      <p className="font-headline text-xl text-primary">{t('journal.forPlant', { name: plantName })}</p>
       <fieldset className="space-y-2">
         <legend className="mb-2 font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('journal.what')}</legend>
         <div className="flex flex-wrap gap-2">
@@ -157,7 +157,7 @@ function MomentForm({ plantId, plantName }: { plantId: string; plantName: string
       <TextField label={t('journal.when')} type="date" value={draft.date ?? ''} onChange={(e) => set('date', e.target.value)} hint={t('journal.whenHint')} />
 
       <div>
-        <label htmlFor="moment-photo" className="flex min-h-14 cursor-pointer items-center justify-center gap-3 rounded-xl bg-surface-container-low px-4 py-4 font-label text-sm font-bold text-primary">
+        <label htmlFor="moment-photo" className="flex min-h-12 cursor-pointer items-center justify-center gap-3 rounded-xl bg-surface-container-low px-4 py-3 font-label text-sm font-bold text-primary">
           <Icon name="add_a_photo" filled />
           {photo ? t('journal.photoChosen', { name: photo.name }) : t('journal.addPhoto')}
         </label>

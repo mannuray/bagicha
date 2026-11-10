@@ -42,7 +42,7 @@ export function RegionScreen({ onDone }: { onDone?: () => void }) {
 
   return (
     <OnboardingLayout step={2} icon="location_on" title={t('onboarding.region.title')} subtitle={t('onboarding.region.subtitle')}>
-      <fieldset className="mb-6 space-y-3">
+      <fieldset className="mb-3 space-y-3">
         <legend className="mb-3 font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">
           {t('onboarding.region.pick')}
         </legend>
@@ -53,7 +53,7 @@ export function RegionScreen({ onDone }: { onDone?: () => void }) {
             aria-pressed={region === r.id}
             onClick={() => setRegion(r.id)}
             className={cx(
-              'flex min-h-14 w-full flex-col items-start rounded-xl px-5 py-3 text-left transition-colors',
+              'flex min-h-12 w-full flex-col items-start rounded-xl px-5 py-3 text-left transition-colors',
               region === r.id ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface',
             )}
           >
@@ -69,7 +69,7 @@ export function RegionScreen({ onDone }: { onDone?: () => void }) {
         autoComplete="address-level2"
         className="mb-4"
       />
-      <div className="mb-8 flex flex-col items-center gap-2">
+      <div className="mb-4 flex flex-col items-center gap-2">
         <Button variant="tertiary" busy={geo === 'locating'} onClick={() => void locate()}>
           <Icon name="my_location" />
           {t('onboarding.region.useLocation')}

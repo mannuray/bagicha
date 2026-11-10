@@ -14,7 +14,7 @@ export function Screen({
 }) {
   return (
     <div className="min-h-dvh bg-surface">
-      <div className={cx('relative mx-auto min-h-dvh w-full max-w-[480px]', nav && 'pb-32', className)}>
+      <div className={cx('relative mx-auto min-h-dvh w-full max-w-[480px]', nav && 'pb-24', className)}>
         {children}
       </div>
       {nav && <BottomNav />}

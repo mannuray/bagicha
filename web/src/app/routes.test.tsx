@@ -29,7 +29,7 @@ describe('routes', () => {
   it.each([
     ['/', /good (morning|afternoon|evening)/i],
     ['/plants', /my plants/i],
-    ['/plants/new', /add a tree/i],
+    ['/plants/new', /start a legacy/i],
     ['/tasks', /daily path/i],
     ['/scan', /^scan$/i],
     ['/profile', /^profile$/i],

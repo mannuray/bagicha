@@ -23,7 +23,8 @@ export function useSessionMaterialize(plantIds: string[] | undefined): Materiali
   const api = useApi();
   const client = useQueryClient();
   const { materialized } = useSessionStore();
-  const key = plantIds?.join(',') ?? '';
+  // "Not loaded" and "no plants" must differ, or an empty garden never settles.
+  const key = plantIds === undefined ? 'loading' : `[${plantIds.join(',')}]`;
   const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState<{ key: string; error: unknown } | null>(null);
   const runKey = `${key}#${attempt}`;

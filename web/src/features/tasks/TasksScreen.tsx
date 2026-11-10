@@ -75,7 +75,7 @@ function Frame({ title, children }: { title: string; children: (onError: (err: u
   return (
     <Screen>
       <TopBar title={title} />
-      <main className="px-6 pb-16 pt-6">
+      <main className="px-4 pb-10 pt-4">
         {problem !== null && (
           <p role="alert" className="mb-4 rounded-xl bg-error-container px-4 py-3 font-body text-sm text-on-error-container">
             {messageFor(problem)}

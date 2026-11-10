@@ -33,7 +33,7 @@ export function Button({
       disabled={disabled || busy}
       aria-busy={busy || undefined}
       className={cx(
-        'inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 py-3',
+        'inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 py-2',
         'font-label text-sm font-bold tracking-wide transition-transform duration-200',
         'enabled:active:scale-95 disabled:cursor-not-allowed disabled:opacity-60',
         VARIANTS[variant],

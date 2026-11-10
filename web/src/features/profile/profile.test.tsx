@@ -71,9 +71,9 @@ describe('onboarding', () => {
     await userEvent.type(screen.getByLabelText(/district/i), 'Patna');
     await userEvent.click(screen.getByRole('button', { name: /continue/i }));
 
-    await screen.findByRole('heading', { name: /what grows/i });
+    await screen.findByRole('heading', { name: /green blueprint/i });
     await userEvent.click(screen.getByRole('button', { name: /trees/i }));
-    await userEvent.click(screen.getByRole('button', { name: /finish/i }));
+    await userEvent.click(screen.getByRole('button', { name: /start gardening/i }));
 
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/'));
     expect(bodies).toEqual([
@@ -136,9 +136,27 @@ describe('onboarding', () => {
     expect(bodies[0]).toMatchObject({ latitude: 25.6, longitude: 85.1 });
   });
 
+  it('marks each chosen focus as selected', async () => {
+    renderWithApp(<Onboarding />, { route: '/onboarding/garden', user: incomplete });
+    const trees = screen.getByRole('button', { name: /fruit trees/i });
+    expect(trees).toHaveAttribute('aria-pressed', 'false');
+    expect(trees).toHaveTextContent(/orchard care/i);
+    await userEvent.click(trees);
+    expect(trees).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: /start gardening/i })).toBeEnabled();
+  });
+
+  it('shows the Stitch photos: the garden header and one per choice', async () => {
+    const { container } = renderWithApp(<Onboarding />, { route: '/onboarding/garden', user: incomplete });
+    const srcs = [...container.querySelectorAll('img')].map((i) => i.getAttribute('src') ?? '');
+    for (const name of ['garden-hero', 'garden-trees', 'garden-veggies', 'garden-flowers']) {
+      expect(srcs.some((s) => s.includes(name))).toBe(true);
+    }
+  });
+
   it('needs at least one garden type', async () => {
     renderWithApp(<Onboarding />, { route: '/onboarding/garden', user: incomplete });
-    expect(screen.getByRole('button', { name: /finish/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /start gardening/i })).toBeDisabled();
   });
 });
 
@@ -150,6 +168,20 @@ describe('profile', () => {
     await userEvent.click(screen.getByRole('button', { name: /sign out/i }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/login'));
     expect(session.get().user).toBeNull();
+  });
+
+  it('shows the status card and settings rows from real profile data', async () => {
+    renderWithApp(<Onboarding />, { route: '/profile' });
+    expect(screen.getByText('Seedling')).toBeInTheDocument();
+    expect(screen.getAllByText(/^free$/i)).toHaveLength(2); // plan card + premium row
+    expect(screen.getByRole('heading', { name: /journal settings/i })).toBeInTheDocument();
+    expect(screen.getByText('Patna')).toBeInTheDocument();
+  });
+
+  it('opens the edit form from a settings row', async () => {
+    renderWithApp(<Onboarding />, { route: '/profile' });
+    await userEvent.click(screen.getByRole('button', { name: /language/i }));
+    expect(screen.getByLabelText(/^district/i)).toHaveValue('Patna');
   });
 
   it('will not save a blank district from the profile (it would send the user back to onboarding)', async () => {

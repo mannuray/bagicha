@@ -52,13 +52,15 @@
       "submit": "Send code"
     },
     "otp": {
-      "bar": "Verification",
-      "title": "Enter Verification Code",
-      "subtitle": "We've sent a 6-digit code to {{phone}}.",
+      "bar": "Verify Your Number",
+      "title": "Enter the Code",
+      "subtitle": "We've sent a 6-digit code to",
       "label": "Verification code",
       "submit": "Verify & continue",
       "resend": "Resend code",
-      "newCode": "Get a new code"
+      "noCode": "Didn't receive the code?",
+      "newCode": "Get a new code",
+      "testCode": "Test code: {{code}}"
     }
   },
   "onboarding": {
@@ -78,13 +80,18 @@
       "locationUnavailable": "We couldn't get your location — that's fine, your region is enough."
     },
     "garden": {
-      "title": "What Grows in Your Garden?",
-      "subtitle": "Choose everything you tend. You can change this later.",
-      "finish": "Finish",
+      "title": "Your Green Blueprint",
+      "subtitle": "Choose everything you tend, so your seasonal care fits. You can change this later.",
+      "finish": "Start Gardening",
       "types": {
         "trees": "Fruit trees",
-        "veggies": "Vegetables",
+        "veggies": "Seasonal vegetables",
         "flowers": "Flowers"
+      },
+      "hints": {
+        "trees": "Orchard care",
+        "veggies": "Harvest cycles",
+        "flowers": "Pollinator support"
       }
     }
   },
@@ -128,7 +135,18 @@
     "name": "Name",
     "edit": "Edit details",
     "needDistrict": "Enter your district so we can time your care.",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "status": "Status",
+    "plan": "Plan",
+    "premium": "Premium",
+    "free": "Free",
+    "active": "Active",
+    "premiumRow": "Bagicha Premium",
+    "groups": {
+      "journal": "Journal Settings",
+      "subscriptions": "Orchard Subscriptions",
+      "sanctuary": "Sanctuary Logic"
+    }
   },
   "plants": {
     "list": {
@@ -157,22 +175,25 @@
       "EXACT_DATE": "Exact date"
     },
     "form": {
-      "newTitle": "Add a Tree",
+      "newTitle": "Start a Legacy",
+      "newSubtitle": "Document your new planting to begin its history.",
+      "editSubtitle": "Update what you know about this tree.",
       "editTitle": "Edit Tree",
-      "name": "Name",
+      "name": "Tree name",
       "namePlaceholder": "e.g. Grandfather's mango",
       "nameRequired": "Give your tree a name.",
-      "species": "What is it?",
+      "species": "Species",
       "speciesPlaceholder": "Search mango, lemon, litchi…",
       "speciesRequired": "Tell us what kind of plant it is.",
       "variety": "Variety (optional)",
       "kind": "Kind",
-      "whenPlanted": "When was it planted?",
+      "whenPlanted": "Planting date",
       "yearPlanted": "Year planted",
       "monthPlanted": "Month planted",
       "datePlanted": "Date planted",
       "dateHint": "Leave blank if you're not sure.",
-      "save": "Save tree"
+      "save": "Add to Sanctuary",
+      "saveEdit": "Save changes"
     },
     "backToPlants": "Back to My Plants"
   },

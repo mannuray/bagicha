@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
+import { systemClock } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
-import { Button, Chip, Icon, Screen, Surface, TextField } from '../../ui';
+import { Button, Chip, Icon, Screen, TextField } from '../../ui';
 import { useSession, type RegionCluster } from '../auth';
 import { useUpdateProfile } from './api';
 import { REGIONS } from './regions';
@@ -35,36 +36,72 @@ export function ProfileScreen() {
     );
   };
 
+  const premium = user.premium_expires_at !== null && new Date(user.premium_expires_at) > systemClock.now();
+  const open = () => setEditing(true);
+
   return (
     <Screen nav>
-      <header className="px-6 pb-6 pt-10">
-        <p className="font-label text-xs font-bold uppercase tracking-widest text-secondary">{t('profile.kicker')}</p>
-        <h1 className="font-headline text-4xl text-primary">{t('profile.title')}</h1>
+      <header className="px-4 pb-2 pt-6">
+        <h1 className="font-headline text-xl font-bold text-primary">{t('profile.title')}</h1>
       </header>
-      <main className="space-y-6 px-6">
-        <Surface className="flex items-center gap-5 p-6">
-          <div className="pebble-large flex h-16 w-16 items-center justify-center bg-primary-gradient text-on-primary">
-            <Icon name="person" filled className="text-3xl" />
+      <main className="space-y-6 px-4">
+        <section className="flex flex-col items-center space-y-3 text-center">
+          <div className="relative">
+            <div className="pebble-large flex h-24 w-24 items-center justify-center bg-primary-gradient text-on-primary shadow-xl">
+              <Icon name="person" filled className="text-4xl" />
+            </div>
+            <button
+              type="button"
+              onClick={open}
+              aria-label={t('profile.edit')}
+              className="absolute -bottom-1 -right-1 flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-on-secondary shadow-lg"
+            >
+              <Icon name="edit" className="text-lg" />
+            </button>
           </div>
-          <div>
-            <p className="font-headline text-2xl text-primary">{user.name ?? t('profile.noName')}</p>
-            <p className="font-body text-sm text-on-surface-variant">{user.phone_number}</p>
-            <p className="mt-1 font-label text-[11px] font-bold uppercase tracking-widest text-secondary">{user.badge_level}</p>
+          <div className="space-y-0.5">
+            <p className="font-headline text-2xl font-bold text-primary">{user.name ?? t('profile.noName')}</p>
+            <p className="font-label text-xs font-medium tracking-wide text-on-surface-variant">{user.phone_number}</p>
           </div>
-        </Surface>
+          <div className="relative flex w-full items-center justify-between overflow-hidden rounded-xl border border-secondary/10 bg-secondary-container/20 px-5 py-4">
+            <div className="absolute left-0 top-0 h-full w-1 bg-secondary" aria-hidden />
+            <div className="text-left">
+              <p className="mb-0.5 font-label text-[10px] font-extrabold uppercase tracking-widest text-on-secondary-container">{t('profile.status')}</p>
+              <p className="font-headline text-lg font-bold leading-tight text-on-secondary-fixed-variant">{user.badge_level}</p>
+            </div>
+            <div className="text-right">
+              <p className="mb-0.5 font-label text-[10px] font-extrabold uppercase tracking-widest text-on-secondary-container">{t('profile.plan')}</p>
+              <p className="flex items-center justify-end gap-1 font-headline text-lg font-bold text-secondary">
+                {premium ? t('profile.premium') : t('profile.free')}
+                <Icon name="eco" filled className="text-sm" />
+              </p>
+            </div>
+          </div>
+        </section>
 
         {!editing ? (
-          <Surface className="space-y-4 p-6">
-            <Row label={t('profile.region')} value={regionLabel ? t(regionLabel.labelKey) : '—'} />
-            <Row label={t('profile.district')} value={user.district ?? '—'} />
-            <Row label={t('profile.language')} value={user.language_pref === 'hi' ? 'हिन्दी' : 'English'} />
-            <Button variant="tertiary" onClick={() => setEditing(true)}>
-              <Icon name="edit" />
-              {t('profile.edit')}
-            </Button>
-          </Surface>
+          <div className="space-y-4">
+            <Group title={t('profile.groups.journal')}>
+              <Row icon="language" label={t('profile.language')} value={user.language_pref === 'hi' ? 'हिन्दी' : 'English'} onClick={open} />
+            </Group>
+            <Group title={t('profile.groups.subscriptions')}>
+              <div className="flex min-h-11 items-center justify-between px-3 py-3">
+                <span className="flex items-center gap-3">
+                  <Icon name="star" className="text-secondary" />
+                  <span className="font-body text-sm font-bold text-on-secondary-fixed-variant">{t('profile.premiumRow')}</span>
+                </span>
+                <span className="rounded-full bg-secondary/10 px-2 py-1 font-label text-[10px] font-black uppercase tracking-widest text-secondary">
+                  {premium ? t('profile.active') : t('profile.free')}
+                </span>
+              </div>
+            </Group>
+            <Group title={t('profile.groups.sanctuary')}>
+              <Row icon="public" label={t('profile.region')} value={regionLabel ? t(regionLabel.labelKey) : '—'} onClick={open} />
+              <Row icon="map" label={t('profile.district')} value={user.district ?? '—'} onClick={open} />
+            </Group>
+          </div>
         ) : (
-          <form onSubmit={save} className="space-y-5 rounded-xl bg-surface-container-low p-6">
+          <form onSubmit={save} className="space-y-4 rounded-xl bg-surface-container-low p-4">
             <TextField label={t('profile.name')} value={name} onChange={(e) => setName(e.target.value)} />
             <div className="flex flex-wrap gap-2">
               {REGIONS.map((r) => (
@@ -102,27 +139,47 @@ export function ProfileScreen() {
           </form>
         )}
 
-        <Button
-          variant="quiet"
-          block
-          onClick={() => {
-            signOut();
-            navigate('/login', { replace: true });
-          }}
-        >
-          <Icon name="logout" />
-          {t('profile.signOut')}
-        </Button>
+        <div className="flex justify-center pt-2">
+          <button
+            type="button"
+            onClick={() => {
+              signOut();
+              navigate('/login', { replace: true });
+            }}
+            className="min-h-11 px-6 font-label text-[11px] font-extrabold uppercase tracking-[0.2em] text-on-surface-variant transition-colors hover:text-secondary"
+          >
+            {t('profile.signOut')}
+          </button>
+        </div>
       </main>
     </Screen>
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-4">
-      <span className="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">{label}</span>
-      <span className="font-body text-base text-on-surface">{value}</span>
-    </div>
+    <section className="space-y-0.5 rounded-xl bg-surface-container-low p-1.5">
+      <h2 className="px-3 py-2 font-headline text-base font-bold text-primary/80">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function Row({ icon, label, value, onClick }: { icon: string; label: string; value: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex min-h-11 w-full items-center justify-between rounded-lg px-3 py-3 transition-colors hover:bg-surface-container"
+    >
+      <span className="flex items-center gap-3">
+        <Icon name={icon} className="text-primary/60 group-hover:text-primary" />
+        <span className="font-body text-sm font-bold tracking-tight text-on-surface">{label}</span>
+      </span>
+      <span className="flex items-center gap-1">
+        <span className="font-body text-xs font-medium text-on-surface-variant">{value}</span>
+        <Icon name="chevron_right" className="text-lg text-outline-variant" />
+      </span>
+    </button>
   );
 }

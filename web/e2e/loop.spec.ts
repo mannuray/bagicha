@@ -29,18 +29,18 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await page.getByLabel(/district/i).fill('Patna');
   await page.getByRole('button', { name: /continue/i }).click();
   await page.getByRole('button', { name: /fruit trees/i }).click();
-  await page.getByRole('button', { name: /finish/i }).click();
+  await page.getByRole('button', { name: /start gardening/i }).click();
   await expect(page.getByRole('heading', { name: /good (morning|afternoon|evening)/i })).toBeVisible();
   await checkScreen(page, '04-dashboard-empty');
 
   // Add a tree via the catalogue.
   await page.getByRole('link', { name: /add a tree/i }).click();
-  await page.getByLabel(/^name/i).fill('Aam');
-  await page.getByLabel(/what is it/i).fill('mango');
+  await page.getByLabel(/tree name/i).fill('Aam');
+  await page.getByLabel(/^species/i).fill('mango');
   await page.getByRole('option').first().click();
   await page.getByLabel(/year planted/i).fill('2015');
   await checkScreen(page, '05-add-tree');
-  await page.getByRole('button', { name: /save tree/i }).click();
+  await page.getByRole('button', { name: /add to sanctuary/i }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Aam' })).toBeVisible();
 
   // Log a moment with a photo; it shows on the timeline with its image.

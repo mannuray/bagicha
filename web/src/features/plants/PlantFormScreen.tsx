@@ -1,8 +1,9 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
-import { Button, Chip, ErrorState, LoadingState, NotInGarden, Screen, TextField, TopBar, isPlantMissing } from '../../ui';
+import { Button, cx, ErrorState, Icon, LoadingState, NotInGarden, Screen, TextField, TopBar, isPlantMissing } from '../../ui';
+import saplingPhoto from '../../assets/stitch/add-tree-sapling.jpg';
 import { CataloguePicker } from './CataloguePicker';
 import { useCreatePlant, usePlant, useResolvePlant, useUpdatePlant } from './api';
 import type { PlantDetail, PlantInput } from './schemas';
@@ -61,7 +62,7 @@ export function PlantFormScreen() {
     return (
       <Screen>
         <TopBar />
-        <div className="p-6">
+        <div className="p-4">
           {isPlantMissing(existing.error) ? (
             <NotInGarden />
           ) : (
@@ -119,53 +120,88 @@ function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState 
 
   return (
     <Screen>
-      <TopBar title={plantId ? t('plants.form.editTitle') : t('plants.form.newTitle')} />
-      <form onSubmit={submit} className="space-y-6 px-6 pb-16 pt-6" noValidate>
-        <TextField label={t('plants.form.name')} value={form.name} error={errors.name} onChange={(e) => set('name', e.target.value)} placeholder={t('plants.form.namePlaceholder')} />
-        <CataloguePicker
-          value={form.species}
-          error={errors.species}
-          onChange={(v) => set('species', v)}
-          onPick={(item) => setForm((f) => ({ ...f, species: item.species, variety: item.variety ?? f.variety }))}
-        />
-        <TextField label={t('plants.form.variety')} value={form.variety} onChange={(e) => set('variety', e.target.value)} />
-        <div className="space-y-2">
-          <p className="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('plants.form.kind')}</p>
-          <div className="flex flex-wrap gap-2">
-            {KINDS.map((k) => (
-              <Chip key={k} selected={form.record_kind === k} onClick={() => set('record_kind', k)}>
-                {t(`plants.kind.${k}`)}
-              </Chip>
-            ))}
-          </div>
+      <header className="relative flex h-48 items-center justify-center overflow-hidden bg-primary-container pb-6">
+        <img src={saplingPhoto} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/30 to-transparent" aria-hidden />
+        <div className="absolute left-0 top-0 z-10">
+          <TopBar />
         </div>
-        <div className="space-y-3">
-          <p className="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('plants.form.whenPlanted')}</p>
-          <div className="flex flex-wrap gap-2">
-            {(['YEAR', 'MONTH_YEAR', 'EXACT_DATE'] as const).map((p) => (
-              <Chip key={p} selected={form.precision === p} onClick={() => setForm((f) => ({ ...f, precision: p, date: '' }))}>
-                {t(`plants.precision.${p}`)}
-              </Chip>
-            ))}
+        <div className="relative flex h-24 w-24 flex-col items-center justify-center rounded-full border border-white/30 bg-white/20 shadow-xl backdrop-blur-xl">
+          <Icon name="spa" filled className="text-on-primary" />
+          <p className="font-headline text-lg italic text-on-primary">{t('app.name')}</p>
+        </div>
+      </header>
+      <main className="relative z-10 -mt-8 rounded-t-[32px] bg-surface px-4 pb-10 pt-6">
+        <h1 className="mb-1 font-headline text-2xl font-bold leading-tight text-primary">
+          {plantId ? t('plants.form.editTitle') : t('plants.form.newTitle')}
+        </h1>
+        <p className="mb-6 font-body text-base text-on-surface-variant">
+          {plantId ? t('plants.form.editSubtitle') : t('plants.form.newSubtitle')}
+        </p>
+        <form onSubmit={submit} className="space-y-5" noValidate>
+          <div className="space-y-2">
+            <p className="font-label text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">{t('plants.form.kind')}</p>
+            <div className="flex flex-wrap gap-2">
+              {KINDS.map((k) => (
+                <Pill key={k} selected={form.record_kind === k} onClick={() => set('record_kind', k)}>
+                  {t(`plants.kind.${k}`)}
+                </Pill>
+              ))}
+            </div>
           </div>
-          <TextField
-            label={t(dateLabel)}
-            type={form.precision === 'EXACT_DATE' ? 'date' : form.precision === 'MONTH_YEAR' ? 'month' : 'number'}
-            inputMode={form.precision === 'YEAR' ? 'numeric' : undefined}
-            value={form.date}
-            onChange={(e) => set('date', e.target.value)}
-            hint={t('plants.form.dateHint')}
+          <TextField label={t('plants.form.name')} value={form.name} error={errors.name} onChange={(e) => set('name', e.target.value)} placeholder={t('plants.form.namePlaceholder')} />
+          <CataloguePicker
+            value={form.species}
+            error={errors.species}
+            onChange={(v) => set('species', v)}
+            onPick={(item) => setForm((f) => ({ ...f, species: item.species, variety: item.variety ?? f.variety }))}
           />
-        </div>
-        {mutation.isError && (
-          <p role="alert" className="text-center font-body text-sm text-error">
-            {messageFor(mutation.error)}
-          </p>
-        )}
-        <Button type="submit" block busy={mutation.isPending}>
-          {t('plants.form.save')}
-        </Button>
-      </form>
+          <TextField label={t('plants.form.variety')} value={form.variety} onChange={(e) => set('variety', e.target.value)} />
+          <div className="space-y-2">
+            <p className="font-label text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">{t('plants.form.whenPlanted')}</p>
+            <div className="flex flex-wrap gap-2">
+              {(['YEAR', 'MONTH_YEAR', 'EXACT_DATE'] as const).map((p) => (
+                <Pill key={p} selected={form.precision === p} onClick={() => setForm((f) => ({ ...f, precision: p, date: '' }))}>
+                  {t(`plants.precision.${p}`)}
+                </Pill>
+              ))}
+            </div>
+            <TextField
+              label={t(dateLabel)}
+              type={form.precision === 'EXACT_DATE' ? 'date' : form.precision === 'MONTH_YEAR' ? 'month' : 'number'}
+              inputMode={form.precision === 'YEAR' ? 'numeric' : undefined}
+              value={form.date}
+              onChange={(e) => set('date', e.target.value)}
+              hint={t('plants.form.dateHint')}
+            />
+          </div>
+          {mutation.isError && (
+            <p role="alert" className="text-center font-body text-sm text-error">
+              {messageFor(mutation.error)}
+            </p>
+          )}
+          <Button type="submit" block busy={mutation.isPending} className="py-3 text-sm uppercase tracking-[0.2em]">
+            {plantId ? t('plants.form.saveEdit') : t('plants.form.save')}
+          </Button>
+        </form>
+      </main>
     </Screen>
+  );
+}
+
+/** Stitch's uppercase choice pill. */
+function Pill({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={cx(
+        'min-h-11 rounded-full px-5 font-label text-xs font-bold uppercase tracking-wider transition-all duration-300',
+        selected ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-variant',
+      )}
+    >
+      {children}
+    </button>
   );
 }

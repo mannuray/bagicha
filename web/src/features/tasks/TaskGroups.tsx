@@ -27,7 +27,7 @@ export function TaskGroups({
         { key: 'later', items: groups.later },
       ];
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {sections
         .filter((s) => s.items.length > 0)
         .map((s) => (

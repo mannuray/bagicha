@@ -30,18 +30,18 @@ export function DiagnoseResultScreen() {
   return (
     <ResultFrame title={t('scan.diagnoseTitle')} previewUrl={scan.previewUrl} pending={diagnose.pending} error={diagnose.error} onRetry={diagnose.retry}>
       {result && (
-        <div className="space-y-5">
+        <div className="space-y-4">
           <div className="text-center">
             <p className="font-label text-xs font-bold uppercase tracking-widest text-secondary">
               {t('scan.severity', { level: t(`scan.levels.${result.diagnosis.severity}`, { defaultValue: result.diagnosis.severity }) })}
             </p>
-            <h2 className="font-headline text-4xl text-primary">
+            <h2 className="font-headline text-2xl text-primary">
               {t(`scan.issues.${result.diagnosis.primary_issue}`, { defaultValue: result.diagnosis.primary_issue })}
             </h2>
           </div>
-          <Surface className="p-5 font-body text-base text-on-surface">{result.diagnosis.reasoning_summary}</Surface>
+          <Surface className="p-4 font-body text-base text-on-surface">{result.diagnosis.reasoning_summary}</Surface>
           {result.diagnosis.recommended_actions.length > 0 && (
-            <Surface className="p-5">
+            <Surface className="p-4">
               <p className="mb-2 font-label text-xs font-bold uppercase tracking-widest text-secondary">{t('scan.whatToDo')}</p>
               <ul className="space-y-1 font-body text-sm">
                 {result.diagnosis.recommended_actions.map((a) => (

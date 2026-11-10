@@ -41,19 +41,71 @@ function AuthRoutes() {
 }
 
 describe('login', () => {
+  it('shows the Stitch mango-leaf photo behind the login header', () => {
+    const { container } = renderWithApp(<LoginScreen />, { route: '/login', user: null });
+    expect(container.querySelector('header img[src*="login-leaf"]')).not.toBeNull();
+  });
+
   it('sends +91 and the 10 digits, then asks for the code', async () => {
     let body: unknown;
     server.use(
       http.post(`${API}/auth/request-otp`, async ({ request }) => {
         body = await request.json();
-        return ok('OTP sent successfully');
+        return ok({ message: 'OTP sent successfully' });
       }),
     );
     renderWithApp(<AuthRoutes />, { route: '/login', user: null });
     await userEvent.type(screen.getByLabelText(/phone number/i), '9876543210');
     await userEvent.click(screen.getByRole('button', { name: /send code/i }));
-    expect(await screen.findByRole('heading', { name: /enter verification code/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /enter the code/i })).toBeInTheDocument();
     expect(body).toEqual({ phone_number: '+919876543210' });
+  });
+
+  it('shows the code on the verification page when the test backend sends it', async () => {
+    server.use(http.post(`${API}/auth/request-otp`, () => ok({ message: 'OTP sent successfully', dev_otp: '482913' })));
+    renderWithApp(<AuthRoutes />, { route: '/login', user: null });
+    await userEvent.type(screen.getByLabelText(/phone number/i), '9876543210');
+    await userEvent.click(screen.getByRole('button', { name: /send code/i }));
+    expect(await screen.findByText(/test code/i)).toHaveTextContent('482913');
+  });
+
+  it('shows the new code after a resend', async () => {
+    let n = 0;
+    server.use(
+      http.post(`${API}/auth/request-otp`, () => {
+        n += 1;
+        return ok({ message: 'OTP sent successfully', dev_otp: n === 1 ? '111111' : '222222' });
+      }),
+    );
+    renderWithApp(<AuthRoutes />, { route: '/login', user: null });
+    await userEvent.type(screen.getByLabelText(/phone number/i), '9876543210');
+    await userEvent.click(screen.getByRole('button', { name: /send code/i }));
+    expect(await screen.findByText(/test code/i)).toHaveTextContent('111111');
+    await userEvent.click(screen.getByRole('button', { name: /resend code/i }));
+    await waitFor(() => expect(screen.getByText(/test code/i)).toHaveTextContent('222222'));
+  });
+
+  it('shows each typed digit in its own box', async () => {
+    renderWithApp(<OtpScreen />, { route: { pathname: '/login/otp', state: { phone: '+919876543210' } } });
+    await userEvent.type(screen.getByLabelText(/verification code/i), '48');
+    const boxes = screen.getAllByTestId('otp-box');
+    expect(boxes).toHaveLength(6);
+    expect(boxes.map((b) => b.textContent)).toEqual(['4', '8', '', '', '', '']);
+    expect(screen.getByText('+91 9876543210')).toBeInTheDocument();
+  });
+
+  it('shows the Stitch garden photo above the code', async () => {
+    const { container } = renderWithApp(<OtpScreen />, { route: { pathname: '/login/otp', state: { phone: '+919876543210' } } });
+    expect(container.querySelector('img[src*="otp-olive"]')).not.toBeNull();
+  });
+
+  it('shows no test code when the backend does not send one', async () => {
+    server.use(http.post(`${API}/auth/request-otp`, () => ok({ message: 'OTP sent successfully' })));
+    renderWithApp(<AuthRoutes />, { route: '/login', user: null });
+    await userEvent.type(screen.getByLabelText(/phone number/i), '9876543210');
+    await userEvent.click(screen.getByRole('button', { name: /send code/i }));
+    await screen.findByRole('heading', { name: /enter the code/i });
+    expect(screen.queryByText(/test code/i)).not.toBeInTheDocument();
   });
 
   it('rejects a short number without calling the server', async () => {

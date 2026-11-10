@@ -13,7 +13,7 @@ export function TextField({ label, error, hint, className, id, ...rest }: TextFi
   const inputId = id ?? autoId;
   const describedBy = error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined;
   return (
-    <div className={cx('flex flex-col gap-2', className)}>
+    <div className={cx('flex flex-col gap-1.5', className)}>
       <label htmlFor={inputId} className="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">
         {label}
       </label>
@@ -22,7 +22,7 @@ export function TextField({ label, error, hint, className, id, ...rest }: TextFi
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         className={cx(
-          'ghost-border min-h-12 rounded-lg bg-surface-container px-4 py-3 font-body text-base text-on-surface',
+          'ghost-border min-h-11 rounded-lg bg-surface-container px-3.5 py-2.5 font-body text-base text-on-surface',
           'placeholder:text-outline focus:bg-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary/20',
           error && 'ring-2 ring-error/60',
         )}

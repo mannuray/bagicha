@@ -15,6 +15,7 @@ Prerequisites: Node 24, Docker, and the backend running (see `../backend`).
 docker compose up -d                        # postgres, redis, minio
 #    backend/.env needs JWT_SECRET, DATABASE_URL and WEB_ORIGINS=http://localhost:5173
 #    optional: AUTH_DEV_OTP_PHONE / AUTH_DEV_OTP_CODE for a fixed local login,
+#              AUTH_EXPOSE_OTP=true to show the OTP on the verification page,
 #              GEMINI_API_KEY + GEMINI_MODEL for scanning (or AI_PROVIDER=fake)
 npm run start:dev                           # http://localhost:3000
 
@@ -24,7 +25,7 @@ npm install
 npm run dev                                 # http://localhost:5173
 ```
 
-Without an SMS provider, the OTP for any phone is logged by the backend at debug level (`LOG_LEVEL=debug`) outside production.
+Without an SMS provider, the OTP for any phone is logged by the backend at debug level (`LOG_LEVEL=debug`) outside production. For easier testing, set `AUTH_EXPOSE_OTP=true` in `backend/.env`: the verification page then shows "Test code: ……". The backend refuses to start with it in production.
 
 ## Scripts
 
@@ -61,7 +62,7 @@ Each feature exposes an `index.ts`; siblings import only that. Device access sit
 - **Health badge is a label, not a percentage.** The backend has no health score. It shows `health_status`, or "Needs attention" after a MEDIUM/HIGH diagnosis in the last 30 days.
 - **Tree Biography has extra sections:** This Season (the region-aware seasonal pack that also creates the tasks), Upcoming Care, Cycles and a Season review link. The chosen Stitch "Detailed Record" screen had none of them, and the loop needs them.
 - **Location screen:** region cards + district + optional "Use my location", instead of Stitch's GPS-first button. This is the user's decision; there is no reverse geocoding, so location never leaves Bagicha.
-- **No stock photos.** Stitch's hero images are replaced by the forest gradient or the user's own latest photo, so there are no third-party image requests and the app works offline in a wrapper.
+- **Stitch photos are bundled, not hot-linked.** The login, dashboard, verification, garden-picker and add-tree photos live in `src/assets/stitch/` (shrunk to JPEG, about 450 KB in total), so there are no third-party image requests and the app works offline in a wrapper. Stitch's dashboard soil-moisture card is left out because there is no moisture data. Other screens still use the forest gradient, and a tree's page shows the user's own latest photo.
 - **No social-login buttons or Terms/Privacy links.** They have no backend yet.
 - Screens Stitch doesn't cover (scan results, season review, onboarding steps beyond location, profile edit) follow the design system: serif headlines, pebble cards, gradient buttons, no divider lines.
 - Hindi can be chosen and is saved; the interface stays English until translations land.

@@ -16,7 +16,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label={t('nav.label')}
-      className="glass-panel fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 rounded-t-[2.5rem] px-4 pb-6 pt-3 shadow-[0_-10px_40px_rgba(28,28,25,0.06)]"
+      className="glass-panel fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 rounded-t-[1.75rem] px-3 pb-3 pt-2 shadow-[0_-10px_40px_rgba(28,28,25,0.06)]"
     >
       <ul className="flex items-center justify-around">
         {TABS.map((tab) => (
@@ -26,15 +26,15 @@ export function BottomNav() {
               end={tab.end}
               className={({ isActive }) =>
                 cx(
-                  'flex min-h-11 flex-col items-center justify-center rounded-[2rem] px-5 py-2 transition-colors',
+                  'flex min-h-11 flex-col items-center justify-center rounded-[1.5rem] px-4 py-1 transition-colors',
                   isActive ? 'bg-primary-gradient text-on-primary shadow-lg' : 'text-primary/60',
                 )
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon name={tab.icon} filled={isActive} className="mb-1" />
-                  <span className="font-label text-[11px] font-semibold uppercase tracking-widest">{t(tab.labelKey)}</span>
+                  <Icon name={tab.icon} filled={isActive} className="text-[22px]" />
+                  <span className="font-label text-[10px] font-semibold uppercase tracking-widest">{t(tab.labelKey)}</span>
                 </>
               )}
             </NavLink>
