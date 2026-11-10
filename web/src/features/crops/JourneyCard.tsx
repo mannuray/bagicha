@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { Button, cx, LoadingState } from '../../ui';
 import { useAddJournalEntry } from '../journal';
-import type { PlantDetail } from '../plants';
-import { useCropCalendar } from './api';
+import { useAllCycles, type PlantDetail } from '../plants';
+import { useCropCalendar, usePlaces, useRemoveFromPlan, useRotation } from './api';
 import { StartSheet } from './StartSheet';
 
 type Step = 'planned' | 'seeds' | 'sown' | 'transplanted' | 'harvesting' | 'ended';
@@ -15,8 +15,17 @@ export function JourneyCard({ plant }: { plant: PlantDetail }) {
   const calendar = useCropCalendar();
   const log = useAddJournalEntry(plant.id);
   const [sheet, setSheet] = useState<'start' | 'transplant' | null>(null);
+  const cycles = useAllCycles(plant.id);
+  const places = usePlaces();
+  const remove = useRemoveFromPlan();
+  const navigate = useNavigate();
   const crop = calendar.data?.find((c) => c.id === plant.crop_id);
+  const open = cycles.data?.find((c) => c.started_at && !c.closed_at) ?? null;
+  const placeId = open?.place_id ?? null;
+  const rotation = useRotation(placeId, plant.crop_id);
   if (!crop) return calendar.isPending ? <LoadingState /> : null;
+  const place = places.data?.find((p) => p.id === placeId);
+  const neverSown = cycles.data !== undefined && cycles.data.length === 0;
 
   const nursery = crop.method === 'NURSERY_TRANSPLANT';
   const steps: Step[] = nursery ? ['planned', 'seeds', 'sown', 'transplanted', 'harvesting', 'ended'] : ['planned', 'seeds', 'sown', 'harvesting', 'ended'];
@@ -42,6 +51,16 @@ export function JourneyCard({ plant }: { plant: PlantDetail }) {
           </li>
         ))}
       </ol>
+      {place && (
+        <div className="space-y-1">
+          <p className="font-body text-sm text-on-surface">{t('crops.journey.growingIn', { place: place.name })}</p>
+          {rotation.data?.conflict && rotation.data.last && (
+            <p className="rounded-lg bg-secondary-container/25 px-3 py-2 font-body text-sm text-on-secondary-fixed-variant">
+              {t('crops.place.rotation', { crop: rotation.data.last.crop_name, season: rotation.data.last.season_label })}
+            </p>
+          )}
+        </div>
+      )}
       <p className="font-body text-xs text-on-surface-variant">
         {t('crops.journey.guide', { plants: crop.guide.plants_for_family_of_4, container: crop.guide.container, min: crop.guide.spacing_cm[0], max: crop.guide.spacing_cm[1] })}
       </p>
@@ -52,14 +71,23 @@ export function JourneyCard({ plant }: { plant: PlantDetail }) {
           {(stage === 'PLANNED' || stage === 'RESTING') && <Button onClick={() => setSheet('start')}>{t('crops.journey.start')}</Button>}
           {stage === 'NURSERY' && <Button onClick={() => setSheet('transplant')}>{t('crops.journey.transplant')}</Button>}
           {(stage === 'IN_GROUND' || stage === 'HARVESTING') && (
-            <>
-              <Link to={`/plants/${plant.id}/log`} className="bg-primary-gradient inline-flex min-h-11 items-center rounded-full px-5 font-label text-sm font-bold text-on-primary">
-                {t('crops.journey.harvest')}
-              </Link>
-              <Button variant="tertiary" busy={log.isPending} onClick={() => log.mutate({ type: 'SEASON_END' })}>
-                {t('crops.journey.end')}
-              </Button>
-            </>
+            <Link to={`/plants/${plant.id}/log`} className="bg-primary-gradient inline-flex min-h-11 items-center rounded-full px-5 font-label text-sm font-bold text-on-primary">
+              {t('crops.journey.harvest')}
+            </Link>
+          )}
+          {(stage === 'NURSERY' || stage === 'IN_GROUND' || stage === 'HARVESTING') && (
+            <Button variant="tertiary" busy={log.isPending} onClick={() => log.mutate({ type: 'SEASON_END' })}>
+              {t('crops.journey.end')}
+            </Button>
+          )}
+          {stage === 'PLANNED' && neverSown && (
+            <Button
+              variant="tertiary"
+              busy={remove.isPending}
+              onClick={() => remove.mutate(plant.id, { onSuccess: () => navigate('/plants', { replace: true }) })}
+            >
+              {t('crops.journey.remove')}
+            </Button>
           )}
         </div>
       )}

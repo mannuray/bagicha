@@ -553,7 +553,9 @@
       "start": "Start",
       "transplant": "Log transplant",
       "harvest": "Log a harvest",
-      "end": "End season"
+      "end": "End season",
+      "growingIn": "Growing in {{place}}",
+      "remove": "Remove from Want to grow"
     }
   }
 }

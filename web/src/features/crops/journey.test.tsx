@@ -97,6 +97,38 @@ describe('the crop page', () => {
     expect(screen.getAllByText(/spinach \(palak\)/i)).toHaveLength(1);
   });
 
+  it('a never-sown planned crop can be removed from Want to grow', async () => {
+    handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'PLANNED' });
+    let deleted = 0;
+    server.use(http.delete(`${API}/crops/plan/c1`, () => { deleted += 1; return new HttpResponse(null, { status: 204 }); }));
+    renderWithApp(routes, { route: '/plants/c1' });
+    const journey = await screen.findByRole('region', { name: /journey/i });
+    await userEvent.click(await within(journey).findByRole('button', { name: /remove from want to grow/i }));
+    await waitFor(() => expect(deleted).toBe(1));
+  });
+
+  it('shows where the crop is growing, with the rotation note', async () => {
+    handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'IN_GROUND' }, { conflict: true });
+    server.use(
+      http.get(`${API}/ledger/plants/c1/cycles`, ({ request }) =>
+        HttpResponse.json(pagedResponse(request, [cycleRecord({ id: 's1', started_at: '2026-10-10T06:00:00Z', closed_at: null, place_id: 'pl1' })])),
+      ),
+    );
+    renderWithApp(routes, { route: '/plants/c1' });
+    const journey = await screen.findByRole('region', { name: /journey/i });
+    expect(await within(journey).findByText(/growing in terrace bag/i)).toBeInTheDocument();
+    expect(await within(journey).findByText(/potato \(same family\) grew here/i)).toBeInTheDocument();
+    expect(within(journey).queryByRole('button', { name: /remove from want to grow/i })).not.toBeInTheDocument();
+  });
+
+  it('a failed nursery tray can be ended from the card', async () => {
+    const posts = handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'NURSERY' });
+    renderWithApp(routes, { route: '/plants/c1' });
+    const journey = await screen.findByRole('region', { name: /journey/i });
+    await userEvent.click(within(journey).getByRole('button', { name: /end season/i }));
+    await waitFor(() => expect(posts).toEqual([{ type: 'SEASON_END' }]));
+  });
+
   it('shows crop seasons by their start month', async () => {
     handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'RESTING' });
     server.use(

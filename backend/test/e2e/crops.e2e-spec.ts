@@ -533,4 +533,102 @@ describe('crops', () => {
       ).toEqual({ conflict: false, last: null });
     });
   });
+  describe('final review fixes', () => {
+    type Task = { id: string; title: string; status: string; due_date: string };
+    const tasksOf = async (a: ReturnType<typeof as>, id: string) =>
+      (await a.get(`/api/v1/ledger/plants/${id}/tasks`)).body.data as Task[];
+
+    it('records the bed chosen at transplant for a nursery crop', async () => {
+      const a = as(alice);
+      const bed = (
+        await a.post('/api/v1/garden/places', { name: 'Back bed', kind: 'BED' })
+      ).body.data;
+      const tomato = (await a.post('/api/v1/crops/plan', { crop_id: 'tomato' }))
+        .body.data;
+      await a.post(`/api/v1/ledger/plants/${tomato.id}/journal`, {
+        type: 'SOWING',
+        metadata: { method: 'NURSERY' },
+      });
+      clock.set('2026-11-08T06:00:00Z');
+      await a.post(`/api/v1/ledger/plants/${tomato.id}/journal`, {
+        type: 'TRANSPLANTING',
+        metadata: { place_id: bed.id },
+      });
+      const cycles = (await a.get(`/api/v1/ledger/plants/${tomato.id}/cycles`))
+        .body.data;
+      expect(cycles[0].place_id).toBe(bed.id);
+      const bobsBed = (
+        await as(bob).post('/api/v1/garden/places', { name: 'B', kind: 'BED' })
+      ).body.data;
+      const chilli = (await a.post('/api/v1/crops/plan', { crop_id: 'chilli' }))
+        .body.data;
+      await a.post(`/api/v1/ledger/plants/${chilli.id}/journal`, {
+        type: 'SOWING',
+        metadata: { method: 'NURSERY' },
+      });
+      expect(
+        (
+          await a.post(`/api/v1/ledger/plants/${chilli.id}/journal`, {
+            type: 'TRANSPLANTING',
+            metadata: { place_id: bobsBed.id },
+          })
+        ).status,
+      ).toBe(404);
+    });
+
+    it('keeps one pending "sow another row" however often you harvest', async () => {
+      const a = as(alice);
+      const palak = (await a.post('/api/v1/crops/plan', { crop_id: 'palak' }))
+        .body.data;
+      await a.post(`/api/v1/ledger/plants/${palak.id}/journal`, {
+        type: 'SOWING',
+        metadata: { method: 'DIRECT' },
+      });
+      clock.set('2026-10-13T06:00:00Z');
+      await a.post(`/api/v1/ledger/plants/${palak.id}/journal`, {
+        type: 'HARVEST',
+      });
+      clock.set('2026-10-16T06:00:00Z');
+      await a.post(`/api/v1/ledger/plants/${palak.id}/journal`, {
+        type: 'HARVEST',
+      });
+      const rows = (await tasksOf(a, palak.id)).filter(
+        (t) => /another row/i.test(t.title) && t.status === 'PENDING',
+      );
+      expect(rows).toHaveLength(1);
+    });
+
+    it('retires sow reminders once their window has closed, and plans the next window', async () => {
+      clock.set('2026-08-20T06:00:00Z');
+      const a = as(alice);
+      const tomato = (await a.post('/api/v1/crops/plan', { crop_id: 'tomato' }))
+        .body.data;
+      await a.post('/api/v1/crops/plan/sync');
+      clock.set('2026-11-15T06:00:00Z');
+      await a.post('/api/v1/crops/plan/sync');
+      const tasks = await tasksOf(a, tomato.id);
+      const pending = tasks.filter((t) => t.status === 'PENDING');
+      expect(pending.map((t) => istDate(t.due_date)).sort()).toEqual([
+        '2026-12-11',
+        '2027-01-01',
+      ]);
+      expect(tasks.filter((t) => t.status === 'CANCELLED')).toHaveLength(2);
+    });
+
+    it('ending a season that never started changes nothing', async () => {
+      const a = as(alice);
+      const palak = (await a.post('/api/v1/crops/plan', { crop_id: 'palak' }))
+        .body.data;
+      await a.post('/api/v1/crops/plan/sync');
+      await a.post(`/api/v1/ledger/plants/${palak.id}/journal`, {
+        type: 'SEASON_END',
+      });
+      expect(
+        (await a.get(`/api/v1/ledger/plants/${palak.id}`)).body.data.crop_stage,
+      ).toBe('PLANNED');
+      expect(
+        (await tasksOf(a, palak.id)).filter((t) => t.status === 'PENDING'),
+      ).toHaveLength(2);
+    });
+  });
 });

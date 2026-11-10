@@ -197,6 +197,17 @@ export class CropJourneyService {
         return;
       }
       case LogType.TRANSPLANTING: {
+        // A nursery crop's bed is chosen at transplant: record it on the season.
+        const placeId = metaOf(log.metadata)?.place_id;
+        if (cycle && !cycle.place_id && typeof placeId === 'string') {
+          if (!(await this.places.findOwned(userId, placeId, tx))) {
+            throw new NotFoundError('PLACE_NOT_FOUND', 'Place not found');
+          }
+          await tx.plantCycle.update({
+            where: { id: cycle.id },
+            data: { place_id: placeId },
+          });
+        }
         await this.setStage(tx, plant, CropStage.IN_GROUND);
         await this.completeSteps(tx, plant.id, [
           'seeds',
@@ -246,11 +257,12 @@ export class CropJourneyService {
         await this.completeSteps(tx, plant.id, ['thin']);
         return;
       case LogType.SEASON_END:
-        if (cycle)
-          await tx.plantCycle.update({
-            where: { id: cycle.id },
-            data: { closed_at: at },
-          });
+        // No season open (e.g. a planned crop): nothing to end, and its reminders stay.
+        if (!cycle) return;
+        await tx.plantCycle.update({
+          where: { id: cycle.id },
+          data: { closed_at: at },
+        });
         await tx.plant.update({
           where: { id: plant.id },
           data: { crop_stage: CropStage.RESTING },
@@ -316,6 +328,15 @@ export class CropJourneyService {
     at: Date,
   ) {
     if (!crop.succession_every_days || !cycle) return;
+    // One pending row at a time: frequent harvests must not pile them up.
+    const pending = await tx.task.findMany({
+      where: {
+        plant_id: plant.id,
+        source: TaskSource.CROP_PLAN,
+        status: TaskStatus.PENDING,
+      },
+    });
+    if (pending.some((t) => metaOf(t.metadata)?.step === 'row')) return;
     const user = await tx.user.findUnique({
       where: { id: userId },
       select: { region_cluster: true },
