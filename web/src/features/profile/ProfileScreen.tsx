@@ -72,6 +72,9 @@ export function ProfileScreen() {
               <p className="mb-0.5 font-label text-[10px] font-extrabold uppercase tracking-widest text-on-secondary-container">{t('profile.status')}</p>
               <p className="font-headline text-lg font-bold leading-tight text-on-secondary-fixed-variant">{user.badge_level}</p>
             </div>
+            {/* TODO(sustenance-score): Stitch shows a "Sustenance score" here. users.ranking_points
+                exists, but nothing awards points and the API doesn't return it; it needs the PRD's
+                earning rules (organic practices, compost logs, community). Until then: the plan. */}
             <div className="text-right">
               <p className="mb-0.5 font-label text-[10px] font-extrabold uppercase tracking-widest text-on-secondary-container">{t('profile.plan')}</p>
               <p className="flex items-center justify-end gap-1 font-headline text-lg font-bold text-secondary">

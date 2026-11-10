@@ -1,9 +1,9 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
-import { describe, expect, it } from 'vitest';
-import { fail, ok, pagedResponse, pageOf, plantRecord, taskRecord } from '../../test/fixtures';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cycleRecord, fail, ok, pagedResponse, pageOf, plantRecord, taskRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { LogMomentScreen } from '../journal';
@@ -29,12 +29,12 @@ const entry = (over: object) => ({
   recorded_at: '2026-02-01T05:00:00Z', plant_cycle_id: 'c1', diagnosis_outcome_id: null, ...over,
 });
 
-function handlers() {
+function handlers(opts: { plant?: Record<string, unknown>; cycles?: unknown[] } = {}) {
   let signed = 0;
   server.use(
-    http.get(`${API}/ledger/plants/p1`, () => HttpResponse.json(ok({ ...plantRecord(), _count: { journal_entries: 2 } }))),
+    http.get(`${API}/ledger/plants/p1`, () => HttpResponse.json(ok({ ...plantRecord(opts.plant), _count: { journal_entries: 2 } }))),
     http.get(`${API}/seasonal/plant/p1/intelligence`, () => HttpResponse.json(ok(intelligence))),
-    http.get(`${API}/ledger/plants/p1/cycles`, () => HttpResponse.json(pageOf([cycle]))),
+    http.get(`${API}/ledger/plants/p1/cycles`, ({ request }) => HttpResponse.json(pagedResponse(request, opts.cycles ?? [cycle]))),
     http.get(`${API}/ledger/plants/p1/tasks`, () => HttpResponse.json(pageOf([taskRecord()]))),
     http.get(`${API}/ledger/plants/p1/timeline`, () =>
       HttpResponse.json(pageOf([entry({ id: 'j2', metadata: { photo_key: 'journal/u1/a.jpg' } }), entry({ id: 'j1', type: 'NOTE', content: 'First note' })])),
@@ -56,18 +56,150 @@ const routes = (
 );
 
 describe('tree biography', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true });
+    vi.setSystemTime(new Date('2026-11-10T06:00:00Z'));
+  });
+  afterEach(() => vi.useRealTimers());
+
   it('renders the loop sections from real data', async () => {
     const h = handlers();
     renderWithApp(routes, { route: '/plants/p1' });
     expect(await screen.findByRole('heading', { level: 1, name: 'Aam' })).toBeInTheDocument();
     expect(screen.getByText('Healthy')).toBeInTheDocument();
-    expect(await screen.findByText(/keep soil evenly moist/i)).toBeInTheDocument();
+    expect(await screen.findByText(/hoppers on panicles/i)).toBeInTheDocument();
     expect(await screen.findByRole('article', { name: /plan pest response/i })).toBeInTheDocument();
-    expect(await screen.findByText(/fruit set was not confirmed/i)).toBeInTheDocument();
     expect(await screen.findByText('First note')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /season review/i })).toHaveAttribute('href', '/plants/p1/season');
     expect(screen.getByRole('link', { name: /log a moment/i })).toHaveAttribute('href', '/plants/p1/log');
     await waitFor(() => expect(h.signed()).toBe(1));
+  });
+
+  it('shows the age line and the Stitch photo when there is no moment photo', async () => {
+    handlers();
+    server.use(http.get(`${API}/ledger/plants/p1/timeline`, () => HttpResponse.json(pageOf([entry({ id: 'j1', type: 'NOTE' })]))));
+    const { container } = renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByText(/planted 2015 · 11 years/i)).toBeInTheDocument();
+    expect(container.querySelector('header img[src*="tree-hero"]')).not.toBeNull();
+  });
+
+  it('shows stage and season phase as separate things', async () => {
+    handlers();
+    renderWithApp(routes, { route: '/plants/p1' });
+    const glance = await screen.findByRole('region', { name: /at a glance/i });
+    expect(within(glance).getByText(/mature canopy/i).closest('[aria-current="step"]')).not.toBeNull();
+    expect(await within(glance).findByText(/now: flowering/i)).toBeInTheDocument();
+  });
+
+  it('drops Do now, Botanical Essence and the Cycles section', async () => {
+    handlers();
+    renderWithApp(routes, { route: '/plants/p1' });
+    await screen.findByText(/hoppers on panicles/i);
+    expect(screen.queryByText(/do now/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/keep soil evenly moist/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /botanical essence/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /^cycles$/i })).not.toBeInTheDocument();
+  });
+
+  it('compares this year with last and links the season review', async () => {
+    handlers({
+      cycles: [
+        cycleRecord({ id: 'c26', cycle_year: 2026, harvest_started_at: '2026-06-01T00:00:00Z', yield_quantity: 40, yield_unit: 'kg' }),
+        cycleRecord({ id: 'c25', cycle_year: 2025, yield_quantity: 30, yield_unit: 'kg' }),
+      ],
+    });
+    renderWithApp(routes, { route: '/plants/p1' });
+    const yoy = await screen.findByRole('region', { name: /year on year/i });
+    expect(await within(yoy).findAllByText('40 kg')).not.toHaveLength(0);
+    expect(within(yoy).getAllByText(/better/i)).not.toHaveLength(0);
+    expect(within(yoy).getByRole('link', { name: /season review/i })).toHaveAttribute('href', '/plants/p1/season');
+  });
+
+  it('says to log harvests when there is nothing to compare', async () => {
+    handlers({ cycles: [cycleRecord({ cycle_year: 2026 })] });
+    renderWithApp(routes, { route: '/plants/p1' });
+    const yoy = await screen.findByRole('region', { name: /year on year/i });
+    expect(await within(yoy).findByText(/log harvests to start comparing/i)).toBeInTheDocument();
+    expect(within(yoy).getByRole('link', { name: /season review/i })).toHaveAttribute('href', '/plants/p1/season');
+  });
+
+  it('lists milestones and mutes the missing ones', async () => {
+    handlers({ plant: { first_flowering_at: '2019-02-10T00:00:00.000Z' } });
+    renderWithApp(routes, { route: '/plants/p1' });
+    const milestones = await screen.findByRole('region', { name: /milestones/i });
+    const flowering = within(milestones).getByText(/first flowering/i).closest('li') as HTMLElement;
+    expect(within(flowering).getByText(/2019/)).toBeInTheDocument();
+    const harvest = within(milestones).getByText(/first harvest/i).closest('li') as HTMLElement;
+    expect(within(harvest).getByText(/not yet/i)).toBeInTheDocument();
+  });
+
+  it('groups the record by year with harvest tags', async () => {
+    handlers();
+    server.use(
+      http.get(`${API}/ledger/plants/p1/timeline`, () =>
+        HttpResponse.json(
+          pageOf([
+            entry({ id: 'h', type: 'HARVEST', timestamp: '2026-06-01T05:00:00Z', metadata: { quantity_value: 120, quantity_unit: 'kg', quality: 'good' } }),
+            entry({ id: 'n', type: 'NOTE', content: 'Old note', timestamp: '2025-03-01T05:00:00Z' }),
+          ]),
+        ),
+      ),
+    );
+    renderWithApp(routes, { route: '/plants/p1' });
+    const record = await screen.findByRole('region', { name: /sanctuary record/i });
+    expect(await within(record).findByRole('heading', { name: '2026' })).toBeInTheDocument();
+    expect(within(record).getByRole('heading', { name: '2025' })).toBeInTheDocument();
+    expect(within(record).getByText(/120 kg · good/i)).toBeInTheDocument();
+  });
+
+  it('filters the record on the server, and pages within the filter', async () => {
+    handlers();
+    const seen: Array<string | null> = [];
+    const all = Array.from({ length: 25 }, (_, i) => entry({ id: `h${i}`, type: 'HARVEST', content: `Harvest ${i}` }));
+    server.use(
+      http.get(`${API}/ledger/plants/p1/timeline`, ({ request }) => {
+        seen.push(new URL(request.url).searchParams.get('types'));
+        return HttpResponse.json(pagedResponse(request, all));
+      }),
+    );
+    renderWithApp(routes, { route: '/plants/p1' });
+    const record = await screen.findByRole('region', { name: /sanctuary record/i });
+    await userEvent.click(within(record).getByRole('button', { name: /^harvest$/i }));
+    await within(record).findByText('Harvest 0');
+    await userEvent.click(within(record).getByRole('button', { name: /earlier moments/i }));
+    await within(record).findByText('Harvest 24');
+    expect(seen.filter((v) => v !== null)).toEqual(['HARVEST', 'HARVEST']);
+  });
+
+  it('shows a kind-empty message when a filter matches nothing', async () => {
+    handlers();
+    server.use(
+      http.get(`${API}/ledger/plants/p1/timeline`, ({ request }) =>
+        HttpResponse.json(pageOf(new URL(request.url).searchParams.get('types') ? [] : [entry({ id: 'n', type: 'NOTE', content: 'A note' })])),
+      ),
+    );
+    renderWithApp(routes, { route: '/plants/p1' });
+    const record = await screen.findByRole('region', { name: /sanctuary record/i });
+    await within(record).findByText('A note');
+    await userEvent.click(within(record).getByRole('button', { name: /^harvest$/i }));
+    expect(await within(record).findByText(/no moments of this kind yet/i)).toBeInTheDocument();
+    expect(within(record).getByRole('button', { name: /^all$/i })).toBeInTheDocument();
+  });
+
+  it('shows a memory card in the anniversary month', async () => {
+    handlers({ plant: { planting_date: '2015-11-04T00:00:00.000Z', planting_date_precision: 'MONTH_YEAR' } });
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByText(/11 years ago this month/i)).toBeInTheDocument();
+  });
+
+  it('has no age line, memory or crash without a planting date', async () => {
+    handlers({ plant: { planting_date: null, planting_date_precision: 'UNKNOWN', planting_date_input: null } });
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Aam' })).toBeInTheDocument();
+    expect(screen.queryByText(/^planted /i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ago this month/i)).not.toBeInTheDocument();
+    const milestones = await screen.findByRole('region', { name: /milestones/i });
+    const planted = within(milestones).getByText(/^planted$/i).closest('li') as HTMLElement;
+    expect(within(planted).getByText(/not yet|unknown/i)).toBeInTheDocument();
   });
 
   it.each(['/plants/p1', '/plants/p1/tasks', '/plants/p1/log'])(
@@ -85,10 +217,11 @@ describe('tree biography', () => {
     },
   );
 
-  it('this season comes from the region-aware pack that also makes the tasks', async () => {
+  it('this season shows what to avoid and watch for from the region-aware pack', async () => {
     handlers();
     renderWithApp(routes, { route: '/plants/p1' });
-    expect(await screen.findByText(/mulch against deccan heat/i)).toBeInTheDocument();
+    expect(await screen.findByText(/heavy pruning/i)).toBeInTheDocument();
+    expect(screen.getByText(/hoppers on panicles/i)).toBeInTheDocument();
   });
 
   it('shows earlier moments on request, beyond the first page', async () => {

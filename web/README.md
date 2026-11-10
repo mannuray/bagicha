@@ -60,9 +60,23 @@ Each feature exposes an `index.ts`; siblings import only that. Device access sit
 
 - **Weather card hidden.** The backend's weather is a mock (user decision). Seasonal guidance takes its place on the dashboard.
 - **Health badge is a label, not a percentage.** The backend has no health score. It shows `health_status`, or "Needs attention" after a MEDIUM/HIGH diagnosis in the last 30 days.
-- **Tree Biography has extra sections:** This Season (the region-aware seasonal pack that also creates the tasks), Upcoming Care, Cycles and a Season review link. The chosen Stitch "Detailed Record" screen had none of them, and the loop needs them.
+- **Tree page ("The Botanical Record") is ordered by what an owner asks** (spec `tree-page-v2`), not by the Stitch layout:
+  - hero with age line and health;
+  - in-app memory card;
+  - At a glance (stage track plus season phase);
+  - This season (Avoid / Watch for);
+  - Upcoming care;
+  - Year on year (season-total yield per year, latest finished season against the one before, Season review link);
+  - Milestones;
+  - The Sanctuary Record (grouped by year, filtered on the server).
+
+  Stitch's Botanical Essence, big growth rings and the "Do now" list are left out on purpose.
+- **Placeholders, marked `TODO(...)` in code:**
+  - vitality % (`TODO(vitality)`: no health score yet);
+  - push memory reminders (`TODO(push-memory)`: no notification service);
+  - sustenance score (`TODO(sustenance-score)`: points are never awarded).
 - **Location screen:** type the district first. A district we know (the same short list as the backend's `region-cluster.ts`, kept equal by a test) sets the region by itself; only an unknown district shows the region cards to pick the closest. "Use my location" is optional and replaces Stitch's GPS-first button. There is no reverse geocoding, so location never leaves Bagicha. A full district, pincode and boundary map is future work.
-- **Stitch photos are bundled, not hot-linked.** The login, dashboard, verification, garden-picker, add-tree and log-a-moment photos live in `src/assets/stitch/` (shrunk to JPEG, about 500 KB in total), so there are no third-party image requests and the app works offline in a wrapper. Stitch's dashboard soil-moisture card is left out because there is no moisture data. Other screens still use the forest gradient, and a tree's page shows the user's own latest photo.
+- **Stitch photos are bundled, not hot-linked.** The login, dashboard, verification, garden-picker, add-tree, log-a-moment and tree-page (fallback hero) photos live in `src/assets/stitch/` (shrunk to JPEG, about 580 KB in total), so there are no third-party image requests and the app works offline in a wrapper. Stitch's dashboard soil-moisture card is left out because there is no moisture data. Other screens still use the forest gradient, and a tree's page shows the user's own latest photo.
 - **No social-login buttons or Terms/Privacy links.** They have no backend yet.
 - Screens Stitch doesn't cover (scan results, season review, onboarding steps beyond location, profile edit) follow the design system: serif headlines, pebble cards, gradient buttons, no divider lines.
 - Hindi can be chosen and is saved; the interface stays English until translations land.

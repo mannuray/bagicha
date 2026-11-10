@@ -302,27 +302,74 @@
   },
   "biography": {
     "earlier": "Show earlier moments",
+    "age": {
+      "years_one": "Planted {{year}} · {{count}} year",
+      "years_other": "Planted {{year}} · {{count}} years",
+      "thisYear": "Planted {{year}} · this year",
+      "months_one": "Planted {{year}} · {{count}} month",
+      "months_other": "Planted {{year}} · {{count}} months"
+    },
+    "glance": "At a glance",
+    "now": "Now: {{current}}",
+    "next": "Next: {{next}}",
+    "yearOnYear": "Year on year",
+    "soFar": "so far",
+    "logHarvests": "Log harvests to start comparing.",
+    "latestVsPrevious": "{{latest}} vs {{previous}}",
+    "compare": {
+      "yield": "Yield",
+      "flowerDrop": "Flower drop",
+      "fruitDrop": "Fruit drop",
+      "pests": "Pest reports logged"
+    },
+    "trend": {
+      "better": "better",
+      "worse": "worse",
+      "same": "same"
+    },
+    "drop": {
+      "NONE": "None",
+      "LOW": "Light",
+      "MEDIUM": "Moderate",
+      "HIGH": "Heavy"
+    },
+    "milestones": "Milestones",
+    "milestone": {
+      "planted": "Planted",
+      "firstFlowering": "First flowering",
+      "firstFruitSet": "First fruit set",
+      "firstHarvest": "First harvest",
+      "latestHarvest": "Latest harvest"
+    },
+    "notYet": "Not yet",
+    "record": "The Sanctuary Record",
+    "filter": {
+      "all": "All",
+      "care": "Care",
+      "bloom": "Bloom & fruit",
+      "harvest": "Harvest",
+      "health": "Health",
+      "notes": "Notes & photos"
+    },
+    "noKind": "No moments of this kind yet.",
+    "tagHarvest": "{{amount}}",
+    "tagHarvestQuality": "{{amount}} · {{quality}}",
+    "tagDrop": "{{severity}} drop",
+    "memory": {
+      "planted_one": "{{count}} year ago this month, {{name}} was planted.",
+      "planted_other": "{{count}} years ago this month, {{name}} was planted.",
+      "firstHarvest_one": "{{count}} year ago this month: {{name}}'s first harvest.",
+      "firstHarvest_other": "{{count}} years ago this month: {{name}}'s first harvest."
+    },
     "seasonReview": "Season review",
     "logMoment": "Log a Moment",
     "needsAttention": "Needs attention",
-    "essence": "Botanical Essence",
-    "family": "Family",
-    "habit": "Growth habit",
-    "journal": "Journal",
-    "entries_one": "{{count}} entry",
-    "entries_other": "{{count}} entries",
     "stage": "Growth stage",
     "thisSeason": "This Season",
-    "phase": "Now: {{current}} · Next: {{next}}",
-    "doNow": "Do now",
     "avoid": "Avoid",
     "watchFor": "Watch for",
     "upcomingCare": "Upcoming Care",
-    "path": "Geological Path",
-    "noEntries": "No moments logged yet.",
-    "cycles": "Cycles",
-    "noCycles": "Cycles appear once you log flowering, fruit set or harvest.",
-    "cycleYear": "Cycle {{year}}"
+    "noEntries": "No moments logged yet."
   },
   "scan": {
     "kicker": "Plant doctor",
