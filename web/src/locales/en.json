@@ -1,5 +1,7 @@
 {
-  "app": { "name": "Bagicha" },
+  "app": {
+    "name": "Bagicha"
+  },
   "common": {
     "retry": "Try again",
     "loading": "Loading…",
@@ -26,5 +28,12 @@
     "UNAUTHORIZED": "Please sign in again.",
     "IMAGE_UNSUPPORTED": "That file isn't a photo we can use.",
     "IMAGE_TOO_LARGE": "That photo is too large, even after shrinking it."
+  },
+  "nav": {
+    "label": "Main",
+    "home": "Home",
+    "plants": "Plants",
+    "scan": "Scan",
+    "profile": "Profile"
   }
 }
