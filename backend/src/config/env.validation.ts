@@ -14,6 +14,7 @@ export interface Env {
   OTEL_SERVICE_NAME?: string;
   LOG_LEVEL?: string;
   WEB_ORIGINS?: string;
+  AI_PROVIDER?: 'gemini' | 'fake';
   [key: string]: unknown;
 }
 
@@ -30,6 +31,15 @@ export function validateEnv(raw: Record<string, unknown>): Env {
       `Missing required environment variables: ${missing.join(', ')}`,
       { missing },
     );
+  }
+  const provider = raw.AI_PROVIDER;
+  if (provider !== undefined && provider !== 'gemini' && provider !== 'fake') {
+    throw new InvariantError('AI_PROVIDER must be "gemini" or "fake"', {
+      AI_PROVIDER: provider,
+    });
+  }
+  if (provider === 'fake' && raw.NODE_ENV === 'production') {
+    throw new InvariantError('AI_PROVIDER=fake is not allowed in production');
   }
   return raw as Env;
 }

@@ -25,4 +25,24 @@ describe('validateEnv', () => {
   it('throws when DATABASE_URL is missing', () => {
     expect(() => validateEnv({ JWT_SECRET: 's' })).toThrow(/DATABASE_URL/);
   });
+
+  it('refuses the fake AI provider in production', () => {
+    expect(() =>
+      validateEnv({ ...base, AI_PROVIDER: 'fake', NODE_ENV: 'production' }),
+    ).toThrow(/AI_PROVIDER/);
+  });
+
+  it('allows the fake AI provider outside production', () => {
+    expect(
+      validateEnv({ ...base, AI_PROVIDER: 'fake', NODE_ENV: 'test' }),
+    ).toMatchObject({
+      AI_PROVIDER: 'fake',
+    });
+  });
+
+  it('rejects unknown AI providers', () => {
+    expect(() => validateEnv({ ...base, AI_PROVIDER: 'gpt' })).toThrow(
+      /AI_PROVIDER/,
+    );
+  });
 });
