@@ -556,3 +556,18 @@ model ExpertVerification {
 
   @@map("expert_verifications")
 }
+
+/// Append-only record of security-relevant mutations, with a snapshot taken at write time.
+model AuditEvent {
+  id            String   @id @default(uuid())
+  actor_user_id String?
+  action        String
+  target_type   String
+  target_id     String
+  snapshot      Json
+  created_at    DateTime @default(now())
+
+  @@index([target_type, target_id])
+  @@index([actor_user_id, created_at])
+  @@map("audit_events")
+}

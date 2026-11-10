@@ -25,6 +25,7 @@ function build(env: Record<string, string | undefined>) {
     },
   };
   const jwt = { sign: jest.fn(() => 'token') };
+  const audit = { record: jest.fn(() => Promise.resolve()) };
   const config = { get: (k: string) => env[k] } as unknown as ConfigService;
   const service = new AuthService(
     prisma as any,
@@ -37,8 +38,9 @@ function build(env: Record<string, string | undefined>) {
       warn: jest.fn(),
       error: jest.fn(),
     } as any,
+    audit as any,
   );
-  return { service, store };
+  return { service, store, audit, prisma };
 }
 
 describe('AuthService', () => {
@@ -88,5 +90,26 @@ describe('AuthService', () => {
     await expect(service.verifyOtp(PHONE, otp)).rejects.toBeInstanceOf(
       UnauthorizedException,
     );
+  });
+
+  it('records one AUTH_SIGNED_IN audit event without the OTP', async () => {
+    const { service, store, audit } = build({ NODE_ENV: 'development' });
+    await service.requestOtp(PHONE);
+    const otp = store.get(`otp:${PHONE}`) as string;
+    await service.verifyOtp(PHONE, otp);
+    expect(audit.record).toHaveBeenCalledTimes(1);
+    const [event] = audit.record.mock.calls[0] as unknown as [any];
+    expect(event).toMatchObject({
+      actorUserId: 'u1',
+      action: 'AUTH_SIGNED_IN',
+      targetType: 'user',
+      targetId: 'u1',
+      snapshot: {
+        user_id: 'u1',
+        phone_number_last4: '2225',
+        is_new_user: false,
+      },
+    });
+    expect(JSON.stringify(event)).not.toContain(otp);
   });
 });

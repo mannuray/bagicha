@@ -24,6 +24,8 @@ import { ObservabilityModule } from './common/observability';
 import { ClockModule } from './common/time';
 import { RateLimitModule } from './common/rate-limit';
 import { HealthModule } from './common/health/health.module';
+import { TransactionModule } from './common/prisma/transaction';
+import { AuditModule } from './modules/audit';
 
 @Module({
   imports: [
@@ -46,6 +48,8 @@ import { HealthModule } from './common/health/health.module';
     ClockModule,
     RateLimitModule,
     HealthModule,
+    TransactionModule,
+    AuditModule,
     MonitorModule,
     PrismaModule,
     RedisModule,

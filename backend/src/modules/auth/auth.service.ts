@@ -1,6 +1,7 @@
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AuditAction, AuditService } from '../audit';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
@@ -15,6 +16,7 @@ export class AuthService {
     private config: ConfigService,
     @InjectPinoLogger(AuthService.name)
     private readonly logger: PinoLogger,
+    private readonly audit: AuditService,
   ) {}
 
   private isProduction(): boolean {
@@ -65,6 +67,7 @@ export class AuthService {
       where: { phone_number: phoneNumber },
     });
 
+    const isNewUser = !user;
     if (!user) {
       user = await this.prisma.user.create({
         data: {
@@ -73,6 +76,18 @@ export class AuthService {
         },
       });
     }
+
+    await this.audit.record({
+      actorUserId: user.id,
+      action: AuditAction.AUTH_SIGNED_IN,
+      targetType: 'user',
+      targetId: user.id,
+      snapshot: {
+        user_id: user.id,
+        phone_number_last4: user.phone_number.slice(-4),
+        is_new_user: isNewUser,
+      },
+    });
 
     const payload = { sub: user.id, phoneNumber: user.phone_number };
     const accessToken = this.jwtService.sign(payload);
