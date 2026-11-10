@@ -193,5 +193,18 @@
       "overdue_one": "{{count}} day overdue",
       "overdue_other": "{{count}} days overdue"
     }
+  },
+  "dashboard": {
+    "greeting": {
+      "morning": "Good morning,",
+      "afternoon": "Good afternoon,",
+      "evening": "Good evening,"
+    },
+    "thisWeek": "This week",
+    "season": "{{season}} guidance",
+    "sowNow": "Good to sow now: {{crops}}",
+    "garden": "Your garden",
+    "plantsInGarden": "Plants in your garden",
+    "addTree": "Add a tree"
   }
 }

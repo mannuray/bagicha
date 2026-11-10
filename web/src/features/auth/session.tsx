@@ -18,6 +18,8 @@ export interface SessionStore {
   updateUser(user: User): void;
   signOut(): void;
   expire(): void;
+  /** Plants whose seasonal tasks were already requested this session. */
+  readonly materialized: Set<string>;
 }
 
 function loadCachedUser(tokens: TokenStore): User | null {
@@ -43,18 +45,21 @@ function cacheUser(user: User | null) {
 export function createSessionStore(tokens: TokenStore): SessionStore {
   let state: SessionState = { user: loadCachedUser(tokens), expired: false };
   const listeners = new Set<() => void>();
+  const materialized = new Set<string>();
   const set = (next: SessionState) => {
     state = next;
     listeners.forEach((l) => l());
   };
   return {
     tokens,
+    materialized,
     get: () => state,
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
     signIn(token, user) {
+      materialized.clear();
       tokens.set(token);
       cacheUser(user);
       set({ user, expired: false });
@@ -64,6 +69,7 @@ export function createSessionStore(tokens: TokenStore): SessionStore {
       set({ ...state, user });
     },
     signOut() {
+      materialized.clear();
       tokens.clear();
       cacheUser(null);
       set({ user: null, expired: false });
