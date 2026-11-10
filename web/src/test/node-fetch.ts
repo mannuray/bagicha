@@ -44,7 +44,7 @@ export const testFetch: typeof fetch = async (input, init) => {
     const { body, contentType } = await toMultipart(init.body);
     const headers = new Headers(init.headers);
     headers.set('Content-Type', contentType);
-    return fetch(input, { ...init, headers, body });
+    return fetch(input, { ...init, headers, body: body as unknown as BodyInit });
   }
   return fetch(input, init);
 };
