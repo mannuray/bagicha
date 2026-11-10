@@ -1,0 +1,24 @@
+@import 'tailwindcss';
+@import '@fontsource/noto-serif/400.css';
+@import '@fontsource/noto-serif/700.css';
+@import '@fontsource/manrope/400.css';
+@import '@fontsource/manrope/500.css';
+@import '@fontsource/manrope/700.css';
+@import 'material-symbols/outlined.css';
+@import './styles/theme.css';
+@import './styles/sanctuary.css';
+
+html,
+body,
+#root {
+  min-height: 100dvh;
+}
+
+body {
+  @apply bg-surface text-on-surface font-body antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 2px;
+}
