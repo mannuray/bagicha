@@ -5,7 +5,7 @@ import { isApiError } from '../../lib/errors';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Icon, Screen, TopBar } from '../../ui';
 import { useRequestOtp, useVerifyOtp } from './api';
-import { isProfileComplete } from './schemas';
+import { isProfileComplete, onboardingStart } from './schemas';
 
 export function OtpScreen() {
   const { t } = useTranslation();
@@ -24,7 +24,7 @@ export function OtpScreen() {
       { phone, otp: code },
       {
         onSuccess: ({ user }) =>
-          navigate(isProfileComplete(user) ? '/' : '/onboarding/language', { replace: true }),
+          navigate(isProfileComplete(user) ? '/' : onboardingStart(user), { replace: true }),
       },
     );
   };

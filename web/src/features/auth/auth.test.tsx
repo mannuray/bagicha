@@ -25,6 +25,7 @@ function AuthRoutes() {
       <Route path="/login" element={<LoginScreen />} />
       <Route path="/login/otp" element={<OtpScreen />} />
       <Route path="/onboarding/language" element={<Where />} />
+      <Route path="/onboarding/region" element={<Where />} />
       <Route
         path="/"
         element={
@@ -97,6 +98,16 @@ describe('otp', () => {
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/onboarding/language'));
   });
 
+  it('sends a returning user who only lacks a region straight to the region step', async () => {
+    server.use(
+      http.post(`${API}/auth/verify-otp`, () => ok({ access_token: 'jwt', user: testUser({ region_cluster: null }) })),
+    );
+    renderWithApp(<AuthRoutes />, { route: otpRoute, user: null });
+    await userEvent.type(screen.getByLabelText(/verification code/i), '123456');
+    await userEvent.click(screen.getByRole('button', { name: /verify/i }));
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/onboarding/region'));
+  });
+
   it('shows a wrong code and offers a new one', async () => {
     server.use(http.post(`${API}/auth/verify-otp`, () => fail(401, 'AUTH_INVALID_OTP')));
     renderWithApp(<AuthRoutes />, { route: otpRoute, user: null });
@@ -108,6 +119,17 @@ describe('otp', () => {
 });
 
 describe('guards', () => {
+  it('routes an onboarded user who only lacks a region to the region step', async () => {
+    renderWithApp(
+      <Routes>
+        <Route path="/onboarding/region" element={<Where />} />
+        <Route path="/" element={<RequireOnboarded><p>home</p></RequireOnboarded>} />
+      </Routes>,
+      { user: testUser({ region_cluster: null }) },
+    );
+    expect(await screen.findByTestId('where')).toHaveTextContent('/onboarding/region');
+  });
+
   it('sends signed-out users to login', async () => {
     renderWithApp(
       <Routes>

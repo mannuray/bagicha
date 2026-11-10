@@ -34,3 +34,13 @@ export const verifyResponseSchema = z.object({
 export function isProfileComplete(user: User): boolean {
   return Boolean(user.district && user.region_cluster && user.garden_types.length > 0);
 }
+
+/** Someone who already chose a district and garden types finished onboarding before regions existed. */
+export function onlyLacksRegion(user: User): boolean {
+  return Boolean(user.district && user.garden_types.length > 0 && !user.region_cluster);
+}
+
+/** Where an incomplete profile resumes: just the region step for returning users, else the start. */
+export function onboardingStart(user: User): string {
+  return onlyLacksRegion(user) ? '/onboarding/region' : '/onboarding/language';
+}

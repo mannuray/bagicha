@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Icon, TextField, cx } from '../../ui';
-import { useSession, type RegionCluster } from '../auth';
+import { isProfileComplete, useSession, type RegionCluster } from '../auth';
 import { useUpdateProfile, type ProfileChanges } from './api';
 import { useGeolocator, type Coordinates } from './geolocation';
 import { OnboardingLayout } from './OnboardingLayout';
@@ -34,7 +34,10 @@ export function RegionScreen({ onDone }: { onDone?: () => void }) {
     if (!region || !district.trim()) return;
     const changes: ProfileChanges = { region_cluster: region, district: district.trim() };
     if (coords) Object.assign(changes, coords);
-    update.mutate(changes, { onSuccess: onDone ?? (() => navigate('/onboarding/garden')) });
+    update.mutate(changes, {
+      // A returning user only needed a region; their garden types are already set.
+      onSuccess: onDone ?? ((saved) => navigate(isProfileComplete(saved) ? '/' : '/onboarding/garden')),
+    });
   };
 
   return (

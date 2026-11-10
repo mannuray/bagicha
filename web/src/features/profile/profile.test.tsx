@@ -89,6 +89,18 @@ describe('onboarding', () => {
     expect(screen.getByText(/english for now/i)).toBeInTheDocument();
   });
 
+  it('a returning user who only lacked a region goes home after choosing it', async () => {
+    server.use(
+      http.put(`${API}/user/profile/update`, async ({ request }) =>
+        HttpResponse.json({ success: true, data: { ...testUser({ region_cluster: null }), ...((await request.json()) as object) } }),
+      ),
+    );
+    renderWithApp(<Onboarding geo={denied} />, { route: '/onboarding/region', user: testUser({ region_cluster: null }) });
+    await userEvent.click(screen.getByRole('button', { name: /east india/i }));
+    await userEvent.click(screen.getByRole('button', { name: /continue/i }));
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(/^\/$/));
+  });
+
   it('needs a region and a district before continuing', async () => {
     renderWithApp(<Onboarding geo={denied} />, { route: '/onboarding/region', user: incomplete });
     const next = screen.getByRole('button', { name: /continue/i });
