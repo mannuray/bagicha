@@ -19,6 +19,7 @@ import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { PlantsModule } from './modules/plants/plants.module';
 import { UserModule } from './modules/user/user.module';
 import { validateEnv } from './config/env.validation';
+import { LoggingModule } from './common/logging/logging.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { validateEnv } from './config/env.validation';
         },
       }),
     }),
+    LoggingModule,
     MonitorModule,
     PrismaModule,
     RedisModule,

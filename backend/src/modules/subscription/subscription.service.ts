@@ -1,3 +1,4 @@
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
@@ -9,14 +10,17 @@ export class SubscriptionService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    @InjectPinoLogger(SubscriptionService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   async createOrder(userId: string, planId: string) {
     // Mock Razorpay Order Creation
     const orderId = `order_${Math.random().toString(36).substring(7)}`;
 
-    console.log(
-      `[SUBSCRIPTION] Creating Razorpay order ${orderId} for user ${userId}, plan ${planId}`,
+    this.logger.info(
+      { orderId, userId, planId },
+      'Creating mock Razorpay order',
     );
 
     return {
@@ -33,7 +37,7 @@ export class SubscriptionService {
   async handleWebhook(payload: RazorpayWebhookDto) {
     if (payload.event === 'order.paid') {
       const userId = payload.payload.payment.entity.notes.user_id;
-      console.log(`[WEBHOOK] Payment successful for user ${userId}`);
+      this.logger.info({ userId }, 'Razorpay payment confirmed');
 
       // Update user status to Premium
       await this.prisma.user.update({

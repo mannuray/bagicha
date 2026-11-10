@@ -31,6 +31,12 @@ function build(env: Record<string, string | undefined>) {
     redis as any,
     jwt as any,
     config,
+    {
+      info: jest.fn(),
+      debug: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    } as any,
   );
   return { service, store };
 }

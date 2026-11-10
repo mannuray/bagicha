@@ -1,7 +1,7 @@
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import {
   BadRequestException,
   Injectable,
-  Logger,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
@@ -33,12 +33,15 @@ export interface MediaUploadResult {
 
 @Injectable()
 export class MediaService implements OnModuleInit {
-  private readonly logger = new Logger(MediaService.name);
   private client!: MinioClient;
   private bucket!: string;
   private publicBaseUrl!: string;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    @InjectPinoLogger(MediaService.name)
+    private readonly logger: PinoLogger,
+  ) {}
 
   async onModuleInit() {
     this.bucket = this.config.get<string>('MEDIA_BUCKET', MEDIA_BUCKET_DEFAULT);
@@ -169,7 +172,7 @@ export class MediaService implements OnModuleInit {
       .catch(() => false);
     if (!exists) {
       await this.client.makeBucket(this.bucket);
-      this.logger.log(`Created MinIO bucket "${this.bucket}"`);
+      this.logger.info({ bucket: this.bucket }, 'Created MinIO bucket');
     }
     // Make `posts/*` (and any future PUBLIC_PREFIXES) public-readable.
     const publicPrefixes = Array.from(PUBLIC_PREFIXES).map(
@@ -187,9 +190,7 @@ export class MediaService implements OnModuleInit {
     try {
       await this.client.setBucketPolicy(this.bucket, JSON.stringify(policy));
     } catch (err) {
-      this.logger.warn(
-        `Failed to set bucket policy: ${(err as Error).message}`,
-      );
+      this.logger.warn({ err }, 'Failed to set bucket policy');
     }
   }
 }

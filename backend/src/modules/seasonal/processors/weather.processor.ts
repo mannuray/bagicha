@@ -1,3 +1,4 @@
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { WeatherService } from '../services/weather.service';
@@ -8,6 +9,8 @@ export class WeatherProcessor extends WorkerHost {
   constructor(
     private weatherService: WeatherService,
     private redisService: RedisService,
+    @InjectPinoLogger(WeatherProcessor.name)
+    private readonly logger: PinoLogger,
   ) {
     super();
   }
@@ -15,7 +18,7 @@ export class WeatherProcessor extends WorkerHost {
   async process(job: Job<any, any, string>): Promise<any> {
     const { pincode } = job.data;
 
-    console.log(`[PROCESSOR] Checking weather for pincode: ${pincode}`);
+    this.logger.info({ pincode }, 'Checking weather');
 
     const weather = await this.weatherService.getWeather(pincode);
 
@@ -27,8 +30,9 @@ export class WeatherProcessor extends WorkerHost {
     );
 
     if (weather.is_extreme) {
-      console.log(
-        `[ALERT] Extreme weather in ${pincode}: ${weather.alert_message}`,
+      this.logger.warn(
+        { pincode, alert: weather.alert_message },
+        'Extreme weather detected',
       );
       // In a real app, we would trigger FCM push notifications here
     }

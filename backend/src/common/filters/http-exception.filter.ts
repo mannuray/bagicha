@@ -7,9 +7,12 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
+import { Logger } from 'nestjs-pino';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  constructor(private readonly logger: Logger) {}
+
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -68,7 +71,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         details: null,
         validation_errors: null,
       };
-      console.error('Unhandled Exception:', exception);
+      this.logger.error({ err: exception }, 'Unhandled exception');
     }
 
     response.status(status).json({

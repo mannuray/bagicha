@@ -1,4 +1,5 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -12,9 +13,9 @@ export class AuthService {
     private redisService: RedisService,
     private jwtService: JwtService,
     private config: ConfigService,
+    @InjectPinoLogger(AuthService.name)
+    private readonly logger: PinoLogger,
   ) {}
-
-  private readonly logger = new Logger(AuthService.name);
 
   private isProduction(): boolean {
     return this.config.get<string>('NODE_ENV') === 'production';

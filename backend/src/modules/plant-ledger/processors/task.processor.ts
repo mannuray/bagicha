@@ -1,3 +1,4 @@
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -5,15 +6,20 @@ import { TaskType, TaskStatus } from '@prisma/client';
 
 @Processor('task-generation')
 export class TaskProcessor extends WorkerHost {
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    @InjectPinoLogger(TaskProcessor.name)
+    private readonly logger: PinoLogger,
+  ) {
     super();
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
     const { plant_id, lifecycle_stage, species } = job.data;
 
-    console.log(
-      `[PROCESSOR] Generating perennial tasks for ${species} in ${lifecycle_stage} stage (ID: ${plant_id})`,
+    this.logger.info(
+      { plantId: plant_id, species, lifecycleStage: lifecycle_stage },
+      'Generating perennial tasks',
     );
 
     const tasks_to_create: any[] = [];
