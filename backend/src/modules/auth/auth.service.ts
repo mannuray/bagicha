@@ -35,7 +35,17 @@ export class AuthService {
     return phoneNumber === phone && otp === code;
   }
 
-  async requestOtp(phoneNumber: string): Promise<string> {
+  /** Local testing only: hand the OTP to the client so the verify screen can show it. */
+  private exposesOtp(): boolean {
+    return (
+      !this.isProduction() &&
+      this.config.get<string>('AUTH_EXPOSE_OTP') === 'true'
+    );
+  }
+
+  async requestOtp(
+    phoneNumber: string,
+  ): Promise<{ message: string; dev_otp?: string }> {
     const otp = randomInt(100000, 1000000).toString();
 
     await this.redisService.set(`otp:${phoneNumber}`, otp, OTP_TTL_SECONDS);
@@ -46,7 +56,8 @@ export class AuthService {
       this.logger.debug({ otp }, 'Development OTP issued');
     }
 
-    return 'OTP sent successfully';
+    const message = 'OTP sent successfully';
+    return this.exposesOtp() ? { message, dev_otp: otp } : { message };
   }
 
   async verifyOtp(phoneNumber: string, otp: string) {

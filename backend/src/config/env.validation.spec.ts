@@ -45,4 +45,10 @@ describe('validateEnv', () => {
       /AI_PROVIDER/,
     );
   });
+
+  it('refuses AUTH_EXPOSE_OTP in production', () => {
+    expect(() =>
+      validateEnv({ ...base, AUTH_EXPOSE_OTP: 'true', NODE_ENV: 'production' }),
+    ).toThrow(/AUTH_EXPOSE_OTP/);
+  });
 });

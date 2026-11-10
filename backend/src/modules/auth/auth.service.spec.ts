@@ -47,6 +47,35 @@ function build(env: Record<string, string | undefined>) {
 }
 
 describe('AuthService', () => {
+  it('returns the issued OTP for on-screen testing when AUTH_EXPOSE_OTP is on', async () => {
+    const { service, store } = build({
+      NODE_ENV: 'development',
+      AUTH_EXPOSE_OTP: 'true',
+    });
+    const res = await service.requestOtp(PHONE);
+    expect(res).toEqual({
+      message: 'OTP sent successfully',
+      dev_otp: store.get(`otp:${PHONE}`),
+    });
+  });
+
+  it('never returns the OTP unless AUTH_EXPOSE_OTP is on', async () => {
+    const { service } = build({ NODE_ENV: 'development' });
+    expect(await service.requestOtp(PHONE)).toEqual({
+      message: 'OTP sent successfully',
+    });
+  });
+
+  it('never returns the OTP in production, even if AUTH_EXPOSE_OTP is set', async () => {
+    const { service } = build({
+      NODE_ENV: 'production',
+      AUTH_EXPOSE_OTP: 'true',
+    });
+    expect(await service.requestOtp(PHONE)).toEqual({
+      message: 'OTP sent successfully',
+    });
+  });
+
   it('rejects the old hard-coded backdoor when no dev OTP is configured', async () => {
     const { service } = build({ NODE_ENV: 'development' });
     await expect(service.verifyOtp(PHONE, '123456')).rejects.toBeInstanceOf(

@@ -112,3 +112,9 @@ is built against the "After" column.
 | CORS | none (browser apps could not call the API) | allow-list from `WEB_ORIGINS` (comma-separated); unset → CORS off; allowed headers `Authorization`, `Content-Type`, `X-Request-Id`; no credentials | S1-2 |
 | `AI_PROVIDER` env (dev/test only) | Gemini always | `AI_PROVIDER=fake` binds a deterministic fake (used by the web e2e run); refused at startup when `NODE_ENV=production`; unknown values refused | S1-3 |
 | `PUT user/profile/update` + seasonal guidance | region guessed by substring-matching `district` (unknown → North India) | new optional `region_cluster` (one of the 7 clusters, else 422) stored on the user and returned; seasonal packs use it when set, falling back to district matching for older profiles | S1-4 |
+
+## Local testing: OTP on screen
+
+| # | Endpoint | Change |
+|---|---|---|
+| T-1 | `POST /auth/request-otp` | `data` is now an object `{ message, dev_otp? }` instead of a plain string. `dev_otp` (the issued code) is present only when `AUTH_EXPOSE_OTP=true` and `NODE_ENV` isn't production; startup fails if both are set. |
