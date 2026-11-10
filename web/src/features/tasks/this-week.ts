@@ -29,3 +29,20 @@ export function dueLabel(due: string, now: Date): { key: string; count?: number 
   if (days === 1) return { key: 'tomorrow' };
   return { key: 'inDays', count: days };
 }
+
+/** Tasks that are done or skipped, most recent first, for the closed history. */
+export function closedTasks(tasks: Task[], limit = 10): Task[] {
+  return tasks
+    .filter((task) => task.status !== 'PENDING')
+    .sort((a, b) => (b.completed_at ?? '').localeCompare(a.completed_at ?? ''))
+    .slice(0, limit);
+}
+
+export function closedLabel(task: Task, now: Date): { key: string; count?: number } {
+  if (task.status === 'SKIPPED') return { key: 'skipped' };
+  if (!task.completed_at) return { key: 'completed' };
+  const ago = -istDayDiff(now, new Date(task.completed_at));
+  if (ago <= 0) return { key: 'completedToday' };
+  if (ago === 1) return { key: 'completedYesterday' };
+  return { key: 'completedDays', count: ago };
+}

@@ -33,7 +33,7 @@ describe('tasks screen', () => {
     );
     renderWithApp(routes, { route: '/tasks' });
     const card = await screen.findByRole('article', { name: /plan pest response/i });
-    await userEvent.dblClick(within(card).getByRole('button', { name: /complete/i }));
+    await userEvent.dblClick(within(card).getByRole('button', { name: /mark done/i }));
     await waitFor(() => expect(screen.queryByRole('article', { name: /plan pest response/i })).not.toBeInTheDocument());
     expect(puts).toBe(1);
   });
@@ -71,6 +71,51 @@ describe('tasks screen', () => {
     await waitFor(() => expect(materialized).toBe(1));
   });
 
+  it('is the Stitch Daily Path: overdue actions, current plan and closed history', async () => {
+    server.use(
+      http.get(`${API}/ledger/tasks`, () =>
+        HttpResponse.json(
+          pageOf([
+            taskRecord({ id: 'late', title: 'Deep soil hydration', priority: 'LOW', due_date: new Date(Date.now() - 2 * 864e5).toISOString() }),
+            taskRecord({ id: 'soon', title: 'Nitrogen feeding', priority: 'HIGH' }),
+            taskRecord({ id: 'done', title: 'Prune lower canopy', status: 'COMPLETED', completed_at: new Date(Date.now() - 864e5).toISOString() }),
+          ]),
+        ),
+      ),
+    );
+    renderWithApp(routes, { route: '/tasks' });
+    const overdue = await screen.findByRole('region', { name: /overdue actions/i });
+    const late = within(overdue).getByRole('article', { name: /deep soil hydration/i });
+    expect(within(late).getByText(/urgent/i)).toBeInTheDocument();
+    expect(within(late).getByText(/due 2 days ago/i)).toBeInTheDocument();
+    const plan = screen.getByRole('region', { name: /current plan/i });
+    const soon = within(plan).getByRole('article', { name: /nitrogen feeding/i });
+    expect(within(soon).getByText(/^high$/i)).toBeInTheDocument();
+    expect(within(soon).getByText(/due tomorrow/i)).toBeInTheDocument();
+    const closed = screen.getByRole('region', { name: /closed history/i });
+    const done = within(closed).getByRole('article', { name: /prune lower canopy/i });
+    expect(within(done).getByText(/completed yesterday/i)).toBeInTheDocument();
+    expect(within(done).queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('per plant: says whose maintenance it is', async () => {
+    server.use(http.get(`${API}/ledger/plants/p1/tasks`, () => HttpResponse.json(pageOf([taskRecord()]))));
+    renderWithApp(routes, { route: '/plants/p1/tasks' });
+    expect(await screen.findByText(/maintenance for aam/i)).toBeInTheDocument();
+  });
+
+  it('still shows closed history when nothing is due', async () => {
+    server.use(
+      http.get(`${API}/ledger/tasks`, () =>
+        HttpResponse.json(pageOf([taskRecord({ id: 'done', title: 'Prune lower canopy', status: 'SKIPPED', completed_at: null })])),
+      ),
+    );
+    renderWithApp(routes, { route: '/tasks' });
+    expect(await screen.findByText(/nothing due/i)).toBeInTheDocument();
+    const closed = screen.getByRole('region', { name: /closed history/i });
+    expect(within(closed).getByText(/aam · skipped/i)).toBeInTheDocument();
+  });
+
   it('says when nothing is due', async () => {
     server.use(http.get(`${API}/ledger/tasks`, () => HttpResponse.json(pageOf([]))));
     renderWithApp(routes, { route: '/tasks' });
@@ -82,7 +127,7 @@ describe('tasks screen', () => {
     server.use(http.put(`${API}/ledger/plants/p1/tasks/t1`, () => HttpResponse.json(fail('X'), { status: 500 })));
     const { taskSchema } = await import('.');
     renderWithApp(<TaskCard task={taskSchema.parse(taskRecord())} />);
-    await userEvent.click(screen.getByRole('button', { name: /complete/i }));
+    await userEvent.click(screen.getByRole('button', { name: /mark done/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent(/something went wrong/i);
   });
 

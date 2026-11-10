@@ -72,8 +72,15 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   const task = page.getByRole('article', { name: /spray neem oil/i });
   await expect(task).toBeVisible();
   await checkScreen(page, '10-dashboard');
-  await task.getByRole('button', { name: /complete/i }).click();
+  await task.getByRole('button', { name: /mark done/i }).click();
   await expect(task).toBeHidden();
+
+  // The Daily Path: the done task sits in Closed history.
+  await page.getByRole('link', { name: /see all/i }).click();
+  const closed = page.getByRole('region', { name: /closed history/i });
+  await expect(closed.getByRole('article', { name: /spray neem oil/i })).toBeVisible();
+  await checkScreen(page, '10b-daily-path');
+  await page.goto('/');
 
   // Season review for Aam.
   await page.getByRole('link', { name: /plants/i }).click();

@@ -202,24 +202,39 @@
   "tasks": {
     "title": "The Daily Path",
     "plantTitle": "Care for this tree",
-    "complete": "Complete",
+    "complete": "Mark done",
     "skip": "Skip",
+    "subtitleAll": "Everything your garden needs",
+    "subtitlePlant": "Maintenance for {{name}}",
+    "badge": {
+      "urgent": "Urgent",
+      "high": "High"
+    },
+    "closed": {
+      "completed": "Completed",
+      "completedToday": "Completed today",
+      "completedYesterday": "Completed yesterday",
+      "completedDays_one": "Completed {{count}} day ago",
+      "completedDays_other": "Completed {{count}} days ago",
+      "skipped": "Skipped"
+    },
     "refreshSeason": "Refresh this season's tasks",
     "emptyTitle": "Nothing due this week",
     "emptyBody": "Your garden is in good hands. New care appears here as the season turns.",
     "emptyPlantBody": "No care is due for this tree right now.",
     "group": {
-      "overdue": "Overdue",
+      "overdue": "Overdue actions",
       "week": "This week",
-      "later": "Later"
+      "plan": "Current plan",
+      "closed": "Closed history"
     },
     "due": {
-      "today": "Today",
-      "tomorrow": "Tomorrow",
-      "inDays_one": "In {{count}} day",
-      "inDays_other": "In {{count}} days",
-      "overdue_one": "{{count}} day overdue",
-      "overdue_other": "{{count}} days overdue"
+      "today": "Due today",
+      "tomorrow": "Due tomorrow",
+      "inDays_one": "Due in {{count}} day",
+      "inDays_other": "Due in {{count}} days",
+      "overdue_one": "Due {{count}} day ago",
+      "overdue_other": "Due {{count}} days ago"
     }
   },
   "dashboard": {

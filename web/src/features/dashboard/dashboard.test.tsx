@@ -45,7 +45,7 @@ describe('dashboard', () => {
     renderWithApp(<DashboardScreen />);
     expect(await screen.findByRole('heading', { name: /asha/i })).toBeInTheDocument();
     expect(await screen.findByRole('article', { name: /plan pest response/i })).toBeInTheDocument();
-    expect(screen.getByText(/days overdue/i)).toBeInTheDocument();
+    expect(screen.getByText(/due 3 days ago/i)).toBeInTheDocument();
     expect(await screen.findByText(/protect young saplings/i)).toBeInTheDocument();
     expect(calls.weather).toBe(0);
     expect(screen.getAllByText(/^this week$/i)).toHaveLength(1);

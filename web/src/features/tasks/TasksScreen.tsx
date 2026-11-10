@@ -5,7 +5,7 @@ import { systemClock } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
 import { Button, EmptyState, Icon, NotInGarden, QueryState, Screen, TopBar, isPlantMissing } from '../../ui';
 import { useMaterializeTasks, useMyTasks, usePlantTasks } from './api';
-import { TaskGroups } from './TaskGroups';
+import { ClosedHistory, TaskGroups } from './TaskGroups';
 import type { Task } from './schemas';
 
 /** Stitch "The Daily Path": every task, or one plant's tasks at /plants/:id/tasks. */
@@ -18,14 +18,10 @@ function AllTasks() {
   const { t } = useTranslation();
   const query = useMyTasks();
   return (
-    <Frame title={t('tasks.title')}>
+    <Frame subtitle={t('tasks.subtitleAll')}>
       {(onError) => (
-        <QueryState
-          query={{ ...query, data: query.data?.items }}
-          empty={(items: Task[]) => items.every((x) => x.status !== 'PENDING')}
-          emptyView={<EmptyState title={t('tasks.emptyTitle')} body={t('tasks.emptyBody')} />}
-        >
-          {(items) => <TaskGroups tasks={items} now={systemClock.now()} onError={onError} />}
+        <QueryState query={{ ...query, data: query.data?.items }}>
+          {(items) => <DailyPath tasks={items} emptyBody={t('tasks.emptyBody')} onError={onError} />}
         </QueryState>
       )}
     </Frame>
@@ -36,18 +32,16 @@ function PlantTasks({ plantId }: { plantId: string }) {
   const { t } = useTranslation();
   const query = usePlantTasks(plantId);
   const materialize = useMaterializeTasks();
+  const treeName = query.data?.items[0]?.tree_name;
+  const subtitle = treeName ? t('tasks.subtitlePlant', { name: treeName }) : t('tasks.plantTitle');
   if (query.isError && isPlantMissing(query.error)) {
-    return (
-      <Frame title={t('tasks.plantTitle')}>
-        {() => <NotInGarden />}
-      </Frame>
-    );
+    return <Frame subtitle={t('tasks.plantTitle')}>{() => <NotInGarden />}</Frame>;
   }
   return (
-    <Frame title={t('tasks.plantTitle')}>
+    <Frame subtitle={subtitle}>
       {(onError) => (
         <>
-          <Button variant="tertiary" busy={materialize.isPending} onClick={() => materialize.mutate(plantId)} className="mb-4">
+          <Button variant="tertiary" busy={materialize.isPending} onClick={() => materialize.mutate(plantId)} className="-ml-2 mb-2 self-start">
             <Icon name="autorenew" />
             {t('tasks.refreshSeason')}
           </Button>
@@ -56,12 +50,8 @@ function PlantTasks({ plantId }: { plantId: string }) {
               {messageFor(materialize.error)}
             </p>
           )}
-          <QueryState
-            query={{ ...query, data: query.data?.items }}
-            empty={(items: Task[]) => items.every((x) => x.status !== 'PENDING')}
-            emptyView={<EmptyState title={t('tasks.emptyTitle')} body={t('tasks.emptyPlantBody')} />}
-          >
-            {(items) => <TaskGroups tasks={items} now={systemClock.now()} showPlant={false} onError={onError} />}
+          <QueryState query={{ ...query, data: query.data?.items }}>
+            {(items) => <DailyPath tasks={items} showPlant={false} emptyBody={t('tasks.emptyPlantBody')} onError={onError} />}
           </QueryState>
         </>
       )}
@@ -69,13 +59,47 @@ function PlantTasks({ plantId }: { plantId: string }) {
   );
 }
 
-function Frame({ title, children }: { title: string; children: (onError: (err: unknown) => void) => ReactNode }) {
+function DailyPath({
+  tasks,
+  showPlant = true,
+  emptyBody,
+  onError,
+}: {
+  tasks: Task[];
+  showPlant?: boolean;
+  emptyBody: string;
+  onError: (err: unknown) => void;
+}) {
+  const { t } = useTranslation();
+  const now = systemClock.now();
+  const nothingDue = tasks.every((task) => task.status !== 'PENDING');
+  return (
+    <div className="space-y-8">
+      {nothingDue ? (
+        <EmptyState title={t('tasks.emptyTitle')} body={emptyBody} />
+      ) : (
+        <TaskGroups tasks={tasks} now={now} showPlant={showPlant} onError={onError} />
+      )}
+      <ClosedHistory tasks={tasks} now={now} showPlant={showPlant} />
+    </div>
+  );
+}
+
+function Frame({ subtitle, children }: { subtitle: string; children: (onError: (err: unknown) => void) => ReactNode }) {
+  const { t } = useTranslation();
   const [problem, setProblem] = useState<unknown>(null);
   const onError = (err: unknown) => setProblem(err);
   return (
     <Screen>
-      <TopBar title={title} />
-      <main className="px-4 pb-10 pt-4">
+      <div className="flex items-center gap-1">
+        <TopBar />
+        <span className="pt-4 font-label text-xs font-bold uppercase tracking-widest text-secondary">{t('tasks.title')}</span>
+      </div>
+      <header className="px-4 pb-4 pt-4">
+        <h1 className="mb-1 font-headline text-2xl font-bold tracking-tight text-primary">{t('tasks.title')}</h1>
+        <p className="font-label text-xs uppercase tracking-[0.1em] text-secondary">{subtitle}</p>
+      </header>
+      <main className="flex flex-col px-4 pb-10">
         {problem !== null && (
           <p role="alert" className="mb-4 rounded-xl bg-error-container px-4 py-3 font-body text-sm text-on-error-container">
             {messageFor(problem)}
