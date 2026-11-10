@@ -1,0 +1,101 @@
+import { Injectable } from '@nestjs/common';
+import { LogType, Plant, Prisma } from '@prisma/client';
+import { Tx } from '../../../common/prisma/transaction';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { Rows, SkipTake } from './types';
+
+export type NewPlantData = Omit<Prisma.PlantUncheckedCreateInput, 'user_id'>;
+
+const AI_CONTEXT_LOG_TYPES = [
+  LogType.DIAGNOSIS,
+  LogType.PEST_DIAGNOSIS,
+  LogType.TREATMENT,
+  LogType.WATERING_STRESS,
+  LogType.HARVEST,
+];
+
+const aiContextInclude = {
+  user: { select: { district: true, latitude: true, longitude: true } },
+  cycles: { orderBy: { cycle_year: 'desc' }, take: 2 },
+  journal_entries: {
+    where: { type: { in: AI_CONTEXT_LOG_TYPES } },
+    orderBy: { timestamp: 'desc' },
+    take: 8,
+  },
+  tasks: { orderBy: { due_date: 'asc' }, take: 6 },
+  diagnosis_outcomes: { orderBy: { event_at: 'desc' }, take: 3 },
+} satisfies Prisma.PlantInclude;
+
+export type PlantWithAiContext = Prisma.PlantGetPayload<{
+  include: typeof aiContextInclude;
+}>;
+
+export type PlantDetail = Prisma.PlantGetPayload<{
+  include: { _count: { select: { journal_entries: true } } };
+}>;
+
+/** Every query is filtered by owner; a miss returns null, never throws. */
+@Injectable()
+export class PlantRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  private db(tx?: Tx) {
+    return tx ?? this.prisma;
+  }
+
+  findOwned(userId: string, plantId: string, tx?: Tx): Promise<Plant | null> {
+    return this.db(tx).plant.findFirst({
+      where: { id: plantId, user_id: userId },
+    });
+  }
+
+  findOwnedDetail(
+    userId: string,
+    plantId: string,
+  ): Promise<PlantDetail | null> {
+    return this.prisma.plant.findFirst({
+      where: { id: plantId, user_id: userId },
+      include: { _count: { select: { journal_entries: true } } },
+    });
+  }
+
+  findOwnedWithContext(
+    userId: string,
+    plantId: string,
+  ): Promise<PlantWithAiContext | null> {
+    return this.prisma.plant.findFirst({
+      where: { id: plantId, user_id: userId },
+      include: aiContextInclude,
+    });
+  }
+
+  async listOwned(userId: string, page: SkipTake): Promise<Rows<Plant>> {
+    const where = { user_id: userId };
+    const [rows, total] = await Promise.all([
+      this.prisma.plant.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+        ...page,
+      }),
+      this.prisma.plant.count({ where }),
+    ]);
+    return { rows, total };
+  }
+
+  create(userId: string, data: NewPlantData, tx?: Tx): Promise<Plant> {
+    return this.db(tx).plant.create({ data: { ...data, user_id: userId } });
+  }
+
+  async updateOwned(
+    userId: string,
+    plantId: string,
+    data: Prisma.PlantUncheckedUpdateManyInput,
+    tx?: Tx,
+  ): Promise<Plant | null> {
+    const { count } = await this.db(tx).plant.updateMany({
+      where: { id: plantId, user_id: userId },
+      data,
+    });
+    return count === 0 ? null : this.findOwned(userId, plantId, tx);
+  }
+}

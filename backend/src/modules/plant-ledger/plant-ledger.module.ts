@@ -1,3 +1,7 @@
+import { PlantRepository } from './repositories/plant.repository';
+import { JournalRepository } from './repositories/journal.repository';
+import { CycleRepository } from './repositories/cycle.repository';
+import { TaskRepository } from './repositories/task.repository';
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { PlantLedgerService } from './plant-ledger.service';
@@ -15,6 +19,10 @@ import { SeasonalIntelligenceService } from './services/seasonal-intelligence.se
   ],
   controllers: [PlantLedgerController],
   providers: [
+    PlantRepository,
+    JournalRepository,
+    CycleRepository,
+    TaskRepository,
     PlantLedgerService,
     LifecycleService,
     SpeciesNormalizationService,

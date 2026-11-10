@@ -271,6 +271,7 @@ model Plant {
   diagnosis_sessions DiagnosisSession[]
   diagnosis_outcomes DiagnosisOutcome[]
 
+  @@index([user_id])
   @@map("trees")
 }
 
