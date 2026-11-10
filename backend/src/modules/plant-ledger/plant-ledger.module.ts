@@ -15,6 +15,7 @@ import { LifecycleService } from './services/lifecycle.service';
 import { MitigationService } from './services/mitigation.service';
 import { PlantEndService } from './services/plant-end.service';
 import { GardenPlaceRepository } from './repositories/garden-place.repository';
+import { CropPlanService } from './services/crop-plan.service';
 import { PlantRecordService } from './services/plant-record.service';
 import { SeasonalIntelligenceService } from './services/seasonal-intelligence.service';
 import { SpeciesNormalizationService } from './services/species-normalization.service';
@@ -31,6 +32,7 @@ import { TaskService } from './services/task.service';
     PlantRecordService,
     PlantEndService,
     GardenPlaceRepository,
+    CropPlanService,
     JournalService,
     CycleService,
     TaskService,
@@ -42,6 +44,7 @@ import { TaskService } from './services/task.service';
   ],
   exports: [
     GardenPlaceRepository,
+    CropPlanService,
     PlantRecordService,
     JournalService,
     CycleService,

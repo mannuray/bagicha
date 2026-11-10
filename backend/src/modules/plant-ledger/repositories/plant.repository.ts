@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { LogType, Plant, Prisma } from '@prisma/client';
+import { CropStage, LogType, Plant, Prisma } from '@prisma/client';
 import { Tx } from '../../../common/prisma/transaction';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Rows, SkipTake } from './types';
@@ -87,12 +87,24 @@ export class PlantRepository {
   async listOwned(
     userId: string,
     page: SkipTake,
-    status: 'active' | 'ended' = 'active',
+    status: 'active' | 'planned' | 'ended' = 'active',
   ): Promise<Rows<Plant>> {
-    const where = {
-      user_id: userId,
-      ended_at: status === 'ended' ? { not: null } : null,
-    };
+    const growing: CropStage[] = [
+      CropStage.NURSERY,
+      CropStage.IN_GROUND,
+      CropStage.HARVESTING,
+    ];
+    const waiting: CropStage[] = [CropStage.PLANNED, CropStage.RESTING];
+    const where: Prisma.PlantWhereInput =
+      status === 'ended'
+        ? { user_id: userId, ended_at: { not: null } }
+        : status === 'planned'
+          ? { user_id: userId, ended_at: null, crop_stage: { in: waiting } }
+          : {
+              user_id: userId,
+              ended_at: null,
+              OR: [{ crop_id: null }, { crop_stage: { in: growing } }],
+            };
     const [rows, total] = await Promise.all([
       this.prisma.plant.findMany({
         where,
@@ -122,5 +134,33 @@ export class PlantRepository {
       data,
     });
     return count === 0 ? null : this.findOwned(userId, plantId, tx);
+  }
+
+  /** The user's not-ended record for a calendar crop, if any. */
+  findActiveCrop(userId: string, cropId: string): Promise<Plant | null> {
+    return this.prisma.plant.findFirst({
+      where: { user_id: userId, crop_id: cropId, ended_at: null },
+    });
+  }
+
+  /** Journey crops waiting for their next season (planned or resting). */
+  listWaitingCrops(userId: string): Promise<Plant[]> {
+    return this.prisma.plant.findMany({
+      where: {
+        user_id: userId,
+        ended_at: null,
+        crop_id: { not: null },
+        crop_stage: { in: [CropStage.PLANNED, CropStage.RESTING] },
+      },
+    });
+  }
+
+  /** When each of the plant's seasons started. */
+  async seasonStarts(plantId: string): Promise<Date[]> {
+    const rows = await this.prisma.plantCycle.findMany({
+      where: { plant_id: plantId, started_at: { not: null } },
+      select: { started_at: true },
+    });
+    return rows.map((r) => r.started_at as Date);
   }
 }

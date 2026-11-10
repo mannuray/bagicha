@@ -83,7 +83,8 @@ export class PlantRecordService implements OnModuleInit {
     if (!plant) throw plantNotFound();
     // An ended tree is a record, not a living plant: no stage changes, no new tasks.
     const ended = Boolean(plant.ended_at);
-    if (!plant.lifecycle_stage_manual && !ended) {
+    // Journey crops have their own stages; the tree age clock never applies to them.
+    if (!plant.lifecycle_stage_manual && !ended && !plant.crop_id) {
       const stage = laterStage(
         plant.lifecycle_stage,
         this.lifecycle.calculateStage(plant),

@@ -151,4 +151,134 @@ describe('crops', () => {
       place_id: null,
     });
   });
+  /** The IST calendar date of an ISO instant. */
+  const istDate = (iso: string) =>
+    new Date(new Date(iso).getTime() + 5.5 * 3600 * 1000)
+      .toISOString()
+      .slice(0, 10);
+
+  describe('want to grow', () => {
+    it('adds a crop as a planned record, once', async () => {
+      const a = as(alice);
+      const added = await a.post('/api/v1/crops/plan', { crop_id: 'palak' });
+      expect(added.status).toBe(201);
+      expect(added.body.data).toMatchObject({
+        crop_id: 'palak',
+        crop_stage: 'PLANNED',
+        record_kind: 'CROP',
+        record_pattern: 'RECURRING_SEASONAL',
+        growth_habit: 'ANNUAL',
+      });
+      const again = await a.post('/api/v1/crops/plan', { crop_id: 'palak' });
+      expect(again.status).toBe(200);
+      expect(again.body.data.id).toBe(added.body.data.id);
+      const planned = await a.get('/api/v1/ledger/plants?status=planned');
+      expect(planned.body.data.map((p: { id: string }) => p.id)).toEqual([
+        added.body.data.id,
+      ]);
+      const active = await a.get('/api/v1/ledger/plants');
+      expect(active.body.data.map((p: { id: string }) => p.id)).not.toContain(
+        added.body.data.id,
+      );
+      expect(
+        (await a.post('/api/v1/crops/plan', { crop_id: 'dragonfruit' })).status,
+      ).toBe(422);
+    });
+
+    it('syncs seed and sow reminders once, never overdue, never repeated', async () => {
+      clock.set('2026-08-20T06:00:00Z');
+      const a = as(alice);
+      const tomato = await a.post('/api/v1/crops/plan', { crop_id: 'tomato' });
+      const first = await a.post('/api/v1/crops/plan/sync');
+      expect(first.status).toBe(201);
+      expect(first.body.data.created_count).toBe(2);
+      const tasks = (
+        await a.get(`/api/v1/ledger/plants/${tomato.body.data.id}/tasks`)
+      ).body.data as Array<{
+        id: string;
+        title: string;
+        due_date: string;
+        source: string;
+      }>;
+      const seeds = tasks.find((t) => /seeds/i.test(t.title))!;
+      const sow = tasks.find((t) => /^sow/i.test(t.title))!;
+      expect(seeds.source).toBe('CROP_PLAN');
+      expect(istDate(seeds.due_date)).toBe('2026-08-20');
+      expect(istDate(sow.due_date)).toBe('2026-09-01');
+      expect(
+        (await a.post('/api/v1/crops/plan/sync')).body.data.created_count,
+      ).toBe(0);
+      await a.put(
+        `/api/v1/ledger/plants/${tomato.body.data.id}/tasks/${seeds.id}`,
+        { status: 'COMPLETED' },
+      );
+      expect(
+        (await a.post('/api/v1/crops/plan/sync')).body.data.created_count,
+      ).toBe(0);
+    });
+
+    it('a crop added mid-window gets reminders due today', async () => {
+      clock.set('2026-09-15T06:00:00Z');
+      const a = as(alice);
+      const tomato = await a.post('/api/v1/crops/plan', { crop_id: 'tomato' });
+      await a.post('/api/v1/crops/plan/sync');
+      const tasks = (
+        await a.get(`/api/v1/ledger/plants/${tomato.body.data.id}/tasks`)
+      ).body.data as Array<{ due_date: string }>;
+      expect(tasks.map((t) => istDate(t.due_date))).toEqual([
+        '2026-09-15',
+        '2026-09-15',
+      ]);
+    });
+
+    it('removes a never-sown crop with its reminders', async () => {
+      const a = as(alice);
+      const palak = await a.post('/api/v1/crops/plan', { crop_id: 'palak' });
+      await a.post('/api/v1/crops/plan/sync');
+      const res = await a.del(`/api/v1/crops/plan/${palak.body.data.id}`);
+      expect(res.status).toBe(204);
+      expect(
+        await prisma.task.count({ where: { plant_id: palak.body.data.id } }),
+      ).toBe(0);
+      expect(
+        (await a.get(`/api/v1/ledger/plants/${palak.body.data.id}`)).status,
+      ).toBe(404);
+      expect(
+        (await as(bob).del(`/api/v1/crops/plan/${palak.body.data.id}`)).status,
+      ).toBe(404);
+    });
+
+    it('keeps older crop records growing, out of the journey', async () => {
+      const a = as(alice);
+      const legacy = await a.post('/api/v1/ledger/plants', {
+        name: 'Bhindi',
+        species: 'Okra',
+        record_kind: 'CROP',
+      });
+      const active = await a.get('/api/v1/ledger/plants');
+      expect(active.body.data.map((p: { id: string }) => p.id)).toContain(
+        legacy.body.data.id,
+      );
+      expect(
+        (await a.post('/api/v1/crops/plan/sync')).body.data.created_count,
+      ).toBe(0);
+      expect(
+        (
+          await a.post(
+            `/api/v1/seasonal/plant/${legacy.body.data.id}/materialize-tasks`,
+          )
+        ).status,
+      ).toBe(201);
+    });
+
+    it('never runs the tree season pack on a journey crop', async () => {
+      const a = as(alice);
+      const palak = await a.post('/api/v1/crops/plan', { crop_id: 'palak' });
+      const res = await a.post(
+        `/api/v1/seasonal/plant/${palak.body.data.id}/materialize-tasks`,
+      );
+      expect(res.status).toBe(201);
+      expect(res.body.data).toEqual({ results: [], created_count: 0 });
+    });
+  });
 });

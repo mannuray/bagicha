@@ -5,6 +5,7 @@ import { NotFoundError } from '../../common/errors';
 import {
   CROPS,
   climateGroupFor,
+  CropPlanService,
   GardenPlaceRepository,
   windowStatus,
   type CropInfo,
@@ -43,7 +44,21 @@ export class CropsService {
   constructor(
     private readonly clock: Clock,
     private readonly placesRepo: GardenPlaceRepository,
+    private readonly plan: CropPlanService,
   ) {}
+
+  addToPlan(userId: string, cropId: string) {
+    return this.plan.add(userId, cropId);
+  }
+
+  removeFromPlan(userId: string, plantId: string) {
+    return this.plan.remove(userId, plantId);
+  }
+
+  /** Seed and sow reminders for the user's region; the dashboard calls this once a session. */
+  sync(user: User) {
+    return this.plan.sync(user.id, climateGroupFor(regionFor(user)));
+  }
 
   places(userId: string) {
     return this.placesRepo.listActive(userId);

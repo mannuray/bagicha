@@ -105,13 +105,22 @@ export class TaskService {
     draft: TaskDraft,
     tx?: Tx,
   ): Promise<TaskCreationResult> {
-    const existing = await this.tasks.findPendingBySourceKey(
-      userId,
-      plantId,
-      draft.source,
-      draft.sourceKey,
-      tx,
-    );
+    const existing =
+      draft.source === TaskSource.CROP_PLAN
+        ? await this.tasks.findBySourceKey(
+            userId,
+            plantId,
+            draft.source,
+            draft.sourceKey,
+            tx,
+          )
+        : await this.tasks.findPendingBySourceKey(
+            userId,
+            plantId,
+            draft.source,
+            draft.sourceKey,
+            tx,
+          );
     if (existing) {
       return {
         sourceKey: draft.sourceKey,

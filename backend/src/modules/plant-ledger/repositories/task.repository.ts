@@ -94,6 +94,19 @@ export class TaskRepository {
     });
   }
 
+  /** Any status: a crop reminder the gardener completed or skipped must not come back. */
+  findBySourceKey(
+    userId: string,
+    plantId: string,
+    source: TaskSource,
+    sourceKey: string,
+    tx?: Tx,
+  ): Promise<Task | null> {
+    return this.db(tx).task.findFirst({
+      where: { ...owned(userId, plantId), source, source_key: sourceKey },
+    });
+  }
+
   findPendingBySourceKey(
     userId: string,
     plantId: string,
