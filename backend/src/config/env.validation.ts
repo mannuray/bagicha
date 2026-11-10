@@ -13,6 +13,7 @@ export interface Env {
   OTEL_EXPORTER_OTLP_ENDPOINT?: string;
   OTEL_SERVICE_NAME?: string;
   LOG_LEVEL?: string;
+  WEB_ORIGINS?: string;
   [key: string]: unknown;
 }
 

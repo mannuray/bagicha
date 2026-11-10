@@ -109,3 +109,4 @@ is built against the "After" column.
 | Endpoint / area | Before | After | Task |
 |---|---|---|---|
 | `POST vision/identify`, `POST vision/diagnose` | default 100 KB JSON limit (phone photos rejected, unhandled 500) | 8 MB JSON limit on `/api/v1/vision/*`; elsewhere 100 KB. Oversized bodies → 413 `PAYLOAD_TOO_LARGE`, malformed JSON → 400 `BAD_REQUEST` (shared envelope) | S1-1 |
+| CORS | none (browser apps could not call the API) | allow-list from `WEB_ORIGINS` (comma-separated); unset → CORS off; allowed headers `Authorization`, `Content-Type`, `X-Request-Id`; no credentials | S1-2 |

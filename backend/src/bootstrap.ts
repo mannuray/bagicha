@@ -4,9 +4,15 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { MonitorService, MonitorValidationPipe } from './common/monitor';
 import { Logger } from 'nestjs-pino';
 import { applyBodyLimits } from './common/http/body-limits';
+import { corsOptionsFor, parseWebOrigins } from './common/http/web-origins';
+import { ConfigService } from '@nestjs/config';
 
 /** Global app wiring shared by main.ts and the e2e harness. */
 export function configureApp(app: INestApplication): INestApplication {
+  const cors = corsOptionsFor(
+    parseWebOrigins(app.get(ConfigService).get<string>('WEB_ORIGINS')),
+  );
+  if (cors) app.enableCors(cors);
   applyBodyLimits(app);
   const logger = app.get(Logger);
   app.useLogger(logger);
