@@ -36,7 +36,9 @@ const detailInclude = {
   replaces: { select: { id: true, name: true } },
 } satisfies Prisma.PlantInclude;
 
-export type PlantDetail = Prisma.PlantGetPayload<{ include: typeof detailInclude }>;
+export type PlantDetail = Prisma.PlantGetPayload<{
+  include: typeof detailInclude;
+}>;
 
 /** Every query is filtered by owner; a miss returns null, never throws. */
 @Injectable()
