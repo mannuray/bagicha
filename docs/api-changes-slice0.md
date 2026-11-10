@@ -10,3 +10,6 @@ is built against the "After" column.
 | `POST diagnosis/finalize`, `POST vision/diagnose`, `POST community/ask-ai` | any signed-in user could read/write another user's plant (or resolve their session) | 404 unless the caller owns the plant (and the session belongs to it) | 2 |
 | `GET media/download-url/*key` | route never matched under Nest 11 (always 500); would have signed any key | works; private prefixes (`vision/`, `journal/`) only for the owner, otherwise 404; malformed keys 404 | 3 |
 | `POST subscription/webhook` | unauthenticated; any POST could grant premium | requires a valid `X-Razorpay-Signature` (HMAC-SHA256 of raw body with `RAZORPAY_WEBHOOK_SECRET`), else 401 `WEBHOOK_SIGNATURE_INVALID`; missing secret = always 401; payload validated | 4 |
+| `POST auth/verify-otp` | hard-coded `+916202042225`/`123456` worked in every environment | only when `AUTH_DEV_OTP_PHONE`/`AUTH_DEV_OTP_CODE` are set **and** `NODE_ENV !== production` (set both in local `.env` to keep the mock-data login) | 5 |
+| startup | JWT signed with fallback secret `bagicha-secret-key-2026` if unset | app refuses to start without `JWT_SECRET` (and `DATABASE_URL`) | 5 |
+| `POST auth/request-otp` | OTP from `Math.random`, printed with `console.log` | `crypto.randomInt`; logged at debug only outside production | 5 |

@@ -1,12 +1,9 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
-import { randomUUID } from 'crypto';
+import { randomInt, randomUUID } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -14,16 +11,33 @@ export class AuthService {
     private prisma: PrismaService,
     private redisService: RedisService,
     private jwtService: JwtService,
+    private config: ConfigService,
   ) {}
 
+  private readonly logger = new Logger(AuthService.name);
+
+  private isProduction(): boolean {
+    return this.config.get<string>('NODE_ENV') === 'production';
+  }
+
+  /** Fixed OTP for local mock data; only honoured when configured and not in production. */
+  private isDevOtp(phoneNumber: string, otp: string): boolean {
+    const phone = this.config.get<string>('AUTH_DEV_OTP_PHONE');
+    const code = this.config.get<string>('AUTH_DEV_OTP_CODE');
+    if (this.isProduction() || !phone || !code) return false;
+    return phoneNumber === phone && otp === code;
+  }
+
   async requestOtp(phoneNumber: string): Promise<string> {
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = randomInt(100000, 1000000).toString();
 
     // Store OTP in Redis for 5 minutes
     await this.redisService.set(`otp:${phoneNumber}`, otp, 300);
 
-    // Log OTP for development (later integrate with SMS provider)
-    console.log(`[AUTH] OTP for ${phoneNumber}: ${otp}`);
+    // No SMS provider yet: surface the code locally, never in production.
+    if (!this.isProduction()) {
+      this.logger.debug({ otp }, 'Development OTP issued');
+    }
 
     return 'OTP sent successfully';
   }
@@ -31,8 +45,7 @@ export class AuthService {
   async verifyOtp(phoneNumber: string, otp: string) {
     const storedOtp = await this.redisService.get(`otp:${phoneNumber}`);
 
-    // BACKDOOR for testing with mock data
-    const isMockUser = phoneNumber === '+916202042225' && otp === '123456';
+    const isMockUser = this.isDevOtp(phoneNumber, otp);
 
     if (!isMockUser && (!storedOtp || storedOtp !== otp)) {
       throw new UnauthorizedException({

@@ -18,11 +18,13 @@ import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { PlantsModule } from './modules/plants/plants.module';
 import { UserModule } from './modules/user/user.module';
+import { validateEnv } from './config/env.validation';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      validate: validateEnv,
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
