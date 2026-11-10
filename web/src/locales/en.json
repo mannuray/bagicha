@@ -35,5 +35,27 @@
     "plants": "Plants",
     "scan": "Scan",
     "profile": "Profile"
+  },
+  "auth": {
+    "splash": {
+      "tagline": "Your orchard's memory"
+    },
+    "login": {
+      "title": "Your Garden Awaits",
+      "subtitle": "Enter your phone number to continue",
+      "phoneLabel": "Phone number",
+      "phonePlaceholder": "Phone number",
+      "invalidPhone": "Enter a 10-digit Indian mobile number.",
+      "submit": "Send code"
+    },
+    "otp": {
+      "bar": "Verification",
+      "title": "Enter Verification Code",
+      "subtitle": "We've sent a 6-digit code to {{phone}}.",
+      "label": "Verification code",
+      "submit": "Verify & continue",
+      "resend": "Resend code",
+      "newCode": "Get a new code"
+    }
   }
 }

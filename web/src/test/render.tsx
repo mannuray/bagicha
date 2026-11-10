@@ -6,13 +6,8 @@ import { createApiClient } from '../lib/api-client';
 import { ApiProvider } from '../lib/api';
 import { createQueryClient } from '../lib/query-client';
 import type { TokenStore } from '../lib/token-store';
+import { createSessionStore, SessionProvider, type SessionStore, type User } from '../features/auth';
 import { API } from './msw/server';
-
-export interface TestAppOptions {
-  route?: string;
-  token?: string | null;
-  onUnauthorized?: () => void;
-}
 
 export function memoryTokenStore(initial: string | null = 'test-token'): TokenStore {
   let value = initial;
@@ -27,20 +22,50 @@ export function memoryTokenStore(initial: string | null = 'test-token'): TokenSt
   };
 }
 
-/** Providers every screen needs, wired to the MSW test API. */
+export const testUser = (over: Partial<User> = {}): User => ({
+  id: 'u1',
+  phone_number: '+919876543210',
+  name: 'Asha',
+  district: 'Patna',
+  region_cluster: 'EAST_INDIA',
+  garden_types: ['trees'],
+  language_pref: 'en',
+  subscription_tier: 'FREE',
+  premium_expires_at: null,
+  badge_level: 'Seedling',
+  ...over,
+});
+
+export interface TestAppOptions {
+  route?: string | { pathname: string; state?: unknown };
+  user?: User | null;
+}
+
+export function createTestSession(user: User | null = testUser()): SessionStore {
+  const store = createSessionStore(memoryTokenStore(user ? 'test-token' : null));
+  if (user) store.signIn('test-token', user);
+  return store;
+}
+
+/** Providers every screen needs, wired to the MSW test API and an in-memory session. */
 export function TestProviders({
   children,
   route = '/',
-  token = 'test-token',
-  onUnauthorized = () => {},
-}: TestAppOptions & { children: ReactNode }) {
+  session,
+}: { children: ReactNode; route?: TestAppOptions['route']; session: SessionStore }) {
   const queryClient = createQueryClient();
   queryClient.setDefaultOptions({ queries: { retry: false } });
-  const api = createApiClient({ baseUrl: API, tokens: memoryTokenStore(token), onUnauthorized });
+  const api = createApiClient({
+    baseUrl: API,
+    tokens: session.tokens,
+    onUnauthorized: () => session.expire(),
+  });
   return (
     <QueryClientProvider client={queryClient}>
       <ApiProvider client={api}>
-        <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+        <SessionProvider store={session}>
+          <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+        </SessionProvider>
       </ApiProvider>
     </QueryClientProvider>
   );
@@ -50,13 +75,15 @@ export function renderWithApp(
   ui: ReactElement,
   options: TestAppOptions & Omit<RenderOptions, 'wrapper'> = {},
 ) {
-  const { route, token, onUnauthorized, ...rest } = options;
-  return render(ui, {
+  const { route, user = testUser(), ...rest } = options;
+  const session = createTestSession(user);
+  const result = render(ui, {
     wrapper: ({ children }) => (
-      <TestProviders route={route} token={token} onUnauthorized={onUnauthorized}>
+      <TestProviders route={route} session={session}>
         {children}
       </TestProviders>
     ),
     ...rest,
   });
+  return { ...result, session };
 }
