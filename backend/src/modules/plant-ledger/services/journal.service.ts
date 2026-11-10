@@ -184,12 +184,13 @@ export class JournalService {
   async timeline(
     userId: string,
     plantId: string,
-    q: PageQuery,
+    q: PageQuery & { types?: LogType[] },
   ): Promise<Page<JournalEntry>> {
     const { rows, total } = await this.journal.listForPlant(
       userId,
       plantId,
       toSkipTake(q),
+      q.types,
     );
     return toPage(rows, total, q);
   }

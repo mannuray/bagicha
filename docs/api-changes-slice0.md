@@ -118,3 +118,13 @@ is built against the "After" column.
 | # | Endpoint | Change |
 |---|---|---|
 | T-1 | `POST /auth/request-otp` | `data` is now an object `{ message, dev_otp? }` instead of a plain string. `dev_otp` (the issued code) is present only when `AUTH_EXPOSE_OTP=true` and `NODE_ENV` isn't production; startup fails if both are set. |
+
+
+## Timeline type filter (tree page v2)
+
+`GET /api/v1/ledger/plants/:id/timeline` accepts an optional `types` query: a comma-separated list of journal entry types.
+
+- **Request:** `?types=HARVEST,NOTE&page=1&page_size=20`
+- **Response:** the usual paged envelope, containing only entries of those types. `pagination.total_items` counts the filtered set, so paging walks the filtered list.
+- **Without `types`:** unchanged from before.
+- **Unknown type** (e.g. `types=BANANA`): `422` with `error.code = "VALIDATION_ERROR"`, the same as other query validation.

@@ -167,4 +167,52 @@ describe('plant ledger loop', () => {
     expect((await b.get('/api/v1/ledger/plants')).body.data).toEqual([]);
     expect((await b.get('/api/v1/ledger/tasks')).body.data).toEqual([]);
   });
+  describe('timeline type filter', () => {
+    const setup = async () => {
+      const a = as(alice);
+      const plant = await a.post('/api/v1/ledger/plants', {
+        name: 'Aam',
+        species: 'Mango',
+      });
+      const plantId = plant.body.data.id as string;
+      await a.post(`/api/v1/ledger/plants/${plantId}/journal`, {
+        type: 'NOTE',
+        content: 'hello',
+      });
+      await a.post(`/api/v1/ledger/plants/${plantId}/journal`, {
+        type: 'HARVEST',
+        metadata: { quantity_value: 10, quantity_unit: 'kg' },
+      });
+      return { a, url: `/api/v1/ledger/plants/${plantId}/timeline` };
+    };
+
+    it('filters the timeline by types', async () => {
+      const { a, url } = await setup();
+      const res = await a.get(`${url}?types=HARVEST`);
+      expect(res.status).toBe(200);
+      expect(res.body.data.map((i: { type: string }) => i.type)).toEqual([
+        'HARVEST',
+      ]);
+      expect(res.body.pagination.total_items).toBe(1);
+    });
+
+    it('accepts several comma-separated types', async () => {
+      const { a, url } = await setup();
+      const res = await a.get(`${url}?types=HARVEST,NOTE`);
+      expect(res.body.pagination.total_items).toBe(2);
+    });
+
+    it('rejects an unknown timeline type', async () => {
+      const { a, url } = await setup();
+      const res = await a.get(`${url}?types=BANANA`);
+      expect(res.status).toBe(422);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('keeps the unfiltered timeline unchanged', async () => {
+      const { a, url } = await setup();
+      const res = await a.get(url);
+      expect(res.body.pagination.total_items).toBe(2);
+    });
+  });
 });

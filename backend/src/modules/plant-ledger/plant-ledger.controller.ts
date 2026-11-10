@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PaginationQueryDto } from '../../common/pagination';
+import { TimelineQueryDto } from './dto/timeline-query.dto';
 import { Clock } from '../../common/time';
 import { AddLogDto } from './dto/add-log.dto';
 import { CreatePlantDto } from './dto/create-plant.dto';
@@ -83,7 +84,7 @@ export class PlantLedgerController {
   async getTimeline(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
-    @Query() q: PaginationQueryDto,
+    @Query() q: TimelineQueryDto,
   ) {
     await this.plants.getDetail(req.user.id, id);
     return this.journal.timeline(req.user.id, id, q);

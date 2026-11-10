@@ -26,8 +26,12 @@ export class JournalRepository {
     userId: string,
     plantId: string,
     page: SkipTake,
+    types?: LogType[],
   ): Promise<Rows<JournalEntry>> {
-    const where = owned(userId, plantId);
+    const where = {
+      ...owned(userId, plantId),
+      ...(types?.length ? { type: { in: types } } : {}),
+    };
     const [rows, total] = await Promise.all([
       this.prisma.journalEntry.findMany({
         where,
