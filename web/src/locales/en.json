@@ -125,5 +125,50 @@
     "name": "Name",
     "edit": "Edit details",
     "signOut": "Sign out"
+  },
+  "plants": {
+    "list": {
+      "kicker": "Your orchard",
+      "title": "My Plants",
+      "add": "Add a plant",
+      "emptyTitle": "Your garden is waiting",
+      "emptyBody": "Add the trees you tend to start their story.",
+      "addFirst": "Add your first tree"
+    },
+    "stage": {
+      "SAPLING": "Sapling",
+      "JUVENILE": "Young tree",
+      "FIRST_FLOWERING": "First flowering",
+      "FIRST_HARVEST": "First harvest",
+      "MATURE_BEARING": "Mature canopy"
+    },
+    "kind": {
+      "TREE": "Tree",
+      "FLOWER": "Flower",
+      "CROP": "Crop"
+    },
+    "precision": {
+      "YEAR": "Year",
+      "MONTH_YEAR": "Month",
+      "EXACT_DATE": "Exact date"
+    },
+    "form": {
+      "newTitle": "Add a Tree",
+      "editTitle": "Edit Tree",
+      "name": "Name",
+      "namePlaceholder": "e.g. Grandfather's mango",
+      "nameRequired": "Give your tree a name.",
+      "species": "What is it?",
+      "speciesPlaceholder": "Search mango, lemon, litchi…",
+      "speciesRequired": "Tell us what kind of plant it is.",
+      "variety": "Variety (optional)",
+      "kind": "Kind",
+      "whenPlanted": "When was it planted?",
+      "yearPlanted": "Year planted",
+      "monthPlanted": "Month planted",
+      "datePlanted": "Date planted",
+      "dateHint": "Leave blank if you're not sure.",
+      "save": "Save tree"
+    }
   }
 }
