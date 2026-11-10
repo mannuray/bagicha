@@ -112,6 +112,16 @@ export function useCycles(id: string) {
   });
 }
 
+/** Every cycle of a plant (all pages), for year-on-year comparison. */
+export function useAllCycles(id: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.plants.cyclesAll(id),
+    queryFn: () => fetchAllPages(api, `/ledger/plants/${id}/cycles`, cycleSchema),
+    enabled: Boolean(id),
+  });
+}
+
 export function useMitigationPlan(id: string) {
   const api = useApi();
   return useQuery({

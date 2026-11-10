@@ -78,3 +78,23 @@ export function pagedResponse<T>(request: Request, all: T[]) {
     has_previous: page > 1,
   });
 }
+
+export const cycleRecord = (over: Record<string, unknown> = {}) => ({
+  id: 'c1',
+  cycle_year: 2026,
+  observed_flowering_at: null,
+  observed_fruit_set_at: null,
+  harvest_started_at: null,
+  harvest_completed_at: null,
+  yield_quantity: null,
+  yield_unit: null,
+  yield_quality: 'UNKNOWN',
+  flower_drop_level: 'UNKNOWN',
+  fruit_drop_level: 'UNKNOWN',
+  stress_score: 0,
+  pest_pressure_score: 0,
+  treatment_count: 0,
+  cycle_summary: null,
+  recommended_next_cycle_actions: [],
+  ...over,
+});

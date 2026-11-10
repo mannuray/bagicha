@@ -22,13 +22,21 @@ export interface NewMoment {
   event_at?: string;
 }
 
-/** The plant's moments, newest first, one page at a time ("Show earlier moments"). */
-export function useTimeline(plantId: string) {
+/**
+ * The plant's moments, newest first, one page at a time ("Show earlier moments").
+ * `types` filters on the server, so paging walks the filtered list.
+ */
+export function useTimeline(plantId: string, types?: readonly string[]) {
   const api = useApi();
+  const filter = types && types.length > 0 ? types.join(',') : null;
   return useInfiniteQuery({
-    queryKey: queryKeys.plants.timelineAll(plantId),
+    queryKey: queryKeys.plants.timeline(plantId, filter ?? 'all'),
     queryFn: ({ pageParam }) =>
-      api.getPage(`/ledger/plants/${plantId}/timeline`, journalEntrySchema, { page: pageParam, page_size: 20 }),
+      api.getPage(`/ledger/plants/${plantId}/timeline`, journalEntrySchema, {
+        page: pageParam,
+        page_size: 20,
+        ...(filter ? { types: filter } : {}),
+      }),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.pagination.has_next ? last.pagination.page + 1 : undefined),
     select: (data) => ({ items: data.pages.flatMap((p) => p.items) }),

@@ -6,7 +6,10 @@ export const queryKeys = {
     everything: ['plants', 'everything'] as const,
     detail: (id: string) => ['plants', id, 'detail'] as const,
     timelineAll: (id: string) => ['plants', id, 'timeline'] as const,
+    /** Under timelineAll, so invalidating timelineAll refreshes every filter. */
+    timeline: (id: string, filter: string) => ['plants', id, 'timeline', filter] as const,
     cycles: (id: string) => ['plants', id, 'cycles'] as const,
+    cyclesAll: (id: string) => ['plants', id, 'cycles', 'all'] as const,
     tasks: (id: string) => ['plants', id, 'tasks'] as const,
     intelligence: (id: string) => ['plants', id, 'intelligence'] as const,
     mitigation: (id: string) => ['plants', id, 'mitigation'] as const,

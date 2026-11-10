@@ -20,8 +20,18 @@ export const plantSchema = z.object({
 });
 export type Plant = z.infer<typeof plantSchema>;
 
+const milestone = z
+  .string()
+  .nullable()
+  .optional()
+  .transform((v) => v ?? null);
+
 export const plantDetailSchema = plantSchema.extend({
   _count: z.object({ journal_entries: z.number() }),
+  first_flowering_at: milestone,
+  first_fruit_set_at: milestone,
+  first_harvest_at: milestone,
+  latest_harvest_at: milestone,
 });
 export type PlantDetail = z.infer<typeof plantDetailSchema>;
 
