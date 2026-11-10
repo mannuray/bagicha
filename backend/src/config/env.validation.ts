@@ -1,3 +1,5 @@
+import { InvariantError } from '../common/errors';
+
 export interface Env {
   DATABASE_URL: string;
   JWT_SECRET: string;
@@ -23,8 +25,9 @@ export function validateEnv(raw: Record<string, unknown>): Env {
     return typeof value !== 'string' || value.trim() === '';
   });
   if (missing.length > 0) {
-    throw new Error(
+    throw new InvariantError(
       `Missing required environment variables: ${missing.join(', ')}`,
+      { missing },
     );
   }
   return raw as Env;

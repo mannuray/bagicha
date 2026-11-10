@@ -1,3 +1,4 @@
+import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
   BadRequestException,
   Body,
@@ -28,7 +29,7 @@ export class MediaController {
     FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_BYTES } }),
   )
   async uploadImage(
-    @Request() req,
+    @Request() req: AuthedRequest,
     @Body('kind') kindRaw: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
@@ -39,7 +40,7 @@ export class MediaController {
 
   @Get('download-url/*key')
   async getDownloadUrl(
-    @Request() req,
+    @Request() req: AuthedRequest,
     @Param('key') keyParam: string | string[],
     @Query('expires') expires?: string,
   ) {

@@ -10,7 +10,7 @@ export class LifecycleService {
    * Calculates the current lifecycle stage based on planting date and species.
    * This is a simplified logic that can be expanded with species-specific data.
    */
-  calculateStage(plantingDate: Date | null, species: string): LifecycleStage {
+  calculateStage(plantingDate: Date | null, _species: string): LifecycleStage {
     if (!plantingDate) return LifecycleStage.SAPLING;
 
     const ageInYears =

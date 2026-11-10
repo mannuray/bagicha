@@ -38,3 +38,63 @@ is built against the "After" column.
 | `POST media/images`, `GET media/download-url/*key` | `{success, data}` double-wrapped inside the envelope | plain envelope `data` | 21 |
 | `POST community/posts/:id/report`, `…/comments/:id/report` | report row only | report + `COMMUNITY_REPORT_FILED` audit row in one transaction (repeat reports write nothing) | 21 |
 | `POST chat/messages` unknown receiver | 404 `NOT_FOUND` | 404 `RECEIVER_NOT_FOUND` | 21 |
+| indexes | none on `trees.user_id`, `messages`, verified comments | `trees(user_id)`, `messages(sender_id, receiver_id, created_at)`, `messages(receiver_id, created_at)`, `comments(is_expert_verified, is_hidden, created_at)`, plus `audit_events` indexes | 13, 22 |
+| error envelope | `error.code` free-form | every error carries a machine-readable `error.code` (the `reason`), e.g. `PLANT_NOT_FOUND`, `RATE_LIMITED`, `AI_RESPONSE_INVALID`; unknown errors never leak their message | 7 |
+
+## Running locally (new requirements)
+
+- `JWT_SECRET` and `DATABASE_URL` are required at startup.
+- AI needs `GEMINI_API_KEY` **and** `GEMINI_MODEL`.
+- Payments webhook needs `RAZORPAY_WEBHOOK_SECRET`.
+- Mock-data login: set `AUTH_DEV_OTP_PHONE=+916202042225` and `AUTH_DEV_OTP_CODE=123456` (ignored in production).
+- Tracing export: set `OTEL_EXPORTER_OTLP_ENDPOINT` (otherwise spans stay local; logs still carry `traceId`).
+- Start scripts load `dist/instrumentation.js` via `node --require` (never import it from `main.ts`).
+- e2e: `cp .env.test.example .env.test`, `docker compose up -d postgres redis minio`, `npm run test:e2e`.
+
+## Principles review (docs/coding-principles.md §8, whole backend)
+
+**Design**
+- ✅ One reason to change per class — the 1,221-line ledger service is split into plant records, journal, cycles, tasks and mitigation; pure rules live in `plant-ledger/domain`, `seasonal/domain`, `vision/ai-diagnosis.mapper.ts`. Follow-up: `plants.service.ts` still holds both seed data and ranking.
+- ✅ Extension points — species config map, rate-limit buckets, `AiProvider`.
+- ✅ Substitutability — `GeminiProvider`/`AiProvider`, throttler guard subclasses honour their base contracts.
+- ✅ Siblings import only `index.ts` — enforced by `scripts/check-module-imports.js` (part of `npm run check:boundaries`). Exception: `app.module.ts` (composition root) imports module classes directly.
+- ✅ Constructor injection — the Gemini SDK comes through an injected factory. `MitigationService` holds a `new MitigationPlanner()`: stateless pure logic with no dependencies.
+- ✅ Persistence behind repositories — `check:boundaries` greps for user-owned tables outside repositories. Exceptions: the health probe (`SELECT 1`) and Kathawachak's Prisma listeners.
+- ✅ Acyclic — `npm run check:cycles` (madge).
+
+**API & errors**
+- ✅ Domain-prefixed routes; ✅ one envelope (double wraps removed in diagnosis and media).
+- ✅ DTOs validated at the boundary (added: plants/resolve, search, feed, webhook payload, create-order plan).
+- ✅ Error hierarchy with `reason`. Remaining Nest exceptions (`UnauthorizedException` in auth/JWT with explicit `code`, `BadRequestException` in media upload) are mapped to reason codes by the filter.
+- ✅ Auth guard + permission. "Permission" here = ownership, enforced in owner-scoped repositories (fail closed, 404).
+- ✅ Per-item outcomes: `diagnosis/finalize`, `materialize-tasks`, `TaskService.createTasks`.
+
+**Testability**
+- ✅ Direct instantiation with stubs (every new unit spec does this).
+- ✅ No constructor I/O in our classes. **Exception:** Kathawachak `MonitorService` builds its batcher in the constructor (left as-is: "Kathawachak stays").
+- ✅ No bare `new Date()` in `src/modules` (grep-enforced). The envelope/filter timestamps in `common/` are response metadata, not business logic.
+
+**Observability**
+- ✅ pino only (no `console.*`, grep-enforced), with `service, version, env, traceId, spanId, requestId, userId`.
+- ✅ `withSpan` around Gemini, MinIO (put/presign/bucket setup) and weather.
+- ✅ Metrics: `bagicha.ai.calls`, `bagicha.diagnoses.recorded`, `bagicha.tasks.created`, `bagicha.tasks.completed`, `bagicha.rate_limit.rejected`, `bagicha.queue.depth`.
+
+**Security**
+- ✅ Fail closed: ownership (404), webhook signature, required `JWT_SECRET`, dev OTP off by default and never in production. The only fail-open is the rate limiter on a Redis outage.
+- ✅ Defaults off: `subscription_tier` defaults to FREE; private media is owner-only.
+- ✅ Owner-scoped repositories for every user-owned table; ✅ rate limits on AI, OTP, uploads and the catalogue.
+- ✅ No secrets in code (test values in `.env.test.example` are dummies; `.env*` gitignored).
+
+**Scaling**
+- ✅ Every list endpoint paginates (max 100). **Exception:** `marketplace/items` (a static mock list of 3).
+- ✅ Indexes for new query shapes (see table above).
+- ✅ Idempotent consumers: task generation (source keys), weather (cache check), webhook (payment-id dedupe).
+- ⛔ Optimistic concurrency — documented exception (spec §7: single-owner records).
+
+**Habits**
+- ✅ Audit at write time with snapshots: `AUTH_SIGNED_IN`, `SUBSCRIPTION_CHANGED`, `COMMUNITY_REPORT_FILED`.
+- ✅ No single-caller abstractions (`AiProvider` has two callers plus the test fake).
+- ✅ `/health` + `/health/live`, graceful shutdown (`enableShutdownHooks`, Redis `quit`, Prisma disconnect, BullMQ workers).
+
+**Known, unchanged behaviour flagged for Slice 1**
+- `GET seasonal/weather` always uses pincode `800001`: users have no pincode field (the old code read `req.user.pincode`, which never existed).

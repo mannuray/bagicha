@@ -39,7 +39,7 @@ export class FailOpenThrottlerStorage implements ThrottlerStorage {
         blockDuration,
         throttlerName,
       );
-    } catch (err) {
+    } catch (err: unknown) {
       this.logger.warn(
         { err },
         'Rate-limit store unavailable; allowing request',

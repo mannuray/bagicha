@@ -1,51 +1,63 @@
 import {
+  CallHandler,
+  ExecutionContext,
   Injectable,
   NestInterceptor,
-  ExecutionContext,
-  CallHandler,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { randomUUID } from 'crypto';
+import { Request } from 'express';
+import { map, Observable } from 'rxjs';
+import { PageMeta } from '../pagination';
 
-export interface Response<T> {
-  success: boolean;
+export interface SuccessEnvelope<T> {
+  success: true;
   data: T;
-  pagination?: any;
+  pagination?: PageMeta;
   request_id: string;
   timestamp: string;
 }
 
+function isPage(
+  value: unknown,
+): value is { items: unknown; pagination: PageMeta } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'items' in value &&
+    'pagination' in value &&
+    Boolean((value as { items: unknown; pagination: unknown }).pagination)
+  );
+}
+
+/** Wraps every successful response in the shared envelope; pages become data + pagination. */
 @Injectable()
-export class TransformInterceptor<T> implements NestInterceptor<
-  T,
-  Response<T>
-> {
+export class TransformInterceptor implements NestInterceptor {
   intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Observable<Response<T>> {
-    const request = context.switchToHttp().getRequest();
-    const requestId = request.headers['x-request-id'] || randomUUID();
+  ): Observable<SuccessEnvelope<unknown>> {
+    const request = context.switchToHttp().getRequest<Request>();
+    const header = request.headers['x-request-id'];
+    const requestId =
+      (Array.isArray(header) ? header[0] : header) ?? randomUUID();
 
     return next.handle().pipe(
-      map((result) => {
-        // Handle paginated results specifically
-        if (result && result.items && result.pagination) {
+      map((result: unknown) => {
+        const timestamp = new Date().toISOString();
+        if (isPage(result)) {
           return {
-            success: true,
+            success: true as const,
             data: result.items,
             pagination: result.pagination,
             request_id: requestId,
-            timestamp: new Date().toISOString(),
+            timestamp,
           };
         }
-
         return {
-          success: true,
+          success: true as const,
           data: result,
           request_id: requestId,
-          timestamp: new Date().toISOString(),
+          timestamp,
         };
       }),
     );

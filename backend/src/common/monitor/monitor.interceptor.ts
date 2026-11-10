@@ -15,7 +15,7 @@ function resolveRoute(
   request: Request,
   context: ExecutionContext,
 ): string | undefined {
-  const expressRoute = (request as Request & { route?: { path?: string } })
+  const expressRoute = (request as unknown as { route?: { path?: string } })
     .route?.path;
   if (expressRoute) return expressRoute;
 
@@ -23,8 +23,12 @@ function resolveRoute(
   // matched (e.g. 404 or exception before the router resolved a route).
   const handler = context.getHandler();
   const controller = context.getClass();
-  const controllerPath = Reflect.getMetadata('path', controller);
-  const handlerPath = Reflect.getMetadata('path', handler);
+  const controllerPath = Reflect.getMetadata('path', controller) as
+    | string
+    | undefined;
+  const handlerPath = Reflect.getMetadata('path', handler) as
+    | string
+    | undefined;
   if (controllerPath !== undefined || handlerPath !== undefined) {
     const normalizedController = controllerPath ? `/${controllerPath}` : '';
     const normalizedHandler = handlerPath ? `/${handlerPath}` : '';

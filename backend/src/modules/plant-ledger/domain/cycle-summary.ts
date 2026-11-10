@@ -1,9 +1,4 @@
-import {
-  DropLevel,
-  JournalEntry,
-  LogType,
-  YieldQuality,
-} from '@prisma/client';
+import { DropLevel, JournalEntry, LogType, YieldQuality } from '@prisma/client';
 
 export function parseDropLevel(metadata: unknown, key: string): DropLevel {
   const value = (metadata as Record<string, unknown> | null | undefined)?.[key];

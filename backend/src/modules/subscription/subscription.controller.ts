@@ -1,3 +1,4 @@
+import type { AuthedRequest } from '../../common/auth/authed-request';
 import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -12,10 +13,7 @@ export class SubscriptionController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post('create-order')
-  createOrder(
-    @Request() req: { user: { id: string } },
-    @Body() dto: CreateOrderDto,
-  ) {
+  createOrder(@Request() req: AuthedRequest, @Body() dto: CreateOrderDto) {
     return this.subscriptionService.createOrder(req.user.id, dto.plan_id);
   }
 

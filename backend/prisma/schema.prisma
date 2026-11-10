@@ -511,6 +511,7 @@ model Comment {
 
   post   Post @relation(fields: [post_id], references: [id])
   author User @relation(fields: [author_id], references: [id])
+  @@index([is_expert_verified, is_hidden, created_at])
 
   @@map("comments")
 }
@@ -551,6 +552,8 @@ model Message {
 
   sender   User @relation("SentMessages", fields: [sender_id], references: [id])
   receiver User @relation("ReceivedMessages", fields: [receiver_id], references: [id])
+  @@index([sender_id, receiver_id, created_at])
+  @@index([receiver_id, created_at])
 
   @@map("messages")
 }

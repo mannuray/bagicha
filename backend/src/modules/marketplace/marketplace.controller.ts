@@ -1,3 +1,4 @@
+import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
   Controller,
   Get,
@@ -21,7 +22,7 @@ export class MarketplaceController {
   }
 
   @Post('buy')
-  buyItem(@Request() req: { user: { id: string } }, @Body() dto: BuyItemDto) {
+  buyItem(@Request() req: AuthedRequest, @Body() dto: BuyItemDto) {
     return this.marketplaceService.buyItem(req.user.id, dto.item_id);
   }
 }

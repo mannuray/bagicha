@@ -202,7 +202,7 @@ export class MediaService implements OnModuleInit {
     };
     try {
       await this.client.setBucketPolicy(this.bucket, JSON.stringify(policy));
-    } catch (err) {
+    } catch (err: unknown) {
       this.logger.warn({ err }, 'Failed to set bucket policy');
     }
   }

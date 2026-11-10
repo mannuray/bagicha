@@ -1,3 +1,4 @@
+import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
   Controller,
   Get,
@@ -23,18 +24,18 @@ export class CommunityController {
   constructor(private readonly communityService: CommunityService) {}
 
   @Get('feed')
-  getFeed(@Request() req: { user: { id: string } }, @Query() q: FeedQueryDto) {
+  getFeed(@Request() req: AuthedRequest, @Query() q: FeedQueryDto) {
     return this.communityService.getFeed(req.user.id, q.district, q);
   }
 
   @Post('posts')
-  async createPost(@Request() req, @Body() dto: CreatePostDto) {
+  async createPost(@Request() req: AuthedRequest, @Body() dto: CreatePostDto) {
     return this.communityService.createPost(req.user.id, dto);
   }
 
   @Post('posts/:id/comments')
   async addComment(
-    @Request() req,
+    @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Body() dto: CreateCommentDto,
   ) {
@@ -43,13 +44,13 @@ export class CommunityController {
 
   @Post('ask-ai')
   @RateLimit('ai')
-  async askAi(@Request() req, @Body() dto: AskAiDto) {
+  async askAi(@Request() req: AuthedRequest, @Body() dto: AskAiDto) {
     return this.communityService.askAi(req.user.id, dto);
   }
 
   @Post('posts/:id/report')
   async reportPost(
-    @Request() req,
+    @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Body() dto: ReportTargetDto,
   ) {
@@ -58,7 +59,7 @@ export class CommunityController {
 
   @Post('comments/:id/report')
   async reportComment(
-    @Request() req,
+    @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Body() dto: ReportTargetDto,
   ) {

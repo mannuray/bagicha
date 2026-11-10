@@ -40,7 +40,7 @@ abstract class BaseRateLimitGuard extends ThrottlerGuard {
 
   protected throwThrottlingException(
     context: ExecutionContext,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     _detail: ThrottlerLimitDetail,
   ): Promise<void> {
     const bucket = this.bucketOf(context) ?? 'default';
@@ -63,7 +63,7 @@ export class DefaultRateLimitGuard extends BaseRateLimitGuard {
   protected generateKey(
     context: ExecutionContext,
     tracker: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     _name: string,
   ): string {
     return `rl:default:${context.getClass().name}.${context.getHandler().name}:${tracker}`;
@@ -83,7 +83,7 @@ export class BucketRateLimitGuard extends BaseRateLimitGuard {
   protected generateKey(
     context: ExecutionContext,
     tracker: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     _name: string,
   ): string {
     return `rl:${this.bucketOf(context)}:${tracker}`;

@@ -1,3 +1,4 @@
+import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
   Controller,
   Get,
@@ -9,31 +10,40 @@ import {
 import { SeasonalService } from './seasonal.service';
 import { AuthGuard } from '@nestjs/passport';
 
+// Users have no pincode yet, so weather has always used this default.
+const DEFAULT_PINCODE = '800001';
+const DEFAULT_DISTRICT = 'Patna';
+
 @Controller('seasonal')
 @UseGuards(AuthGuard('jwt'))
 export class SeasonalController {
   constructor(private readonly seasonalService: SeasonalService) {}
 
   @Get('weather')
-  async getWeather(@Request() req) {
-    // Uses the user's pincode from their profile
-    return this.seasonalService.getLocalizedWeather(
-      req.user.pincode || '800001',
-    );
+  getWeather() {
+    return this.seasonalService.getLocalizedWeather(DEFAULT_PINCODE);
   }
 
   @Get('guide')
-  async getGuide(@Request() req) {
-    return this.seasonalService.getSeasonalGuide(req.user.district || 'Patna');
+  getGuide(@Request() req: AuthedRequest) {
+    return this.seasonalService.getSeasonalGuide(
+      req.user.district || DEFAULT_DISTRICT,
+    );
   }
 
   @Get('plant/:id/intelligence')
-  async getTreeIntelligence(@Request() req, @Param('id') id: string) {
+  async getTreeIntelligence(
+    @Request() req: AuthedRequest,
+    @Param('id') id: string,
+  ) {
     return this.seasonalService.getTreeIntelligence(req.user.id, id);
   }
 
   @Post('plant/:id/materialize-tasks')
-  async materializeTasks(@Request() req, @Param('id') id: string) {
+  async materializeTasks(
+    @Request() req: AuthedRequest,
+    @Param('id') id: string,
+  ) {
     return this.seasonalService.materializeTasksForTree(req.user.id, id);
   }
 }

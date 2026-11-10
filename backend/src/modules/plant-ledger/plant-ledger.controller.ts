@@ -1,3 +1,4 @@
+import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
   Body,
   Controller,
@@ -21,8 +22,6 @@ import { JournalService } from './services/journal.service';
 import { MitigationService } from './services/mitigation.service';
 import { PlantRecordService } from './services/plant-record.service';
 import { TaskService } from './services/task.service';
-
-type AuthedRequest = { user: { id: string } };
 
 @Controller('ledger')
 @UseGuards(AuthGuard('jwt'))

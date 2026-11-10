@@ -1,3 +1,4 @@
+import type { AuthedRequest } from '../../common/auth/authed-request';
 import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
 import { VisionService } from './vision.service';
 import { VisionRequestDto } from './dto/vision-request.dto';
@@ -11,13 +12,19 @@ export class VisionController {
 
   @Post('identify')
   @RateLimit('ai')
-  async identify(@Request() req, @Body() visionRequestDto: VisionRequestDto) {
+  async identify(
+    @Request() req: AuthedRequest,
+    @Body() visionRequestDto: VisionRequestDto,
+  ) {
     return this.visionService.identifyPlant(req.user.id, visionRequestDto);
   }
 
   @Post('diagnose')
   @RateLimit('ai')
-  async diagnose(@Request() req, @Body() visionRequestDto: VisionRequestDto) {
+  async diagnose(
+    @Request() req: AuthedRequest,
+    @Body() visionRequestDto: VisionRequestDto,
+  ) {
     return this.visionService.diagnosePlant(req.user.id, visionRequestDto);
   }
 }

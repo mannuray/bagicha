@@ -65,7 +65,7 @@ export class SeasonalIntelligenceService {
 
   private resolveSeasonalWindow(
     month: number,
-    district?: string | null,
+    _district?: string | null,
   ): 'late_winter' | 'spring' | 'summer' | 'monsoon' | 'post_monsoon' {
     if (month === 1 || month === 2) return 'late_winter';
     if (month === 3 || month === 4) return 'spring';

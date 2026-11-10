@@ -1,3 +1,4 @@
+import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
   Body,
   Controller,
@@ -20,7 +21,10 @@ export class DiagnosisController {
   @Post('finalize')
   @RateLimit('ai')
   @HttpCode(HttpStatus.OK)
-  async finalize(@Request() req, @Body() dto: FinalizeDiagnosisDto) {
+  async finalize(
+    @Request() req: AuthedRequest,
+    @Body() dto: FinalizeDiagnosisDto,
+  ) {
     return this.pipeline.finalize(req.user.id, dto);
   }
 }

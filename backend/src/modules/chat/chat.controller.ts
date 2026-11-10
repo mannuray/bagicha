@@ -1,3 +1,4 @@
+import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
   Controller,
   Get,
@@ -10,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../common/pagination';
 
-type AuthedRequest = { user: { id: string } };
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { AuthGuard } from '@nestjs/passport';

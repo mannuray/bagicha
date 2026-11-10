@@ -49,7 +49,7 @@ export class GeminiProvider extends AiProvider {
             .getGenerativeModel({ model })
             .generateContent(parts);
           text = result.response.text();
-        } catch (err) {
+        } catch (err: unknown) {
           this.metrics.aiCall(request.feature, 'error');
           this.logger.error(
             { err, feature: request.feature },
@@ -65,7 +65,7 @@ export class GeminiProvider extends AiProvider {
           const json = extractJsonObject(text);
           this.metrics.aiCall(request.feature, 'ok');
           return json;
-        } catch (err) {
+        } catch (err: unknown) {
           if (err instanceof AppError) {
             this.metrics.aiCall(request.feature, 'invalid_response');
             this.logger.warn(
