@@ -83,12 +83,7 @@ export class PlantsService implements OnModuleInit {
   }
 
   private async bootstrapCatalog() {
-    // Safe to run on every boot: seeds only an empty catalogue.
-    const count = await this.catalog.count();
-    if (count > 0) {
-      return;
-    }
-
+    // Safe to run on every boot: adds missing entries and refreshes existing ones.
     const seeds: PlantSeed[] = [
       {
         species_family: 'mango',
@@ -205,9 +200,95 @@ export class PlantsService implements OnModuleInit {
         regions: ['east_india', 'south_deccan', 'coastal_humid'],
         confidence_weight: 0.88,
       },
+      {
+        species_family: 'papaya',
+        species: 'papaya',
+        display_name: 'Papaya',
+        plant_type: 'fruit_tree',
+        aliases: ['papaya', 'papita', 'red lady'],
+        languages: { hi: ['पपीता'] },
+        regions: [
+          'east_india',
+          'south_deccan',
+          'coastal_humid',
+          'west_india',
+          'central_india',
+        ],
+        confidence_weight: 0.88,
+      },
+      {
+        species_family: 'grape',
+        species: 'grape',
+        display_name: 'Grape',
+        plant_type: 'fruit_tree',
+        aliases: ['grape', 'grapes', 'angoor', 'angur', 'grape vine'],
+        languages: { hi: ['अंगूर'] },
+        regions: ['west_india', 'south_deccan', 'north_india'],
+        confidence_weight: 0.86,
+      },
+      {
+        species_family: 'jackfruit',
+        species: 'jackfruit',
+        display_name: 'Jackfruit',
+        plant_type: 'fruit_tree',
+        aliases: ['jackfruit', 'jack fruit', 'kathal'],
+        languages: { hi: ['कटहल'] },
+        regions: ['east_india', 'coastal_humid', 'south_deccan'],
+        confidence_weight: 0.86,
+      },
+      {
+        species_family: 'coconut',
+        species: 'coconut',
+        display_name: 'Coconut',
+        plant_type: 'fruit_tree',
+        aliases: ['coconut', 'nariyal', 'coconut palm'],
+        languages: { hi: ['नारियल'] },
+        regions: ['coastal_humid', 'south_deccan'],
+        confidence_weight: 0.86,
+      },
+      {
+        species_family: 'sapota',
+        species: 'sapota',
+        display_name: 'Sapota (Chikoo)',
+        plant_type: 'fruit_tree',
+        aliases: ['sapota', 'chikoo', 'chiku', 'sapodilla'],
+        languages: { hi: ['चीकू'] },
+        regions: ['west_india', 'south_deccan', 'coastal_humid'],
+        confidence_weight: 0.86,
+      },
+      {
+        species_family: 'amla',
+        species: 'amla',
+        display_name: 'Amla',
+        plant_type: 'fruit_tree',
+        aliases: ['amla', 'aonla', 'indian gooseberry'],
+        languages: { hi: ['आंवला', 'आँवला'] },
+        regions: ['north_india', 'central_india', 'east_india'],
+        confidence_weight: 0.86,
+      },
+      {
+        species_family: 'custard_apple',
+        species: 'custard apple',
+        display_name: 'Custard apple (Sitaphal)',
+        plant_type: 'fruit_tree',
+        aliases: ['custard apple', 'sitaphal', 'sharifa', 'sugar apple'],
+        languages: { hi: ['सीताफल', 'शरीफा'] },
+        regions: ['central_india', 'west_india', 'south_deccan'],
+        confidence_weight: 0.85,
+      },
+      {
+        species_family: 'moringa',
+        species: 'moringa',
+        display_name: 'Moringa (Drumstick)',
+        plant_type: 'fruit_tree',
+        aliases: ['moringa', 'drumstick', 'sahjan', 'sehjan', 'munga'],
+        languages: { hi: ['सहजन', 'मुनगा'] },
+        regions: ['south_deccan', 'east_india', 'central_india', 'west_india'],
+        confidence_weight: 0.85,
+      },
     ];
 
-    await this.catalog.createMany(
+    await this.catalog.upsertAll(
       seeds.map((seed) => ({
         ...seed,
         variety: seed.variety ?? null,
