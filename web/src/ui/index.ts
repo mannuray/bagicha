@@ -11,3 +11,4 @@ export { BottomNav } from './BottomNav';
 export { EmptyState, ErrorState, LoadingState, QueryState } from './StateViews';
 export type { QueryLike } from './StateViews';
 export { cx } from './cx';
+export { NotInGarden, isPlantMissing } from './NotInGarden';

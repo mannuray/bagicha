@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import { systemClock } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
-import { Button, EmptyState, Icon, QueryState, Screen, TopBar } from '../../ui';
+import { Button, EmptyState, Icon, NotInGarden, QueryState, Screen, TopBar, isPlantMissing } from '../../ui';
 import { useMaterializeTasks, useMyTasks, usePlantTasks } from './api';
 import { TaskGroups } from './TaskGroups';
 import type { Task } from './schemas';
@@ -36,6 +36,13 @@ function PlantTasks({ plantId }: { plantId: string }) {
   const { t } = useTranslation();
   const query = usePlantTasks(plantId);
   const materialize = useMaterializeTasks();
+  if (query.isError && isPlantMissing(query.error)) {
+    return (
+      <Frame title={t('tasks.plantTitle')}>
+        {() => <NotInGarden />}
+      </Frame>
+    );
+  }
   return (
     <Frame title={t('tasks.plantTitle')}>
       {(onError) => (

@@ -169,7 +169,8 @@
       "datePlanted": "Date planted",
       "dateHint": "Leave blank if you're not sure.",
       "save": "Save tree"
-    }
+    },
+    "backToPlants": "Back to My Plants"
   },
   "tasks": {
     "title": "The Daily Path",
@@ -254,5 +255,28 @@
       "good": "Good",
       "excellent": "Excellent"
     }
+  },
+  "biography": {
+    "seasonReview": "Season review",
+    "logMoment": "Log a Moment",
+    "needsAttention": "Needs attention",
+    "essence": "Botanical Essence",
+    "family": "Family",
+    "habit": "Growth habit",
+    "journal": "Journal",
+    "entries_one": "{{count}} entry",
+    "entries_other": "{{count}} entries",
+    "stage": "Growth stage",
+    "thisSeason": "This Season",
+    "phase": "Now: {{current}} · Next: {{next}}",
+    "doNow": "Do now",
+    "avoid": "Avoid",
+    "watchFor": "Watch for",
+    "upcomingCare": "Upcoming Care",
+    "path": "Geological Path",
+    "noEntries": "No moments logged yet.",
+    "cycles": "Cycles",
+    "noCycles": "Cycles appear once you log flowering, fruit set or harvest.",
+    "cycleYear": "Cycle {{year}}"
   }
 }

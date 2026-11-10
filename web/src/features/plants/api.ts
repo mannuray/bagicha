@@ -5,6 +5,9 @@ import { useApi } from '../../lib/api';
 import { queryKeys } from '../../lib/query-keys';
 import {
   catalogueItemSchema,
+  cycleSchema,
+  mitigationSchema,
+  seasonalStateSchema,
   plantDetailSchema,
   plantSchema,
   resolveSchema,
@@ -88,5 +91,32 @@ export function useResolvePlant(query: string | null) {
     queryFn: () => api.send('POST', '/plants/resolve', { query }, resolveSchema),
     enabled: Boolean(query && query.trim()),
     staleTime: Infinity,
+  });
+}
+
+export function useSeasonalState(id: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.plants.seasonalState(id),
+    queryFn: () => api.get(`/ledger/plants/${id}/seasonal-state`, seasonalStateSchema),
+    enabled: Boolean(id),
+  });
+}
+
+export function useCycles(id: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.plants.cycles(id),
+    queryFn: () => api.getPage(`/ledger/plants/${id}/cycles`, cycleSchema, { page: 1, page_size: 2 }),
+    enabled: Boolean(id),
+  });
+}
+
+export function useMitigationPlan(id: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.plants.mitigation(id),
+    queryFn: () => api.get(`/ledger/plants/${id}/mitigation-plan`, mitigationSchema),
+    enabled: Boolean(id),
   });
 }

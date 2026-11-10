@@ -48,3 +48,50 @@ export interface PlantInput {
   planting_date?: string | null;
   planting_date_precision?: 'EXACT_DATE' | 'MONTH_YEAR' | 'YEAR' | 'UNKNOWN';
 }
+
+const stringList = z.array(z.string());
+
+export const seasonalStateSchema = z.object({
+  species_family: z.string(),
+  current_phase: z.string(),
+  upcoming_phase: z.string(),
+  confidence: z.string(),
+  do_now: stringList,
+  avoid_now: stringList,
+  watch_for: stringList,
+  next_checkpoint_days: z.number(),
+});
+export type SeasonalState = z.infer<typeof seasonalStateSchema>;
+
+export const cycleSchema = z.object({
+  id: z.string(),
+  cycle_year: z.number(),
+  observed_flowering_at: z.string().nullable(),
+  observed_fruit_set_at: z.string().nullable(),
+  harvest_started_at: z.string().nullable(),
+  harvest_completed_at: z.string().nullable(),
+  yield_quantity: z.number().nullable(),
+  yield_unit: z.string().nullable(),
+  yield_quality: z.string(),
+  flower_drop_level: z.string(),
+  fruit_drop_level: z.string(),
+  stress_score: z.number().nullable(),
+  pest_pressure_score: z.number().nullable(),
+  treatment_count: z.number(),
+  cycle_summary: z.string().nullable(),
+  recommended_next_cycle_actions: z.unknown(),
+});
+export type Cycle = z.infer<typeof cycleSchema>;
+
+export const mitigationSchema = z.object({
+  cycle_year: z.number().nullable(),
+  summary: z.string(),
+  likely_issues: stringList,
+  what_to_change: stringList,
+  watch_early: stringList,
+  priority_actions: stringList,
+  completed_tasks: z.number(),
+  skipped_tasks: z.number(),
+  pending_tasks: z.number(),
+});
+export type MitigationPlan = z.infer<typeof mitigationSchema>;

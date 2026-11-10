@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
-import { Button, Chip, ErrorState, Icon, LoadingState, Screen, TextField, TopBar } from '../../ui';
+import { Button, Chip, ErrorState, Icon, LoadingState, NotInGarden, Screen, TextField, TopBar, isPlantMissing } from '../../ui';
 import { usePlant } from '../plants';
 import { useAddJournalEntry, type NewMoment } from './api';
 import { useImageCompressor } from './compressor-context';
@@ -44,7 +44,7 @@ export function LogMomentScreen() {
       <TopBar title={t('journal.title')} />
       <main className="px-6 pb-16 pt-6">
         {plant.isError ? (
-          <ErrorState error={plant.error} onRetry={() => void plant.refetch()} />
+          isPlantMissing(plant.error) ? <NotInGarden /> : <ErrorState error={plant.error} onRetry={() => void plant.refetch()} />
         ) : plant.data ? (
           <MomentForm plantId={id} plantName={plant.data.name} />
         ) : (
