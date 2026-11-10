@@ -278,5 +278,46 @@
     "cycles": "Cycles",
     "noCycles": "Cycles appear once you log flowering, fruit set or harvest.",
     "cycleYear": "Cycle {{year}}"
+  },
+  "scan": {
+    "kicker": "Plant doctor",
+    "title": "Scan",
+    "mode": {
+      "diagnose": "What's wrong?",
+      "identify": "What is this?"
+    },
+    "whichTree": "Which tree",
+    "chooseTree": "Choose a tree",
+    "needTree": "Choose which tree this is, so the diagnosis is saved to it.",
+    "note": "Anything to add? (optional)",
+    "takePhoto": "Take or choose a photo",
+    "submit": {
+      "diagnose": "Diagnose",
+      "identify": "Identify"
+    },
+    "thinking": "Looking closely…",
+    "identifyTitle": "Identification",
+    "diagnoseTitle": "Diagnosis",
+    "unknownPlant": "Unknown plant",
+    "addAsPlant": "Add as a plant",
+    "severity": "{{level}} severity",
+    "whatToDo": "What to do",
+    "savedTo": "Saved to {{name}}",
+    "levels": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High",
+      "UNKNOWN": "Unknown"
+    },
+    "issues": {
+      "PEST": "Pest",
+      "DISEASE": "Disease",
+      "NUTRIENT": "Nutrient issue",
+      "WATER_STRESS": "Water stress",
+      "WEATHER_DAMAGE": "Weather damage",
+      "FRUIT_DROP": "Fruit drop",
+      "FLOWER_DROP": "Flower drop",
+      "UNKNOWN": "Unclear"
+    }
   }
 }
