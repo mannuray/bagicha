@@ -1,26 +1,78 @@
 import { Injectable } from '@nestjs/common';
 import { LifecycleStage } from '@prisma/client';
 import { Clock } from '../../../common/time';
+import { lifeProfileFor } from '../domain/species-life-profiles';
+import { SpeciesNormalizationService } from './species-normalization.service';
+
+const ORDER: LifecycleStage[] = [
+  LifecycleStage.SAPLING,
+  LifecycleStage.JUVENILE,
+  LifecycleStage.FIRST_FLOWERING,
+  LifecycleStage.FIRST_HARVEST,
+  LifecycleStage.MATURE_BEARING,
+];
+const MONTH_MS = (365.25 / 12) * 24 * 60 * 60 * 1000;
+
+export interface StageInput {
+  planting_date: Date | null;
+  species: string;
+  species_family?: string | null;
+  first_flowering_at?: Date | null;
+  first_fruit_set_at?: Date | null;
+  first_harvest_at?: Date | null;
+}
+
+/** The later of two stages: automatic recalculation never moves a tree backwards. */
+export function laterStage(
+  a: LifecycleStage,
+  b: LifecycleStage,
+): LifecycleStage {
+  return ORDER.indexOf(a) >= ORDER.indexOf(b) ? a : b;
+}
 
 @Injectable()
 export class LifecycleService {
-  constructor(private readonly clock: Clock) {}
+  constructor(
+    private readonly clock: Clock,
+    private readonly species: SpeciesNormalizationService,
+  ) {}
 
   /**
-   * Calculates the current lifecycle stage based on planting date and species.
-   * This is a simplified logic that can be expanded with species-specific data.
+   * The stage from age, timed by the species' life profile when we have one,
+   * and never earlier than what the gardener has recorded (flowering, harvest).
    */
-  calculateStage(plantingDate: Date | null, _species: string): LifecycleStage {
-    if (!plantingDate) return LifecycleStage.SAPLING;
+  calculateStage(input: StageInput): LifecycleStage {
+    return laterStage(this.byAge(input), this.byMilestones(input));
+  }
 
-    const ageInYears =
-      (this.clock.now().getTime() - new Date(plantingDate).getTime()) /
-      (1000 * 60 * 60 * 24 * 365);
+  private byMilestones(input: StageInput): LifecycleStage {
+    if (input.first_harvest_at) return LifecycleStage.FIRST_HARVEST;
+    if (input.first_fruit_set_at || input.first_flowering_at)
+      return LifecycleStage.FIRST_FLOWERING;
+    return LifecycleStage.SAPLING;
+  }
 
-    // Default thresholds (can be species-specific later)
-    if (ageInYears < 1) return LifecycleStage.SAPLING;
-    if (ageInYears < 3) return LifecycleStage.JUVENILE;
-    if (ageInYears < 5) return LifecycleStage.FIRST_FLOWERING;
+  private byAge(input: StageInput): LifecycleStage {
+    if (!input.planting_date) return LifecycleStage.SAPLING;
+    const months =
+      (this.clock.now().getTime() - new Date(input.planting_date).getTime()) /
+      MONTH_MS;
+    const family =
+      input.species_family ??
+      this.species.resolveSpeciesFamily({ species: input.species });
+    const profile = lifeProfileFor(family);
+    if (!profile) {
+      // No profile: the original age thresholds.
+      if (months < 12) return LifecycleStage.SAPLING;
+      if (months < 36) return LifecycleStage.JUVENILE;
+      if (months < 60) return LifecycleStage.FIRST_FLOWERING;
+      return LifecycleStage.MATURE_BEARING;
+    }
+    const [min, max] = profile.first_fruit_months;
+    if (months < min / 2) return LifecycleStage.SAPLING;
+    if (months < min) return LifecycleStage.JUVENILE;
+    if (months <= max) return LifecycleStage.FIRST_FLOWERING;
+    if (months <= max + 12) return LifecycleStage.FIRST_HARVEST;
     return LifecycleStage.MATURE_BEARING;
   }
 }

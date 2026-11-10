@@ -38,7 +38,15 @@ export class SpeciesNormalizationService {
     litchi: ['litchi', 'lychee', 'shahi', 'china', 'rose scented'],
     guava: ['guava', 'allahabad safeda', 'lalit', 'lucknow 49'],
     pomegranate: ['pomegranate', 'anar', 'bhagawa'],
-    banana: ['banana', 'plantain', 'grand naine', 'g9', 'robusta'],
+    banana: ['banana', 'plantain', 'grand naine', 'g9', 'robusta', 'kela'],
+    papaya: ['papaya', 'papita', 'red lady'],
+    grape: ['grape', 'angoor', 'angur'],
+    jackfruit: ['jackfruit', 'jack fruit', 'kathal'],
+    coconut: ['coconut', 'nariyal'],
+    sapota: ['sapota', 'chikoo', 'chiku', 'sapodilla'],
+    amla: ['amla', 'aonla', 'indian gooseberry'],
+    custard_apple: ['custard apple', 'sitaphal', 'sharifa', 'sugar apple'],
+    moringa: ['moringa', 'drumstick', 'sahjan', 'sehjan', 'munga'],
   };
 
   resolveSpeciesFamily(input: TreeIdentityInput): string {

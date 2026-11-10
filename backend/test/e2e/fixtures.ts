@@ -10,7 +10,20 @@ export async function resetDb(prisma: PrismaClient): Promise<void> {
   );
   if (tables.length === 0) return;
   const list = tables.map((t) => `"public"."${t.tablename}"`).join(', ');
-  await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} CASCADE`);
+  // A background job from the previous test (e.g. task generation) can still be
+  // writing; TRUNCATE then deadlocks (40P01). Retry briefly instead of failing.
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} CASCADE`);
+      return;
+    } catch (err) {
+      const deadlock = String((err as { message?: string }).message).includes(
+        '40P01',
+      );
+      if (!deadlock || attempt >= 5) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 100 * attempt));
+    }
+  }
 }
 
 export async function seedUser(

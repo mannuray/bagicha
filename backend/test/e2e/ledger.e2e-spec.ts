@@ -215,4 +215,24 @@ describe('plant ledger loop', () => {
       expect(res.body.pagination.total_items).toBe(2);
     });
   });
+  it('returns the species life profile on plant detail', async () => {
+    const a = as(alice);
+    const papaya = await a.post('/api/v1/ledger/plants', {
+      name: 'Papita',
+      species: 'Papaya',
+    });
+    const detail = await a.get(`/api/v1/ledger/plants/${papaya.body.data.id}`);
+    expect(detail.body.data.life_profile).toMatchObject({
+      first_fruit_months: [8, 12],
+      note_key: 'papaya',
+    });
+    const rose = await a.post('/api/v1/ledger/plants', {
+      name: 'Gulab',
+      species: 'Rose',
+    });
+    const roseDetail = await a.get(
+      `/api/v1/ledger/plants/${rose.body.data.id}`,
+    );
+    expect(roseDetail.body.data.life_profile).toBeNull();
+  });
 });

@@ -19,7 +19,8 @@ import {
   TaskGenerationJob,
 } from '../processors/task.processor';
 import { PlantDetail, PlantRepository } from '../repositories/plant.repository';
-import { LifecycleService } from './lifecycle.service';
+import { lifeProfileFor } from '../domain/species-life-profiles';
+import { laterStage, LifecycleService } from './lifecycle.service';
 import {
   SeasonalIntelligenceService,
   TreeSeasonalState,
@@ -67,10 +68,12 @@ export class PlantRecordService implements OnModuleInit {
   async getDetail(userId: string, plantId: string): Promise<PlantDetail> {
     const plant = await this.plants.findOwnedDetail(userId, plantId);
     if (!plant) throw plantNotFound();
-    if (!plant.lifecycle_stage_manual) {
-      const stage = this.lifecycle.calculateStage(
-        plant.planting_date,
-        plant.species,
+    // An ended tree is a record, not a living plant: no stage changes, no new tasks.
+    const ended = Boolean((plant as { ended_at?: Date | null }).ended_at);
+    if (!plant.lifecycle_stage_manual && !ended) {
+      const stage = laterStage(
+        plant.lifecycle_stage,
+        this.lifecycle.calculateStage(plant),
       );
       if (stage !== plant.lifecycle_stage) {
         await this.plants.updateOwned(userId, plant.id, {
@@ -88,6 +91,17 @@ export class PlantRecordService implements OnModuleInit {
     return plant;
   }
 
+  /** Plant detail as the API returns it: the plant plus its species life profile. */
+  async detailView(userId: string, plantId: string) {
+    const plant = await this.getDetail(userId, plantId);
+    return {
+      ...plant,
+      life_profile: lifeProfileFor(
+        plant.species_family ?? this.species.resolveSpeciesFamily(plant),
+      ),
+    };
+  }
+
   async list(userId: string, q: PageQuery): Promise<Page<Plant>> {
     const { rows, total } = await this.plants.listOwned(userId, toSkipTake(q));
     return toPage(rows, total, q);
@@ -101,7 +115,10 @@ export class PlantRecordService implements OnModuleInit {
     );
     const stage =
       dto.lifecycle_stage ??
-      this.lifecycle.calculateStage(planting.date, dto.species);
+      this.lifecycle.calculateStage({
+        planting_date: planting.date,
+        species: dto.species,
+      });
 
     const plant = await this.plants.create(userId, {
       name: dto.name,
@@ -148,7 +165,12 @@ export class PlantRecordService implements OnModuleInit {
     const species = dto.species ?? plant.species;
     const stage =
       dto.lifecycle_stage ??
-      this.lifecycle.calculateStage(planting.date, species);
+      this.lifecycle.calculateStage({
+        ...plant,
+        planting_date: planting.date,
+        species,
+        species_family: dto.species ? null : plant.species_family,
+      });
 
     const updated = await this.plants.updateOwned(userId, plantId, {
       name: dto.name ?? undefined,
