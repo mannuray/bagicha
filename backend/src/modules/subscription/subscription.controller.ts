@@ -12,7 +12,10 @@ export class SubscriptionController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post('create-order')
-  async createOrder(@Request() req, @Body() dto: CreateOrderDto) {
+  createOrder(
+    @Request() req: { user: { id: string } },
+    @Body() dto: CreateOrderDto,
+  ) {
     return this.subscriptionService.createOrder(req.user.id, dto.plan_id);
   }
 

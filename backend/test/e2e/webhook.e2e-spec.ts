@@ -11,7 +11,7 @@ describe('Razorpay webhook', () => {
   let prisma: PrismaClient;
   let user: User;
 
-  const payloadFor = (userId: string, paymentId = 'pay_1') =>
+  const payloadFor = (userId: string, paymentId = `pay_${Date.now()}`) =>
     JSON.stringify({
       event: 'order.paid',
       payload: {
@@ -54,19 +54,22 @@ describe('Razorpay webhook', () => {
   it('rejects a request with no signature and does not upgrade', async () => {
     const res = await post(payloadFor(user.id));
     expect(res.status).toBe(401);
-    expect((await reload()).badge_level).toBe('Seedling');
+    expect((await reload()).subscription_tier).toBe('FREE');
   });
 
   it('rejects a bad signature', async () => {
     const res = await post(payloadFor(user.id), 'deadbeef');
     expect(res.status).toBe(401);
-    expect((await reload()).badge_level).toBe('Seedling');
+    expect((await reload()).subscription_tier).toBe('FREE');
   });
 
   it('upgrades the user on a correctly signed payment', async () => {
     const raw = payloadFor(user.id);
     const res = await post(raw, sign(raw));
     expect(res.status).toBe(201);
-    expect((await reload()).badge_level).toBe('Rooted');
+    const after = await reload();
+    expect(after.subscription_tier).toBe('PREMIUM');
+    expect(after.premium_expires_at).not.toBeNull();
+    expect(after.badge_level).toBe('Seedling');
   });
 });

@@ -193,6 +193,11 @@ enum DiagnosisSeverity {
   UNKNOWN
 }
 
+enum SubscriptionTier {
+  FREE
+  PREMIUM
+}
+
 model User {
   id             String   @id @default(uuid())
   phone_number   String   @unique
@@ -204,6 +209,10 @@ model User {
   language_pref  String   @default("en")
   ranking_points Int      @default(0)
   badge_level    String   @default("Seedling")
+  /// Paid status. Separate from badge_level, which is only the gamification rank.
+  subscription_tier  SubscriptionTier @default(FREE)
+  /// Null with PREMIUM = lifetime.
+  premium_expires_at DateTime?
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 

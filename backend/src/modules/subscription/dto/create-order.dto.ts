@@ -1,7 +1,7 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsIn } from 'class-validator';
+import { PLAN_IDS, type PlanId } from '../plans';
 
 export class CreateOrderDto {
-  @IsNotEmpty()
-  @IsString()
-  plan_id: string;
+  @IsIn(PLAN_IDS)
+  plan_id!: PlanId;
 }
