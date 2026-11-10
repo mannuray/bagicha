@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   Logger,
+  NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -16,6 +17,7 @@ import {
   MEDIA_PREFIXES,
   MediaKind,
   PUBLIC_PREFIXES,
+  parseMediaKey,
 } from './media.config';
 
 export interface MediaUploadResult {
@@ -129,7 +131,24 @@ export class MediaService implements OnModuleInit {
     };
   }
 
-  async getDownloadUrl(key: string, expirySeconds = 60 * 60): Promise<string> {
+  /** Signs a download URL only if the caller may read the key; otherwise 404. */
+  async getDownloadUrlFor(
+    callerId: string,
+    key: string,
+    expirySeconds: number,
+  ): Promise<string> {
+    const parsed = parseMediaKey(key);
+    if (!parsed) throw new NotFoundException('Media not found');
+    if (!PUBLIC_PREFIXES.has(parsed.kind) && parsed.ownerId !== callerId) {
+      throw new NotFoundException('Media not found');
+    }
+    return this.getDownloadUrl(key, expirySeconds);
+  }
+
+  private async getDownloadUrl(
+    key: string,
+    expirySeconds = 60 * 60,
+  ): Promise<string> {
     return this.client.presignedGetObject(this.bucket, key, expirySeconds);
   }
 

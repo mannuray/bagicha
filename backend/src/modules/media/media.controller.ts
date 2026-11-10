@@ -35,15 +35,22 @@ export class MediaController {
     return { success: true, data: result };
   }
 
-  @Get('download-url/*')
+  @Get('download-url/*key')
   async getDownloadUrl(
-    @Param('0') key: string,
+    @Request() req,
+    @Param('key') keyParam: string | string[],
     @Query('expires') expires?: string,
   ) {
     const seconds = expires
       ? Math.min(Math.max(parseInt(expires, 10), 60), 86400)
       : 3600;
-    const url = await this.mediaService.getDownloadUrl(key, seconds);
+    // Express 5 wildcards arrive as path segments.
+    const key = Array.isArray(keyParam) ? keyParam.join('/') : keyParam;
+    const url = await this.mediaService.getDownloadUrlFor(
+      req.user.id,
+      key,
+      seconds,
+    );
     return { success: true, data: { url, expires_in_seconds: seconds } };
   }
 
