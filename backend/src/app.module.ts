@@ -23,6 +23,7 @@ import { LoggingModule } from './common/logging/logging.module';
 import { ObservabilityModule } from './common/observability';
 import { ClockModule } from './common/time';
 import { RateLimitModule } from './common/rate-limit';
+import { HealthModule } from './common/health/health.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { RateLimitModule } from './common/rate-limit';
     ObservabilityModule,
     ClockModule,
     RateLimitModule,
+    HealthModule,
     MonitorModule,
     PrismaModule,
     RedisModule,

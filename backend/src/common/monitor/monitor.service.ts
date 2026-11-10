@@ -19,7 +19,8 @@ export class MonitorService implements OnModuleDestroy {
   private readonly batcher: MonitorBatcher;
 
   constructor(private readonly configService: ConfigService) {
-    const isTestEnv = (process.env.NODE_ENV ?? '').toLowerCase() === 'test';
+    const isTestEnv =
+      this.configService.get<string>('NODE_ENV', '').toLowerCase() === 'test';
     const enabledFromEnv =
       this.configService
         .get<string>('KATHAWACHAK_ENABLED', 'true')

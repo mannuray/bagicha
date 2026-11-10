@@ -59,6 +59,11 @@ export class UpstreamError extends OperationalError {
   readonly httpStatus = 502;
 }
 
+/** The service can't serve requests right now (a dependency is down). */
+export class ServiceUnavailableError extends OperationalError {
+  readonly httpStatus = 503;
+}
+
 /** A bug: an assumption the code relies on did not hold. */
 export class InvariantError extends AppError {
   readonly httpStatus = 500;

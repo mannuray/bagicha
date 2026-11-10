@@ -5,6 +5,7 @@ export {
   InvariantError,
   NotFoundError,
   RateLimitedError,
+  ServiceUnavailableError,
   UnauthorizedError,
   UpstreamError,
   ValidationError,
