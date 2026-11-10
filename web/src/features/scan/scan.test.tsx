@@ -1,13 +1,37 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { Route, Routes, useLocation } from 'react-router';
+import { Route, Routes, useLocation, useNavigate } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import { fail, ok, pageOf, plantRecord, taskRecord } from '../../test/fixtures';
+import { fail, ok, pagedResponse, pageOf, plantRecord, taskRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { ImageCompressorProvider, type ImageCompressor } from '../journal';
 import { DiagnoseResultScreen, IdentifyResultScreen, ScanScreen, ScanStateProvider } from '.';
+import { useScanState } from './scan-state';
+
+function Away() {
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => void navigate(-1)}>
+      go back
+    </button>
+  );
+}
+
+function LeaveButton() {
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => void navigate('/away')}>
+      leave
+    </button>
+  );
+}
+
+function ScanProbe() {
+  const { scan } = useScanState();
+  return <p data-testid="probe">{scan ? 'has-scan' : 'no-scan'}</p>;
+}
 
 function Where() {
   const l = useLocation();
@@ -146,5 +170,99 @@ describe('scan', () => {
     await pickPhoto();
     await userEvent.click(screen.getByRole('button', { name: /diagnose/i }));
     expect(screen.getByText(/choose which tree/i)).toBeInTheDocument();
+  });
+
+  it('lists every tree in the picker, beyond the first page', async () => {
+    const all = Array.from({ length: 45 }, (_, i) => plantRecord({ id: `p${i}`, name: `Tree ${i}` }));
+    server.use(http.get(`${API}/ledger/plants`, ({ request }) => HttpResponse.json(pagedResponse(request, all))));
+    renderWithApp(tree, { route: '/scan' });
+    expect(await screen.findByRole('option', { name: 'Tree 44' })).toBeInTheDocument();
+  });
+
+  it('says so when the tree list cannot load, with a retry', async () => {
+    server.use(http.get(`${API}/ledger/plants`, () => HttpResponse.json(fail('X'), { status: 500 })));
+    renderWithApp(tree, { route: '/scan' });
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+  });
+
+  it('coming back to a result shows it again without re-sending the scan', async () => {
+    plants();
+    let calls = 0;
+    server.use(
+      http.post(`${API}/vision/diagnose`, () => {
+        calls += 1;
+        return HttpResponse.json(ok({ diagnosis, persisted: true, task_id: null }), { status: 201 });
+      }),
+      http.get(`${API}/ledger/plants/p1/tasks`, () => HttpResponse.json(pageOf([]))),
+    );
+    renderWithApp(
+      <ImageCompressorProvider value={compressor}>
+        <ScanStateProvider>
+          <LeaveButton />
+          <Routes>
+            <Route path="/scan" element={<ScanScreen />} />
+            <Route path="/scan/diagnose" element={<DiagnoseResultScreen />} />
+            <Route path="/away" element={<Away />} />
+          </Routes>
+        </ScanStateProvider>
+      </ImageCompressorProvider>,
+      { route: '/scan' },
+    );
+    await screen.findByRole('option', { name: 'Aam' });
+    await userEvent.selectOptions(screen.getByLabelText(/which tree/i), 'p1');
+    await pickPhoto();
+    await userEvent.click(screen.getByRole('button', { name: /diagnose/i }));
+    await screen.findByRole('heading', { name: /pest/i });
+    await userEvent.click(screen.getByRole('button', { name: 'leave' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'go back' }));
+    expect(await screen.findByRole('heading', { name: /pest/i })).toBeInTheDocument();
+    expect(calls).toBe(1);
+  });
+
+  it('forgets the pending scan photo on sign-out', async () => {
+    plants();
+    const view = renderWithApp(
+      <ImageCompressorProvider value={compressor}>
+        <ScanStateProvider>
+          <ScanProbe />
+          <Routes>
+            <Route path="/scan" element={<ScanScreen />} />
+            <Route path="/scan/identify" element={<p>result</p>} />
+          </Routes>
+        </ScanStateProvider>
+      </ImageCompressorProvider>,
+      { route: '/scan' },
+    );
+    await userEvent.click(screen.getByRole('button', { name: /what is this/i }));
+    await pickPhoto();
+    await userEvent.click(screen.getByRole('button', { name: /identify/i }));
+    await waitFor(() => expect(screen.getByTestId('probe')).toHaveTextContent('has-scan'));
+    act(() => view.session.signOut());
+    expect(screen.getByTestId('probe')).toHaveTextContent('no-scan');
+  });
+
+  it('a double tap on Retry sends one request', async () => {
+    plants();
+    let calls = 0;
+    server.use(
+      http.post(`${API}/vision/diagnose`, async () => {
+        calls += 1;
+        await new Promise((r) => setTimeout(r, 30));
+        return calls === 1
+          ? HttpResponse.json(fail('AI_UNAVAILABLE'), { status: 502 })
+          : HttpResponse.json(ok({ diagnosis, persisted: true, task_id: null }), { status: 201 });
+      }),
+      http.get(`${API}/ledger/plants/p1/tasks`, () => HttpResponse.json(pageOf([]))),
+    );
+    renderWithApp(tree, { route: '/scan' });
+    await screen.findByRole('option', { name: 'Aam' });
+    await userEvent.selectOptions(screen.getByLabelText(/which tree/i), 'p1');
+    await pickPhoto();
+    await userEvent.click(screen.getByRole('button', { name: /diagnose/i }));
+    await userEvent.dblClick(await screen.findByRole('button', { name: /try again/i }));
+    await screen.findByRole('heading', { name: /pest/i });
+    await new Promise((r) => setTimeout(r, 60));
+    expect(calls).toBe(2);
   });
 });

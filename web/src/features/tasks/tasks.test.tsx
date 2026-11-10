@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { fail, ok, pageOf, taskRecord } from '../../test/fixtures';
+import { fail, ok, pagedResponse, pageOf, taskRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { TasksScreen } from '.';
@@ -75,5 +75,21 @@ describe('tasks screen', () => {
     server.use(http.get(`${API}/ledger/tasks`, () => HttpResponse.json(pageOf([]))));
     renderWithApp(routes, { route: '/tasks' });
     expect(await screen.findByText(/nothing due/i)).toBeInTheDocument();
+  });
+
+  it('shows a failed Complete on the card itself when the screen gives no error handler', async () => {
+    const { TaskCard } = await import('.');
+    server.use(http.put(`${API}/ledger/plants/p1/tasks/t1`, () => HttpResponse.json(fail('X'), { status: 500 })));
+    const { taskSchema } = await import('.');
+    renderWithApp(<TaskCard task={taskSchema.parse(taskRecord())} />);
+    await userEvent.click(screen.getByRole('button', { name: /complete/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/something went wrong/i);
+  });
+
+  it('shows tasks beyond the first page', async () => {
+    const all = Array.from({ length: 120 }, (_, i) => taskRecord({ id: `t${i}`, title: `Task ${i}` }));
+    server.use(http.get(`${API}/ledger/tasks`, ({ request }) => HttpResponse.json(pagedResponse(request, all))));
+    renderWithApp(routes, { route: '/tasks' });
+    expect(await screen.findByRole('article', { name: 'Task 119' })).toBeInTheDocument();
   });
 });

@@ -1,23 +1,23 @@
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate } from 'react-router';
 import { Surface } from '../../ui';
-import { useIdentify } from './api';
+import { useVisionApi } from './api';
 import { ResultFrame } from './ResultFrame';
 import { useScanState } from './scan-state';
-import { useRunOnce } from './use-run-once';
+import { useScanRequest } from './use-scan-request';
 
 export function IdentifyResultScreen() {
   const { t } = useTranslation();
   const { scan } = useScanState();
-  const identify = useIdentify();
-  const send = () => scan && identify.mutate({ image_base64: scan.base64 });
-  useRunOnce(send);
-  if (!scan || scan.mode !== 'identify') return <Navigate to="/scan" replace />;
+  const vision = useVisionApi();
+  const isIdentify = scan?.mode === 'identify';
+  const identify = useScanRequest(isIdentify ? scan : null, (s) => vision.identify({ image_base64: s.base64 }));
+  if (!scan || !isIdentify) return <Navigate to="/scan" replace />;
 
   const result = identify.data;
   const care = result?.care_summary;
   return (
-    <ResultFrame title={t('scan.identifyTitle')} previewUrl={scan.previewUrl} pending={!result} error={identify.error} onRetry={send}>
+    <ResultFrame title={t('scan.identifyTitle')} previewUrl={scan.previewUrl} pending={identify.pending} error={identify.error} onRetry={identify.retry}>
       {result && (
         <div className="space-y-4">
           <div className="text-center">

@@ -17,14 +17,20 @@ export function ProfileScreen() {
   const [district, setDistrict] = useState(user?.district ?? '');
   const [region, setRegion] = useState<RegionCluster | null>(user?.region_cluster ?? null);
   const [lang, setLang] = useState(user?.language_pref ?? 'en');
+  const [needDistrict, setNeedDistrict] = useState(false);
 
   if (!user) return null;
   const regionLabel = REGIONS.find((r) => r.id === user.region_cluster);
 
   const save = (event: FormEvent) => {
     event.preventDefault();
+    // A profile without a district is incomplete and would bounce the user back to onboarding.
+    if (!district.trim()) {
+      setNeedDistrict(true);
+      return;
+    }
     update.mutate(
-      { name: name.trim() || null, district: district.trim() || null, region_cluster: region, language_pref: lang },
+      { name: name.trim() || null, district: district.trim(), region_cluster: region, language_pref: lang },
       { onSuccess: () => setEditing(false) },
     );
   };
@@ -67,7 +73,15 @@ export function ProfileScreen() {
                 </Chip>
               ))}
             </div>
-            <TextField label={t('profile.district')} value={district} onChange={(e) => setDistrict(e.target.value)} />
+            <TextField
+              label={t('profile.district')}
+              value={district}
+              error={needDistrict ? t('profile.needDistrict') : null}
+              onChange={(e) => {
+                setDistrict(e.target.value);
+                setNeedDistrict(false);
+              }}
+            />
             <div className="flex gap-2">
               <Chip selected={lang === 'en'} onClick={() => setLang('en')}>English</Chip>
               <Chip selected={lang === 'hi'} onClick={() => setLang('hi')}>हिन्दी</Chip>

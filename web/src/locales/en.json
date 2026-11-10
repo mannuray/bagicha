@@ -127,6 +127,7 @@
     "language": "Language",
     "name": "Name",
     "edit": "Edit details",
+    "needDistrict": "Enter your district so we can time your care.",
     "signOut": "Sign out"
   },
   "plants": {
@@ -260,6 +261,7 @@
     }
   },
   "biography": {
+    "earlier": "Show earlier moments",
     "seasonReview": "Season review",
     "logMoment": "Log a Moment",
     "needsAttention": "Needs attention",

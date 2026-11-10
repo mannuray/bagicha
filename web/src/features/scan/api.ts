@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useApi } from '../../lib/api';
 
@@ -32,22 +31,17 @@ export const diagnoseResponseSchema = z.object({
 });
 export type DiagnoseResponse = z.infer<typeof diagnoseResponseSchema>;
 
-export interface ScanRequest {
+export interface ScanPayload {
   image_base64: string;
   plant_id?: string;
   note?: string;
 }
 
-export function useIdentify() {
+/** The two vision calls as plain functions; the result screens own when they run. */
+export function useVisionApi() {
   const api = useApi();
-  return useMutation({
-    mutationFn: (req: ScanRequest) => api.send('POST', '/vision/identify', { image_base64: req.image_base64 }, identifySchema),
-  });
-}
-
-export function useDiagnose() {
-  const api = useApi();
-  return useMutation({
-    mutationFn: (req: ScanRequest) => api.send('POST', '/vision/diagnose', req, diagnoseResponseSchema),
-  });
+  return {
+    identify: (req: ScanPayload) => api.send('POST', '/vision/identify', { image_base64: req.image_base64 }, identifySchema),
+    diagnose: (req: ScanPayload) => api.send('POST', '/vision/diagnose', req, diagnoseResponseSchema),
+  };
 }

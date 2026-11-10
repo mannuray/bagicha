@@ -51,18 +51,6 @@ export interface PlantInput {
 
 const stringList = z.array(z.string());
 
-export const seasonalStateSchema = z.object({
-  species_family: z.string(),
-  current_phase: z.string(),
-  upcoming_phase: z.string(),
-  confidence: z.string(),
-  do_now: stringList,
-  avoid_now: stringList,
-  watch_for: stringList,
-  next_checkpoint_days: z.number(),
-});
-export type SeasonalState = z.infer<typeof seasonalStateSchema>;
-
 export const cycleSchema = z.object({
   id: z.string(),
   cycle_year: z.number(),

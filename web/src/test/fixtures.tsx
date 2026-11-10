@@ -62,3 +62,19 @@ export const taskRecord = (over: Record<string, unknown> = {}) => ({
   source_summary: 'Created from pest diagnosis log: mealybugs',
   ...over,
 });
+
+/** Answers a paged list request from `all`, honouring page and page_size like the backend. */
+export function pagedResponse<T>(request: Request, all: T[]) {
+  const url = new URL(request.url);
+  const page = Number(url.searchParams.get('page') ?? 1);
+  const size = Number(url.searchParams.get('page_size') ?? 20);
+  const pages = Math.max(1, Math.ceil(all.length / size));
+  return pageOf(all.slice((page - 1) * size, page * size), {
+    page,
+    page_size: size,
+    total_items: all.length,
+    total_pages: pages,
+    has_next: page < pages,
+    has_previous: page > 1,
+  });
+}

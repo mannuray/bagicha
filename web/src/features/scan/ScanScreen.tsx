@@ -2,9 +2,9 @@ import { useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
-import { Button, Icon, Screen, TextField, cx } from '../../ui';
+import { Button, ErrorState, Icon, Screen, TextField, cx } from '../../ui';
 import { useImageCompressor } from '../journal';
-import { usePlants } from '../plants';
+import { useAllPlants } from '../plants';
 import { useScanState, type ScanMode } from './scan-state';
 
 /** Stitch "Vision Scan": choose identify or diagnose, pick the tree, take a photo. */
@@ -12,7 +12,7 @@ export function ScanScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const compressor = useImageCompressor();
-  const plants = usePlants(1);
+  const plants = useAllPlants();
   const { setScan } = useScanState();
   const [mode, setMode] = useState<ScanMode>('diagnose');
   const [plantId, setPlantId] = useState('');
@@ -35,7 +35,7 @@ export function ScanScreen() {
     setProblem(null);
     try {
       const compressed = await compressor.compress(photo);
-      const plantName = plants.data?.items.find((p) => p.id === plantId)?.name;
+      const plantName = plants.data?.find((p) => p.id === plantId)?.name;
       setScan({
         mode,
         base64: compressed.base64,
@@ -91,13 +91,14 @@ export function ScanScreen() {
                 className="ghost-border min-h-12 rounded-lg bg-surface-container px-4 font-body text-base text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
                 <option value="">{t('scan.chooseTree')}</option>
-                {plants.data?.items.map((p) => (
+                {plants.data?.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
                   </option>
                 ))}
               </select>
               {needTree && <p className="font-body text-sm text-error">{t('scan.needTree')}</p>}
+              {plants.isError && <ErrorState error={plants.error} onRetry={() => void plants.refetch()} />}
             </div>
             <TextField label={t('scan.note')} value={note} onChange={(e) => setNote(e.target.value)} />
           </div>

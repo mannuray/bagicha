@@ -139,4 +139,18 @@ describe('profile', () => {
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/login'));
     expect(session.get().user).toBeNull();
   });
+
+  it('will not save a blank district from the profile (it would send the user back to onboarding)', async () => {
+    let puts = 0;
+    server.use(http.put(`${API}/user/profile/update`, () => {
+      puts += 1;
+      return HttpResponse.json({ success: true, data: testUser({ district: null }) });
+    }));
+    renderWithApp(<Onboarding />, { route: '/profile' });
+    await userEvent.click(screen.getByRole('button', { name: /edit details/i }));
+    await userEvent.clear(screen.getByLabelText(/^district/i));
+    await userEvent.click(screen.getByRole('button', { name: /^save$/i }));
+    expect(await screen.findByText(/enter your district/i)).toBeInTheDocument();
+    expect(puts).toBe(0);
+  });
 });

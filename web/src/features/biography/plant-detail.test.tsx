@@ -1,18 +1,22 @@
 import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { fail, ok, pageOf, plantRecord, taskRecord } from '../../test/fixtures';
+import { fail, ok, pagedResponse, pageOf, plantRecord, taskRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { LogMomentScreen } from '../journal';
 import { TasksScreen } from '../tasks';
 import { PlantDetailScreen } from '.';
 
-const seasonal = {
-  species_family: 'mango', current_phase: 'flowering', upcoming_phase: 'fruit_set', confidence: 'high',
-  do_now: ['Keep soil evenly moist'], avoid_now: ['Heavy pruning'], watch_for: ['Hoppers on panicles'],
-  next_checkpoint_days: 7, basis: 'x',
+const intelligence = {
+  seasonal_pack: {
+    id: 'pack1', current_phase: 'flowering', upcoming_phase: 'fruit_set', confidence: 'high',
+    do_now: ['Keep soil evenly moist', 'Mulch against Deccan heat'], avoid_now: ['Heavy pruning'], watch_for: ['Hoppers on panicles'],
+  },
+  personalized_overlay: null,
+  is_paid_user: false,
 };
 const cycle = {
   id: 'c1', cycle_year: 2025, observed_flowering_at: '2026-02-01T00:00:00Z', observed_fruit_set_at: null,
@@ -29,7 +33,7 @@ function handlers() {
   let signed = 0;
   server.use(
     http.get(`${API}/ledger/plants/p1`, () => HttpResponse.json(ok({ ...plantRecord(), _count: { journal_entries: 2 } }))),
-    http.get(`${API}/ledger/plants/p1/seasonal-state`, () => HttpResponse.json(ok(seasonal))),
+    http.get(`${API}/seasonal/plant/p1/intelligence`, () => HttpResponse.json(ok(intelligence))),
     http.get(`${API}/ledger/plants/p1/cycles`, () => HttpResponse.json(pageOf([cycle]))),
     http.get(`${API}/ledger/plants/p1/tasks`, () => HttpResponse.json(pageOf([taskRecord()]))),
     http.get(`${API}/ledger/plants/p1/timeline`, () =>
@@ -80,4 +84,21 @@ describe('tree biography', () => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
     },
   );
+
+  it('this season comes from the region-aware pack that also makes the tasks', async () => {
+    handlers();
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByText(/mulch against deccan heat/i)).toBeInTheDocument();
+  });
+
+  it('shows earlier moments on request, beyond the first page', async () => {
+    handlers();
+    const all = Array.from({ length: 25 }, (_, i) => entry({ id: `j${i}`, type: 'NOTE', content: `Moment ${i}` }));
+    server.use(http.get(`${API}/ledger/plants/p1/timeline`, ({ request }) => HttpResponse.json(pagedResponse(request, all))));
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByText('Moment 0')).toBeInTheDocument();
+    expect(screen.queryByText('Moment 24')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /earlier moments/i }));
+    expect(await screen.findByText('Moment 24')).toBeInTheDocument();
+  });
 });

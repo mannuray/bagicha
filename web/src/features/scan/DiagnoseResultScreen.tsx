@@ -4,35 +4,31 @@ import { Navigate } from 'react-router';
 import { queryKeys } from '../../lib/query-keys';
 import { Icon, Surface } from '../../ui';
 import { TaskCard, usePlantTasks } from '../tasks';
-import { useDiagnose } from './api';
+import { useVisionApi } from './api';
 import { ResultFrame } from './ResultFrame';
 import { useScanState } from './scan-state';
-import { useRunOnce } from './use-run-once';
+import { useScanRequest } from './use-scan-request';
 
 export function DiagnoseResultScreen() {
   const { t } = useTranslation();
   const client = useQueryClient();
   const { scan } = useScanState();
-  const diagnose = useDiagnose();
-  const send = () =>
-    scan &&
-    diagnose.mutate(
-      { image_base64: scan.base64, plant_id: scan.plantId, ...(scan.note ? { note: scan.note } : {}) },
-      {
-        onSuccess: () => {
-          if (!scan.plantId) return;
-          for (const key of [queryKeys.plants.tasks(scan.plantId), queryKeys.plants.timelineAll(scan.plantId), queryKeys.tasks.mineAll]) {
-            void client.invalidateQueries({ queryKey: key });
-          }
-        },
-      },
-    );
-  useRunOnce(send);
-  if (!scan || scan.mode !== 'diagnose') return <Navigate to="/scan" replace />;
+  const vision = useVisionApi();
+  const isDiagnose = scan?.mode === 'diagnose';
+  const diagnose = useScanRequest(isDiagnose ? scan : null, async (s) => {
+    const res = await vision.diagnose({ image_base64: s.base64, plant_id: s.plantId, ...(s.note ? { note: s.note } : {}) });
+    if (s.plantId) {
+      for (const key of [queryKeys.plants.tasks(s.plantId), queryKeys.plants.timelineAll(s.plantId), queryKeys.tasks.mineAll]) {
+        void client.invalidateQueries({ queryKey: key });
+      }
+    }
+    return res;
+  });
+  if (!scan || !isDiagnose) return <Navigate to="/scan" replace />;
 
   const result = diagnose.data;
   return (
-    <ResultFrame title={t('scan.diagnoseTitle')} previewUrl={scan.previewUrl} pending={!result} error={diagnose.error} onRetry={send}>
+    <ResultFrame title={t('scan.diagnoseTitle')} previewUrl={scan.previewUrl} pending={diagnose.pending} error={diagnose.error} onRetry={diagnose.retry}>
       {result && (
         <div className="space-y-5">
           <div className="text-center">

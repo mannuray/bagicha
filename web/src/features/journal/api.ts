@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useApi } from '../../lib/api';
 import { queryKeys } from '../../lib/query-keys';
@@ -22,13 +22,17 @@ export interface NewMoment {
   event_at?: string;
 }
 
-export function useTimeline(plantId: string, page = 1) {
+/** The plant's moments, newest first, one page at a time ("Show earlier moments"). */
+export function useTimeline(plantId: string) {
   const api = useApi();
-  return useQuery({
-    queryKey: queryKeys.plants.timeline(plantId, page),
-    queryFn: () => api.getPage(`/ledger/plants/${plantId}/timeline`, journalEntrySchema, { page, page_size: 20 }),
+  return useInfiniteQuery({
+    queryKey: queryKeys.plants.timelineAll(plantId),
+    queryFn: ({ pageParam }) =>
+      api.getPage(`/ledger/plants/${plantId}/timeline`, journalEntrySchema, { page: pageParam, page_size: 20 }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.pagination.has_next ? last.pagination.page + 1 : undefined),
+    select: (data) => ({ items: data.pages.flatMap((p) => p.items) }),
     enabled: Boolean(plantId),
-    placeholderData: keepPreviousData,
   });
 }
 

@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
-import { Button, Chip, ErrorState, LoadingState, Screen, TextField, TopBar } from '../../ui';
+import { Button, Chip, ErrorState, LoadingState, NotInGarden, Screen, TextField, TopBar, isPlantMissing } from '../../ui';
 import { CataloguePicker } from './CataloguePicker';
 import { useCreatePlant, usePlant, useResolvePlant, useUpdatePlant } from './api';
 import type { PlantDetail, PlantInput } from './schemas';
@@ -62,7 +62,11 @@ export function PlantFormScreen() {
       <Screen>
         <TopBar />
         <div className="p-6">
-          <ErrorState error={existing.error} onRetry={() => void existing.refetch()} />
+          {isPlantMissing(existing.error) ? (
+            <NotInGarden />
+          ) : (
+            <ErrorState error={existing.error} onRetry={() => void existing.refetch()} />
+          )}
         </div>
       </Screen>
     );

@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { systemClock } from '../../lib/clock';
 import { EmptyState, ErrorState, Icon, LoadingState, Pebble, Screen } from '../../ui';
 import { useSession } from '../auth';
-import { usePlants } from '../plants';
+import { useAllPlants } from '../plants';
 import { useSeasonalGuide } from '../seasonal';
 import { hasPendingSoon, TaskGroups, useMyTasks } from '../tasks';
 import { useSessionMaterialize } from './use-session-materialize';
@@ -14,8 +14,8 @@ const PREVIEW = 5;
 export function DashboardScreen() {
   const { t } = useTranslation();
   const { user } = useSession();
-  const plants = usePlants(1);
-  const settled = useSessionMaterialize(plants.data?.items.map((p) => p.id));
+  const plants = useAllPlants();
+  const season = useSessionMaterialize(plants.data?.map((p) => p.id));
   const tasks = useMyTasks();
   const guide = useSeasonalGuide();
   const now = systemClock.now();
@@ -48,10 +48,14 @@ export function DashboardScreen() {
           </div>
           {tasks.isError ? (
             <ErrorState error={tasks.error} onRetry={() => void tasks.refetch()} />
-          ) : !tasks.data || (!settled && !hasPendingSoon(tasks.data.items, now)) ? (
-            <LoadingState />
-          ) : hasPendingSoon(tasks.data.items, now) ? (
+          ) : tasks.data && hasPendingSoon(tasks.data.items, now) ? (
             <TaskGroups tasks={tasks.data.items} now={now} limit={PREVIEW} />
+          ) : plants.isError ? (
+            <ErrorState error={plants.error} onRetry={() => void plants.refetch()} />
+          ) : season.error ? (
+            <ErrorState error={season.error} onRetry={season.retry} />
+          ) : !tasks.data || !season.settled ? (
+            <LoadingState />
           ) : (
             <EmptyState title={t('tasks.emptyTitle')} body={t('tasks.emptyBody')} />
           )}
@@ -77,7 +81,7 @@ export function DashboardScreen() {
         <section className="grid grid-cols-2 gap-4" aria-label={t('dashboard.garden')}>
           <div className="relative flex h-48 flex-col items-center justify-between rounded-xl bg-surface-container-low p-5 text-center">
             <Pebble className="h-24 w-24">
-              <span className="font-display text-4xl text-primary">{plants.data?.pagination.total_items ?? '–'}</span>
+              <span className="font-display text-4xl text-primary">{plants.data?.length ?? '–'}</span>
             </Pebble>
             <p className="font-headline text-lg text-on-surface-variant">{t('dashboard.plantsInGarden')}</p>
           </div>

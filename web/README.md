@@ -59,7 +59,7 @@ Each feature exposes an `index.ts`; siblings import only that. Device access sit
 
 - **Weather card hidden.** The backend's weather is a mock (user decision). Seasonal guidance takes its place on the dashboard.
 - **Health badge is a label, not a percentage.** The backend has no health score. It shows `health_status`, or "Needs attention" after a MEDIUM/HIGH diagnosis in the last 30 days.
-- **Tree Biography has extra sections:** This Season, Upcoming Care, Cycles and a Season review link. The chosen Stitch "Detailed Record" screen had none of them, and the loop needs them.
+- **Tree Biography has extra sections:** This Season (the region-aware seasonal pack that also creates the tasks), Upcoming Care, Cycles and a Season review link. The chosen Stitch "Detailed Record" screen had none of them, and the loop needs them.
 - **Location screen:** region cards + district + optional "Use my location", instead of Stitch's GPS-first button. This is the user's decision; there is no reverse geocoding, so location never leaves Bagicha.
 - **No stock photos.** Stitch's hero images are replaced by the forest gradient or the user's own latest photo, so there are no third-party image requests and the app works offline in a wrapper.
 - **No social-login buttons or Terms/Privacy links.** They have no backend yet.
@@ -103,9 +103,9 @@ How `docs/coding-principles.md` §8 applies to this client (spec §6):
 - n/a Rate limits and audit trail are server concerns, already enforced by the backend.
 
 **Scaling**
-- ✅ Every list uses the backend's paging; plants load more on demand.
+- ✅ Every list follows the backend's paging. The plant list and timeline load more on demand. Task lists, the scan tree picker and the dashboard's season check fetch every page, because they filter or act on the whole set.
 - ✅ Signed photo URLs are cached under their expiry.
-- ✅ Double taps are guarded (busy buttons plus in-flight refs) on complete, save and diagnose.
+- ✅ Double taps are guarded with busy buttons on complete and with in-flight refs on save and scan. A scan photo is sent once; going back to its result screen reuses the answer, and only Retry sends again.
 
 **Habits**
 - ✅ Accessibility: labelled inputs, real buttons, visible focus, 44 px touch targets, AA contrast on surface.

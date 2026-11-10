@@ -1,24 +1,23 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApi } from '../../lib/api';
+import { fetchAllPages } from '../../lib/paging';
 import { queryKeys } from '../../lib/query-keys';
 import { materializeSchema, taskSchema, type Task } from './schemas';
 
-const PAGE_SIZE = 50;
-
-export function useMyTasks(page = 1) {
+/** All of the user's tasks: "this week" groups them client-side, so a page cut would hide some. */
+export function useMyTasks() {
   const api = useApi();
   return useQuery({
-    queryKey: queryKeys.tasks.mine(page),
-    queryFn: () => api.getPage('/ledger/tasks', taskSchema, { page, page_size: PAGE_SIZE }),
-    placeholderData: keepPreviousData,
+    queryKey: queryKeys.tasks.mineAll,
+    queryFn: async () => ({ items: await fetchAllPages(api, '/ledger/tasks', taskSchema) }),
   });
 }
 
-export function usePlantTasks(plantId: string, page = 1) {
+export function usePlantTasks(plantId: string) {
   const api = useApi();
   return useQuery({
-    queryKey: [...queryKeys.plants.tasks(plantId), page],
-    queryFn: () => api.getPage(`/ledger/plants/${plantId}/tasks`, taskSchema, { page, page_size: PAGE_SIZE }),
+    queryKey: queryKeys.plants.tasks(plantId),
+    queryFn: async () => ({ items: await fetchAllPages(api, `/ledger/plants/${plantId}/tasks`, taskSchema) }),
     enabled: Boolean(plantId),
   });
 }

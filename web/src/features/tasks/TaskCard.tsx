@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { systemClock } from '../../lib/clock';
+import { messageFor } from '../../lib/error-messages';
 import { Button, cx } from '../../ui';
 import { useUpdateTaskStatus } from './api';
 import type { Task } from './schemas';
@@ -43,6 +44,11 @@ export function TaskCard({
           {task.source_summary && <p className="mt-1 font-body text-xs text-on-surface-variant">{task.source_summary}</p>}
         </div>
       </div>
+      {!onError && update.error && (
+        <p role="alert" className="mt-2 font-body text-sm text-error">
+          {messageFor(update.error)}
+        </p>
+      )}
       <div className="mt-3 flex justify-end gap-2">
         <Button variant="tertiary" disabled={update.isPending} onClick={() => act('SKIPPED')}>
           {t('tasks.skip')}

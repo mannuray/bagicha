@@ -129,4 +129,11 @@ describe('add a plant', () => {
     await userEvent.click(screen.getByRole('button', { name: /save tree/i }));
     await waitFor(() => expect(sent).toEqual({ name: 'Old Aam' }));
   });
+
+  it('editing a tree that no longer exists says so instead of offering a retry', async () => {
+    server.use(http.get(`${API}/ledger/plants/p1`, () => HttpResponse.json(fail('PLANT_NOT_FOUND'), { status: 404 })));
+    renderWithApp(routes, { route: '/plants/p1/edit' });
+    expect(await screen.findByText(/isn't in your garden/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /try again/i })).not.toBeInTheDocument();
+  });
 });

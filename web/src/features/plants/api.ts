@@ -2,12 +2,12 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { useApi } from '../../lib/api';
+import { fetchAllPages } from '../../lib/paging';
 import { queryKeys } from '../../lib/query-keys';
 import {
   catalogueItemSchema,
   cycleSchema,
   mitigationSchema,
-  seasonalStateSchema,
   plantDetailSchema,
   plantSchema,
   resolveSchema,
@@ -22,6 +22,15 @@ export function usePlants(page: number) {
     queryKey: queryKeys.plants.list(page),
     queryFn: () => api.getPage('/ledger/plants', plantSchema, { page, page_size: PAGE_SIZE }),
     placeholderData: keepPreviousData,
+  });
+}
+
+/** Every plant the user owns, across all pages (pickers and per-plant work). */
+export function useAllPlants() {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.plants.everything,
+    queryFn: () => fetchAllPages(api, '/ledger/plants', plantSchema),
   });
 }
 
@@ -91,15 +100,6 @@ export function useResolvePlant(query: string | null) {
     queryFn: () => api.send('POST', '/plants/resolve', { query }, resolveSchema),
     enabled: Boolean(query && query.trim()),
     staleTime: Infinity,
-  });
-}
-
-export function useSeasonalState(id: string) {
-  const api = useApi();
-  return useQuery({
-    queryKey: queryKeys.plants.seasonalState(id),
-    queryFn: () => api.get(`/ledger/plants/${id}/seasonal-state`, seasonalStateSchema),
-    enabled: Boolean(id),
   });
 }
 

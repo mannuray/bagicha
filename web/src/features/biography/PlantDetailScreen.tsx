@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { systemClock } from '../../lib/clock';
-import { ErrorState, Icon, LoadingState, NotInGarden, Screen, Surface, cx, isPlantMissing } from '../../ui';
+import { Button, ErrorState, Icon, LoadingState, NotInGarden, Screen, Surface, cx, isPlantMissing } from '../../ui';
 import { useMediaUrl, useTimeline, type JournalEntry } from '../journal';
-import { useCycles, usePlant, useSeasonalState, type Cycle, type PlantDetail } from '../plants';
+import { useCycles, usePlant, type Cycle, type PlantDetail } from '../plants';
+import { usePlantIntelligence } from '../seasonal';
 import { TaskCard, thisWeek, usePlantTasks } from '../tasks';
 import { growthRing, RING_COUNT } from './growth-stage';
 import { healthLabel } from './health-label';
@@ -163,22 +164,28 @@ function GrowthRings({ stage }: { stage: string }) {
 
 function ThisSeason({ plantId }: { plantId: string }) {
   const { t } = useTranslation();
-  const state = useSeasonalState(plantId);
+  // The same region-aware pack the backend turns into tasks; no AI call for free users.
+  const intel = usePlantIntelligence(plantId);
+  const pack = intel.data?.seasonal_pack;
+  const overlay = intel.data?.personalized_overlay;
   return (
     <section>
       <h2 className="mb-6 font-headline text-2xl text-primary">{t('biography.thisSeason')}</h2>
-      {state.isError ? (
-        <ErrorState error={state.error} onRetry={() => void state.refetch()} />
-      ) : !state.data ? (
+      {intel.isError ? (
+        <ErrorState error={intel.error} onRetry={() => void intel.refetch()} />
+      ) : !pack ? (
         <LoadingState />
       ) : (
         <div className="space-y-4">
           <p className="font-body text-base text-on-surface-variant">
-            {t('biography.phase', { current: humanize(state.data.current_phase), next: humanize(state.data.upcoming_phase) })}
+            {t('biography.phase', {
+              current: humanize(overlay?.adjusted_phase ?? pack.current_phase),
+              next: humanize(pack.upcoming_phase),
+            })}
           </p>
-          <AdviceList title={t('biography.doNow')} icon="check_circle" items={state.data.do_now} />
-          <AdviceList title={t('biography.avoid')} icon="block" items={state.data.avoid_now} />
-          <AdviceList title={t('biography.watchFor')} icon="visibility" items={state.data.watch_for} />
+          <AdviceList title={t('biography.doNow')} icon="check_circle" items={[...(overlay?.priority_actions ?? []), ...pack.do_now]} />
+          <AdviceList title={t('biography.avoid')} icon="block" items={pack.avoid_now} />
+          <AdviceList title={t('biography.watchFor')} icon="visibility" items={pack.watch_for} />
         </div>
       )}
     </section>
@@ -251,6 +258,11 @@ function Timeline({ query }: { query: ReturnType<typeof useTimeline> }) {
             <TimelineEntry key={entry.id} entry={entry} />
           ))}
         </ol>
+      )}
+      {query.hasNextPage && (
+        <Button variant="quiet" block busy={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>
+          {t('biography.earlier')}
+        </Button>
       )}
     </section>
   );

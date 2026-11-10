@@ -57,6 +57,13 @@ const successEnvelope = z.object({
   pagination: pageMetaSchema.optional(),
 });
 
+/** crypto.randomUUID only exists on secure origins; a phone on plain-http LAN has getRandomValues. */
+function requestId(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 /** One typed client for the backend: unwraps the envelope, validates with zod, maps errors. */
 export function createApiClient(opts: ApiClientOptions): ApiClient {
   const doFetch = opts.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
@@ -67,7 +74,7 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
       if (value !== undefined) url.searchParams.set(key, String(value));
     }
     const headers = new Headers(init.headers);
-    headers.set('X-Request-Id', crypto.randomUUID());
+    headers.set('X-Request-Id', requestId());
     const token = opts.tokens.get();
     if (token) headers.set('Authorization', `Bearer ${token}`);
 
@@ -78,18 +85,22 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
       throw new ApiError(0, 'NETWORK_ERROR', 'Network request failed', err);
     }
 
+    // Fail closed on auth before anything can go wrong reading the body.
+    if (response.status === 401) {
+      opts.tokens.clear();
+      opts.onUnauthorized();
+    }
+
     let body: unknown;
     try {
       body = await response.json();
     } catch {
-      throw new ApiError(response.status, 'BAD_RESPONSE', 'The server sent an unreadable response');
+      throw response.status === 401
+        ? new ApiError(401, 'UNAUTHORIZED', response.statusText)
+        : new ApiError(response.status, 'BAD_RESPONSE', 'The server sent an unreadable response');
     }
 
     if (!response.ok) {
-      if (response.status === 401) {
-        opts.tokens.clear();
-        opts.onUnauthorized();
-      }
       const parsed = errorEnvelope.safeParse(body);
       throw parsed.success
         ? new ApiError(response.status, parsed.data.error.code, parsed.data.error.message, parsed.data.error.details)

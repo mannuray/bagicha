@@ -102,4 +102,26 @@ describe('api client', () => {
     }));
     await client(memoryTokens(null)).api.send('POST', '/auth/request-otp', {}, z.string());
   });
+
+  it('a 401 with a non-JSON body (proxy page) still signs out', async () => {
+    server.use(http.get(`${API}/ledger/plants`, () => new HttpResponse('<html>401</html>', { status: 401, headers: { 'Content-Type': 'text/html' } })));
+    const { api, tokens, onUnauthorized } = client();
+    await expect(api.getPage('/ledger/plants', plant)).rejects.toMatchObject({ status: 401, code: 'UNAUTHORIZED' });
+    expect(tokens.value).toBeNull();
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it('still works where crypto.randomUUID is missing (plain-http LAN testing)', async () => {
+    const original = crypto.randomUUID;
+    Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true });
+    try {
+      server.use(http.get(`${API}/ledger/plants/p1`, ({ request }) => {
+        expect(request.headers.get('x-request-id')).toBeTruthy();
+        return ok({ id: 'p1', name: 'Aam' });
+      }));
+      await expect(client().api.get('/ledger/plants/p1', plant)).resolves.toEqual({ id: 'p1', name: 'Aam' });
+    } finally {
+      Object.defineProperty(crypto, 'randomUUID', { value: original, configurable: true });
+    }
+  });
 });
