@@ -21,6 +21,9 @@ import {
   TaskCreationResult,
   TaskDraft,
   TaskService,
+  CROPS,
+  climateGroupFor,
+  windowStatus,
   taskCategoryFromCategory,
   taskPriorityFrom,
   taskTypeFromCategory,
@@ -80,8 +83,17 @@ export class SeasonalService implements OnModuleInit {
     return this.weatherService.getWeather(pincode);
   }
 
-  getSeasonalGuide(district: string) {
-    return this.weatherService.getSeasonalSuggestions(district);
+  /** Season advice, with "good to sow now" from the crop calendar for the user's region. */
+  getSeasonalGuide(user: Pick<User, 'district' | 'region_cluster'>) {
+    const guide = this.weatherService.getSeasonalSuggestions(
+      user.district ?? '',
+    );
+    const group = climateGroupFor(regionFor(user));
+    const now = this.clock.now();
+    const crops = CROPS.filter(
+      (c) => windowStatus(c, group, now).status === 'open',
+    ).map((c) => c.name);
+    return { ...guide, crops };
   }
 
   async getTreeIntelligence(userId: string, plantId: string) {

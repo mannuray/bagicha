@@ -22,3 +22,16 @@ export {
   taskTypeFromIssue,
 } from './domain/task-mapping';
 export { resolveCycleYear } from './domain/cycle-year';
+export {
+  CROPS,
+  climateGroupFor,
+  cropById,
+  nextWindow,
+  windowContaining,
+  windowStatus,
+} from './domain/crop-calendar';
+export type {
+  ClimateGroup,
+  CropInfo,
+  WindowStatus,
+} from './domain/crop-calendar';

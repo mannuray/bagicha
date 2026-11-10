@@ -9,6 +9,7 @@ import { RedisModule } from './common/redis/redis.module';
 import { MonitorModule } from './common/monitor';
 import { PlantLedgerModule } from './modules/plant-ledger/plant-ledger.module';
 import { SeasonalModule } from './modules/seasonal/seasonal.module';
+import { CropsModule } from './modules/crops/crops.module';
 import { VisionModule } from './modules/vision/vision.module';
 import { DiagnosisModule } from './modules/diagnosis/diagnosis.module';
 import { MediaModule } from './modules/media/media.module';
@@ -56,6 +57,7 @@ import { AuditModule } from './modules/audit';
     AuthModule,
     PlantLedgerModule,
     SeasonalModule,
+    CropsModule,
     VisionModule,
     DiagnosisModule,
     MediaModule,

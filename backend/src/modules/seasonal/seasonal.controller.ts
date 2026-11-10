@@ -26,9 +26,10 @@ export class SeasonalController {
 
   @Get('guide')
   getGuide(@Request() req: AuthedRequest) {
-    return this.seasonalService.getSeasonalGuide(
-      req.user.district || DEFAULT_DISTRICT,
-    );
+    return this.seasonalService.getSeasonalGuide({
+      ...req.user,
+      district: req.user.district || DEFAULT_DISTRICT,
+    });
   }
 
   @Get('plant/:id/intelligence')
