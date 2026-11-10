@@ -55,6 +55,7 @@ function build(opts: {
     { get: jest.fn() } as any,
     {
       getOwnedOrThrow: jest.fn(() => Promise.resolve(plant)),
+      assertGrowing: jest.fn(() => Promise.resolve(plant)),
     } as unknown as PlantRecordService,
     {
       recent: jest.fn(() =>

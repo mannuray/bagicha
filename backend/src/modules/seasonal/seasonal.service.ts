@@ -101,6 +101,7 @@ export class SeasonalService implements OnModuleInit {
     userId: string,
     plantId: string,
   ): Promise<{ results: TaskCreationResult[]; created_count: number }> {
+    await this.plants.assertGrowing(userId, plantId);
     const { pack, overlay } = await this.loadIntelligence(userId, plantId);
     const now = this.clock.now();
     const toDraft = (

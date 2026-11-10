@@ -2,7 +2,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Plant } from '@prisma/client';
 import { Queue } from 'bullmq';
-import { NotFoundError } from '../../../common/errors';
+import { ConflictError, NotFoundError } from '../../../common/errors';
 import { Metrics } from '../../../common/observability';
 import {
   Page,
@@ -13,6 +13,7 @@ import {
 import { Clock } from '../../../common/time';
 import { parsePlantingDate } from '../domain/planting-date';
 import { CreatePlantDto } from '../dto/create-plant.dto';
+import type { PlantListStatus } from '../dto/list-plants-query.dto';
 import { UpdatePlantDto } from '../dto/update-plant.dto';
 import {
   TASK_GENERATION_QUEUE,
@@ -55,6 +56,18 @@ export class PlantRecordService implements OnModuleInit {
   }
 
   /** The owner's plant, or 404. No side effects — for other modules. */
+  /** The owner's plant, refusing writes that would grow the record of an ended tree. */
+  async assertGrowing(userId: string, plantId: string): Promise<Plant> {
+    const plant = await this.getOwnedOrThrow(userId, plantId);
+    if (plant.ended_at) {
+      throw new ConflictError(
+        'PLANT_ENDED',
+        'This tree has ended; restore it to keep growing its record',
+      );
+    }
+    return plant;
+  }
+
   async getOwnedOrThrow(userId: string, plantId: string): Promise<Plant> {
     const plant = await this.plants.findOwned(userId, plantId);
     if (!plant) throw plantNotFound();
@@ -69,7 +82,7 @@ export class PlantRecordService implements OnModuleInit {
     const plant = await this.plants.findOwnedDetail(userId, plantId);
     if (!plant) throw plantNotFound();
     // An ended tree is a record, not a living plant: no stage changes, no new tasks.
-    const ended = Boolean((plant as { ended_at?: Date | null }).ended_at);
+    const ended = Boolean(plant.ended_at);
     if (!plant.lifecycle_stage_manual && !ended) {
       const stage = laterStage(
         plant.lifecycle_stage,
@@ -102,12 +115,28 @@ export class PlantRecordService implements OnModuleInit {
     };
   }
 
-  async list(userId: string, q: PageQuery): Promise<Page<Plant>> {
-    const { rows, total } = await this.plants.listOwned(userId, toSkipTake(q));
+  async list(
+    userId: string,
+    q: PageQuery & { status?: PlantListStatus },
+  ): Promise<Page<Plant>> {
+    const { rows, total } = await this.plants.listOwned(
+      userId,
+      toSkipTake(q),
+      q.status ?? 'active',
+    );
     return toPage(rows, total, q);
   }
 
   async create(userId: string, dto: CreatePlantDto): Promise<Plant> {
+    const replaces = dto.replaces_id
+      ? await this.getOwnedOrThrow(userId, dto.replaces_id)
+      : null;
+    if (replaces && !replaces.ended_at) {
+      throw new ConflictError(
+        'PLANT_NOT_ENDED',
+        'Only a tree that has ended can be replaced',
+      );
+    }
     const planting = parsePlantingDate(
       dto.planting_date,
       dto.planting_date_precision,
@@ -140,6 +169,11 @@ export class PlantRecordService implements OnModuleInit {
       plant.lifecycle_stage,
       plant.species,
     );
+    if (replaces) {
+      await this.plants.updateOwned(userId, replaces.id, {
+        replaced_by_id: plant.id,
+      });
+    }
     return plant;
   }
 
@@ -148,6 +182,7 @@ export class PlantRecordService implements OnModuleInit {
     plantId: string,
     dto: UpdatePlantDto,
   ): Promise<Plant> {
+    await this.assertGrowing(userId, plantId);
     const plant = await this.getDetail(userId, plantId);
     const planting =
       dto.planting_date === undefined &&

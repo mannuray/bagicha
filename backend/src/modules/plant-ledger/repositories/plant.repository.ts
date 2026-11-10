@@ -78,12 +78,22 @@ export class PlantRepository {
     });
   }
 
-  async listOwned(userId: string, page: SkipTake): Promise<Rows<Plant>> {
-    const where = { user_id: userId };
+  async listOwned(
+    userId: string,
+    page: SkipTake,
+    status: 'active' | 'ended' = 'active',
+  ): Promise<Rows<Plant>> {
+    const where = {
+      user_id: userId,
+      ended_at: status === 'ended' ? { not: null } : null,
+    };
     const [rows, total] = await Promise.all([
       this.prisma.plant.findMany({
         where,
-        orderBy: { created_at: 'desc' },
+        orderBy:
+          status === 'ended'
+            ? [{ ended_at: 'desc' as const }]
+            : [{ created_at: 'desc' as const }],
         ...page,
       }),
       this.prisma.plant.count({ where }),

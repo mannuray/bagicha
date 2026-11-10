@@ -48,4 +48,9 @@ export class CreatePlantDto {
   @IsOptional()
   @IsEnum(LifecycleStage)
   lifecycle_stage?: LifecycleStage;
+
+  /** An ended plant this one replaces; links the two records. */
+  @IsOptional()
+  @IsString()
+  replaces_id?: string;
 }

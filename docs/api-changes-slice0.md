@@ -128,3 +128,44 @@ is built against the "After" column.
 - **Response:** the usual paged envelope, containing only entries of those types. `pagination.total_items` counts the filtered set, so paging walks the filtered list.
 - **Without `types`:** unchanged from before.
 - **Unknown type** (e.g. `types=BANANA`): `422` with `error.code = "VALIDATION_ERROR"`, the same as other query validation.
+
+## Tree life and loss
+
+**Plant detail:** `GET /api/v1/ledger/plants/:id` gains `life_profile`, or `null` when the species family has no profile:
+
+```json
+{ "first_fruit_months": [8, 12], "productive_until_months": [24, 36], "lifespan_months": [48, 72], "note_key": "papaya" }
+```
+
+**Stages** (`lifecycle_stage`) are timed per species when a profile exists. Automatic recalculation never moves a stage backwards, and recorded milestones (`first_flowering_at`, `first_fruit_set_at`, `first_harvest_at`) set a floor.
+
+**Plant fields:** `ended_at`, `end_reason`, `end_note`, `end_entry_id` and `replaced_by_id`. All are nullable; null means the tree is growing.
+
+**Enum additions:**
+- `PlantEndReason`: `DISEASE_OR_PEST`, `WEATHER`, `WATER`, `OLD_AGE`, `UNKNOWN_CAUSE`, `REMOVED`, `REPLACED`.
+- `TaskStatus` gains `CANCELLED`.
+- `LogType` gains `PLANT_ENDED`.
+
+**`POST /api/v1/ledger/plants/:id/end`**, body `{ reason, ended_at?, note?, entry_id? }`, returns `201` with the plant.
+- It sets the end fields, writes a `PLANT_ENDED` journal entry, and moves every pending task to `CANCELLED`.
+- `422 VALIDATION_ERROR`: a future date, a date before planting, or an unknown reason.
+- `404 JOURNAL_ENTRY_NOT_FOUND`: an `entry_id` that isn't part of this plant.
+- `409 PLANT_ENDED`: the plant has already ended.
+
+**`POST /api/v1/ledger/plants/:id/restore`** returns `201` with the plant.
+- It clears the end fields and writes a NOTE "Restored".
+- Cancelled tasks stay cancelled; materialise creates fresh ones.
+- `409 PLANT_NOT_ENDED`: the plant hasn't ended.
+
+**Ended plants are read-only.** These writes return `409 PLANT_ENDED`:
+- `POST .../journal`
+- `PUT .../tasks/:taskId`
+- `PUT /ledger/plants/:id`
+- `POST /seasonal/plant/:id/materialize-tasks`
+- `POST /vision/diagnose` with that `plant_id`
+
+Reads still work.
+
+**`GET /api/v1/ledger/plants?status=active|ended`** defaults to `active`. `ended` lists past trees, newest first.
+
+**`POST /api/v1/ledger/plants`** accepts `replaces_id`: an ended plant the user owns. The old plant's `replaced_by_id` is set to the new one. A living plant gives `409 PLANT_NOT_ENDED`; someone else's gives `404`.

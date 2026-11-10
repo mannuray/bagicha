@@ -17,6 +17,7 @@ function build(ai: Partial<AiProvider>) {
   };
   const plants = {
     getContextForAi: jest.fn(() => Promise.resolve({ plant: {} })),
+    assertGrowing: jest.fn(() => Promise.resolve({})),
   };
   const service = new VisionService(
     ai as AiProvider,

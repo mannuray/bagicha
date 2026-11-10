@@ -13,6 +13,7 @@ import { CycleService } from './services/cycle.service';
 import { JournalService } from './services/journal.service';
 import { LifecycleService } from './services/lifecycle.service';
 import { MitigationService } from './services/mitigation.service';
+import { PlantEndService } from './services/plant-end.service';
 import { PlantRecordService } from './services/plant-record.service';
 import { SeasonalIntelligenceService } from './services/seasonal-intelligence.service';
 import { SpeciesNormalizationService } from './services/species-normalization.service';
@@ -27,6 +28,7 @@ import { TaskService } from './services/task.service';
     CycleRepository,
     TaskRepository,
     PlantRecordService,
+    PlantEndService,
     JournalService,
     CycleService,
     TaskService,

@@ -53,6 +53,7 @@ enum LogType {
   BLOOM_PEAK
   // Cross-kind cycle close
   SEASON_END
+  PLANT_ENDED
 }
 
 enum PlantedContext {
@@ -115,10 +116,21 @@ enum TaskType {
   TREAT
 }
 
+enum PlantEndReason {
+  DISEASE_OR_PEST
+  WEATHER
+  WATER
+  OLD_AGE
+  UNKNOWN_CAUSE
+  REMOVED
+  REPLACED
+}
+
 enum TaskStatus {
   PENDING
   COMPLETED
   SKIPPED
+  CANCELLED
 }
 
 enum RegionCluster {
@@ -271,10 +283,19 @@ model Plant {
   first_harvest_at   DateTime?
   latest_harvest_at  DateTime?
   health_status     String         @default("Healthy")
+  /// When the tree died or was removed; null while it is growing.
+  ended_at          DateTime?
+  end_reason        PlantEndReason?
+  end_note          String?
+  /// The journal entry (e.g. a diagnosis) that explains the loss.
+  end_entry_id      String?
+  replaced_by_id    String?
   created_at        DateTime       @default(now())
   updated_at        DateTime       @updatedAt
 
   user  User  @relation(fields: [user_id], references: [id])
+  replaced_by Plant? @relation("PlantReplacement", fields: [replaced_by_id], references: [id], onDelete: SetNull)
+  replaces    Plant[] @relation("PlantReplacement")
   journal_entries JournalEntry[]
   tasks Task[]
   cycles PlantCycle[]
@@ -283,6 +304,7 @@ model Plant {
   diagnosis_outcomes DiagnosisOutcome[]
 
   @@index([user_id])
+  @@index([user_id, ended_at])
   @@map("trees")
 }
 

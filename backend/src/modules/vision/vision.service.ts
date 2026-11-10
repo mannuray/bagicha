@@ -32,6 +32,8 @@ export class VisionService {
   }
 
   async diagnosePlant(userId: string, dto: VisionRequestDto) {
+    // A diagnosis is saved to the tree, so an ended tree can't take one.
+    if (dto.plant_id) await this.plants.assertGrowing(userId, dto.plant_id);
     const context = dto.plant_id
       ? await this.plants.getContextForAi(userId, dto.plant_id)
       : null;

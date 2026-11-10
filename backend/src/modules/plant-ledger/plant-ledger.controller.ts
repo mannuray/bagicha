@@ -13,6 +13,9 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { PaginationQueryDto } from '../../common/pagination';
 import { TimelineQueryDto } from './dto/timeline-query.dto';
+import { EndPlantDto } from './dto/end-plant.dto';
+import { ListPlantsQueryDto } from './dto/list-plants-query.dto';
+import { PlantEndService } from './services/plant-end.service';
 import { Clock } from '../../common/time';
 import { AddLogDto } from './dto/add-log.dto';
 import { CreatePlantDto } from './dto/create-plant.dto';
@@ -34,6 +37,7 @@ export class PlantLedgerController {
     private readonly tasks: TaskService,
     private readonly mitigation: MitigationService,
     private readonly clock: Clock,
+    private readonly ending: PlantEndService,
   ) {}
 
   @Post('plants')
@@ -42,8 +46,22 @@ export class PlantLedgerController {
   }
 
   @Get('plants')
-  getPlants(@Request() req: AuthedRequest, @Query() q: PaginationQueryDto) {
+  getPlants(@Request() req: AuthedRequest, @Query() q: ListPlantsQueryDto) {
     return this.plants.list(req.user.id, q);
+  }
+
+  @Post('plants/:id/end')
+  endPlant(
+    @Request() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body() dto: EndPlantDto,
+  ) {
+    return this.ending.end(req.user.id, id, dto);
+  }
+
+  @Post('plants/:id/restore')
+  restorePlant(@Request() req: AuthedRequest, @Param('id') id: string) {
+    return this.ending.restore(req.user.id, id);
   }
 
   @Get('plants/:id')
@@ -71,7 +89,7 @@ export class PlantLedgerController {
     @Param('id') id: string,
     @Body() dto: AddLogDto,
   ) {
-    await this.plants.getDetail(req.user.id, id);
+    await this.plants.assertGrowing(req.user.id, id);
     return this.journal.addEntry(req.user.id, id, {
       type: dto.type,
       content: dto.content,
@@ -131,7 +149,7 @@ export class PlantLedgerController {
     @Param('taskId') taskId: string,
     @Body() dto: UpdateTaskStatusDto,
   ) {
-    await this.plants.getDetail(req.user.id, id);
+    await this.plants.assertGrowing(req.user.id, id);
     return this.tasks.updateStatus(
       req.user.id,
       id,
