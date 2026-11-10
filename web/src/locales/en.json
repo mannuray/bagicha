@@ -319,5 +319,20 @@
       "FLOWER_DROP": "Flower drop",
       "UNKNOWN": "Unclear"
     }
+  },
+  "review": {
+    "bar": "Season review",
+    "title": "Season {{year}}",
+    "likely": "What likely went wrong",
+    "change": "Change next season",
+    "watch": "Watch early",
+    "first": "Do first",
+    "done_one": "{{count}} done",
+    "done_other": "{{count}} done",
+    "skipped": "Skipped",
+    "pending": "Pending",
+    "compare": "Compared with last season",
+    "emptyTitle": "No season to review yet",
+    "emptyBody": "Log flowering, fruit set and harvest this season to get a review."
   }
 }
