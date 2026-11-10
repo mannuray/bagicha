@@ -28,6 +28,17 @@ export interface NewJournalEntry {
   eventAt?: Date;
 }
 
+/** An entry another workflow (e.g. diagnosis) has already placed in a cycle. */
+export interface RecordedJournalEntry {
+  type: LogType;
+  content?: string | null;
+  metadata?: Prisma.InputJsonValue;
+  eventAt: Date;
+  recordedAt: Date;
+  plantCycleId: string;
+  diagnosisOutcomeId?: string | null;
+}
+
 /** Milestone dates a new entry fills in on the plant (first flowering, harvests…). */
 function milestonesFor(plant: Plant, type: LogType, eventAt: Date) {
   const data: Record<string, Date> = {};
@@ -130,6 +141,34 @@ export class JournalService {
         tx,
       );
     }
+    return log;
+  }
+
+  /**
+   * Writes an entry exactly as given — no milestones, summary refresh or
+   * follow-up task. For workflows that manage those themselves (diagnosis).
+   */
+  async recordEntry(
+    userId: string,
+    plantId: string,
+    entry: RecordedJournalEntry,
+    tx?: Tx,
+  ): Promise<JournalEntry> {
+    const log = await this.journal.create(
+      userId,
+      plantId,
+      {
+        type: entry.type,
+        content: entry.content,
+        metadata: entry.metadata,
+        timestamp: entry.eventAt,
+        recorded_at: entry.recordedAt,
+        plant_cycle_id: entry.plantCycleId,
+        diagnosis_outcome_id: entry.diagnosisOutcomeId ?? null,
+      },
+      tx,
+    );
+    if (!log) throw new NotFoundError('PLANT_NOT_FOUND', 'Plant not found');
     return log;
   }
 

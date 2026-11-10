@@ -92,6 +92,13 @@ describe('plant ownership', () => {
         .post('/api/v1/diagnosis/finalize')
         .send(finalizeBody(alicePlant.id));
       expect(res.status).toBe(200);
+      expect(res.body.data.success).toBeUndefined();
+      expect(res.body.data.tasks).toEqual([
+        expect.objectContaining({
+          status: 'created',
+          taskId: expect.any(String),
+        }),
+      ]);
     });
   });
 

@@ -8,7 +8,7 @@ import {
 } from '@prisma/client';
 import { SeasonalIntelligenceService } from '../plant-ledger/services/seasonal-intelligence.service';
 import { SpeciesNormalizationService } from '../plant-ledger/services/species-normalization.service';
-import { DiagnosisPipelineService } from '../diagnosis/services/diagnosis-pipeline.service';
+import { DiagnosisPipelineService } from '../diagnosis';
 import { VisionRequestDto } from './dto/vision-request.dto';
 import { AiProvider } from '../ai';
 
@@ -140,8 +140,8 @@ export class VisionService {
       sessionId: result.session_id,
       outcomeId: result.outcome_id,
       logIds: result.log_ids,
-      taskId: result.task_ids[0] ?? null,
-      taskIds: result.task_ids,
+      taskId: result.tasks.find((t) => t.taskId)?.taskId ?? null,
+      taskIds: result.tasks.flatMap((t) => (t.taskId ? [t.taskId] : [])),
     };
   }
 

@@ -3,7 +3,10 @@ export { PlantLedgerModule } from './plant-ledger.module';
 export { PlantRecordService } from './services/plant-record.service';
 export type { PlantAiContext } from './services/plant-record.service';
 export { JournalService } from './services/journal.service';
-export type { NewJournalEntry } from './services/journal.service';
+export type {
+  NewJournalEntry,
+  RecordedJournalEntry,
+} from './services/journal.service';
 export { CycleService } from './services/cycle.service';
 export { TaskService } from './services/task.service';
 export type { TaskCreationResult, TaskDraft } from './services/task.service';

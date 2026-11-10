@@ -21,7 +21,6 @@ export class DiagnosisController {
   @RateLimit('ai')
   @HttpCode(HttpStatus.OK)
   async finalize(@Request() req, @Body() dto: FinalizeDiagnosisDto) {
-    const result = await this.pipeline.finalize(req.user.id, dto);
-    return { success: true, data: result };
+    return this.pipeline.finalize(req.user.id, dto);
   }
 }

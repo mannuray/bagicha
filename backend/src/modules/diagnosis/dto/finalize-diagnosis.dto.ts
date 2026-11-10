@@ -1,3 +1,4 @@
+import type { FinalizeDiagnosisInput } from '../services/diagnosis-pipeline.service';
 import {
   IsArray,
   IsBoolean,
@@ -16,7 +17,7 @@ import {
   LogType,
 } from '@prisma/client';
 
-export class FinalizeDiagnosisDto {
+export class FinalizeDiagnosisDto implements FinalizeDiagnosisInput {
   @IsEnum(DiagnosisSubjectType)
   subject_type!: DiagnosisSubjectType;
 
@@ -87,11 +88,4 @@ export class FinalizeDiagnosisDto {
 
   @IsOptional()
   messages?: Array<Record<string, unknown>>;
-}
-
-export interface FinalizeDiagnosisResult {
-  session_id: string;
-  outcome_id: string;
-  log_ids: string[];
-  task_ids: string[];
 }
