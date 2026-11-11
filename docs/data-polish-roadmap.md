@@ -1,0 +1,74 @@
+# Data polish roadmap
+
+The live app (bagicha-web.vercel.app) works end to end; this is the list of data and copy we are making better, in the order agreed, with what each step covers and where it stands. Each item is shipped and deployed on its own.
+
+## Order
+
+1. District → region map — **done, live**
+2. Home season guidance — **done, live**
+3. Tree catalogue — **in progress** (phase 1 done)
+4. + 5. + 6. Tree care, first tasks and life profiles — together, tree type by tree type, after item 3
+7. Crop and flower photos
+8. Task-title wording
+9. More vegetables
+10. Bulbs
+11. Hindi translation
+12. Copy gaps
+13. Matching gaps
+
+## Done
+
+### 1. District → region map (live)
+- 786 districts across all 36 states and UTs (2021 government list plus districts created since, each with its parent), with old and common names (Gurgaon → Gurugram, Allahabad → Prayagraj).
+- Region rules: east UP with Bihar in East; Vidarbha in Central; Konkan and coastal Karnataka in Coastal; Jammu hill districts, Dehradun, Darjeeling and Kalimpong in Hills.
+- Type-ahead on onboarding and Profile; names shared by two states are saved as "Aurangabad, Bihar".
+- "Use my location": the server finds the district from geoBoundaries 2021 boundaries (ODbL, credited on Profile). Coordinates are posted, rounded to ~100 m and never logged. Islands are covered; PoK and Gilgit-Baltistan are treated as India.
+- Design: `docs/superpowers/specs/2026-11-11-district-map-design.md`.
+
+### 2. Home season guidance (live)
+- The season as each region names it (Northeast monsoon in the south, snow winter in the hills, dry season on the coast).
+- 84 cards (7 regions × 12 months): a headline and 2–3 points. Gardening practice only: no weather, temperatures or forecasts; no frost or snow where there is none.
+- "Good to sow now" still comes from the crop calendar.
+
+## 3. Tree catalogue (in progress)
+
+Each tree type touches four things: the **catalogue entry** (add-tree search, Hindi and regional names), **name matching** (typed text → tree type), a **life profile** (first fruit, productive years, lifespan) and **care** (item 4). The catalogue grows in phases; each phase ships on its own.
+
+| Phase | What | Status |
+|---|---|---|
+| 1 | Popular varieties for the 14 known fruit types, with Hindi names; Hindi search works | **Done** (79 entries, live after deploy) |
+| 2 | Common home fruit trees we don't have: jamun, ber, bael, fig, mulberry, star fruit (kamrakh), karonda, phalsa, wood apple (kaith), tamarind, kokum, dragon fruit | Next |
+| 3 | Hill and cool-climate fruit: apple, pear, peach, plum, apricot, cherry, walnut, almond, kiwi, persimmon | Planned |
+| 4 | Shade, ornamental and sacred trees: neem, peepal, ashoka, curry leaf and others (no fruit stages; care more like the perennial flowers) | Planned |
+
+**For each new tree type (phases 2–4):** catalogue entries with Hindi names, name-matching aliases, a life profile. Care stays generic until item 4.
+
+### Phase 1 detail (done)
+- Mango: Dasheri, Chausa, Alphonso (Hapus), Kesar, Himsagar, Banganapalli, Totapuri, Fazli, Mallika, Neelum, plus Malda, Langra, Amrapali.
+- Citrus: Kagzi lime, Gondhoraj, Assam lemon, Galgal, seedless lemon, Nagpur and Darjeeling oranges, Malta, Chakotra (pomelo), plus Kinnow and Mosambi.
+- Banana: G9 (Grand Naine), Robusta, Dwarf Cavendish (Basrai), Malbhog, Poovan, Nendran, Elaichi, Red.
+- Guava, litchi, pomegranate, papaya, grape, coconut, chikoo, amla, custard apple (incl. Ramphal), moringa, jackfruit varieties.
+- Search keeps letters in any script and matches Hindi names; variety names typed as the species are recognised.
+- Data lives in `backend/src/modules/plants/domain/fruit-catalogue.ts`.
+
+## 4 + 5 + 6. Tree care, first tasks, life profiles (after item 3)
+
+Done tree type by tree type over everything the catalogue holds:
+- **Care (4):** month-by-month guidance per region. Today only mango, citrus, litchi and guava have real rules; the rest fall back to generic advice.
+- **First tasks (5):** what a newly added tree gets. Today only mango gets feed and prune tasks; everything else gets "water in 3 days".
+- **Life profiles (6):** first fruit, productive years, lifespan for every type (today 14 fruit families and 10 perennial flowers).
+- Personal points on Home ("Your mango: stop watering before flowering") come with this.
+
+## Later items
+
+7. **Crop and flower photos:** 8 of 42 have one; the rest show a family icon.
+8. **Task-title wording:** a short name for titles ("Pinch the marigold tips", not "Pinch the marigold (genda) tips").
+9. **More vegetables:** beetroot, turnip, spring onion, amaranth (chaulai), bathua, sem, lobia, tinda, parwal, ash gourd — checked against what Indian home gardeners grow.
+10. **Bulbs:** dahlia, gladiolus, rajnigandha, lilies — plant, bloom, lift and store.
+11. **Hindi translation:** users can pick Hindi; the app is English only.
+12. **Copy gaps:** a seasonal flower's "should start blooming soon" task is typed as a harvest; flower care reasons are generic; end-of-life reasons are tree-flavoured for crops.
+13. **Matching gaps:** Hindi typed in a different Unicode form misses (गुड़हल); a nickname can outrank the species ("Champa's rose"); state-only text ("Goa") and Sikkim's direction names on the server fallback.
+
+## Still open outside the list
+- Rotate the AWS key, Neon password and Gemini key that were pasted in chat; check the Gemini key works (it starts `AQ.`, not `AIza…`).
+- Render does not redeploy on push; deploys are started by hand (`docs/deploy.md`).
