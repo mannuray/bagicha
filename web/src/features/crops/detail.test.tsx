@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes, useLocation } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { ok, pageOf, plantRecord } from '../../test/fixtures';
+import { fail, ok, pageOf, plantRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { CropDetailScreen } from '.';
@@ -93,5 +93,13 @@ describe('crop detail', () => {
   it('shows On your list when the crop is already planned', async () => {
     setup(tomato, [plantRecord({ id: 'p1', crop_id: 'tomato', crop_stage: 'PLANNED', record_kind: 'CROP' })]);
     expect(await screen.findByText(/on your list/i)).toBeInTheDocument();
+  });
+
+  it('says so when Start now fails, and stays on the page', async () => {
+    setup(tomato);
+    server.use(http.post(`${API}/crops/plan`, () => HttpResponse.json(fail('SERVER_ERROR', 'Something went wrong'), { status: 500 })));
+    await userEvent.click(await screen.findByRole('button', { name: /start now/i }));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByTestId('where')).not.toBeInTheDocument();
   });
 });

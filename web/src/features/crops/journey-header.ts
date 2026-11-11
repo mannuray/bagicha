@@ -1,6 +1,5 @@
+import { istDayDiff } from '../../lib/ist';
 import type { Task } from '../tasks';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type CropStatus = { stage: string; day: number | null; place: string | null };
 
@@ -16,7 +15,8 @@ export function cropStatusLine(
 ): CropStatus {
   const s = stage ?? 'PLANNED';
   if (!openSeasonStartedAt || (s !== 'NURSERY' && s !== 'IN_GROUND' && s !== 'HARVESTING')) return { stage: s, day: null, place: null };
-  const day = Math.max(0, Math.floor((now.getTime() - new Date(openSeasonStartedAt).getTime()) / DAY_MS));
+  // IST calendar days, like the tasks' "Due in N days", so the two lines agree.
+  const day = Math.max(0, istDayDiff(new Date(openSeasonStartedAt), now));
   return { stage: s, day, place: s === 'NURSERY' ? null : placeName };
 }
 

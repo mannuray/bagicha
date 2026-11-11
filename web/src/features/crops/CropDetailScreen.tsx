@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
+import { messageFor } from '../../lib/error-messages';
 import { Button, ErrorState, Icon, LoadingState, Screen, TopBar } from '../../ui';
 import { useAllPlants, usePlants } from '../plants';
 import { useAddToPlan, useCropDetail } from './api';
@@ -36,10 +37,7 @@ export function CropDetailScreen() {
     crop.method === 'NURSERY_TRANSPLANT' ? { icon: 'move_down', label: t('crops.detail.transplantAt'), value: range(crop.transplant_after_days) } : null,
     { icon: 'nutrition', label: t('crops.detail.firstHarvest'), value: range(crop.days_to_first_harvest) },
   ].filter((f): f is { icon: string; label: string; value: string } => Boolean(f?.value));
-  const startNow = async () => {
-    const plant = await add.mutateAsync(crop.id);
-    void navigate(`/plants/${plant.id}?start=1`);
-  };
+  const startNow = () => add.mutate(crop.id, { onSuccess: (plant) => void navigate(`/plants/${plant.id}?start=1`) });
 
   return (
     <Screen className="pb-32">
@@ -106,7 +104,12 @@ export function CropDetailScreen() {
         </section>
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-[480px] gap-3 bg-surface/90 px-4 pb-6 pt-3 backdrop-blur-xl">
+      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-[480px] flex-wrap gap-3 bg-surface/90 px-4 pb-6 pt-3 backdrop-blur-xl">
+        {add.isError && (
+          <p role="alert" className="w-full font-body text-sm text-error">
+            {messageFor(add.error)}
+          </p>
+        )}
         {onList || add.isSuccess ? (
           <span className="flex min-h-12 flex-1 items-center justify-center gap-1 font-label text-sm font-bold text-primary">
             <Icon name="check_circle" filled className="text-base" />
@@ -117,7 +120,7 @@ export function CropDetailScreen() {
             {t('crops.add')}
           </Button>
         )}
-        <Button className="flex-1" busy={add.isPending} onClick={() => void startNow()}>
+        <Button className="flex-1" busy={add.isPending} onClick={startNow}>
           {t('crops.detail.startNow')}
         </Button>
       </div>
