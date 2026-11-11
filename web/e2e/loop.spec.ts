@@ -34,7 +34,8 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await checkScreen(page, '04-dashboard-empty');
 
   // Add a tree via the catalogue.
-  await page.getByRole('link', { name: /add a tree/i }).click();
+  await page.getByRole('button', { name: /add to garden/i }).click();
+  await page.getByRole('link', { name: /plant a tree/i }).click();
   await page.getByLabel(/tree name/i).fill('Aam');
   await page.getByLabel(/^species/i).fill('mango');
   await page.getByRole('option').first().click();

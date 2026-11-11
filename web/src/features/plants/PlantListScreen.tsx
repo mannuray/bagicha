@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button, cx, EmptyState, ErrorState, Icon, LoadingState, Screen } from '../../ui';
@@ -6,7 +6,8 @@ import { usePlants } from './api';
 import type { Plant } from './schemas';
 
 /** Stitch "Orchard Gallery": growing trees, and past trees on their own tab. */
-export function PlantListScreen() {
+/** `addSlot` lets the app put the garden chooser here without plants importing crops. */
+export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<'active' | 'planned' | 'ended'>('active');
   const [pages, setPages] = useState(1);
@@ -22,13 +23,15 @@ export function PlantListScreen() {
           <p className="font-label text-xs font-bold uppercase tracking-widest text-secondary">{t('plants.list.kicker')}</p>
           <h1 className="font-headline text-2xl text-primary">{t('plants.list.title')}</h1>
         </div>
-        <Link
-          to="/plants/new"
-          aria-label={t('plants.list.add')}
-          className="bg-primary-gradient flex h-12 w-12 items-center justify-center rounded-full text-on-primary shadow-lg"
-        >
-          <Icon name="add" />
-        </Link>
+        {addSlot ?? (
+          <Link
+            to="/plants/new"
+            aria-label={t('plants.list.add')}
+            className="bg-primary-gradient flex h-12 w-12 items-center justify-center rounded-full text-on-primary shadow-lg"
+          >
+            <Icon name="add" />
+          </Link>
+        )}
       </header>
       <main className="space-y-3 px-4">
         <div role="tablist" className="flex gap-2">

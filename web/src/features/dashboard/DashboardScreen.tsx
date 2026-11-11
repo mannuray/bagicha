@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import orchardPhoto from '../../assets/stitch/dashboard-orchard.jpg';
 import { systemClock } from '../../lib/clock';
 import { EmptyState, ErrorState, Icon, LoadingState, Pebble, Screen } from '../../ui';
 import { useSession } from '../auth';
-import { useCropSyncOnce } from '../crops';
+import { AddToGardenSheet, useCropSyncOnce } from '../crops';
 import { useAllPlants } from '../plants';
 import { useSeasonalGuide } from '../seasonal';
 import { hasPendingSoon, TaskGroups, useMyTasks } from '../tasks';
@@ -20,6 +21,7 @@ export function DashboardScreen() {
   // Journey crops follow the crop calendar, not the tree season pack.
   const season = useSessionMaterialize(plants.data?.filter((p) => !p.crop_id).map((p) => p.id));
   useCropSyncOnce();
+  const [adding, setAdding] = useState(false);
   const tasks = useMyTasks();
   const guide = useSeasonalGuide();
   const now = systemClock.now();
@@ -91,14 +93,15 @@ export function DashboardScreen() {
             </Pebble>
             <p className="font-headline text-sm leading-tight text-on-surface-variant">{t('dashboard.plantsInGarden')}</p>
           </div>
-          <Link to="/plants/new" className="flex items-center gap-3 rounded-xl bg-surface-container-low p-3 text-primary">
+          <button type="button" onClick={() => setAdding(true)} className="flex w-full items-center gap-3 text-left rounded-xl bg-surface-container-low p-3 text-primary">
             <span className="bg-primary-gradient flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-on-primary">
               <Icon name="add" />
             </span>
-            <span className="font-headline text-sm leading-tight">{t('dashboard.addTree')}</span>
-          </Link>
+            <span className="font-headline text-sm leading-tight">{t('crops.chooser.open')}</span>
+          </button>
         </section>
       </main>
+      {adding && <AddToGardenSheet onClose={() => setAdding(false)} />}
     </Screen>
   );
 }

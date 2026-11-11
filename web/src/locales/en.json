@@ -255,7 +255,6 @@
     "sowNow": "Good to sow now: {{crops}}",
     "garden": "Your garden",
     "plantsInGarden": "Plants in your garden",
-    "addTree": "Add a tree",
     "sowNowLink": "Good to sow now: {{crops}}"
   },
   "journal": {
@@ -556,6 +555,16 @@
       "end": "End season",
       "growingIn": "Growing in {{place}}",
       "remove": "Remove from Want to grow"
+    },
+    "chooser": {
+      "open": "Add to garden",
+      "kicker": "Add to your garden",
+      "title": "What are you growing?",
+      "tree": "Plant a tree",
+      "treeHint": "Fruit trees that stay for years: mango, lemon, guava…",
+      "vegetable": "Grow a vegetable",
+      "vegetableHint": "Seasonal crops: we'll tell you when to sow and remind you to get seeds.",
+      "sowNow": "Sow now: {{crops}}"
     }
   }
 }
