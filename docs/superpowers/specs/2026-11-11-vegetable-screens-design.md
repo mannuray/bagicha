@@ -72,6 +72,7 @@ Starting a crop works, but it's hard to find (a text link on Home and a tab in M
 - **Regional gardener's tips:** editorial content per region and month.
 - **Yield targets** ("3 kg over 5 cuts"): would need yield expectations per crop and per container size; risky as false precision.
 - **Card tags like "Fast grower", "Aromatic", "Deep pot":** marketing copy until there's a curated tag set.
+- **Photos for the other 18 crops:** Stitch's text-to-screen returns placeholder images for a photo grid; the 8 bundled photos (palak, methi, coriander, peas, carrot, radish, tomato, potato) came from the designed discovery screen. The rest show the family pebble until photos are made.
 - **Already parked there:** companion hints, seed stock and shopping list, weather-aware sowing, push "remind me" per task, ordering seeds in the app.
 
 ## 5. Excluded (fake or contradictory in the Stitch drafts)

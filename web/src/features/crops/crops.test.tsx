@@ -116,7 +116,15 @@ describe('what can I sow now?', () => {
   it('shows a family pebble when a crop has no photo', async () => {
     handlers();
     renderWithApp(<CropsScreen />, { route: '/crops' });
+    await userEvent.click(await screen.findByRole('button', { name: /later: pumpkin/i }));
+    const card = screen.getByText('Pumpkin', { selector: 'h3' }).closest('article') as HTMLElement;
+    expect(within(card).getByRole('img', { name: 'Pumpkin' }).tagName).not.toBe('IMG');
+  });
+
+  it('uses the bundled photo when a crop has one', async () => {
+    handlers();
+    renderWithApp(<CropsScreen />, { route: '/crops' });
     const card = (await screen.findByText('Tomato')).closest('article') as HTMLElement;
-    expect(within(card).getByRole('img', { name: 'Tomato' }).tagName).not.toBe('IMG');
+    expect(within(card).getByRole('img', { name: 'Tomato' }).tagName).toBe('IMG');
   });
 });
