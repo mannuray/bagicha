@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerStorage } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import { redisConnection } from '../redis/redis-connection';
 import { DEFAULT_RATE_LIMIT } from './limits';
 import {
   FailOpenThrottlerStorage,
@@ -21,8 +22,8 @@ import {
       inject: [ConfigService],
       useFactory: (config: ConfigService) =>
         new ThrottlerStorageRedisService({
-          host: config.get<string>('REDIS_HOST', 'localhost'),
-          port: Number(config.get<string>('REDIS_PORT', '6379')),
+          // Same Redis as everything else (REDIS_URL on staging, host/port locally).
+          ...redisConnection(config),
           // Fail fast instead of queueing when Redis is down (we fail open).
           maxRetriesPerRequest: 1,
           enableOfflineQueue: false,

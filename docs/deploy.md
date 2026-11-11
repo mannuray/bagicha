@@ -4,8 +4,8 @@ Staging runs on four hosted pieces, under the same accounts as OPD staging.
 
 | Piece | Where | Account |
 |---|---|---|
-| Web app | Vercel project `bagicha-web` (`web/`) | Vercel `mannuray`, team mannu-kumars-projects |
-| API | Render `bagicha-api` (free, Singapore), settings in `render.yaml` | Render, mannu.ray@gmail.com |
+| Web app | https://bagicha-web.vercel.app (Vercel project `bagicha-web`, from `web/`) | Vercel `mannuray`, team mannu-kumars-projects |
+| API | https://bagicha-api.onrender.com (Render `bagicha-api`, `srv-dbq3qch5efls739jf6l0`, free, Singapore; created with the Render CLI, settings mirrored in `render.yaml`) | Render, mannu.ray@gmail.com |
 | Redis | Shared with OPD: `opd-redis`, **database 1** (`REDIS_URL=redis://red-dbhgb78473hc739u2ho0:6379/1`). The free plan allows one Key Value per workspace. | Render |
 | Database | Neon project `bagicha-staging` (`lucky-band-03541719`, Singapore) | Neon, mannu.ray@gmail.com |
 | Photos | S3 bucket `bagicha-media-114823617214-ap-south-1-an` (`ap-south-1`, private), IAM user `bagicha-staging-media` limited to it | AWS account 114823617214 |
@@ -49,7 +49,7 @@ Render builds `backend/Dockerfile` when `main` is pushed and waits for `/api/v1/
 
 ```bash
 cd web
-vercel deploy --prod --scope mannu-kumars-projects --yes
+vercel deploy --prod --scope mannu-kumars-projects --archive=tgz --yes
 ```
 
 Then open the production URL and hard-refresh.
@@ -76,7 +76,7 @@ After changing a setting on Render, redeploy the service.
 
 ```bash
 curl -s https://bagicha-api.onrender.com/api/v1/health/live                 # status ok
-curl -s -o /dev/null -w '%{http_code}\n' https://<web url>/api/v1/crops/calendar   # 401: reached the API
+curl -s -o /dev/null -w '%{http_code}\n' https://bagicha-web.vercel.app/api/v1/crops/calendar   # 401: reached the API
 ```
 
 Then sign in on the web app (the code is shown on screen), add a tree, and log a moment with a photo.
