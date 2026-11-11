@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client as MinioClient } from 'minio';
+import { mediaClientOptions } from './media-client';
 import sharp from 'sharp';
 import { randomUUID } from 'crypto';
 import {
@@ -37,6 +38,7 @@ export class MediaService implements OnModuleInit {
   private client!: MinioClient;
   private bucket!: string;
   private publicBaseUrl!: string;
+  private region?: string;
 
   constructor(
     private readonly config: ConfigService,
@@ -54,26 +56,13 @@ export class MediaService implements OnModuleInit {
 
   private async init() {
     this.bucket = this.config.get<string>('MEDIA_BUCKET', MEDIA_BUCKET_DEFAULT);
-    const endPoint = this.config.get<string>('MEDIA_ENDPOINT', 'localhost');
-    const port = parseInt(this.config.get<string>('MEDIA_PORT', '9000'), 10);
-    const useSSL = this.config.get<string>('MEDIA_USE_SSL', 'false') === 'true';
-    const accessKey = this.config.get<string>('MINIO_ROOT_USER', 'minioadmin');
-    const secretKey = this.config.get<string>(
-      'MINIO_ROOT_PASSWORD',
-      'minioadmin',
-    );
+    const options = mediaClientOptions(this.config);
     this.publicBaseUrl = this.config.get<string>(
       'MEDIA_PUBLIC_BASE_URL',
-      `${useSSL ? 'https' : 'http'}://${endPoint}:${port}`,
+      `${options.useSSL ? 'https' : 'http'}://${options.endPoint}:${options.port}`,
     );
-
-    this.client = new MinioClient({
-      endPoint,
-      port,
-      useSSL,
-      accessKey,
-      secretKey,
-    });
+    this.region = options.region;
+    this.client = new MinioClient(options);
     await this.ensureBucket();
   }
 
@@ -184,7 +173,7 @@ export class MediaService implements OnModuleInit {
       .bucketExists(this.bucket)
       .catch(() => false);
     if (!exists) {
-      await this.client.makeBucket(this.bucket);
+      await this.client.makeBucket(this.bucket, this.region);
       this.logger.info({ bucket: this.bucket }, 'Created MinIO bucket');
     }
     // Make `posts/*` (and any future PUBLIC_PREFIXES) public-readable.
