@@ -42,6 +42,7 @@ import {
   TaskTemplateInput,
 } from './domain/overlay-rules';
 import { regionFor } from './domain/region-cluster';
+import { seasonGuide } from './domain/season-guide';
 import { resolveSeasonWindow } from './domain/season-window';
 import { OverlayRepository } from './repositories/overlay.repository';
 import { SeasonalPackRepository } from './repositories/seasonal-pack.repository';
@@ -91,15 +92,14 @@ export class SeasonalService implements OnModuleInit {
 
   /** Season advice, with "good to sow now" from the crop calendar for the user's region. */
   getSeasonalGuide(user: Pick<User, 'district' | 'region_cluster'>) {
-    const guide = this.weatherService.getSeasonalSuggestions(
-      user.district ?? '',
-    );
-    const group = climateGroupFor(regionFor(user));
+    const region = regionFor(user);
+    const group = climateGroupFor(region);
     const now = this.clock.now();
+    const { season, headline, points } = seasonGuide(region, now);
     const crops = CROPS.filter(
       (c) => c.kind === 'CROP' && windowStatus(c, group, now).status === 'open',
     ).map((c) => c.name);
-    return { ...guide, crops };
+    return { season, advice: headline, points, crops };
   }
 
   async getTreeIntelligence(userId: string, plantId: string) {

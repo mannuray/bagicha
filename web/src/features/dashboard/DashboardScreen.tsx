@@ -81,6 +81,16 @@ export function DashboardScreen() {
               <Icon name="eco" className="absolute -bottom-4 -right-4 text-[72px] opacity-20" />
               <p className="font-label text-xs font-bold uppercase tracking-widest text-primary-fixed-dim">{t('dashboard.season', { season: guide.data.season })}</p>
               <h2 id="guide-heading" className="mt-2 font-headline text-lg">{guide.data.advice}</h2>
+              {guide.data.points.length > 0 && (
+                <ul aria-label={t('dashboard.thisMonth')} className="mt-2 space-y-1">
+                  {guide.data.points.map((point) => (
+                    <li key={point} className="flex gap-2 font-body text-sm text-on-primary/90">
+                      <span aria-hidden className="mt-2 h-1 w-1 shrink-0 rounded-full bg-primary-fixed-dim" />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              )}
               {guide.data.crops.length > 0 && (
                 <Link to="/crops" className="mt-2 block font-body text-sm text-primary-fixed-dim underline-offset-2 hover:underline">
                   {t('dashboard.sowNowLink', { crops: guide.data.crops.join(', ') })}

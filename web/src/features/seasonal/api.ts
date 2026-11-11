@@ -7,6 +7,8 @@ export const guideSchema = z.object({
   season: z.string(),
   crops: z.array(z.string()),
   advice: z.string(),
+  /** This month's few practical points for the user's region. */
+  points: z.array(z.string()).optional().transform((v) => v ?? []),
 });
 export type SeasonalGuide = z.infer<typeof guideSchema>;
 

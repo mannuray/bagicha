@@ -83,6 +83,10 @@ describe('crops', () => {
       expect(res.status).toBe(200);
       expect(res.body.data.crops).toContain('Spinach (Palak)');
       expect(res.body.data.crops).not.toContain('Okra');
+      // Season and advice follow the user's region (East India) and the month (10 Oct).
+      expect(res.body.data.season).toBe('Post-monsoon');
+      expect(res.body.data.advice).toEqual(expect.any(String));
+      expect(res.body.data.points.length).toBeGreaterThanOrEqual(2);
     });
   });
   describe('garden places', () => {

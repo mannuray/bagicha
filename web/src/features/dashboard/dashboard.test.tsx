@@ -7,7 +7,12 @@ import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { DashboardScreen } from '.';
 
-const guide = { season: 'Winter', crops: ['Peas', 'Carrots'], advice: 'Protect young saplings from morning frost.' };
+const guide = {
+  season: 'Post-monsoon',
+  crops: ['Peas', 'Carrots'],
+  advice: 'Cool, dry days: the heart of winter gardening.',
+  points: ['Sow peas and another row of greens.', 'Mulch beds to keep the soil moist.'],
+};
 
 function baseHandlers(
   opts: { tasks?: unknown[]; tasksFail?: boolean; plants?: unknown[]; plantsFail?: boolean; materializeFail?: boolean } = {},
@@ -47,7 +52,11 @@ describe('dashboard', () => {
     expect(await screen.findByRole('heading', { name: /asha/i })).toBeInTheDocument();
     expect(await screen.findByRole('article', { name: /plan pest response/i })).toBeInTheDocument();
     expect(screen.getByText(/due 3 days ago/i)).toBeInTheDocument();
-    expect(await screen.findByText(/protect young saplings/i)).toBeInTheDocument();
+    expect(await screen.findByText(/heart of winter gardening/i)).toBeInTheDocument();
+    expect(screen.getByText(/post-monsoon guidance/i)).toBeInTheDocument();
+    const points = screen.getByRole('list', { name: /this month/i });
+    expect(points).toHaveTextContent(/sow peas and another row of greens/i);
+    expect(points).toHaveTextContent(/mulch beds/i);
     expect(calls.weather).toBe(0);
     expect(screen.getAllByText(/^this week$/i)).toHaveLength(1);
   });
@@ -95,7 +104,7 @@ describe('dashboard', () => {
     baseHandlers({ tasksFail: true });
     renderWithApp(<DashboardScreen />);
     expect(await screen.findByRole('alert')).toBeInTheDocument();
-    expect(await screen.findByText(/protect young saplings/i)).toBeInTheDocument();
+    expect(await screen.findByText(/heart of winter gardening/i)).toBeInTheDocument();
   });
 
   it('does not spin forever when the plant list fails; it offers a retry', async () => {

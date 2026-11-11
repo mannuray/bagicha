@@ -275,7 +275,8 @@
     "planned": "+{{count}} planned",
     "flowers_one": "Flower",
     "flowers_other": "Flowers",
-    "flowerSplit": "{{seasonal}} seasonal · {{perennial}} perennial"
+    "flowerSplit": "{{seasonal}} seasonal · {{perennial}} perennial",
+    "thisMonth": "This month"
   },
   "journal": {
     "title": "Log a Moment",
