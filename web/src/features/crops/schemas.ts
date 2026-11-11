@@ -19,6 +19,18 @@ export const cropItemSchema = z.object({
 });
 export type CropItem = z.infer<typeof cropItemSchema>;
 
+const range = z.tuple([z.number(), z.number()]).nullable();
+export const cropDetailSchema = cropItemSchema.extend({
+  germination_days: range,
+  transplant_after_days: range,
+  harvest_span_days: z.number().nullable(),
+  thin_after_days: z.number().nullable(),
+  succession_every_days: z.number().nullable(),
+  care: z.array(z.object({ key: z.string(), after: z.string(), days: z.number() })),
+  windows: z.array(z.object({ start_month: z.number(), end_month: z.number(), label: z.string().nullable() })),
+});
+export type CropDetail = z.infer<typeof cropDetailSchema>;
+
 export const placeSchema = z.object({
   id: z.string(),
   name: z.string(),

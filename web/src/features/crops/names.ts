@@ -26,3 +26,11 @@ export function sunniest(places: Array<{ sun_hours: Sun | null }>): Sun | null {
 export function suitsSun(crop: { sun: 'FULL' | 'PARTIAL' }, place: Sun): boolean {
   return SUN_RANK[place] >= SUN_RANK[crop.sun];
 }
+
+/** The order a crop goes through, from its method and care steps. */
+export function growingSteps(crop: { method: string; care: Array<{ key: string }>; thin_after_days: number | null }): string[] {
+  const care = crop.care.map((c) => c.key);
+  if (crop.method === 'NURSERY_TRANSPLANT') return ['seeds', 'nursery', 'transplant', ...care, 'harvest'];
+  if (crop.method === 'DIRECT_SOW') return ['seeds', 'sow', ...(crop.thin_after_days ? ['thin'] : []), ...care, 'harvest'];
+  return [`material.${crop.method}`, 'plant', ...care, 'harvest'];
+}

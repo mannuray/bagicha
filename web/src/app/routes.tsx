@@ -1,4 +1,4 @@
-import { AddToGardenButton, CropsScreen } from '../features/crops';
+import { AddToGardenButton, CropDetailScreen, CropsScreen } from '../features/crops';
 import type { ReactNode } from 'react';
 import { Route, Routes } from 'react-router';
 import { LoginScreen, OtpScreen, RequireAuth, RequireOnboarded, SplashScreen } from '../features/auth';
@@ -42,6 +42,7 @@ export function AppRoutes() {
         <Route path="/plants/:id/season" element={app(<SeasonReviewScreen />)} />
         <Route path="/tasks" element={app(<TasksScreen />)} />
         <Route path="/crops" element={app(<CropsScreen />)} />
+        <Route path="/crops/:cropId" element={app(<CropDetailScreen />)} />
         <Route path="/scan" element={app(<ScanScreen />)} />
         <Route path="/scan/identify" element={app(<IdentifyResultScreen />)} />
         <Route path="/scan/diagnose" element={app(<DiagnoseResultScreen />)} />

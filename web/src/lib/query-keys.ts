@@ -20,6 +20,7 @@ export const queryKeys = {
   guide: ['seasonal', 'guide'] as const,
   crops: {
     calendar: ['crops', 'calendar'] as const,
+    detail: (cropId: string) => ['crops', 'calendar', cropId] as const,
     places: ['crops', 'places'] as const,
     rotation: (placeId: string, cropId: string) => ['crops', 'rotation', placeId, cropId] as const,
   },

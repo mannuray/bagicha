@@ -578,6 +578,111 @@
       "CLOVE": "cloves",
       "RHIZOME": "rhizomes"
     },
-    "firstHarvestShort": "First harvest {{min}}–{{max}} days"
+    "firstHarvestShort": "First harvest {{min}}–{{max}} days",
+    "family": {
+      "SOLANACEAE": "Nightshade family",
+      "MALVACEAE": "Mallow family",
+      "CUCURBITACEAE": "Gourd family",
+      "FABACEAE": "Bean family",
+      "BRASSICACEAE": "Cabbage family",
+      "APIACEAE": "Carrot family",
+      "AMARANTHACEAE": "Amaranth family",
+      "ASTERACEAE": "Daisy family",
+      "AMARYLLIDACEAE": "Onion family",
+      "ZINGIBERACEAE": "Ginger family"
+    },
+    "familyMates": {
+      "SOLANACEAE": "tomato, brinjal, chilli, capsicum or potato",
+      "MALVACEAE": "okra",
+      "CUCURBITACEAE": "gourds, cucumber or pumpkin",
+      "FABACEAE": "peas, beans or methi",
+      "BRASSICACEAE": "cauliflower, cabbage, mustard or radish",
+      "APIACEAE": "carrot or coriander",
+      "AMARANTHACEAE": "spinach",
+      "ASTERACEAE": "lettuce",
+      "AMARYLLIDACEAE": "onion or garlic",
+      "ZINGIBERACEAE": "ginger or turmeric"
+    },
+    "detail": {
+      "status": {
+        "open": "Sow now ({{window}})",
+        "soon_one": "Opens in {{count}} day ({{window}})",
+        "soon_other": "Opens in {{count}} days ({{window}})",
+        "later": "Next sowing: {{window}}",
+        "none": "Not usually grown in your region"
+      },
+      "glance": "At a glance",
+      "germinates": "Germinates",
+      "transplantAt": "Transplant at",
+      "firstHarvest": "First harvest",
+      "days": "{{min}}–{{max}} days",
+      "howItGrows": "How it grows",
+      "howMuch": "How much to plant",
+      "goodToKnow": "Good to know",
+      "rotation": "{{family}}. Don't follow it with {{mates}} in the same bed within a year: they share pests and diseases.",
+      "succession": "Sow again every {{days}} days for a steady supply.",
+      "spacing": "Space plants {{min}}–{{max}} cm apart.",
+      "startNow": "Start now"
+    },
+    "steps": {
+      "seeds": {
+        "title": "Seeds",
+        "body": "Get fresh seed from a nursery or seed shop."
+      },
+      "nursery": {
+        "title": "Nursery tray",
+        "body": "Raise seedlings in a tray or small pots first."
+      },
+      "transplant": {
+        "title": "Transplant",
+        "body": "Move strong seedlings to their bed or container."
+      },
+      "sow": {
+        "title": "Sow",
+        "body": "Sow straight where it will grow."
+      },
+      "thin": {
+        "title": "Thin",
+        "body": "Pull the weakest seedlings so the rest have room."
+      },
+      "stake": {
+        "title": "Stake",
+        "body": "Tie the plant to a stake as it grows tall."
+      },
+      "trellis": {
+        "title": "Trellis",
+        "body": "Give the vines something to climb."
+      },
+      "support": {
+        "title": "Support",
+        "body": "Add a few sticks or a net to hold the plants up."
+      },
+      "earth_up": {
+        "title": "Earth up",
+        "body": "Pile soil around the base to cover what's growing underground."
+      },
+      "plant": {
+        "title": "Plant",
+        "body": "Set them in the soil at the right depth."
+      },
+      "harvest": {
+        "title": "Harvest",
+        "body": "Pick as it ripens; regular picking keeps many crops going."
+      },
+      "material": {
+        "TUBER": {
+          "title": "Seed potatoes",
+          "body": "Use sprouted potatoes from a nursery or your kitchen."
+        },
+        "CLOVE": {
+          "title": "Cloves",
+          "body": "Split a healthy bulb into cloves."
+        },
+        "RHIZOME": {
+          "title": "Rhizomes",
+          "body": "Use plump rhizome pieces with a bud each."
+        }
+      }
+    }
   }
 }

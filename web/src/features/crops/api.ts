@@ -5,12 +5,21 @@ import { useApi } from '../../lib/api';
 import { queryKeys } from '../../lib/query-keys';
 import { reportError } from '../../lib/report-error';
 import { useSessionStore } from '../auth';
-import { cropItemSchema, placeSchema, rotationSchema } from './schemas';
+import { cropDetailSchema, cropItemSchema, placeSchema, rotationSchema } from './schemas';
 
 /** Every calendar crop with its sowing status for the user's region. */
 export function useCropCalendar() {
   const api = useApi();
   return useQuery({ queryKey: queryKeys.crops.calendar, queryFn: () => api.get('/crops/calendar', z.array(cropItemSchema)) });
+}
+
+/** One crop with its timings, care and sowing windows for the user's region. */
+export function useCropDetail(cropId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.crops.detail(cropId),
+    queryFn: () => api.get(`/crops/calendar/${encodeURIComponent(cropId)}`, cropDetailSchema),
+  });
 }
 
 function useInvalidateGarden() {
@@ -26,7 +35,7 @@ export function useAddToPlan() {
   const api = useApi();
   const invalidate = useInvalidateGarden();
   return useMutation({
-    mutationFn: (cropId: string) => api.send('POST', '/crops/plan', { crop_id: cropId }, z.unknown()),
+    mutationFn: (cropId: string) => api.send('POST', '/crops/plan', { crop_id: cropId }, z.object({ id: z.string() }).passthrough()),
     onSuccess: invalidate,
   });
 }
