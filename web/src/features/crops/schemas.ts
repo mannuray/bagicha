@@ -2,11 +2,12 @@ import { z } from 'zod';
 
 export const cropItemSchema = z.object({
   id: z.string(),
+  kind: z.enum(['CROP', 'FLOWER']).optional().transform((v) => v ?? 'CROP'),
   name: z.string(),
   aliases: z.array(z.string()),
   family: z.string(),
   method: z.enum(['NURSERY_TRANSPLANT', 'DIRECT_SOW', 'TUBER', 'CLOVE', 'RHIZOME']),
-  tags: z.array(z.enum(['container', 'beginner', 'quick'])),
+  tags: z.array(z.enum(['container', 'beginner', 'quick', 'long'])),
   days_to_first_harvest: z.tuple([z.number(), z.number()]),
   guide: z.object({ plants_for_family_of_4: z.string(), container: z.string(), spacing_cm: z.tuple([z.number(), z.number()]) }),
   scientific_name: z.string().optional().transform((v) => v ?? ''),

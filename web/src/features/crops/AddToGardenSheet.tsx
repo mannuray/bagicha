@@ -9,7 +9,7 @@ import { shortName } from './names';
 export function AddToGardenSheet({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   const calendar = useCropCalendar();
-  const sowNow = (calendar.data ?? []).filter((c) => c.status === 'open').slice(0, 3).map(shortName);
+  const sowNow = (calendar.data ?? []).filter((c) => c.kind === 'CROP' && c.status === 'open').slice(0, 3).map(shortName);
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30 backdrop-blur-sm" onClick={onClose}>
       <section
@@ -47,6 +47,14 @@ export function AddToGardenSheet({ onClose }: { onClose: () => void }) {
               {t('crops.chooser.sowNow', { crops: sowNow.join(', ') })}
             </span>
           )}
+        </Link>
+        <Link to="/crops?kind=flower" className="flex items-center gap-3 rounded-[1.75rem] bg-surface-container-low p-4" onClick={onClose}>
+          <span className="pebble-large flex h-14 w-14 shrink-0 items-center justify-center bg-secondary-container/60 text-on-secondary-container"><Icon name="local_florist" filled /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-headline text-lg font-bold text-primary">{t('crops.chooser.flower')}</span>
+            <span className="block font-body text-xs text-on-surface-variant">{t('crops.chooser.flowerHint')}</span>
+          </span>
+          <Icon name="chevron_right" className="text-outline" />
         </Link>
         <button type="button" onClick={onClose} className="min-h-11 w-full font-label text-sm font-semibold uppercase tracking-wider text-primary/60">
           {t('common.cancel')}

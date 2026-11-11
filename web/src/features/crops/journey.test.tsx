@@ -7,7 +7,7 @@ import { cycleRecord, ok, pagedResponse, pageOf, plantRecord, taskRecord } from 
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { PlantDetailScreen } from '../biography';
-import { cropItem } from './test-fixtures';
+import { cropItem, flowerItem } from './test-fixtures';
 
 const tomatoItem = cropItem({ id: 'tomato', name: 'Tomato', family: 'SOLANACEAE', method: 'NURSERY_TRANSPLANT', sun: 'FULL', guide: { plants_for_family_of_4: '4–6 plants', container: '12–14 inch pot or grow-bag per plant', spacing_cm: [45, 60] } });
 
@@ -18,7 +18,7 @@ function handlers(plant: Record<string, unknown>, opts: { conflict?: boolean; pl
     http.get(`${API}/ledger/plants/c1/timeline`, () => HttpResponse.json(pageOf([]))),
     http.get(`${API}/ledger/plants/c1/tasks`, () => HttpResponse.json(pageOf([]))),
     http.get(`${API}/ledger/plants/c1/cycles`, ({ request }) => HttpResponse.json(pagedResponse(request, []))),
-    http.get(`${API}/crops/calendar`, () => HttpResponse.json(ok([cropItem(), tomatoItem]))),
+    http.get(`${API}/crops/calendar`, () => HttpResponse.json(ok([cropItem(), tomatoItem, flowerItem()]))),
     http.get(`${API}/garden/places`, () => HttpResponse.json(ok(opts.places ?? [{ id: 'pl1', name: 'Terrace bag', kind: 'GROW_BAG', archived_at: null }]))),
     http.get(`${API}/crops/calendar/:id`, ({ params }) =>
       HttpResponse.json(ok({ ...(params.id === 'tomato' ? tomatoItem : cropItem()), germination_days: [5, 10], transplant_after_days: params.id === 'tomato' ? [25, 30] : null, harvest_span_days: 60, thin_after_days: null, succession_every_days: null, care: [], windows: [] })),
@@ -298,6 +298,24 @@ describe('the crop page', () => {
       await userEvent.click(within(sheet).getByRole('button', { name: /^full sun$/i }));
       await userEvent.click(within(sheet).getByRole('button', { name: /add place/i }));
       await waitFor(() => expect(created).toEqual({ name: 'Back bed', kind: 'BED', sun_hours: 'FULL' }));
+    });
+  });
+
+  describe('a seasonal flower', () => {
+    it('blooms instead of harvesting, logs a bloom, and has no rotation note', async () => {
+      handlers({ name: 'Marigold (Genda)', crop_id: 'marigold', crop_stage: 'HARVESTING', record_kind: 'FLOWER' }, { conflict: true });
+      server.use(
+        http.get(`${API}/ledger/plants/c1/cycles`, ({ request }) =>
+          HttpResponse.json(pagedResponse(request, [cycleRecord({ id: 's1', started_at: new Date(Date.now() - 70 * 86400000 - 3600000).toISOString(), closed_at: null, place_id: 'pl1' })])),
+        ),
+      );
+      renderWithApp(routes, { route: '/plants/c1' });
+      expect(await screen.findByText('Blooming · day 70 · Terrace bag')).toBeInTheDocument();
+      const journey = screen.getByRole('region', { name: /journey/i });
+      expect(within(journey).getByText(/^blooming$/i).closest('[aria-current="step"]')).not.toBeNull();
+      expect(within(journey).getByRole('link', { name: /log a bloom/i })).toHaveAttribute('href', '/plants/c1/log');
+      expect(await within(journey).findByText(/growing in terrace bag/i)).toBeInTheDocument();
+      expect(within(journey).queryByText(/same family/i)).not.toBeInTheDocument();
     });
   });
 });

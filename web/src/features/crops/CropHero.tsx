@@ -4,6 +4,7 @@ import { useAllCycles } from '../plants';
 import { useCropCalendar, usePlaces } from './api';
 import { CropPhoto } from './CropPhoto';
 import { cropStatusLine } from './journey-header';
+import { stageKey } from './names';
 
 /** The crop page header: photo (or family pebble), name, and "In the bed · day 12 · Terrace bag 3". */
 export function CropHero({ plant, now }: { plant: PlantDetail; now: Date }) {
@@ -16,7 +17,7 @@ export function CropHero({ plant, now }: { plant: PlantDetail; now: Date }) {
   const place = places.data?.find((p) => p.id === open?.place_id)?.name ?? null;
   const status = cropStatusLine(plant.crop_stage ?? null, open?.started_at ?? null, place, now);
   const line = [
-    t(`crops.stage.${status.stage}`),
+    t(stageKey(status.stage, crop?.kind)),
     status.day === null ? null : t('crops.journey.day', { day: status.day }),
     status.place,
   ]

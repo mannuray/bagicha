@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { ErrorState, Icon, LoadingState, Pill, Screen, TopBar, cx } from '../../ui';
 import { useSession } from '../auth';
 import { useAllPlants, usePlants } from '../plants';
@@ -9,8 +9,10 @@ import { CropPhoto } from './CropPhoto';
 import { hindiName, matchesSearch, suitsSun, sunniest } from './names';
 import type { CropItem } from './schemas';
 
-type Filter = 'container' | 'beginner' | 'quick' | 'sun';
-const TAG_FILTERS = ['container', 'beginner', 'quick'] as const;
+type Filter = 'container' | 'beginner' | 'quick' | 'long' | 'sun';
+type View = 'CROP' | 'FLOWER';
+/** Vegetables filter by a quick harvest; flowers by a long bloom. */
+const TAG_FILTERS: Record<View, Filter[]> = { CROP: ['container', 'beginner', 'quick'], FLOWER: ['container', 'beginner', 'long'] };
 
 /** "What can I sow now?": the region's crops by sowing window, to add to Want to grow. */
 export function CropsScreen() {
@@ -20,7 +22,14 @@ export function CropsScreen() {
   const places = usePlaces();
   const planned = usePlants(1, 'planned');
   const growing = useAllPlants();
+  // "Grow flowers" in the chooser opens this page with ?kind=flower.
+  const [params, setParams] = useSearchParams();
+  const view: View = params.get('kind') === 'flower' ? 'FLOWER' : 'CROP';
   const [filters, setFilters] = useState<Filter[]>([]);
+  const chooseView = (next: View) => {
+    setParams(next === 'FLOWER' ? { kind: 'flower' } : {}, { replace: true });
+    setFilters([]);
+  };
   const [query, setQuery] = useState('');
   const [showLater, setShowLater] = useState(false);
   const onList = new Set(
@@ -30,6 +39,7 @@ export function CropsScreen() {
   const toggle = (f: Filter) => setFilters((cur) => (cur.includes(f) ? cur.filter((x) => x !== f) : [...cur, f]));
   const visible = (calendar.data ?? []).filter(
     (c) =>
+      c.kind === view &&
       matchesSearch(c, query) &&
       filters.every((f) => (f === 'sun' ? sun === null || suitsSun(c, sun) : c.tags.includes(f))),
   );
@@ -37,7 +47,7 @@ export function CropsScreen() {
   const soon = visible.filter((c) => c.status === 'soon');
   const later = visible.filter((c) => c.status === 'later');
   const [month] = useState(() => new Date().toLocaleString('en-IN', { month: 'long' }));
-  const filterList: Filter[] = sun === null ? [...TAG_FILTERS] : [...TAG_FILTERS, 'sun'];
+  const filterList: Filter[] = sun === null ? TAG_FILTERS[view] : [...TAG_FILTERS[view], 'sun'];
 
   return (
     <Screen nav>
@@ -49,6 +59,28 @@ export function CropsScreen() {
           </p>
           {calendar.data && <h2 className="font-headline text-2xl font-bold text-primary">{t('crops.toSowNow', { count: open.length })}</h2>}
         </header>
+        <div className="flex gap-2 rounded-full bg-surface-container-low p-1">
+          {(['CROP', 'FLOWER'] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              aria-pressed={view === v}
+              onClick={() => chooseView(v)}
+              className={cx(
+                'min-h-10 flex-1 rounded-full font-label text-sm font-semibold transition-colors',
+                view === v ? 'bg-primary text-on-primary' : 'text-primary/70',
+              )}
+            >
+              {t(v === 'CROP' ? 'crops.view.vegetables' : 'crops.view.flowers')}
+            </button>
+          ))}
+        </div>
+        {view === 'FLOWER' && (
+          <Link to="/plants/new?kind=FLOWER" className="flex min-h-11 items-center gap-2 font-label text-sm font-bold text-secondary">
+            <Icon name="local_florist" />
+            {t('crops.view.perennials')}
+          </Link>
+        )}
         <label className="flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2.5">
           <Icon name="search" className="text-outline" />
           <input

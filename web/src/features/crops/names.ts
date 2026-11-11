@@ -28,9 +28,16 @@ export function suitsSun(crop: { sun: 'FULL' | 'PARTIAL' }, place: Sun): boolean
 }
 
 /** The order a crop goes through, from its method and care steps. */
-export function growingSteps(crop: { method: string; care: Array<{ key: string }>; thin_after_days: number | null }): string[] {
+export function growingSteps(crop: { kind?: string; method: string; care: Array<{ key: string }>; thin_after_days: number | null }): string[] {
   const care = crop.care.map((c) => c.key);
-  if (crop.method === 'NURSERY_TRANSPLANT') return ['seeds', 'nursery', 'transplant', ...care, 'harvest'];
-  if (crop.method === 'DIRECT_SOW') return ['seeds', 'sow', ...(crop.thin_after_days ? ['thin'] : []), ...care, 'harvest'];
-  return [`material.${crop.method}`, 'plant', ...care, 'harvest'];
+  // A flower's journey ends in bloom, not harvest.
+  const end = crop.kind === 'FLOWER' ? 'bloom' : 'harvest';
+  if (crop.method === 'NURSERY_TRANSPLANT') return ['seeds', 'nursery', 'transplant', ...care, end];
+  if (crop.method === 'DIRECT_SOW') return ['seeds', 'sow', ...(crop.thin_after_days ? ['thin'] : []), ...care, end];
+  return [`material.${crop.method}`, 'plant', ...care, end];
+}
+
+/** The stage's translation key: a flower in HARVESTING is blooming. */
+export function stageKey(stage: string, kind: string | null | undefined): string {
+  return kind === 'FLOWER' && stage === 'HARVESTING' ? 'crops.stage.BLOOMING' : `crops.stage.${stage}`;
 }

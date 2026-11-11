@@ -8,12 +8,12 @@ import { renderWithApp } from '../../test/render';
 import { DashboardScreen } from '../dashboard';
 import { PlantListScreen } from '../plants';
 import { AddToGardenButton } from '.';
-import { cropItem } from './test-fixtures';
+import { cropItem, flowerItem } from './test-fixtures';
 
 function handlers() {
   server.use(
     http.get(`${API}/crops/calendar`, () =>
-      HttpResponse.json(ok([cropItem(), cropItem({ id: 'methi', name: 'Fenugreek (Methi)' }), cropItem({ id: 'peas', name: 'Peas' }), cropItem({ id: 'okra', name: 'Okra', status: 'later' })])),
+      HttpResponse.json(ok([flowerItem(), cropItem(), cropItem({ id: 'methi', name: 'Fenugreek (Methi)' }), cropItem({ id: 'peas', name: 'Peas' }), cropItem({ id: 'okra', name: 'Okra', status: 'later' })])),
     ),
     http.get(`${API}/ledger/plants`, () => HttpResponse.json(pageOf([]))),
     http.get(`${API}/ledger/tasks`, () => HttpResponse.json(pageOf([]))),
@@ -40,5 +40,15 @@ describe('add to your garden', () => {
     renderWithApp(<PlantListScreen addSlot={<AddToGardenButton />} />, { route: '/plants' });
     await userEvent.click(screen.getByRole('button', { name: /add to garden/i }));
     expect(screen.getByRole('dialog', { name: /what are you growing/i })).toBeInTheDocument();
+  });
+
+  it('has a flowers path, and keeps flowers out of the vegetable Sow-now line', async () => {
+    handlers();
+    renderWithApp(<DashboardScreen />);
+    await userEvent.click(await screen.findByRole('button', { name: /add to garden/i }));
+    const sheet = screen.getByRole('dialog', { name: /what are you growing/i });
+    expect(within(sheet).getByRole('link', { name: /grow flowers/i })).toHaveAttribute('href', '/crops?kind=flower');
+    expect(await within(sheet).findByText(/sow now: palak, methi, peas/i)).toBeInTheDocument();
+    expect(within(sheet).queryByText(/genda/i)).not.toBeInTheDocument();
   });
 });

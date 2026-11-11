@@ -45,6 +45,8 @@ export function JourneyCard({ plant }: { plant: PlantDetail }) {
   const neverSown = cycles.data !== undefined && cycles.data.length === 0;
 
   const nursery = crop.method === 'NURSERY_TRANSPLANT';
+  // Seasonal flowers bloom where vegetables are harvested, and skip rotation.
+  const flower = crop.kind === 'FLOWER';
   const steps: Step[] = nursery ? ['planned', 'seeds', 'sown', 'transplanted', 'harvesting', 'ended'] : ['planned', 'seeds', 'sown', 'harvesting', 'ended'];
   const stage = plant.crop_stage ?? 'PLANNED';
   const current: Step =
@@ -63,7 +65,7 @@ export function JourneyCard({ plant }: { plant: PlantDetail }) {
           <li key={step} aria-current={i === at ? 'step' : undefined} className="flex flex-1 flex-col items-center gap-1 text-center">
             <span className={cx('h-1.5 w-full rounded-full', i <= at ? 'bg-primary' : 'bg-surface-container-highest')} aria-hidden />
             <span className={cx('font-label text-[10px] leading-tight', i === at ? 'font-bold text-primary' : 'text-on-surface-variant')}>
-              {t(`crops.journey.step.${step}`)}
+              {t(`crops.journey.step.${flower && step === 'harvesting' ? 'blooming' : step}`)}
             </span>
           </li>
         ))}
@@ -76,14 +78,15 @@ export function JourneyCard({ plant }: { plant: PlantDetail }) {
       )}
       {status.day !== null && (stage === 'NURSERY' || stage === 'IN_GROUND') && (
         <p className="font-body text-sm text-on-surface-variant">
-          {t('crops.journey.progress', { day: status.day, min: crop.days_to_first_harvest[0], max: crop.days_to_first_harvest[1] })}
+          {t(flower ? 'crops.journey.progressBloom' : 'crops.journey.progress', { day: status.day, min: crop.days_to_first_harvest[0], max: crop.days_to_first_harvest[1] })}
         </p>
       )}
       {harvestCount > 0 && <p className="font-body text-sm text-on-surface-variant">{t('crops.journey.harvests', { count: harvestCount })}</p>}
       {place && (
         <div className="space-y-1">
           <p className="font-body text-sm text-on-surface">{t('crops.journey.growingIn', { place: place.name })}</p>
-          {rotation.data?.last &&
+          {!flower &&
+            rotation.data?.last &&
             (rotation.data.conflict ? (
               <p className="rounded-lg bg-secondary-container/25 px-3 py-2 font-body text-sm text-on-secondary-fixed-variant">
                 {t('crops.place.rotation', { crop: rotation.data.last.crop_name, season: rotation.data.last.season_label })}
@@ -106,7 +109,7 @@ export function JourneyCard({ plant }: { plant: PlantDetail }) {
           {stage === 'NURSERY' && <Button onClick={() => setSheet('transplant')}>{t('crops.journey.transplant')}</Button>}
           {(stage === 'IN_GROUND' || stage === 'HARVESTING') && (
             <Link to={`/plants/${plant.id}/log`} className="bg-primary-gradient inline-flex min-h-11 items-center rounded-full px-5 font-label text-sm font-bold text-on-primary">
-              {t('crops.journey.harvest')}
+              {t(flower ? 'crops.journey.bloom' : 'crops.journey.harvest')}
             </Link>
           )}
           {(stage === 'NURSERY' || stage === 'IN_GROUND' || stage === 'HARVESTING') && (

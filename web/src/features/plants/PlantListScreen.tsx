@@ -15,7 +15,8 @@ const GROUPS: Group[] = ['all', 'trees', 'crops'];
 function statusLine(plant: Plant, t: TFunction): string {
   if (plant.crop_stage) {
     const day = plant.season_started_at ? Math.max(0, istDayDiff(new Date(plant.season_started_at), new Date())) : null;
-    return [t(`crops.stage.${plant.crop_stage}`), day === null ? null : t('plants.list.day', { day })].filter(Boolean).join(' · ');
+    const flowerBloom = plant.record_kind === 'FLOWER' && plant.crop_stage === 'HARVESTING';
+    return [t(flowerBloom ? 'crops.stage.BLOOMING' : `crops.stage.${plant.crop_stage}`), day === null ? null : t('plants.list.day', { day })].filter(Boolean).join(' · ');
   }
   const year = plant.planting_date && plant.planting_date_precision !== 'UNKNOWN' ? new Date(plant.planting_date).getUTCFullYear() : null;
   return [t(`plants.stage.${plant.lifecycle_stage}`), year ? t('plants.list.planted', { year }) : null].filter(Boolean).join(' · ');

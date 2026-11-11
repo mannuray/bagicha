@@ -505,7 +505,8 @@
       "container": "Container-friendly",
       "beginner": "Easy for beginners",
       "quick": "Quick harvest",
-      "sun": "Suits my sunlight"
+      "sun": "Suits my sunlight",
+      "long": "Long blooming"
     },
     "section": {
       "open": "Sow now",
@@ -532,7 +533,8 @@
       "NURSERY": "In the nursery",
       "IN_GROUND": "In the bed",
       "HARVESTING": "Harvesting",
-      "RESTING": "Resting until next season"
+      "RESTING": "Resting until next season",
+      "BLOOMING": "Blooming"
     },
     "place": {
       "where": "Where will it grow?",
@@ -583,7 +585,8 @@
         "sown": "Sown",
         "transplanted": "Transplanted",
         "harvesting": "Harvesting",
-        "ended": "Season ended"
+        "ended": "Season ended",
+        "blooming": "Blooming"
       },
       "guide": "How much: {{plants}} · {{container}} · space {{min}}–{{max}} cm in a bed.",
       "start": "Start",
@@ -597,7 +600,9 @@
       "progress": "Day {{day}} of about {{min}}–{{max}} to the first harvest",
       "harvests_one": "{{count}} harvest this season",
       "harvests_other": "{{count}} harvests this season",
-      "goodRotation": "Good choice: {{crop}} grew here last, a different family."
+      "goodRotation": "Good choice: {{crop}} grew here last, a different family.",
+      "bloom": "Log a bloom",
+      "progressBloom": "Day {{day}} of about {{min}}–{{max}} to the first bloom"
     },
     "chooser": {
       "open": "Add to garden",
@@ -607,7 +612,9 @@
       "treeHint": "Fruit trees that stay for years: mango, lemon, guava…",
       "vegetable": "Grow a vegetable",
       "vegetableHint": "Seasonal crops: we'll tell you when to sow and remind you to get seeds.",
-      "sowNow": "Sow now: {{crops}}"
+      "sowNow": "Sow now: {{crops}}",
+      "flower": "Grow flowers",
+      "flowerHint": "Seasonal flowers from seed: marigold, zinnia, petunia…"
     },
     "monthSowing": "{{month}} sowing",
     "toSowNow_one": "{{count}} crop to sow now",
@@ -632,7 +639,13 @@
       "AMARANTHACEAE": "Amaranth family",
       "ASTERACEAE": "Daisy family",
       "AMARYLLIDACEAE": "Onion family",
-      "ZINGIBERACEAE": "Ginger family"
+      "ZINGIBERACEAE": "Ginger family",
+      "PORTULACACEAE": "Purslane family",
+      "BALSAMINACEAE": "Balsam family",
+      "CARYOPHYLLACEAE": "Pink family",
+      "LAMIACEAE": "Mint family",
+      "VIOLACEAE": "Violet family",
+      "RANUNCULACEAE": "Buttercup family"
     },
     "familyMates": {
       "SOLANACEAE": "tomato, brinjal, chilli, capsicum or potato",
@@ -665,7 +678,11 @@
       "rotation": "{{family}}. Don't follow it with {{mates}} in the same bed within a year: they share pests and diseases.",
       "succession": "Sow again every {{days}} days for a steady supply.",
       "spacing": "Space plants {{min}}–{{max}} cm apart.",
-      "startNow": "Start now"
+      "startNow": "Start now",
+      "firstBloom": "First bloom",
+      "bloomsFor": "Blooms for",
+      "aboutDays": "about {{days}} days",
+      "deadheadTip": "Pick off faded flowers every few days: it keeps new blooms coming."
     },
     "steps": {
       "seeds": {
@@ -725,7 +742,24 @@
           "title": "Rhizomes",
           "body": "Use plump rhizome pieces with a bud each."
         }
+      },
+      "pinch": {
+        "title": "Pinch",
+        "body": "Nip the growing tips once for a bushier plant with more flowers."
+      },
+      "deadhead": {
+        "title": "Deadhead",
+        "body": "Pick off faded flowers so the plant keeps blooming."
+      },
+      "bloom": {
+        "title": "Bloom",
+        "body": "Enjoy the flowers; cut a few for the house to encourage more."
       }
+    },
+    "view": {
+      "vegetables": "Vegetables",
+      "flowers": "Flowers",
+      "perennials": "Perennials like rose or mogra? Add one"
     }
   }
 }

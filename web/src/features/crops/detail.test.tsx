@@ -7,7 +7,7 @@ import { fail, ok, pageOf, plantRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { CropDetailScreen } from '.';
-import { cropItem } from './test-fixtures';
+import { cropItem, flowerItem } from './test-fixtures';
 
 const detail = (over: Record<string, unknown> = {}) => ({
   ...cropItem(),
@@ -101,5 +101,20 @@ describe('crop detail', () => {
     await userEvent.click(await screen.findByRole('button', { name: /start now/i }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(screen.queryByTestId('where')).not.toBeInTheDocument();
+  });
+
+  it('speaks of blooms for a flower, with pinch and deadhead steps and no rotation tip', async () => {
+    setup(detail({
+      ...flowerItem(), germination_days: [5, 7], transplant_after_days: [25, 30], harvest_span_days: 90, thin_after_days: null, succession_every_days: null,
+      care: [{ key: 'pinch', after: 'TRANSPLANTING', days: 20 }, { key: 'deadhead', after: 'TRANSPLANTING', days: 40 }],
+    }));
+    await screen.findByRole('heading', { level: 1, name: 'Marigold (Genda)' });
+    const facts = screen.getByRole('list', { name: /at a glance/i });
+    expect(within(facts).getByText(/first bloom/i)).toBeInTheDocument();
+    expect(within(facts).getByText(/55–70 days/)).toBeInTheDocument();
+    expect(within(facts).getByText(/about 90 days/i)).toBeInTheDocument();
+    const steps = within(screen.getByRole('list', { name: /how it grows/i })).getAllByRole('listitem').map((li) => li.querySelector('h3')?.textContent);
+    expect(steps).toEqual(['Seeds', 'Nursery tray', 'Transplant', 'Pinch', 'Deadhead', 'Bloom']);
+    expect(screen.queryByText(/don't follow it with/i)).not.toBeInTheDocument();
   });
 });

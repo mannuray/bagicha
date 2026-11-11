@@ -2,7 +2,7 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
-import { Button, ErrorState, Icon, LoadingState, Screen, TopBar } from '../../ui';
+import { Button, cx, ErrorState, Icon, LoadingState, Screen, TopBar } from '../../ui';
 import { useAllPlants, usePlants } from '../plants';
 import { useAddToPlan, useCropDetail } from './api';
 import { CropPhoto } from './CropPhoto';
@@ -26,6 +26,7 @@ export function CropDetailScreen() {
   if (!detail.data) return <Screen><TopBar /><LoadingState /></Screen>;
   const crop = detail.data;
   const hindi = hindiName(crop);
+  const flower = crop.kind === 'FLOWER';
   const steps: Step[] = growingSteps(crop).map((key) => ({
     key,
     title: t(`crops.steps.${key}.title`),
@@ -35,7 +36,8 @@ export function CropDetailScreen() {
   const facts = [
     { icon: 'psychiatry', label: t('crops.detail.germinates'), value: range(crop.germination_days) },
     crop.method === 'NURSERY_TRANSPLANT' ? { icon: 'move_down', label: t('crops.detail.transplantAt'), value: range(crop.transplant_after_days) } : null,
-    { icon: 'nutrition', label: t('crops.detail.firstHarvest'), value: range(crop.days_to_first_harvest) },
+    { icon: flower ? 'local_florist' : 'nutrition', label: t(flower ? 'crops.detail.firstBloom' : 'crops.detail.firstHarvest'), value: range(crop.days_to_first_harvest) },
+    flower && crop.harvest_span_days ? { icon: 'event_repeat', label: t('crops.detail.bloomsFor'), value: t('crops.detail.aboutDays', { days: crop.harvest_span_days }) } : null,
   ].filter((f): f is { icon: string; label: string; value: string } => Boolean(f?.value));
   const startNow = () => add.mutate(crop.id, { onSuccess: (plant) => void navigate(`/plants/${plant.id}?start=1`) });
 
@@ -61,7 +63,7 @@ export function CropDetailScreen() {
           <p className="font-label text-sm font-bold text-secondary">{statusLine(crop, t)}</p>
         </div>
 
-        <ul aria-label={t('crops.detail.glance')} className="grid grid-cols-3 gap-2">
+        <ul aria-label={t('crops.detail.glance')} className={cx('grid gap-2', facts.length > 3 ? 'grid-cols-2' : 'grid-cols-3')}>
           {facts.map((f) => (
             <li key={f.label} className="space-y-1 rounded-[1.25rem] bg-surface-container-low p-3">
               <Icon name={f.icon} className="text-primary" />
@@ -94,12 +96,17 @@ export function CropDetailScreen() {
 
         <section className="space-y-2 rounded-[1.5rem] bg-surface-container-low p-4">
           <h2 className="font-headline text-lg font-bold text-primary">{t('crops.detail.goodToKnow')}</h2>
-          <p className="font-body text-sm text-on-surface">
-            {t('crops.detail.rotation', {
-              family: t(`crops.family.${crop.family}`, { defaultValue: crop.family }),
-              mates: t(`crops.familyMates.${crop.family}`, { defaultValue: crop.name.toLowerCase() }),
-            })}
-          </p>
+          {/* Rotation is a vegetable concern (family pests in the soil); flowers skip it. */}
+          {flower ? (
+            <p className="font-body text-sm text-on-surface">{t('crops.detail.deadheadTip')}</p>
+          ) : (
+            <p className="font-body text-sm text-on-surface">
+              {t('crops.detail.rotation', {
+                family: t(`crops.family.${crop.family}`, { defaultValue: crop.family }),
+                mates: t(`crops.familyMates.${crop.family}`, { defaultValue: crop.name.toLowerCase() }),
+              })}
+            </p>
+          )}
           {crop.succession_every_days && <p className="font-body text-sm text-on-surface">{t('crops.detail.succession', { days: crop.succession_every_days })}</p>}
         </section>
       </main>

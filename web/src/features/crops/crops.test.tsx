@@ -6,10 +6,11 @@ import { ok, pageOf, plantRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { CropsScreen } from '.';
-import { cropItem } from './test-fixtures';
+import { cropItem, flowerItem } from './test-fixtures';
 
 
 const calendar = [
+  flowerItem(),
   cropItem({ aliases: ['palak', 'पालक'] }),
   cropItem({ id: 'tomato', name: 'Tomato', family: 'SOLANACEAE', method: 'NURSERY_TRANSPLANT', tags: ['container'], sun: 'FULL', status: 'soon', opens_in_days: 12, window_label: 'Jan–Feb' }),
   cropItem({ id: 'pumpkin', name: 'Pumpkin', family: 'CUCURBITACEAE', tags: ['beginner'], status: 'later', next_month: 2, window_label: 'Feb–Mar' }),
@@ -126,5 +127,25 @@ describe('what can I sow now?', () => {
     renderWithApp(<CropsScreen />, { route: '/crops' });
     const card = (await screen.findByText('Tomato')).closest('article') as HTMLElement;
     expect(within(card).getByRole('img', { name: 'Tomato' }).tagName).toBe('IMG');
+  });
+
+  it('switches to flowers, with flower filters and a way to add perennials', async () => {
+    handlers();
+    renderWithApp(<CropsScreen />, { route: '/crops' });
+    await screen.findByText('Spinach (Palak)');
+    expect(screen.queryByText('Marigold (Genda)')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^flowers$/i }));
+    expect(screen.getByRole('button', { name: /^flowers$/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(await screen.findByText('Marigold (Genda)')).toBeInTheDocument();
+    expect(screen.queryByText('Spinach (Palak)')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /long blooming/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /quick harvest/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /perennials like rose or mogra/i })).toHaveAttribute('href', '/plants/new?kind=FLOWER');
+  });
+
+  it('opens on flowers from ?kind=flower', async () => {
+    handlers();
+    renderWithApp(<CropsScreen />, { route: '/crops?kind=flower' });
+    expect(await screen.findByText('Marigold (Genda)')).toBeInTheDocument();
   });
 });
