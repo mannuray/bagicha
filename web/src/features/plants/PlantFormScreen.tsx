@@ -1,14 +1,13 @@
-import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import { Button, ErrorState, Icon, LoadingState, NotInGarden, Pill, Screen, TextField, TopBar, isPlantMissing } from '../../ui';
 import saplingPhoto from '../../assets/stitch/add-tree-sapling.jpg';
 import { CataloguePicker } from './CataloguePicker';
-import { useCreatePlant, usePlant, useResolvePlant, useUpdatePlant } from './api';
-import type { PlantDetail, PlantInput } from './schemas';
+import { usePlant } from './api';
+import { emptyForm, fromPlant, type FormState } from './form';
+import { usePlantForm } from './usePlantForm';
 
-type Precision = 'YEAR' | 'MONTH_YEAR' | 'EXACT_DATE';
 // Crops come through Want to grow (the crop calendar), not this form.
 const KINDS = ['TREE', 'FLOWER'] as const;
 const BEARING_CHOICES = [
@@ -16,58 +15,6 @@ const BEARING_CHOICES = [
   { value: 'NOT_YET', label: 'plants.form.fruitedNotYet' },
   { value: null, label: 'plants.form.fruitedNotSure' },
 ] as const;
-
-interface FormState {
-  name: string;
-  species: string;
-  variety: string;
-  record_kind: PlantInput['record_kind'];
-  precision: Precision;
-  date: string;
-  /** "Has it fruited yet?" — null is "Not sure". */
-  bearing: 'BEARING' | 'NOT_YET' | null;
-  since: string;
-}
-
-const emptyForm: FormState = { name: '', species: '', variety: '', record_kind: 'TREE', precision: 'YEAR', date: '', bearing: null, since: '' };
-
-function fromPlant(p: PlantDetail): FormState {
-  const precision: Precision =
-    p.planting_date_precision === 'MONTH_YEAR' || p.planting_date_precision === 'EXACT_DATE' ? p.planting_date_precision : 'YEAR';
-  return {
-    name: p.name,
-    species: p.species,
-    variety: p.variety ?? '',
-    record_kind: p.record_kind,
-    precision,
-    date: p.planting_date_input ?? '',
-    bearing: p.bearing_status,
-    since: p.bearing_since_year ? String(p.bearing_since_year) : '',
-  };
-}
-
-function toInput(f: FormState): PlantInput {
-  return {
-    name: f.name.trim(),
-    species: f.species.trim(),
-    variety: f.variety.trim() || null,
-    record_kind: f.record_kind,
-    planting_date: f.date.trim() || null,
-    planting_date_precision: f.date.trim() ? f.precision : 'UNKNOWN',
-    // Trees only; a since-year only with "Yes".
-    bearing_status: f.record_kind === 'TREE' ? f.bearing : null,
-    bearing_since_year: f.record_kind === 'TREE' && f.bearing === 'BEARING' && /^\d{4}$/.test(f.since.trim()) ? Number(f.since.trim()) : null,
-  };
-}
-
-/** Only fields that actually changed, so an edit never rewrites what the user didn't touch. */
-function diff(before: PlantInput, after: PlantInput): Partial<PlantInput> {
-  const out: Partial<PlantInput> = {};
-  for (const key of Object.keys(after) as Array<keyof PlantInput>) {
-    if (after[key] !== before[key]) Object.assign(out, { [key]: after[key] });
-  }
-  return out;
-}
 
 export function PlantFormScreen() {
   const { id } = useParams();
@@ -95,57 +42,7 @@ export function PlantFormScreen() {
 
 function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const prefill = plantId ? null : params.get('prefill');
-  const replacesId = plantId ? null : params.get('replaces');
-  const resolved = useResolvePlant(prefill);
-  const replaced = usePlant(replacesId ?? undefined);
-  const create = useCreatePlant();
-  const update = useUpdatePlant(plantId ?? '');
-  const [form, setForm] = useState<FormState>(initial);
-  const [errors, setErrors] = useState<{ name?: string; species?: string }>({});
-
-  useEffect(() => {
-    const match = resolved.data?.match;
-    if (match) {
-      setForm((f) => ({ ...f, species: f.species || match.species, variety: f.variety || (match.variety ?? '') }));
-    } else if (resolved.data && prefill) {
-      setForm((f) => ({ ...f, species: f.species || prefill }));
-    }
-  }, [resolved.data, prefill]);
-
-  // Planting a replacement: start from the species and variety of the tree it replaces
-  // (adjusted once during render, when the old tree arrives).
-  const [prefilledFrom, setPrefilledFrom] = useState<string | null>(null);
-  if (replaced.data && prefilledFrom !== replaced.data.id) {
-    const old = replaced.data;
-    setPrefilledFrom(old.id);
-    setForm((f) => ({ ...f, species: f.species || old.species, variety: f.variety || (old.variety ?? ''), record_kind: old.record_kind }));
-  }
-
-  const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
-  const mutation = plantId ? update : create;
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    const nextErrors = {
-      name: form.name.trim() ? undefined : t('plants.form.nameRequired'),
-      species: form.species.trim() ? undefined : t('plants.form.speciesRequired'),
-    };
-    setErrors(nextErrors);
-    if (nextErrors.name || nextErrors.species) return;
-    if (plantId) {
-      const changes = diff(toInput(initial), toInput(form));
-      if (Object.keys(changes).length === 0) return navigate(`/plants/${plantId}`);
-      update.mutate(changes, { onSuccess: () => navigate(`/plants/${plantId}`, { replace: true }) });
-    } else {
-      create.mutate(
-        { ...toInput(form), ...(replacesId ? { replaces_id: replacesId } : {}) },
-        { onSuccess: (plant) => navigate(`/plants/${plant.id}`, { replace: true }) },
-      );
-    }
-  };
+  const { form, set, setForm, errors, submit, busy, error } = usePlantForm(plantId, initial);
 
   const dateLabel = { YEAR: 'plants.form.yearPlanted', MONTH_YEAR: 'plants.form.monthPlanted', EXACT_DATE: 'plants.form.datePlanted' }[form.precision];
 
@@ -180,10 +77,10 @@ function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState 
               ))}
             </div>
           </div>
-          <TextField label={t('plants.form.name')} value={form.name} error={errors.name} onChange={(e) => set('name', e.target.value)} placeholder={t('plants.form.namePlaceholder')} />
+          <TextField label={t('plants.form.name')} value={form.name} error={errors.name && t(errors.name)} onChange={(e) => set('name', e.target.value)} placeholder={t('plants.form.namePlaceholder')} />
           <CataloguePicker
             value={form.species}
-            error={errors.species}
+            error={errors.species && t(errors.species)}
             onChange={(v) => set('species', v)}
             flowers={form.record_kind === 'FLOWER'}
             onPick={(item) => setForm((f) => ({ ...f, species: item.species, variety: item.variety ?? f.variety }))}
@@ -230,12 +127,12 @@ function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState 
               )}
             </div>
           )}
-          {mutation.isError && (
+          {error && (
             <p role="alert" className="text-center font-body text-sm text-error">
-              {messageFor(mutation.error)}
+              {messageFor(error)}
             </p>
           )}
-          <Button type="submit" block busy={mutation.isPending} className="py-3 text-sm uppercase tracking-[0.2em]">
+          <Button type="submit" block busy={busy} className="py-3 text-sm uppercase tracking-[0.2em]">
             {plantId ? t('plants.form.saveEdit') : t('plants.form.save')}
           </Button>
         </form>

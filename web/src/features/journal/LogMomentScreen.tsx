@@ -1,40 +1,18 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import leavesPhoto from '../../assets/stitch/moment-leaves.jpg';
 import { Button, ErrorState, Icon, LoadingState, NotInGarden, Pill, TextField, isPlantMissing } from '../../ui';
 import { usePlant } from '../plants';
-import { useAddJournalEntry, type NewMoment } from './api';
-import { useImageCompressor } from './compressor-context';
-import { clearDraft, loadDraft, saveDraft, type MomentDraft } from './draft';
-import { useUploadImage } from './media-api';
+import { DROP_TYPES } from './moment';
+import { useLogMoment } from './useLogMoment';
 
 const TYPES = ['NOTE', 'WATERING', 'FLOWERING', 'FRUIT_SET', 'FLOWER_DROP', 'FRUIT_DROP', 'HARVEST', 'PRUNING', 'FEEDING', 'TREATMENT', 'PHOTO'] as const;
 /** Flowers log blooms and bloom care, never fruit. */
 const FLOWER_TYPES = ['FLOWERING', 'BLOOM_PEAK', 'DEADHEADING', 'PINCHING', 'PRUNING', 'FEEDING', 'WATERING', 'TREATMENT', 'NOTE', 'PHOTO'] as const;
-const DROP_TYPES = new Set(['FLOWER_DROP', 'FRUIT_DROP']);
 const SEVERITIES = ['LOW', 'MEDIUM', 'HIGH'] as const;
 const UNITS = ['kg', 'pieces', 'crates'] as const;
 const QUALITIES = ['poor', 'fair', 'good', 'excellent'] as const;
-
-const blank = (): MomentDraft => ({ type: 'NOTE', content: '', unit: 'kg' });
-
-function toMoment(d: MomentDraft, photoKey: string | null): NewMoment {
-  const metadata: Record<string, unknown> = {};
-  if (photoKey) metadata.photo_key = photoKey;
-  if (DROP_TYPES.has(d.type) && d.severity) metadata.severity = d.severity;
-  if (d.type === 'HARVEST') {
-    if (d.quantity && Number(d.quantity) > 0) metadata.quantity_value = Number(d.quantity);
-    if (d.quantity && d.unit) metadata.quantity_unit = d.unit;
-    if (d.quality) metadata.quality = d.quality;
-  }
-  const moment: NewMoment = { type: d.type };
-  if (d.content.trim()) moment.content = d.content.trim();
-  if (Object.keys(metadata).length > 0) moment.metadata = metadata;
-  if (d.date) moment.event_at = new Date(`${d.date}T12:00:00+05:30`).toISOString();
-  return moment;
-}
 
 /** Stitch "Log a Moment – Quick Entry": a frosted sheet over the orchard photo. */
 export function LogMomentScreen() {
@@ -79,41 +57,7 @@ export function LogMomentScreen() {
 
 function MomentForm({ plantId, plantName, flower = false }: { plantId: string; plantName: string; flower?: boolean }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const compressor = useImageCompressor();
-  const upload = useUploadImage('journal');
-  const save = useAddJournalEntry(plantId);
-  const [draft, setDraft] = useState<MomentDraft>(() => loadDraft(plantId) ?? blank());
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [problem, setProblem] = useState<unknown>(null);
-  const [busy, setBusy] = useState(false);
-  const inFlight = useRef(false);
-
-  useEffect(() => saveDraft(plantId, draft), [plantId, draft]);
-  const set = <K extends keyof MomentDraft>(k: K, v: MomentDraft[K]) => setDraft((d) => ({ ...d, [k]: v }));
-
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (inFlight.current) return;
-    inFlight.current = true;
-    setBusy(true);
-    setProblem(null);
-    try {
-      let photoKey: string | null = null;
-      if (photo) {
-        const compressed = await compressor.compress(photo);
-        photoKey = (await upload.mutateAsync(compressed.blob)).key;
-      }
-      await save.mutateAsync(toMoment(draft, photoKey));
-      clearDraft(plantId);
-      navigate(`/plants/${plantId}`, { replace: true });
-    } catch (err) {
-      setProblem(err);
-    } finally {
-      inFlight.current = false;
-      setBusy(false);
-    }
-  };
+  const { draft, set, photo, setPhoto, problem, busy, submit } = useLogMoment(plantId);
 
   return (
     <form onSubmit={(e) => void submit(e)} className="flex flex-1 flex-col gap-5 pt-1" noValidate>

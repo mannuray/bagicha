@@ -28,3 +28,31 @@ export function nextStep(tasks: Task[]): Task | null {
       .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))[0] ?? null
   );
 }
+
+export type JourneyStep = 'planned' | 'seeds' | 'sown' | 'transplanted' | 'harvesting' | 'ended';
+type CropStage = 'PLANNED' | 'NURSERY' | 'IN_GROUND' | 'HARVESTING' | 'RESTING';
+
+/** The steps a crop's journey shows: nursery crops are transplanted, direct-sown ones are not. */
+export function journeySteps(nursery: boolean): JourneyStep[] {
+  return nursery ? ['planned', 'seeds', 'sown', 'transplanted', 'harvesting', 'ended'] : ['planned', 'seeds', 'sown', 'harvesting', 'ended'];
+}
+
+/** Which journey step a crop stage stands for. */
+export function journeyStep(stage: CropStage | null, nursery: boolean): JourneyStep {
+  if (stage === 'NURSERY') return 'sown';
+  if (stage === 'IN_GROUND') return nursery ? 'transplanted' : 'sown';
+  if (stage === 'HARVESTING') return 'harvesting';
+  if (stage === 'RESTING') return 'ended';
+  return 'planned';
+}
+
+/** The season that has started and not closed, if any. */
+export function openCycle<C extends { started_at: string | null; closed_at: string | null }>(cycles: C[] | undefined): C | null {
+  return cycles?.find((c) => c.started_at && !c.closed_at) ?? null;
+}
+
+/** Harvests logged in one season. */
+export function harvestsIn(entries: Array<{ type: string; plant_cycle_id: string | null }>, cycleId: string | null): number {
+  if (!cycleId) return 0;
+  return entries.filter((e) => e.type === 'HARVEST' && e.plant_cycle_id === cycleId).length;
+}

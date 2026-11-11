@@ -1,32 +1,20 @@
-import { useState, type ChangeEvent } from 'react';
+import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { messageFor } from '../../lib/error-messages';
 import { Icon } from '../../ui';
-import { useImageCompressor, useMediaUrl, useUploadImage } from '../journal';
-import { useUpdateProfile } from './api';
+import { useMediaUrl } from '../journal';
+import { useChangeAvatar } from './useChangeAvatar';
 
 /** The profile picture: tap to pick a photo; it is compressed, uploaded privately and saved. */
 export function ProfilePhoto({ avatarKey }: { avatarKey: string | null }) {
   const { t } = useTranslation();
-  const compressor = useImageCompressor();
-  const upload = useUploadImage('avatar');
-  const update = useUpdateProfile();
   const photo = useMediaUrl(avatarKey);
-  const [error, setError] = useState<string | null>(null);
-  const busy = upload.isPending || update.isPending;
+  const { change, busy, problem } = useChangeAvatar();
 
-  const pick = async (event: ChangeEvent<HTMLInputElement>) => {
+  const pick = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
-    if (!file || busy) return;
-    setError(null);
-    try {
-      const compressed = await compressor.compress(file);
-      const { key } = await upload.mutateAsync(compressed.blob);
-      await update.mutateAsync({ avatar_key: key });
-    } catch (err) {
-      setError(messageFor(err));
-    }
+    if (file) void change(file);
   };
 
   return (
@@ -46,12 +34,12 @@ export function ProfilePhoto({ avatarKey }: { avatarKey: string | null }) {
           className="sr-only"
           aria-label={t('profile.changePhoto')}
           disabled={busy}
-          onChange={(e) => void pick(e)}
+          onChange={pick}
         />
       </label>
-      {error && (
+      {problem !== null && (
         <p role="alert" className="max-w-56 text-center font-label text-xs text-error">
-          {error}
+          {messageFor(problem)}
         </p>
       )}
     </div>

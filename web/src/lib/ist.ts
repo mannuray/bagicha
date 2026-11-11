@@ -12,3 +12,14 @@ export function istParts(d: Date): { year: number; month: number; day: number } 
   const shifted = new Date(d.getTime() + IST_OFFSET_MS);
   return { year: shifted.getUTCFullYear(), month: shifted.getUTCMonth() + 1, day: shifted.getUTCDate() };
 }
+
+/** A picked calendar day ("2026-03-10") pinned to its noon in India, as an ISO instant. */
+export function istNoonIso(day: string): string {
+  return new Date(`${day}T12:00:00+05:30`).toISOString();
+}
+
+/** The calendar day in India for an instant, as "YYYY-MM-DD" (what a date input holds). */
+export function istDateString(at: Date): string {
+  const { year, month, day } = istParts(at);
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
