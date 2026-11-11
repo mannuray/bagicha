@@ -17,4 +17,15 @@ describe('things asked once per sign-in', () => {
     session.signOut();
     expect(once.has('p1')).toBe(false);
   });
+
+  it('also forgets them when the same user signs in again', () => {
+    const tokens = { get: () => null, set: () => undefined, clear: () => undefined };
+    const session = createSessionStore(tokens, memoryKeyValueStore());
+    const once = createSessionOnce();
+    clearOnUserChange(session, once);
+    session.signIn('t1', testUser({ id: 'u1' }));
+    once.add('p1');
+    session.signIn('t2', testUser({ id: 'u1' }));
+    expect(once.has('p1')).toBe(false);
+  });
 });

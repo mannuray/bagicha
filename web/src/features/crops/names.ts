@@ -70,3 +70,35 @@ export function filterCalendar<C extends CalendarCrop>(
     later: visible.filter((c) => c.status === 'later'),
   };
 }
+
+export interface CropFact {
+  icon: string;
+  labelKey: string;
+  /** A days range ("5–8 days"). */
+  range?: [number, number];
+  /** About this many days. */
+  days?: number;
+}
+
+/** The crop page's quick facts; ones with no value are left out. */
+export function cropFacts(crop: {
+  kind: string;
+  method: string;
+  germination_days: [number, number] | null;
+  transplant_after_days: [number, number] | null;
+  days_to_first_harvest: [number, number] | null;
+  harvest_span_days: number | null;
+}): CropFact[] {
+  const flower = crop.kind === 'FLOWER';
+  const facts: Array<CropFact | null> = [
+    crop.germination_days ? { icon: 'psychiatry', labelKey: 'crops.detail.germinates', range: crop.germination_days } : null,
+    crop.method === 'NURSERY_TRANSPLANT' && crop.transplant_after_days
+      ? { icon: 'move_down', labelKey: 'crops.detail.transplantAt', range: crop.transplant_after_days }
+      : null,
+    crop.days_to_first_harvest
+      ? { icon: flower ? 'local_florist' : 'nutrition', labelKey: flower ? 'crops.detail.firstBloom' : 'crops.detail.firstHarvest', range: crop.days_to_first_harvest }
+      : null,
+    flower && crop.harvest_span_days ? { icon: 'event_repeat', labelKey: 'crops.detail.bloomsFor', days: crop.harvest_span_days } : null,
+  ];
+  return facts.filter((f): f is CropFact => f !== null);
+}

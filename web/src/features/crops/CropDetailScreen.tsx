@@ -5,7 +5,7 @@ import { messageFor } from '../../lib/error-messages';
 import { Button, cx, ErrorState, Icon, LoadingState, Screen, TopBar } from '../../ui';
 import { useAddToPlan, useCropDetail, useCropsOnList } from './api';
 import { CropPhoto } from './CropPhoto';
-import { growingSteps, hindiName } from './names';
+import { cropFacts, growingSteps, hindiName } from './names';
 import type { CropDetail } from './schemas';
 
 type Step = { key: string; title: string; body: string };
@@ -29,13 +29,11 @@ export function CropDetailScreen() {
     title: t(`crops.steps.${key}.title`),
     body: t(`crops.steps.${key}.body`),
   }));
-  const range = (r: [number, number] | null) => (r ? t('crops.detail.days', { min: r[0], max: r[1] }) : null);
-  const facts = [
-    { icon: 'psychiatry', label: t('crops.detail.germinates'), value: range(crop.germination_days) },
-    crop.method === 'NURSERY_TRANSPLANT' ? { icon: 'move_down', label: t('crops.detail.transplantAt'), value: range(crop.transplant_after_days) } : null,
-    { icon: flower ? 'local_florist' : 'nutrition', label: t(flower ? 'crops.detail.firstBloom' : 'crops.detail.firstHarvest'), value: range(crop.days_to_first_harvest) },
-    flower && crop.harvest_span_days ? { icon: 'event_repeat', label: t('crops.detail.bloomsFor'), value: t('crops.detail.aboutDays', { days: crop.harvest_span_days }) } : null,
-  ].filter((f): f is { icon: string; label: string; value: string } => Boolean(f?.value));
+  const facts = cropFacts(crop).map((f) => ({
+    icon: f.icon,
+    label: t(f.labelKey),
+    value: f.range ? t('crops.detail.days', { min: f.range[0], max: f.range[1] }) : t('crops.detail.aboutDays', { days: f.days }),
+  }));
   const startNow = () => add.mutate(crop.id, { onSuccess: (plant) => void navigate(`/plants/${plant.id}?start=1`) });
 
   return (

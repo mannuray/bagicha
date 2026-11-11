@@ -17,3 +17,13 @@ describe('what kind of plant this is', () => {
     });
   });
 });
+
+describe('usesSeasonPack', () => {
+  it('trees and perennial flowers follow the tree season pack; journey plants follow the crop calendar', async () => {
+    const { usesSeasonPack } = await import('./category');
+    expect(usesSeasonPack(p('TREE', null))).toBe(true);
+    expect(usesSeasonPack(p('FLOWER', null))).toBe(true);
+    expect(usesSeasonPack(p('CROP', 'okra'))).toBe(false);
+    expect(usesSeasonPack(p('FLOWER', 'marigold'))).toBe(false);
+  });
+});

@@ -1,40 +1,20 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import orchardPhoto from '../../assets/stitch/dashboard-orchard.jpg';
-import { useNow } from '../../lib/clock';
-import { istHour } from '../../lib/format';
 import { EmptyState, ErrorState, Icon, LoadingState, Pebble, Screen, SeeAllLink } from '../../ui';
-import { useSession } from '../auth';
-import { AddToGardenSheet, useCropSyncOnce } from '../crops';
-import { gardenCounts, useAllPlants, usePlants } from '../plants';
-import { useSeasonalGuide } from '../seasonal';
-import { hasPendingSoon, TaskGroups, useMyTasks } from '../tasks';
-import { useSessionMaterialize } from './use-session-materialize';
+import { AddToGardenSheet } from '../crops';
+import { hasPendingSoon, TaskGroups } from '../tasks';
+import { useDashboard } from './useDashboard';
 
 const PREVIEW = 5;
 
 /** Stitch "Home Dashboard – Sanctuary", with its orchard photo. The weather card is hidden until weather is real. */
 export function DashboardScreen() {
   const { t } = useTranslation();
-  const { user } = useSession();
-  const plants = useAllPlants();
-  // Journey crops follow the crop calendar, not the tree season pack.
-  const season = useSessionMaterialize(plants.data?.filter((p) => !p.crop_id).map((p) => p.id));
-  useCropSyncOnce();
-  const [adding, setAdding] = useState(false);
-  // The garden at a glance: trees, crops growing now, and Want to grow underneath.
-  const planned = usePlants(1, 'planned').data?.pagination.total_items ?? 0;
-  const all = plants.data;
-  const counts = all ? gardenCounts(all) : null;
+  const { user, now, greeting, plants, season, counts, planned, tasks, guide, adding, setAdding } = useDashboard();
   const trees = counts?.tree ?? null;
   const crops = counts?.crop ?? null;
   const flowers = counts?.flowers ?? null;
-  const tasks = useMyTasks();
-  const guide = useSeasonalGuide();
-  const now = useNow();
-  const hour = istHour(now);
-  const greeting = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
 
   return (
     <Screen nav>

@@ -21,3 +21,9 @@ export function gardenCounts(plants: Array<Pick<Plant, 'record_kind' | 'crop_id'
   counts.flowers = counts.seasonalFlower + counts.perennialFlower;
   return counts;
 }
+
+/** Trees and perennial flowers follow the tree season pack; journey plants follow the crop calendar. */
+export function usesSeasonPack(plant: Pick<Plant, 'record_kind' | 'crop_id'>): boolean {
+  const category = plantCategory(plant);
+  return category === 'tree' || category === 'perennialFlower';
+}

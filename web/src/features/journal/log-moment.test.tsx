@@ -8,6 +8,7 @@ import { API, server } from '../../test/msw/server';
 import { createTestSession, renderWithApp, TestProviders } from '../../test/render';
 import { RequireAuth } from '../auth';
 import { ImageCompressorProvider, LogMomentScreen, type ImageCompressor } from '.';
+import { memoryKeyValueStore } from '../../lib/storage';
 
 function Where() {
   return <p data-testid="where">{useLocation().pathname}</p>;
@@ -121,14 +122,16 @@ describe('log a moment', () => {
   it('keeps what was typed when the session expires mid-save (Review Focus #1)', async () => {
     plantHandler();
     server.use(http.post(`${API}/ledger/plants/p1/journal`, () => HttpResponse.json(fail('UNAUTHORIZED'), { status: 401 })));
-    const first = renderWithApp(screenTree, { route: '/plants/p1/log' });
+    // One storage across both mounts, as the browser keeps it across a reload.
+    const storage = memoryKeyValueStore();
+    const first = renderWithApp(screenTree, { route: '/plants/p1/log', storage });
     await userEvent.type(await screen.findByLabelText(/note/i), 'Mango flowers opening');
     await userEvent.click(screen.getByRole('button', { name: /save to biography/i }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/login'));
     first.unmount();
 
     render(
-      <TestProviders route="/plants/p1/log" session={createTestSession()}>
+      <TestProviders route="/plants/p1/log" session={createTestSession()} storage={storage}>
         {screenTree}
       </TestProviders>,
     );

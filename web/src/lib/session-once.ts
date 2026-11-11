@@ -9,20 +9,26 @@ export type SessionOnce = Set<string>;
 export const createSessionOnce = (): SessionOnce => new Set<string>();
 
 interface UserSource {
-  get(): { user: { id: string } | null };
+  get(): { user: { id: string } | null; signIns: number };
   subscribe(listener: () => void): () => void;
 }
 
-/** Clears `once` whenever the signed-in user changes (sign-in, sign-out, expiry). */
+/** Clears `once` on every sign-in (even as the same user), sign-out and expiry; not on profile edits. */
 export function clearOnUserChange(session: UserSource, once: SessionOnce): () => void {
-  let userId = session.get().user?.id ?? null;
+  const key = () => `${session.get().user?.id ?? ''}#${session.get().signIns}`;
+  let last = key();
   return session.subscribe(() => {
-    const next = session.get().user?.id ?? null;
-    if (next !== userId) once.clear();
-    userId = next;
+    const next = key();
+    if (next !== last) once.clear();
+    last = next;
   });
 }
 
-const SessionOnceContext = createContext<SessionOnce>(createSessionOnce());
+const SessionOnceContext = createContext<SessionOnce | null>(null);
 export const SessionOnceProvider = SessionOnceContext.Provider;
-export const useSessionOnce = (): SessionOnce => useContext(SessionOnceContext);
+
+export function useSessionOnce(): SessionOnce {
+  const once = useContext(SessionOnceContext);
+  if (!once) throw new TypeError('useSessionOnce must be used inside <SessionOnceProvider>');
+  return once;
+}

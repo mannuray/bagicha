@@ -1,31 +1,12 @@
-import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Icon, Screen } from '../../ui';
-import { toE164India, useRequestOtp } from './api';
 import { AuthHero } from './AuthHero';
-import { useSession } from './session';
+import { useLoginForm } from './useLoginForm';
 
 export function LoginScreen() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { expired } = useSession();
-  const requestOtp = useRequestOtp();
-  const [phone, setPhone] = useState('');
-  const [invalid, setInvalid] = useState(false);
-  const reason = (location.state as { reason?: string } | null)?.reason;
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    const e164 = toE164India(phone);
-    setInvalid(!e164);
-    if (!e164) return;
-    requestOtp.mutate(e164, {
-      onSuccess: (res) => navigate('/login/otp', { state: { phone: e164, devOtp: res.dev_otp } }),
-    });
-  };
+  const { phone, setPhone, invalid, submit, sessionExpired, busy, error } = useLoginForm();
 
   return (
     <Screen>
@@ -37,7 +18,7 @@ export function LoginScreen() {
             {t('auth.login.subtitle')}
           </p>
         </div>
-        {(expired || reason === 'expired') && (
+        {sessionExpired && (
           <p role="status" className="mb-3 rounded-xl bg-secondary-fixed px-4 py-3 text-center font-body text-sm text-on-secondary-fixed">
             {t('errors.UNAUTHORIZED')}
           </p>
@@ -69,12 +50,12 @@ export function LoginScreen() {
               </p>
             )}
           </div>
-          {requestOtp.isError && (
+          {error && (
             <p role="alert" className="text-center font-body text-sm text-error">
-              {messageFor(requestOtp.error)}
+              {messageFor(error)}
             </p>
           )}
-          <Button type="submit" block busy={requestOtp.isPending} className="py-3 text-lg">
+          <Button type="submit" block busy={busy} className="py-3 text-lg">
             {t('auth.login.submit')}
           </Button>
         </form>

@@ -1,17 +1,18 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useAddJournalEntry, useTimeline } from '../journal';
-import { useAllCycles, type PlantDetail } from '../plants';
+import type { PlantDetail } from '../plants';
 import { dueLabel, usePlantTasks } from '../tasks';
-import { useCropCalendar, usePlaces, useRemoveFromPlan, useRotation } from './api';
-import { cropStatusLine, harvestsIn, journeyStep, journeySteps, nextStep, openCycle } from './journey-header';
+import { useRemoveFromPlan, useRotation } from './api';
+import { cropStatusLine, harvestsIn, journeyStep, journeySteps, nextStep } from './journey-header';
+import { useCropContext } from './useCropContext';
 
 /**
  * ViewModel for the crop journey card: the crop, its open season and place, the
  * step it's on, the next task, rotation, the start/transplant sheet and the actions.
  */
 export function useCropJourney(plant: PlantDetail, now: Date) {
-  const calendar = useCropCalendar();
+  const { crop, loading, open, place, placeId, neverSown } = useCropContext(plant);
   const log = useAddJournalEntry(plant.id);
   const [params, setParams] = useSearchParams();
   const startable = !plant.crop_stage || plant.crop_stage === 'PLANNED' || plant.crop_stage === 'RESTING';
@@ -19,13 +20,8 @@ export function useCropJourney(plant: PlantDetail, now: Date) {
   const [sheet, setSheet] = useState<'start' | 'transplant' | null>(params.get('start') === '1' && startable ? 'start' : null);
   const tasks = usePlantTasks(plant.id);
   const harvests = useTimeline(plant.id, ['HARVEST']);
-  const cycles = useAllCycles(plant.id);
-  const places = usePlaces();
   const remove = useRemoveFromPlan();
   const navigate = useNavigate();
-  const crop = calendar.data?.find((c) => c.id === plant.crop_id) ?? null;
-  const open = openCycle(cycles.data);
-  const placeId = open?.place_id ?? null;
   const rotation = useRotation(placeId, plant.crop_id);
 
   const nursery = crop?.method === 'NURSERY_TRANSPLANT';
@@ -35,7 +31,7 @@ export function useCropJourney(plant: PlantDetail, now: Date) {
 
   return {
     crop,
-    loading: calendar.isPending,
+    loading,
     stage,
     steps,
     at: steps.indexOf(journeyStep(plant.crop_stage ?? null, nursery)),
@@ -45,9 +41,9 @@ export function useCropJourney(plant: PlantDetail, now: Date) {
     next,
     due: next?.due_date ? dueLabel(next.due_date, now) : null,
     harvestCount: harvestsIn(harvests.data?.items ?? [], open?.id ?? null),
-    place: places.data?.find((p) => p.id === placeId) ?? null,
+    place,
     rotation: rotation.data ?? null,
-    neverSown: cycles.data !== undefined && cycles.data.length === 0,
+    neverSown,
     sheet,
     openSheet: setSheet,
     closeSheet: () => {

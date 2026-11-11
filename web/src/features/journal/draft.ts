@@ -1,4 +1,4 @@
-import { localKeyValueStore, type KeyValueStore } from '../../lib/storage';
+import type { KeyValueStore } from '../../lib/storage';
 import { logTypeSchema, type LogType } from './log-types';
 
 export interface MomentDraft {
@@ -14,11 +14,11 @@ export interface MomentDraft {
 const key = (plantId: string) => `bagicha.draft.moment.${plantId}`;
 
 /** Typed text survives a session expiry or a reload (photos are not kept). */
-export function saveDraft(plantId: string, draft: MomentDraft, storage: KeyValueStore = localKeyValueStore): void {
+export function saveDraft(plantId: string, draft: MomentDraft, storage: KeyValueStore): void {
   storage.set(key(plantId), JSON.stringify(draft));
 }
 
-export function loadDraft(plantId: string, storage: KeyValueStore = localKeyValueStore): MomentDraft | null {
+export function loadDraft(plantId: string, storage: KeyValueStore): MomentDraft | null {
   try {
     const raw = storage.get(key(plantId));
     if (!raw) return null;
@@ -30,6 +30,6 @@ export function loadDraft(plantId: string, storage: KeyValueStore = localKeyValu
   }
 }
 
-export function clearDraft(plantId: string, storage: KeyValueStore = localKeyValueStore): void {
+export function clearDraft(plantId: string, storage: KeyValueStore): void {
   storage.remove(key(plantId));
 }

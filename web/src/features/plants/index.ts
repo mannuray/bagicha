@@ -4,7 +4,7 @@ export { useAllPlants, usePlant, usePlants, useCreatePlant, useUpdatePlant, useC
 export { plantSchema, plantDetailSchema } from './schemas';
 export type { Plant, PlantDetail, Cycle, MitigationPlan, LifeProfile, PlantEndReason } from './schemas';
 export type { EndPlantInput } from './api';
-export { gardenCounts, plantCategory } from './category';
+export { gardenCounts, plantCategory, usesSeasonPack } from './category';
 export type { GardenCounts, PlantCategory } from './category';
 export { NotInGarden } from './NotInGarden';
 export { isPlantMissing } from './missing';

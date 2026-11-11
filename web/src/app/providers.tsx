@@ -7,6 +7,7 @@ import { createApiClient } from '../lib/api-client';
 import { ApiProvider } from '../lib/api';
 import { createQueryClient } from '../lib/query-client';
 import { clearOnUserChange, createSessionOnce, SessionOnceProvider } from '../lib/session-once';
+import { localKeyValueStore, StorageProvider } from '../lib/storage';
 import { localTokenStore } from '../lib/token-store';
 import { ServerWakeBanner } from './server-wake';
 import { createServerWake } from './server-wake-store';
@@ -18,7 +19,7 @@ const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1';
 /** Builds the app's long-lived services once and wires the 401 → sign-out path. */
 export function AppProviders({ children }: { children: ReactNode }) {
   const [services] = useState(() => {
-    const session = createSessionStore(localTokenStore);
+    const session = createSessionStore(localTokenStore, localKeyValueStore);
     const queryClient = createQueryClient();
     const wake = createServerWake();
     const once = createSessionOnce();
@@ -53,7 +54,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
           <ServerWakeBanner wake={services.wake} />
           <SessionOnceProvider value={services.once}>
             <NavTabsProvider value={APP_TABS}>
-              <BrowserRouter>{children}</BrowserRouter>
+              <StorageProvider value={localKeyValueStore}>
+                <BrowserRouter>{children}</BrowserRouter>
+              </StorageProvider>
             </NavTabsProvider>
           </SessionOnceProvider>
         </SessionProvider>

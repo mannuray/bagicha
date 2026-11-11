@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import { Button, cx, Icon, Screen } from '../../ui';
-import { nextOnboardingStep, useSession } from '../auth';
-import { useUpdateProfile } from './api';
+import { useSession } from '../auth';
+import { useOnboardingStep } from './useOnboardingStep';
 import heroPhoto from '../../assets/stitch/garden-hero.jpg';
 import treesPhoto from '../../assets/stitch/garden-trees.jpg';
 import veggiesPhoto from '../../assets/stitch/garden-veggies.jpg';
@@ -19,9 +18,8 @@ const TYPES = [
 /** Stitch "Your Green Blueprint", with its photos bundled locally. */
 export function GardenScreen() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { user } = useSession();
-  const update = useUpdateProfile();
+  const step = useOnboardingStep('garden');
   const [types, setTypes] = useState<string[]>(user?.garden_types ?? []);
 
   const toggle = (type: string) =>
@@ -81,17 +79,17 @@ export function GardenScreen() {
             );
           })}
         </div>
-        {update.isError && (
+        {step.error !== null && (
           <p role="alert" className="mb-4 text-center font-body text-sm text-error">
-            {messageFor(update.error)}
+            {messageFor(step.error)}
           </p>
         )}
         <Button
           block
-          busy={update.isPending}
+          busy={step.busy}
           disabled={types.length === 0}
           className="py-3 text-base"
-          onClick={() => update.mutate({ garden_types: types }, { onSuccess: (saved) => navigate(nextOnboardingStep(saved, 'garden'), { replace: true }) })}
+          onClick={() => step.save({ garden_types: types })}
         >
           {t('onboarding.garden.finish')}
           <Icon name="arrow_forward" />

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
+import { useStorage } from '../../lib/storage';
 import { useAddJournalEntry } from './api';
 import { clearDraft, loadDraft, saveDraft, type MomentDraft } from './draft';
 import { blankMoment, toMoment } from './moment';
@@ -11,15 +12,16 @@ import { usePhotoUpload } from './usePhotoUpload';
  */
 export function useLogMoment(plantId: string) {
   const navigate = useNavigate();
+  const storage = useStorage();
   const photoUpload = usePhotoUpload('journal');
   const save = useAddJournalEntry(plantId);
-  const [draft, setDraft] = useState<MomentDraft>(() => loadDraft(plantId) ?? blankMoment());
+  const [draft, setDraft] = useState<MomentDraft>(() => loadDraft(plantId, storage) ?? blankMoment());
   const [photo, setPhoto] = useState<File | null>(null);
   const [problem, setProblem] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
 
-  useEffect(() => saveDraft(plantId, draft), [plantId, draft]);
+  useEffect(() => saveDraft(plantId, draft, storage), [plantId, draft, storage]);
   const set = <K extends keyof MomentDraft>(k: K, v: MomentDraft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
   const submit = async (event: FormEvent) => {
@@ -31,7 +33,7 @@ export function useLogMoment(plantId: string) {
     try {
       const photoKey = photo ? await photoUpload.upload(photo) : null;
       await save.mutateAsync(toMoment(draft, photoKey));
-      clearDraft(plantId);
+      clearDraft(plantId, storage);
       navigate(`/plants/${plantId}`, { replace: true });
     } catch (err) {
       setProblem(err);

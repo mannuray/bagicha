@@ -1,46 +1,17 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useLocation, useNavigate } from 'react-router';
-import { isApiError } from '../../lib/errors';
+import { Navigate } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import olivePhoto from '../../assets/stitch/otp-olive.jpg';
 import { Button, cx, Screen, TopBar } from '../../ui';
-import { useRequestOtp, useVerifyOtp } from './api';
-import { homeFor } from './schemas';
-import { z } from 'zod';
-
-const OTP_LENGTH = 6;
-
-/** What Login hands over in navigation state; anything else counts as nothing. */
-const otpStateSchema = z.object({ phone: z.string().optional(), devOtp: z.string().optional() });
+import { OTP_LENGTH, useOtpForm } from './useOtpForm';
 
 export function OtpScreen() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const parsed = otpStateSchema.safeParse(useLocation().state);
-  const state = parsed.success ? parsed.data : null;
-  const phone = state?.phone;
-  const verify = useVerifyOtp();
-  const resend = useRequestOtp();
-  const [code, setCode] = useState('');
-  const [devOtp, setDevOtp] = useState(state?.devOtp);
+  const { phone, code, setCode, devOtp, complete, submit, verifying, verifyError, wrongCode, sendAgain, resending, resendError } = useOtpForm();
   const [focused, setFocused] = useState(false);
 
   if (!phone) return <Navigate to="/login" replace />;
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    if (code.length !== OTP_LENGTH) return;
-    verify.mutate(
-      { phone, otp: code },
-      {
-        onSuccess: ({ user }) =>
-          navigate(homeFor(user), { replace: true }),
-      },
-    );
-  };
-
-  const wrongCode = isApiError(verify.error) && verify.error.code === 'AUTH_INVALID_OTP';
 
   return (
     <Screen className="flex flex-col">
@@ -95,13 +66,13 @@ export function OtpScreen() {
               className="absolute inset-0 h-full w-full cursor-text opacity-0"
             />
           </div>
-          {verify.isError && (
+          {verifyError !== null && (
             <p role="alert" className="mb-4 text-center font-body text-sm text-error">
-              {messageFor(verify.error)}
+              {messageFor(verifyError)}
             </p>
           )}
           <div className="mt-auto space-y-4 pt-6">
-            <Button type="submit" block busy={verify.isPending} disabled={code.length !== OTP_LENGTH} className="py-3 text-base">
+            <Button type="submit" block busy={verifying} disabled={!complete} className="py-3 text-base">
               {t('auth.otp.submit')}
             </Button>
             <p className="text-center font-label text-sm tracking-wide text-on-surface-variant">
@@ -109,22 +80,15 @@ export function OtpScreen() {
               <Button
                 variant="tertiary"
                 className="ml-1 px-2 text-secondary"
-                busy={resend.isPending}
-                onClick={() =>
-                  resend.mutate(phone, {
-                    onSuccess: (res) => {
-                      setCode('');
-                      setDevOtp(res.dev_otp);
-                    },
-                  })
-                }
+                busy={resending}
+                onClick={sendAgain}
               >
                 {wrongCode ? t('auth.otp.newCode') : t('auth.otp.resend')}
               </Button>
             </p>
-            {resend.isError && (
+            {resendError !== null && (
               <p role="alert" className="text-center font-body text-sm text-error">
-                {messageFor(resend.error)}
+                {messageFor(resendError)}
               </p>
             )}
           </div>

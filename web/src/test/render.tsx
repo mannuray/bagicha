@@ -11,7 +11,7 @@ import { API } from './msw/server';
 import { testFetch } from './node-fetch';
 import { ClockProvider, systemClock } from '../lib/clock';
 import { createSessionOnce, SessionOnceProvider, type SessionOnce } from '../lib/session-once';
-import { memoryKeyValueStore } from '../lib/storage';
+import { memoryKeyValueStore, StorageProvider, type KeyValueStore } from '../lib/storage';
 import { APP_TABS } from '../app/nav-tabs';
 import { NavTabsProvider } from '../ui';
 
@@ -48,6 +48,8 @@ export interface TestAppOptions {
   user?: User | null;
   /** A fixed clock for the screen ("now"); the real clock when omitted. */
   now?: Date;
+  /** Storage for drafts etc.; a fresh in-memory one when omitted. */
+  storage?: KeyValueStore;
 }
 
 export function createTestSession(user: User | null = testUser()): SessionStore {
@@ -63,7 +65,8 @@ export function TestProviders({
   session,
   now,
   once,
-}: { children: ReactNode; route?: TestAppOptions['route']; session: SessionStore; now?: Date; once?: SessionOnce }) {
+  storage,
+}: { children: ReactNode; route?: TestAppOptions['route']; session: SessionStore; now?: Date; once?: SessionOnce; storage?: KeyValueStore }) {
   const queryClient = createQueryClient();
   queryClient.setDefaultOptions({ queries: { retry: false } });
   const api = createApiClient({
@@ -79,7 +82,9 @@ export function TestProviders({
           <ClockProvider value={now ? { now: () => new Date(now) } : systemClock}>
             <SessionOnceProvider value={once ?? createSessionOnce()}>
               <NavTabsProvider value={APP_TABS}>
-                <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+                <StorageProvider value={storage ?? memoryKeyValueStore()}>
+                  <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+                </StorageProvider>
               </NavTabsProvider>
             </SessionOnceProvider>
           </ClockProvider>
@@ -93,12 +98,12 @@ export function renderWithApp(
   ui: ReactElement,
   options: TestAppOptions & Omit<RenderOptions, 'wrapper'> = {},
 ) {
-  const { route, user = testUser(), now, ...rest } = options;
+  const { route, user = testUser(), now, storage, ...rest } = options;
   const session = createTestSession(user);
   const once = createSessionOnce();
   const result = render(ui, {
     wrapper: ({ children }) => (
-      <TestProviders route={route} session={session} now={now} once={once}>
+      <TestProviders route={route} session={session} now={now} once={once} storage={storage}>
         {children}
       </TestProviders>
     ),

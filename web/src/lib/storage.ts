@@ -1,3 +1,5 @@
+import { createContext, useContext } from 'react';
+
 /**
  * Small persistent key-value storage, injected rather than read from a global
  * (coding principles §3). Web uses localStorage; tests use memory; a Capacitor
@@ -41,4 +43,14 @@ export function memoryKeyValueStore(): KeyValueStore {
     set: (key, value) => void values.set(key, value),
     remove: (key) => void values.delete(key),
   };
+}
+
+const StorageContext = createContext<KeyValueStore | null>(null);
+export const StorageProvider = StorageContext.Provider;
+
+/** The app's storage (localStorage in the browser, memory in tests). */
+export function useStorage(): KeyValueStore {
+  const storage = useContext(StorageContext);
+  if (!storage) throw new TypeError('useStorage must be used inside <StorageProvider>');
+  return storage;
 }

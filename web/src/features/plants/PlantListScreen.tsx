@@ -8,10 +8,11 @@ import { Button, cx, EmptyState, ErrorState, Icon, LoadingState, Screen } from '
 import { usePlants } from './api';
 import type { Plant } from './schemas';
 import { plantStatus } from './status';
+import { LIST_GROUPS, listView, type ListGroup, type ListStatus } from './list-view';
 
-type Status = 'active' | 'planned' | 'ended';
-type Group = 'all' | 'trees' | 'crops' | 'flowers';
-const GROUPS: Group[] = ['all', 'trees', 'crops', 'flowers'];
+type Status = ListStatus;
+type Group = ListGroup;
+const GROUPS = LIST_GROUPS;
 
 /** "Harvesting · day 40" for a growing crop; "Mature · planted 2015" for a tree. */
 function statusLine(plant: Plant, t: TFunction, now: Date): string {
@@ -28,8 +29,9 @@ export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
   const { t } = useTranslation();
   // Home's garden tile links here with ?group=trees|crops (and &tab=planned for Want to grow).
   const [params, setParams] = useSearchParams();
-  const group: Group = GROUPS.includes(params.get('group') as Group) ? (params.get('group') as Group) : 'all';
-  const [status, setStatus] = useState<Status>(params.get('tab') === 'planned' ? 'planned' : params.get('tab') === 'ended' ? 'ended' : 'active');
+  const view = listView(params);
+  const group = view.group;
+  const [status, setStatus] = useState<Status>(view.status);
   const [pages, setPages] = useState(1);
   const choose = (next: Status) => {
     setStatus(next);
@@ -39,7 +41,7 @@ export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
     setParams(next === 'all' ? {} : { group: next }, { replace: true });
     setPages(1);
   };
-  const kind = group === 'trees' ? 'tree' : group === 'crops' ? 'crop' : group === 'flowers' ? 'flower' : undefined;
+  const kind = view.kind;
 
   return (
     <Screen nav>

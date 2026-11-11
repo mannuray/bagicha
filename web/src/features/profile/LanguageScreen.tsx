@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Icon, cx } from '../../ui';
-import { nextOnboardingStep, useSession } from '../auth';
-import { useUpdateProfile } from './api';
+import { useSession } from '../auth';
+import { useOnboardingStep } from './useOnboardingStep';
 import { OnboardingLayout } from './OnboardingLayout';
 
 const LANGUAGES = [
@@ -14,9 +13,8 @@ const LANGUAGES = [
 
 export function LanguageScreen() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { user } = useSession();
-  const update = useUpdateProfile();
+  const step = useOnboardingStep('language');
   const [lang, setLang] = useState<string>(user?.language_pref ?? 'en');
 
   return (
@@ -46,15 +44,15 @@ export function LanguageScreen() {
           {t('onboarding.language.englishForNow')}
         </p>
       )}
-      {update.isError && (
+      {step.error !== null && (
         <p role="alert" className="mb-4 text-center font-body text-sm text-error">
-          {messageFor(update.error)}
+          {messageFor(step.error)}
         </p>
       )}
       <Button
         block
-        busy={update.isPending}
-        onClick={() => update.mutate({ language_pref: lang }, { onSuccess: (saved) => navigate(nextOnboardingStep(saved, 'language')) })}
+        busy={step.busy}
+        onClick={() => step.save({ language_pref: lang })}
       >
         {t('common.continue')}
       </Button>

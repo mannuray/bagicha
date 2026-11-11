@@ -1,5 +1,5 @@
 import { createContext, useContext, useSyncExternalStore, type ReactNode } from 'react';
-import { localKeyValueStore, type KeyValueStore } from '../../lib/storage';
+import type { KeyValueStore } from '../../lib/storage';
 import type { TokenStore } from '../../lib/token-store';
 import { userSchema, type User } from './schemas';
 
@@ -9,6 +9,8 @@ export interface SessionState {
   user: User | null;
   /** Set when the server ended the session (401), so login can say why. */
   expired: boolean;
+  /** Counts sign-ins, so a fresh sign-in is visible even as the same user. */
+  signIns: number;
 }
 
 export interface SessionStore {
@@ -32,9 +34,9 @@ function loadCachedUser(tokens: TokenStore, storage: KeyValueStore): User | null
 }
 
 /** The signed-in user and token. Lives outside React so the API client can expire it. */
-export function createSessionStore(tokens: TokenStore, storage: KeyValueStore = localKeyValueStore): SessionStore {
+export function createSessionStore(tokens: TokenStore, storage: KeyValueStore): SessionStore {
   const cacheUser = (user: User | null) => (user ? storage.set(USER_KEY, JSON.stringify(user)) : storage.remove(USER_KEY));
-  let state: SessionState = { user: loadCachedUser(tokens, storage), expired: false };
+  let state: SessionState = { user: loadCachedUser(tokens, storage), expired: false, signIns: 0 };
   const listeners = new Set<() => void>();
   const set = (next: SessionState) => {
     state = next;
@@ -50,7 +52,7 @@ export function createSessionStore(tokens: TokenStore, storage: KeyValueStore = 
     signIn(token, user) {
       tokens.set(token);
       cacheUser(user);
-      set({ user, expired: false });
+      set({ user, expired: false, signIns: state.signIns + 1 });
     },
     updateUser(user) {
       cacheUser(user);
@@ -59,13 +61,13 @@ export function createSessionStore(tokens: TokenStore, storage: KeyValueStore = 
     signOut() {
       tokens.clear();
       cacheUser(null);
-      set({ user: null, expired: false });
+      set({ ...state, user: null, expired: false });
     },
     expire() {
       if (!state.user) return;
       tokens.clear();
       cacheUser(null);
-      set({ user: null, expired: true });
+      set({ ...state, user: null, expired: true });
     },
   };
 }
