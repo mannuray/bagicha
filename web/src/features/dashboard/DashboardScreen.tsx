@@ -24,8 +24,12 @@ export function DashboardScreen() {
   const [adding, setAdding] = useState(false);
   // The garden at a glance: trees, crops growing now, and Want to grow underneath.
   const planned = usePlants(1, 'planned').data?.pagination.total_items ?? 0;
-  const trees = plants.data ? plants.data.filter((p) => !p.crop_id).length : null;
-  const crops = plants.data ? plants.data.filter((p) => p.crop_id).length : null;
+  const all = plants.data;
+  const trees = all ? all.filter((p) => !p.crop_id && p.record_kind !== 'FLOWER').length : null;
+  const crops = all ? all.filter((p) => p.crop_id && p.record_kind !== 'FLOWER').length : null;
+  const seasonalFlowers = all ? all.filter((p) => p.record_kind === 'FLOWER' && p.crop_id).length : 0;
+  const perennialFlowers = all ? all.filter((p) => p.record_kind === 'FLOWER' && !p.crop_id).length : 0;
+  const flowers = all ? seasonalFlowers + perennialFlowers : null;
   const tasks = useMyTasks();
   const guide = useSeasonalGuide();
   const now = systemClock.now();
@@ -102,11 +106,21 @@ export function DashboardScreen() {
                 </Link>
               )}
             </div>
-            <button type="button" onClick={() => setAdding(true)} className="flex flex-col items-center justify-center gap-1 rounded-xl p-2 text-primary">
-              <span className="bg-primary-gradient flex h-11 w-11 items-center justify-center rounded-full text-on-primary">
+            <div className="space-y-1">
+              <GardenCount count={flowers} label={t('dashboard.flowers', { count: flowers ?? 0 })} to="/plants?group=flowers" />
+              {(flowers ?? 0) > 0 && (
+                <p className="text-center font-label text-[11px] font-semibold text-secondary">
+                  {t('dashboard.flowerSplit', { seasonal: seasonalFlowers, perennial: perennialFlowers })}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-center">
+            <button type="button" onClick={() => setAdding(true)} className="flex items-center justify-center gap-2 rounded-full p-1 pr-3 text-primary">
+              <span className="bg-primary-gradient flex h-9 w-9 items-center justify-center rounded-full text-on-primary">
                 <Icon name="add" />
               </span>
-              <span className="font-label text-[11px] font-semibold leading-tight">{t('crops.chooser.open')}</span>
+              <span className="font-label text-sm font-semibold">{t('crops.chooser.open')}</span>
             </button>
           </div>
         </section>

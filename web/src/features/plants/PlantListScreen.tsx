@@ -8,8 +8,8 @@ import { usePlants } from './api';
 import type { Plant } from './schemas';
 
 type Status = 'active' | 'planned' | 'ended';
-type Group = 'all' | 'trees' | 'crops';
-const GROUPS: Group[] = ['all', 'trees', 'crops'];
+type Group = 'all' | 'trees' | 'crops' | 'flowers';
+const GROUPS: Group[] = ['all', 'trees', 'crops', 'flowers'];
 
 /** "Harvesting · day 40" for a growing crop; "Mature · planted 2015" for a tree. */
 function statusLine(plant: Plant, t: TFunction): string {
@@ -19,7 +19,12 @@ function statusLine(plant: Plant, t: TFunction): string {
     return [t(flowerBloom ? 'crops.stage.BLOOMING' : `crops.stage.${plant.crop_stage}`), day === null ? null : t('plants.list.day', { day })].filter(Boolean).join(' · ');
   }
   const year = plant.planting_date && plant.planting_date_precision !== 'UNKNOWN' ? new Date(plant.planting_date).getUTCFullYear() : null;
-  return [t(`plants.stage.${plant.lifecycle_stage}`), year ? t('plants.list.planted', { year }) : null].filter(Boolean).join(' · ');
+  // A perennial flower is young, then blooming; trees use their lifecycle stage.
+  const stage =
+    plant.record_kind === 'FLOWER'
+      ? t(plant.lifecycle_stage === 'SAPLING' || plant.lifecycle_stage === 'JUVENILE' ? 'biography.flower.stage.YOUNG' : 'biography.flower.stage.BLOOMING')
+      : t(`plants.stage.${plant.lifecycle_stage}`);
+  return [stage, year ? t('plants.list.planted', { year }) : null].filter(Boolean).join(' · ');
 }
 
 /** Stitch "Orchard Gallery": growing plants by group (trees, crops), with Want to grow and Past tabs. */
@@ -39,7 +44,7 @@ export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
     setParams(next === 'all' ? {} : { group: next }, { replace: true });
     setPages(1);
   };
-  const kind = group === 'trees' ? 'tree' : group === 'crops' ? 'crop' : undefined;
+  const kind = group === 'trees' ? 'tree' : group === 'crops' ? 'crop' : group === 'flowers' ? 'flower' : undefined;
 
   return (
     <Screen nav>
@@ -106,7 +111,7 @@ export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
   );
 }
 
-function PlantPage({ status, kind, page, isLast, onMore }: { status: Status; kind?: 'tree' | 'crop'; page: number; isLast: boolean; onMore: () => void }) {
+function PlantPage({ status, kind, page, isLast, onMore }: { status: Status; kind?: 'tree' | 'crop' | 'flower'; page: number; isLast: boolean; onMore: () => void }) {
   const { t } = useTranslation();
   const query = usePlants(page, status, kind);
 

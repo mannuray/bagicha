@@ -25,7 +25,7 @@ export function Hero({ plant, health, photoKey, now }: { plant: PlantDetail; hea
     <header className="relative mb-4 h-[260px] w-full overflow-hidden rounded-b-[32px] bg-primary-container">
       {/* The Stitch photo only stands in when the tree has no photo of its own (or it failed),
           never while the tree's own photo is still loading. */}
-      {(photo.data ?? (!plant.crop_id && (!photoKey || photo.isError) ? treeHero : null)) && (
+      {(photo.data ?? (plant.record_kind === 'TREE' && !plant.crop_id && (!photoKey || photo.isError) ? treeHero : null)) && (
         <img src={photo.data ?? treeHero} alt="" className="absolute inset-0 h-full w-full object-cover" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />

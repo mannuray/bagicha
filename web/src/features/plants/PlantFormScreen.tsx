@@ -59,6 +59,9 @@ function diff(before: PlantInput, after: PlantInput): Partial<PlantInput> {
 export function PlantFormScreen() {
   const { id } = useParams();
   const existing = usePlant(id);
+  // "Perennials like rose or mogra? Add one" opens the form with ?kind=FLOWER.
+  const [search] = useSearchParams();
+  const newForm: FormState = search.get('kind') === 'FLOWER' ? { ...emptyForm, record_kind: 'FLOWER' } : emptyForm;
   if (id && existing.isError) {
     return (
       <Screen>
@@ -74,7 +77,7 @@ export function PlantFormScreen() {
     );
   }
   if (id && !existing.data) return <Screen><LoadingState /></Screen>;
-  return <PlantForm plantId={id} initial={existing.data ? fromPlant(existing.data) : emptyForm} />;
+  return <PlantForm plantId={id} initial={existing.data ? fromPlant(existing.data) : newForm} />;
 }
 
 function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState }) {
@@ -169,6 +172,7 @@ function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState 
             value={form.species}
             error={errors.species}
             onChange={(v) => set('species', v)}
+            flowers={form.record_kind === 'FLOWER'}
             onPick={(item) => setForm((f) => ({ ...f, species: item.species, variety: item.variety ?? f.variety }))}
           />
           <TextField label={t('plants.form.variety')} value={form.variety} onChange={(e) => set('variety', e.target.value)} />

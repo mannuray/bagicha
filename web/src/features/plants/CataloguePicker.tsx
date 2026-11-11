@@ -10,17 +10,20 @@ export function CataloguePicker({
   onChange,
   onPick,
   error,
+  flowers = false,
 }: {
   value: string;
   onChange: (value: string) => void;
   onPick: (item: CatalogueItem) => void;
   error?: string | null;
+  /** Suggest perennial flowers only (Flower kind), or everything else (Tree kind). */
+  flowers?: boolean;
 }) {
   const { t } = useTranslation();
   const id = useId();
   const [open, setOpen] = useState(false);
   const search = useCatalogueSearch(open ? value : '');
-  const items = search.data?.items ?? [];
+  const items = (search.data?.items ?? []).filter((item) => (item.plant_type === 'perennial_flower') === flowers);
 
   return (
     <div className="relative flex flex-col gap-2">

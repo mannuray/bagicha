@@ -253,3 +253,40 @@ describe('groups', () => {
     expect(screen.getByRole('tab', { name: /want to grow/i })).toHaveAttribute('aria-selected', 'true');
   });
 });
+
+describe('flowers', () => {
+  it('the add form opens on Flower from ?kind=FLOWER and suggests flowers only', async () => {
+    server.use(
+      http.get(`${API}/plants/search`, () =>
+        HttpResponse.json(pageOf([
+          { id: 'f1', display_name: 'Rose', species_family: 'rose', species: 'rose', variety: null, plant_type: 'perennial_flower' },
+          { id: 't1', display_name: 'Rose apple', species_family: 'generic', species: 'rose apple', variety: null, plant_type: 'fruit_tree' },
+        ])),
+      ),
+    );
+    renderWithApp(routes, { route: '/plants/new?kind=FLOWER' });
+    expect(await screen.findByRole('button', { name: /^flower$/i })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.type(screen.getByLabelText(/^species/i), 'rose');
+    expect(await screen.findByRole('option', { name: /^rose$/i })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /rose apple/i })).not.toBeInTheDocument();
+  });
+
+  it('lists flowers in their own group with bloom wording', async () => {
+    const kinds: Array<string | null> = [];
+    server.use(
+      http.get(`${API}/ledger/plants`, ({ request }) => {
+        kinds.push(new URL(request.url).searchParams.get('kind'));
+        return HttpResponse.json(pageOf([
+          plantRecord({ id: 'f1', name: 'Genda', species: 'Marigold (Genda)', record_kind: 'FLOWER', crop_id: 'marigold', crop_stage: 'HARVESTING', season_started_at: new Date(Date.now() - 3 * 86400000).toISOString() }),
+          plantRecord({ id: 'f2', name: 'Gulab', species: 'Rose', record_kind: 'FLOWER', lifecycle_stage: 'FIRST_FLOWERING', planting_date: '2022-01-01T00:00:00.000Z' }),
+        ]));
+      }),
+    );
+    renderWithApp(routes, { route: '/plants?group=flowers' });
+    expect(await screen.findByText('Genda')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^flowers$/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(kinds).toContain('flower');
+    expect(screen.getByText(/blooming · day 3/i)).toBeInTheDocument();
+    expect(screen.getByText(/blooming · planted 2022/i)).toBeInTheDocument();
+  });
+});

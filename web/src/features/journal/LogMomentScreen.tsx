@@ -11,6 +11,8 @@ import { clearDraft, loadDraft, saveDraft, type MomentDraft } from './draft';
 import { useUploadImage } from './media-api';
 
 const TYPES = ['NOTE', 'WATERING', 'FLOWERING', 'FRUIT_SET', 'FLOWER_DROP', 'FRUIT_DROP', 'HARVEST', 'PRUNING', 'FEEDING', 'TREATMENT', 'PHOTO'] as const;
+/** Flowers log blooms and bloom care, never fruit. */
+const FLOWER_TYPES = ['FLOWERING', 'BLOOM_PEAK', 'DEADHEADING', 'PINCHING', 'PRUNING', 'FEEDING', 'WATERING', 'TREATMENT', 'NOTE', 'PHOTO'] as const;
 const DROP_TYPES = new Set(['FLOWER_DROP', 'FRUIT_DROP']);
 const SEVERITIES = ['LOW', 'MEDIUM', 'HIGH'] as const;
 const UNITS = ['kg', 'pieces', 'crates'] as const;
@@ -65,7 +67,7 @@ export function LogMomentScreen() {
               {isPlantMissing(plant.error) ? <NotInGarden /> : <ErrorState error={plant.error} onRetry={() => void plant.refetch()} />}
             </div>
           ) : plant.data ? (
-            <MomentForm plantId={id} plantName={plant.data.name} />
+            <MomentForm plantId={id} plantName={plant.data.name} flower={plant.data.record_kind === 'FLOWER'} />
           ) : (
             <LoadingState />
           )}
@@ -75,7 +77,7 @@ export function LogMomentScreen() {
   );
 }
 
-function MomentForm({ plantId, plantName }: { plantId: string; plantName: string }) {
+function MomentForm({ plantId, plantName, flower = false }: { plantId: string; plantName: string; flower?: boolean }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const compressor = useImageCompressor();
@@ -119,7 +121,7 @@ function MomentForm({ plantId, plantName }: { plantId: string; plantName: string
       <fieldset>
         <legend className="sr-only">{t('journal.what')}</legend>
         <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
-          {TYPES.map((type) => (
+          {(flower ? FLOWER_TYPES : TYPES).map((type) => (
             <Pill key={type} selected={draft.type === type} onClick={() => set('type', type)}>
               {t(`journal.types.${type}`)}
             </Pill>

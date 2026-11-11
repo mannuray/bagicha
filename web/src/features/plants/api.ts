@@ -19,7 +19,7 @@ const PAGE_SIZE = 20;
 
 /** Growing plants by default; `ended` lists past trees. */
 /** One page of plants; `kind` narrows to trees or calendar crops. */
-export function usePlants(page: number, status: 'active' | 'planned' | 'ended' = 'active', kind?: 'tree' | 'crop') {
+export function usePlants(page: number, status: 'active' | 'planned' | 'ended' = 'active', kind?: 'tree' | 'crop' | 'flower') {
   const api = useApi();
   return useQuery({
     queryKey: queryKeys.plants.list(status, page, kind ?? 'all'),

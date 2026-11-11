@@ -167,7 +167,8 @@
       "group": {
         "all": "All",
         "trees": "Trees",
-        "crops": "Crops"
+        "crops": "Crops",
+        "flowers": "Flowers"
       },
       "day": "day {{day}}",
       "planted": "planted {{year}}"
@@ -266,7 +267,10 @@
     "trees_other": "Trees",
     "crops_one": "Crop growing",
     "crops_other": "Crops growing",
-    "planned": "+{{count}} planned"
+    "planned": "+{{count}} planned",
+    "flowers_one": "Flower",
+    "flowers_other": "Flowers",
+    "flowerSplit": "{{seasonal}} seasonal · {{perennial}} perennial"
   },
   "journal": {
     "title": "Log a Moment",
@@ -300,7 +304,10 @@
       "WATERING_STRESS": "Water stress",
       "WEATHER_DAMAGE": "Weather damage",
       "PLANTING": "Planting",
-      "PLANT_ENDED": "Tree ended"
+      "PLANT_ENDED": "Tree ended",
+      "BLOOM_PEAK": "Peak bloom",
+      "DEADHEADING": "Deadheading",
+      "PINCHING": "Pinching"
     },
     "severities": {
       "LOW": "Light",
@@ -441,7 +448,22 @@
       "replaces": "Replaces {{name}}",
       "openCrop": "Stop growing this crop"
     },
-    "seasons": "Seasons"
+    "seasons": "Seasons",
+    "flower": {
+      "stage": {
+        "YOUNG": "Young",
+        "BLOOMING": "Blooming"
+      },
+      "inSeason": "In its bloom season ({{window}})",
+      "nextBloom": "Next bloom: {{window}}",
+      "lives": "Usually lives {{min}}–{{max}} years.",
+      "shortLived": "Short-lived: sow or replant every couple of years.",
+      "years": "Blooms by year",
+      "logBlooms": "Log a bloom when it flowers to start comparing years.",
+      "bloomsLogged_one": "{{count}} bloom logged",
+      "bloomsLogged_other": "{{count}} blooms logged",
+      "firstIn": "first in {{month}}"
+    }
   },
   "scan": {
     "kicker": "Plant doctor",

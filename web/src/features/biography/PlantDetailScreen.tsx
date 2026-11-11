@@ -10,6 +10,8 @@ import { healthLabel } from './health-label';
 import { AtAGlance } from './sections/AtAGlance';
 import { EndedBanner } from './sections/EndedBanner';
 import { EndSheet } from './sections/EndSheet';
+import { FlowerGlance } from './sections/FlowerGlance';
+import { FlowerYears } from './sections/FlowerYears';
 import { photoKeyOf } from './sections/format';
 import { Hero } from './sections/Hero';
 import { MemoryCard } from './sections/MemoryCard';
@@ -64,6 +66,7 @@ function Biography({ plant }: { plant: PlantDetail }) {
   const heroKey = entries.map((e) => photoKeyOf(e)).find(Boolean) ?? null;
   const ended = Boolean(plant.ended_at);
   const crop = Boolean(plant.crop_id);
+  const flower = plant.record_kind === 'FLOWER' && !crop;
   const [ending, setEnding] = useState(false);
 
   return (
@@ -86,6 +89,13 @@ function Biography({ plant }: { plant: PlantDetail }) {
             <JourneyCard plant={plant} />
             <UpcomingCare plantId={plant.id} now={now} />
           </>
+        ) : flower ? (
+          // A perennial flower: flower stages and bloom months; no fruit season or milestones.
+          <>
+            <MemoryCard plant={plant} now={now} />
+            <FlowerGlance plant={plant} />
+            <UpcomingCare plantId={plant.id} now={now} />
+          </>
         ) : (
           <>
             <MemoryCard plant={plant} now={now} />
@@ -94,8 +104,8 @@ function Biography({ plant }: { plant: PlantDetail }) {
             <UpcomingCare plantId={plant.id} now={now} />
           </>
         )}
-        <YearOnYear plantId={plant.id} now={now} crop={crop} />
-        {!crop && <Milestones plant={plant} />}
+        {flower ? <FlowerYears plantId={plant.id} /> : <YearOnYear plantId={plant.id} now={now} crop={crop} />}
+        {!crop && !flower && <Milestones plant={plant} />}
         <SanctuaryRecord plantId={plant.id} />
         {!ended &&
           (ending ? (

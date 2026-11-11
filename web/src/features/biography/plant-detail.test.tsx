@@ -367,3 +367,36 @@ describe('tree biography', () => {
     expect(await screen.findByText('Moment 24')).toBeInTheDocument();
   });
 });
+
+describe('a perennial flower', () => {
+  const rose = {
+    record_kind: 'FLOWER', name: 'Gulab', species: 'Rose', variety: null, lifecycle_stage: 'FIRST_FLOWERING', planting_date: '2022-01-01T00:00:00.000Z',
+    bloom: { status: 'in_season', window_label: 'Nov–Mar' },
+    life_profile: { first_fruit_months: [4, 8], productive_until_months: [120, 180], lifespan_months: [120, 180], note_key: null },
+  };
+
+  it('has flower stages, its bloom months and blooms per year, never fruit guidance', async () => {
+    handlers({ plant: rose });
+    let intel = 0;
+    server.use(http.get(`${API}/seasonal/plant/p1/intelligence`, () => { intel += 1; return HttpResponse.json(ok(intelligence)); }));
+    const { container } = renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByText(/in its bloom season \(nov–mar\)/i)).toBeInTheDocument();
+    const stages = screen.getByRole('list', { name: /stage/i });
+    expect(within(stages).getByText('Young')).toBeInTheDocument();
+    expect(within(stages).getByText('Blooming').closest('[aria-current="step"]')).not.toBeNull();
+    expect(screen.queryByText(/mature canopy/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/usually lives 10–15 years/i)).toBeInTheDocument();
+    const blooms = await screen.findByRole('region', { name: /blooms by year/i });
+    expect(await within(blooms).findByText(/1 bloom logged/i)).toBeInTheDocument();
+    expect(container.querySelector('img[src*="tree-hero"]')).toBeNull();
+    expect(intel).toBe(0);
+  });
+
+  it('a flower we do not know still renders, without a bloom line', async () => {
+    handlers({ plant: { ...rose, species: 'Lotus', bloom: null, life_profile: null, lifecycle_stage: 'JUVENILE' } });
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Gulab' })).toBeInTheDocument();
+    expect(screen.queryByText(/bloom season|next bloom/i)).not.toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: /stage/i })).getByText('Young').closest('[aria-current="step"]')).not.toBeNull();
+  });
+});

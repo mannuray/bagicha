@@ -134,4 +134,14 @@ describe('log a moment', () => {
     );
     expect(await screen.findByLabelText(/note/i)).toHaveValue('Mango flowers opening');
   });
+
+  it('offers flower moments for a flower, and no fruit ones', async () => {
+    server.use(http.get(`${API}/ledger/plants/p1`, () => HttpResponse.json(ok({ ...plantRecord({ record_kind: 'FLOWER', name: 'Gulab', species: 'Rose' }), _count: { journal_entries: 0 } }))));
+    renderWithApp(screenTree, { route: '/plants/p1/log' });
+    expect(await screen.findByRole('button', { name: /^peak bloom$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^deadheading$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^pinching$/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^fruit set$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^harvest$/i })).not.toBeInTheDocument();
+  });
 });

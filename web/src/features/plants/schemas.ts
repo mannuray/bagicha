@@ -63,6 +63,12 @@ export const plantDetailSchema = plantSchema.extend({
   first_harvest_at: nullableOptional,
   latest_harvest_at: nullableOptional,
   life_profile: lifeProfileSchema.nullable().optional().transform((v) => v ?? null),
+  /** A perennial flower's usual bloom months for the user's climate; null otherwise. */
+  bloom: z
+    .object({ status: z.enum(['in_season', 'later']), window_label: z.string() })
+    .nullable()
+    .optional()
+    .transform((v) => v ?? null),
   replaced_by: plantLink.nullable().optional().transform((v) => v ?? null),
   replaces: z.array(plantLink).optional().transform((v) => v ?? []),
 });

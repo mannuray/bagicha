@@ -173,5 +173,19 @@ describe('dashboard', () => {
       await userEvent.click(within(tile).getByRole('button', { name: /add to garden/i }));
       expect(screen.getByRole('dialog', { name: /what are you growing/i })).toBeInTheDocument();
     });
+
+    it('counts flowers apart from crops, seasonal and perennial', async () => {
+      garden([
+        plantRecord({ id: 'p1' }),
+        crop('c1', 'IN_GROUND'),
+        plantRecord({ id: 'f1', record_kind: 'FLOWER', crop_id: 'marigold', crop_stage: 'HARVESTING' }),
+        plantRecord({ id: 'f2', record_kind: 'FLOWER' }),
+      ], []);
+      renderWithApp(<DashboardScreen />);
+      const tile = await screen.findByRole('region', { name: /your garden/i });
+      expect(await within(tile).findByRole('link', { name: /2\s*flowers/i })).toHaveAttribute('href', '/plants?group=flowers');
+      expect(within(tile).getByRole('link', { name: /1\s*crop growing/i })).toBeInTheDocument();
+      expect(within(tile).getByText(/1 seasonal · 1 perennial/i)).toBeInTheDocument();
+    });
   });
 });
