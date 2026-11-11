@@ -84,6 +84,12 @@ enum RecordPattern {
   ONE_OFF_SEASON
 }
 
+/// What the gardener said about an old tree's fruiting. Null = not sure / never asked.
+enum BearingStatus {
+  BEARING
+  NOT_YET
+}
+
 enum RecordKind {
   TREE
   FLOWER
@@ -309,6 +315,10 @@ model Plant {
   first_fruit_set_at DateTime?
   first_harvest_at   DateTime?
   latest_harvest_at  DateTime?
+  /// Trees only: does it already fruit (asked when adding an old tree)?
+  bearing_status     BearingStatus?
+  /// With BEARING: about which year it started fruiting.
+  bearing_since_year Int?
   health_status     String         @default("Healthy")
   /// When the tree died or was removed; null while it is growing.
   ended_at          DateTime?

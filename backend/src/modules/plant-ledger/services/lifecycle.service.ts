@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { LifecycleStage } from '@prisma/client';
+import { BearingStatus, LifecycleStage } from '@prisma/client';
 import { Clock } from '../../../common/time';
 import { perennialFlower } from '../domain/flower-care';
 import { lifeProfileFor } from '../domain/species-life-profiles';
+import { predatesFirsts } from '../domain/bearing';
 import { SpeciesNormalizationService } from './species-normalization.service';
 
 const ORDER: LifecycleStage[] = [
@@ -22,6 +23,7 @@ export interface StageInput {
   first_flowering_at?: Date | null;
   first_fruit_set_at?: Date | null;
   first_harvest_at?: Date | null;
+  bearing_status?: BearingStatus | null;
 }
 
 /** The later of two stages: automatic recalculation never moves a tree backwards. */
@@ -30,6 +32,10 @@ export function laterStage(
   b: LifecycleStage,
 ): LifecycleStage {
   return ORDER.indexOf(a) >= ORDER.indexOf(b) ? a : b;
+}
+
+function earlierStage(a: LifecycleStage, b: LifecycleStage): LifecycleStage {
+  return ORDER.indexOf(a) <= ORDER.indexOf(b) ? a : b;
 }
 
 @Injectable()
@@ -45,7 +51,28 @@ export class LifecycleService {
    */
   calculateStage(input: StageInput): LifecycleStage {
     if (input.record_kind === 'FLOWER') return this.flowerStage(input);
-    return laterStage(this.byAge(input), this.byMilestones(input));
+    // "Not yet fruited": age alone never takes the tree past juvenile.
+    const byAge =
+      input.bearing_status === 'NOT_YET'
+        ? earlierStage(this.byAge(input), LifecycleStage.JUVENILE)
+        : this.byAge(input);
+    return laterStage(byAge, this.byMilestones(input));
+  }
+
+  /** Whether a log today would not be this tree's "first" (it fruited before Bagicha). */
+  predatesFirsts(input: StageInput): boolean {
+    if (input.record_kind && input.record_kind !== 'TREE') return false;
+    const family =
+      input.species_family ??
+      this.species.resolveSpeciesFamily({ species: input.species });
+    return predatesFirsts(
+      {
+        bearing_status: input.bearing_status ?? null,
+        planting_date: input.planting_date,
+        profile: lifeProfileFor(family),
+      },
+      this.clock.now(),
+    );
   }
 
   /** Flowers are young, then blooming; never bearing (spec flowers §2.2). */
@@ -66,6 +93,7 @@ export class LifecycleService {
   }
 
   private byMilestones(input: StageInput): LifecycleStage {
+    if (input.bearing_status === 'BEARING') return LifecycleStage.FIRST_HARVEST;
     if (input.first_harvest_at) return LifecycleStage.FIRST_HARVEST;
     if (input.first_fruit_set_at || input.first_flowering_at)
       return LifecycleStage.FIRST_FLOWERING;

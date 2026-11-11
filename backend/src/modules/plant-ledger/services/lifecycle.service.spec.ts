@@ -25,6 +25,34 @@ const stage = (
   });
 
 describe('LifecycleService.calculateStage', () => {
+  it('a tree the gardener says already fruits is at least at first harvest', () => {
+    expect(
+      service.calculateStage({
+        planting_date: monthsAgo(12),
+        species: 'Mango',
+        bearing_status: 'BEARING',
+      }),
+    ).toBe(LifecycleStage.FIRST_HARVEST);
+  });
+
+  it('a tree that has not fruited yet stops at juvenile by age, until something is recorded', () => {
+    expect(
+      service.calculateStage({
+        planting_date: monthsAgo(110),
+        species: 'Mango',
+        bearing_status: 'NOT_YET',
+      }),
+    ).toBe(LifecycleStage.JUVENILE);
+    expect(
+      service.calculateStage({
+        planting_date: monthsAgo(110),
+        species: 'Mango',
+        bearing_status: 'NOT_YET',
+        first_harvest_at: monthsAgo(1),
+      }),
+    ).toBe(LifecycleStage.FIRST_HARVEST);
+  });
+
   it('times papaya by its own profile', () => {
     expect(stage('Papaya', 3)).toBe(LifecycleStage.SAPLING);
     expect(stage('Papaya', 10)).toBe(LifecycleStage.FIRST_FLOWERING);

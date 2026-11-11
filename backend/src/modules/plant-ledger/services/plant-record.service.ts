@@ -32,6 +32,7 @@ import {
   TreeSeasonalState,
 } from './seasonal-intelligence.service';
 import { SpeciesNormalizationService } from './species-normalization.service';
+import { firstsToClear, resolveBearing } from '../domain/bearing';
 
 const plantNotFound = () =>
   new NotFoundError('PLANT_NOT_FOUND', 'Plant not found');
@@ -153,12 +154,24 @@ export class PlantRecordService implements OnModuleInit {
       dto.planting_date_precision,
       this.clock,
     );
+    const bearing = resolveBearing(
+      {
+        bearing_status: dto.bearing_status ?? null,
+        bearing_since_year: dto.bearing_since_year ?? null,
+      },
+      {
+        record_kind: dto.record_kind ?? 'TREE',
+        planting_date: planting.date,
+        now: this.clock.now(),
+      },
+    );
     const stage =
       dto.lifecycle_stage ??
       this.lifecycle.calculateStage({
         planting_date: planting.date,
         species: dto.species,
         record_kind: dto.record_kind,
+        bearing_status: bearing.bearing_status,
       });
 
     const plant = await this.plants.create(userId, {
@@ -174,6 +187,7 @@ export class PlantRecordService implements OnModuleInit {
       planting_date_input: planting.input,
       lifecycle_stage: stage,
       lifecycle_stage_manual: !!dto.lifecycle_stage,
+      ...bearing,
     });
     await this.enqueueTaskGeneration(
       userId,
@@ -212,7 +226,35 @@ export class PlantRecordService implements OnModuleInit {
     const species = dto.species ?? plant.species;
     // Only a corrected planting date or species may recompute freely; any other
     // edit (a rename) must never move an automatic stage backwards.
+    const recordKind = dto.record_kind ?? plant.record_kind;
+    const bearingChanged =
+      dto.bearing_status !== undefined ||
+      dto.bearing_since_year !== undefined ||
+      recordKind !== plant.record_kind;
+    const bearing = resolveBearing(
+      {
+        bearing_status:
+          dto.bearing_status !== undefined
+            ? dto.bearing_status
+            : plant.bearing_status,
+        bearing_since_year:
+          dto.bearing_since_year !== undefined
+            ? dto.bearing_since_year
+            : plant.bearing_since_year,
+      },
+      {
+        record_kind: recordKind,
+        planting_date: planting.date,
+        now: this.clock.now(),
+      },
+    );
+    // "It already fruits, since 2019": firsts logged later were not firsts.
+    const cleared =
+      dto.bearing_status === 'BEARING'
+        ? firstsToClear(plant, bearing.bearing_since_year)
+        : {};
     const ageInputsChanged =
+      bearingChanged ||
       dto.planting_date !== undefined ||
       dto.planting_date_precision !== undefined ||
       (dto.species !== undefined && dto.species !== plant.species);
@@ -220,8 +262,10 @@ export class PlantRecordService implements OnModuleInit {
       ...plant,
       planting_date: planting.date,
       species,
+      ...cleared,
       species_family: dto.species ? null : plant.species_family,
-      record_kind: dto.record_kind ?? plant.record_kind,
+      record_kind: recordKind,
+      bearing_status: bearing.bearing_status,
     });
     const stage =
       dto.lifecycle_stage ??
@@ -242,6 +286,8 @@ export class PlantRecordService implements OnModuleInit {
       planting_date_input: planting.input,
       lifecycle_stage: stage,
       lifecycle_stage_manual: !!dto.lifecycle_stage,
+      ...bearing,
+      ...cleared,
     });
     if (!updated) throw plantNotFound();
     await this.enqueueTaskGeneration(

@@ -1,5 +1,6 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsInt, Min } from 'class-validator';
 import {
+  BearingStatus,
   GrowthHabit,
   LifecycleStage,
   PlantingDatePrecision,
@@ -48,4 +49,15 @@ export class UpdatePlantDto {
   @IsOptional()
   @IsEnum(LifecycleStage)
   lifecycle_stage?: LifecycleStage;
+
+  /** Trees: does it already fruit? Null = not sure. */
+  @IsOptional()
+  @IsEnum(BearingStatus)
+  bearing_status?: BearingStatus | null;
+
+  /** With BEARING: about which year it began fruiting. */
+  @IsOptional()
+  @IsInt()
+  @Min(1900)
+  bearing_since_year?: number | null;
 }

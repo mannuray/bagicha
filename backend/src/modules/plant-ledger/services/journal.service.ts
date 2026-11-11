@@ -21,6 +21,7 @@ import { PlantRepository } from '../repositories/plant.repository';
 import { CycleService } from './cycle.service';
 import { CropJourneyService } from './crop-journey.service';
 import { TaskService } from './task.service';
+import { LifecycleService } from './lifecycle.service';
 
 export interface NewJournalEntry {
   type: LogType;
@@ -41,16 +42,23 @@ export interface RecordedJournalEntry {
 }
 
 /** Milestone dates a new entry fills in on the plant (first flowering, harvests…). */
-function milestonesFor(plant: Plant, type: LogType, eventAt: Date) {
+function milestonesFor(
+  plant: Plant,
+  type: LogType,
+  eventAt: Date,
+  firstsAlreadyPast: boolean,
+) {
   const data: Record<string, Date> = {};
-  if (type === LogType.FLOWERING && !plant.first_flowering_at) {
+  // An old tree's firsts happened before Bagicha; today's log is not one of them.
+  const firsts = !firstsAlreadyPast;
+  if (firsts && type === LogType.FLOWERING && !plant.first_flowering_at) {
     data.first_flowering_at = eventAt;
   }
-  if (type === LogType.FRUIT_SET && !plant.first_fruit_set_at) {
+  if (firsts && type === LogType.FRUIT_SET && !plant.first_fruit_set_at) {
     data.first_fruit_set_at = eventAt;
   }
   if (type === LogType.HARVEST) {
-    if (!plant.first_harvest_at) data.first_harvest_at = eventAt;
+    if (firsts && !plant.first_harvest_at) data.first_harvest_at = eventAt;
     data.latest_harvest_at = eventAt;
   }
   return data;
@@ -67,6 +75,7 @@ export class JournalService {
     private readonly cropJourney: CropJourneyService,
     private readonly transactions: TransactionRunner,
     private readonly clock: Clock,
+    private readonly lifecycle: LifecycleService,
   ) {}
 
   /**
@@ -125,7 +134,12 @@ export class JournalService {
     );
     if (!log) throw new InvariantError('Journal write lost plant ownership');
 
-    const milestones = milestonesFor(plant, log.type, log.timestamp);
+    const milestones = milestonesFor(
+      plant,
+      log.type,
+      log.timestamp,
+      this.lifecycle.predatesFirsts(plant),
+    );
     if (Object.keys(milestones).length > 0) {
       await this.plants.updateOwned(userId, plant.id, milestones, tx);
     }
