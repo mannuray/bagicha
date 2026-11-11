@@ -107,23 +107,27 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await page.goto('/plants');
   await expect(page.getByRole('link', { name: /aam/i })).toBeVisible();
 
-  // Vegetables: want to grow palak, start with seeds in a new grow-bag, harvest, end the season.
-  await page.goto('/crops');
-  const palakCard = page.getByRole('article', { name: /spinach \(palak\)/i });
-  await palakCard.getByRole('button', { name: /add to want to grow/i }).click();
-  await expect(palakCard.getByText(/on your list/i)).toBeVisible();
-  await page.goto('/plants');
-  await page.getByRole('tab', { name: /want to grow/i }).click();
+  // Vegetables: Home "+" → grow a vegetable → palak → Start now → seeds into a new grow-bag.
+  await page.goto('/');
+  await page.getByRole('button', { name: /add to garden/i }).click();
+  await page.getByRole('link', { name: /grow a vegetable/i }).click();
+  await expect(page.getByText(/sowing$/i).first()).toBeVisible();
+  await checkScreen(page, '14-discover');
   await page.getByRole('link', { name: /spinach \(palak\)/i }).click();
-  await page.getByRole('button', { name: /^start$/i }).click();
+  await expect(page.getByRole('heading', { level: 1, name: /spinach \(palak\)/i })).toBeVisible();
+  await checkScreen(page, '15-crop-detail');
+  await page.getByRole('button', { name: /start now/i }).click();
   const start = page.getByRole('dialog', { name: /start growing/i });
   await start.getByRole('button', { name: /i have seeds/i }).click();
   await start.getByRole('button', { name: /add a place/i }).click();
   await start.getByLabel(/place name/i).fill('Terrace bag');
-  await start.getByRole('button', { name: /^add$/i }).click();
-  await start.getByRole('button', { name: /^save$/i }).click();
+  await start.getByRole('button', { name: /^grow-bag$/i }).click();
+  await start.getByRole('button', { name: /^full sun$/i }).click();
+  await start.getByRole('button', { name: /add place/i }).click();
+  await start.getByRole('button', { name: /start season/i }).click();
+  await expect(page.getByText('In the bed · day 0 · Terrace bag')).toBeVisible();
   await expect(page.getByRole('article', { name: /seedlings have come up/i })).toBeVisible();
-  await checkScreen(page, '13-crop-journey');
+  await checkScreen(page, '16-crop-journey');
   await page.getByRole('link', { name: /log a harvest/i }).click();
   await page.getByRole('button', { name: /^harvest$/i }).click();
   await page.getByRole('button', { name: /save to biography/i }).click();

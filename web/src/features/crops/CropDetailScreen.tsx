@@ -32,7 +32,7 @@ export function CropDetailScreen() {
   }));
   const range = (r: [number, number] | null) => (r ? t('crops.detail.days', { min: r[0], max: r[1] }) : null);
   const facts = [
-    { icon: 'sprout', label: t('crops.detail.germinates'), value: range(crop.germination_days) },
+    { icon: 'psychiatry', label: t('crops.detail.germinates'), value: range(crop.germination_days) },
     crop.method === 'NURSERY_TRANSPLANT' ? { icon: 'move_down', label: t('crops.detail.transplantAt'), value: range(crop.transplant_after_days) } : null,
     { icon: 'nutrition', label: t('crops.detail.firstHarvest'), value: range(crop.days_to_first_harvest) },
   ].filter((f): f is { icon: string; label: string; value: string } => Boolean(f?.value));
