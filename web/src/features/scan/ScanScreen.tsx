@@ -70,7 +70,7 @@ export function ScanScreen() {
 
         {problem !== null && (
           <p role="alert" className="rounded-xl bg-error-container px-4 py-3 font-body text-sm text-on-error-container">
-            {messageFor(problem)}
+            {messageFor(problem, t)}
           </p>
         )}
         <Button type="submit" block busy={busy} disabled={!photo}>

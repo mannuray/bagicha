@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useSession } from '../auth';
 
 export type ScanMode = 'identify' | 'diagnose';
@@ -53,11 +53,14 @@ export function ScanStateProvider({ children, previews = browserPreviews }: { ch
   const [stored, setStored] = useState<{ owner: string; scan: PendingScan } | null>(null);
   const [requests] = useState(() => new WeakMap<PendingScan, ScanRequest>());
   const scan = stored && user && stored.owner === user.id ? stored.scan : null;
-  const setScan = (next: PendingScan | null) => {
-    const old = stored?.scan.previewUrl;
-    if (old && old !== next?.previewUrl) previews.revoke(old);
-    setStored(next && user ? { owner: user.id, scan: next } : null);
-  };
+  const setScan = (next: PendingScan | null) => setStored(next && user ? { owner: user.id, scan: next } : null);
+  // A preview lives as long as its scan is the current one for this user: replaced,
+  // cleared, signed out or closed, it's released.
+  const previewUrl = scan?.previewUrl ?? null;
+  useEffect(() => {
+    if (!previewUrl) return;
+    return () => previews.revoke(previewUrl);
+  }, [previewUrl, previews]);
   const previewOf = (blob: Blob) => previews.create(blob);
   return <ScanStateContext.Provider value={{ scan, setScan, previewOf, requests }}>{children}</ScanStateContext.Provider>;
 }

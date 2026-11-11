@@ -1,19 +1,15 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
-import { useNow } from '../../lib/clock';
 import { Button, ErrorState, Icon, LoadingState, Screen } from '../../ui';
 import { CropHero, JourneyCard } from '../crops';
-import { useTimeline } from '../journal';
-import { isPlantMissing, plantCategory, type PlantDetail, NotInGarden, usePlant } from '../plants';
-import { healthLabel } from './health-label';
+import { isPlantMissing, type PlantDetail, NotInGarden, usePlant } from '../plants';
 import { AtAGlance } from './sections/AtAGlance';
 import { EndedBanner } from './sections/EndedBanner';
 import { EndSheet } from './sections/EndSheet';
 import { FlowerGlance } from './sections/FlowerGlance';
 import { FlowerYears } from './sections/FlowerYears';
-import { photoKeyOf } from './sections/format';
 import { Hero } from './sections/Hero';
+import { usePlantPage } from './usePlantPage';
 import { MemoryCard } from './sections/MemoryCard';
 import { Milestones } from './sections/Milestones';
 import { SanctuaryRecord } from './sections/SanctuaryRecord';
@@ -59,16 +55,7 @@ function BackButton() {
  */
 function Biography({ plant }: { plant: PlantDetail }) {
   const { t } = useTranslation();
-  const timeline = useTimeline(plant.id);
-  const entries = timeline.data?.items ?? [];
-  const now = useNow();
-  const health = healthLabel(plant, entries, now);
-  const heroKey = entries.map((e) => photoKeyOf(e)).find(Boolean) ?? null;
-  const ended = Boolean(plant.ended_at);
-  const category = plantCategory(plant);
-  const crop = category === 'crop' || category === 'seasonalFlower';
-  const flower = category === 'perennialFlower';
-  const [ending, setEnding] = useState(false);
+  const { now, entries, health, heroKey, ended, crop, flower, ending, openEnding, closeEnding } = usePlantPage(plant);
 
   return (
     <Screen className="pb-28">
@@ -111,10 +98,10 @@ function Biography({ plant }: { plant: PlantDetail }) {
         <SanctuaryRecord plantId={plant.id} />
         {!ended &&
           (ending ? (
-            <EndSheet plantId={plant.id} entries={entries} now={now} crop={crop} onClose={() => setEnding(false)} />
+            <EndSheet plantId={plant.id} entries={entries} now={now} crop={crop} onClose={closeEnding} />
           ) : (
             <div className="flex justify-center">
-              <Button variant="quiet" onClick={() => setEnding(true)}>
+              <Button variant="quiet" onClick={openEnding}>
                 {t(crop ? 'biography.end.openCrop' : 'biography.end.open')}
               </Button>
             </div>

@@ -58,3 +58,12 @@ describe('milestoneView: what a "first" card says', () => {
     expect(view).toEqual({ kind: 'estimate', from: 2026, to: 2026 });
   });
 });
+
+describe('plantedView', () => {
+  it('a bare year, a month and year, or unknown', async () => {
+    const { plantedView } = await import('./milestone-view');
+    expect(plantedView(plant({ planting_date: '2017-01-01T00:00:00.000Z', planting_date_precision: 'YEAR' }))).toEqual({ kind: 'year', year: 2017 });
+    expect(plantedView(plant({ planting_date: '2024-03-01T00:00:00.000Z', planting_date_precision: 'MONTH_YEAR' }))).toEqual({ kind: 'date', at: '2024-03-01T00:00:00.000Z' });
+    expect(plantedView(plant({ planting_date: null, planting_date_precision: 'UNKNOWN' }))).toEqual({ kind: 'unknown' });
+  });
+});

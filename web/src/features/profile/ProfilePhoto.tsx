@@ -39,7 +39,7 @@ export function ProfilePhoto({ avatarKey }: { avatarKey: string | null }) {
       </label>
       {problem !== null && (
         <p role="alert" className="max-w-56 text-center font-label text-xs text-error">
-          {messageFor(problem)}
+          {messageFor(problem, t)}
         </p>
       )}
     </div>

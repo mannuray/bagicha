@@ -49,7 +49,7 @@ export function EndSheet({ plantId, entries, now, crop = false, onClose }: { pla
       </div>
       {error && (
         <p role="alert" className="font-body text-sm text-error">
-          {messageFor(error)}
+          {messageFor(error, t)}
         </p>
       )}
       <div className="flex gap-3">

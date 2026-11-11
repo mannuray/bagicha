@@ -101,7 +101,7 @@ export function ProfileScreen() {
             </div>
             {f.error && (
               <p role="alert" className="font-body text-sm text-error">
-                {messageFor(f.error)}
+                {messageFor(f.error, t)}
               </p>
             )}
             <div className="flex gap-3">

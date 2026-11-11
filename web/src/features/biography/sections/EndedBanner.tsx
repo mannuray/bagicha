@@ -31,7 +31,7 @@ export function EndedBanner({ plant }: { plant: PlantDetail }) {
       )}
       {restore.isError && (
         <p role="alert" className="font-body text-sm text-error">
-          {messageFor(restore.error)}
+          {messageFor(restore.error, t)}
         </p>
       )}
       <div className="flex flex-wrap gap-3">

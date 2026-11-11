@@ -13,6 +13,8 @@ import { ServerWakeBanner } from './server-wake';
 import { createServerWake } from './server-wake-store';
 import { APP_TABS } from './nav-tabs';
 import { NavTabsProvider } from '../ui';
+import { reportError } from '../lib/report-error';
+import { ReporterProvider } from '../lib/reporter';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1';
 
@@ -29,6 +31,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       tokens: localTokenStore,
       onUnauthorized: () => session.expire(),
       onSlow: wake.set,
+      report: reportError,
     });
     return { session, queryClient, api, wake, once };
   });
@@ -54,9 +57,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
           <ServerWakeBanner wake={services.wake} />
           <SessionOnceProvider value={services.once}>
             <NavTabsProvider value={APP_TABS}>
+              <ReporterProvider value={reportError}>
               <StorageProvider value={localKeyValueStore}>
                 <BrowserRouter>{children}</BrowserRouter>
               </StorageProvider>
+              </ReporterProvider>
             </NavTabsProvider>
           </SessionOnceProvider>
         </SessionProvider>

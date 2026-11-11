@@ -63,3 +63,13 @@ describe('dueLabel', () => {
     expect(label.count === undefined ? label.key : `${label.key}:${label.count}`).toBe(expected);
   });
 });
+
+describe('taskBadge', () => {
+  it('overdue is urgent; otherwise a HIGH task is high; else no badge', async () => {
+    const { taskBadge } = await import('./this-week');
+    const now = new Date('2026-11-12T06:30:00Z');
+    expect(taskBadge({ due_date: '2026-11-01T00:00:00Z', priority: 'LOW' }, now)).toBe('urgent');
+    expect(taskBadge({ due_date: '2026-11-20T00:00:00Z', priority: 'HIGH' }, now)).toBe('high');
+    expect(taskBadge({ due_date: '2026-11-20T00:00:00Z', priority: 'MEDIUM' }, now)).toBeNull();
+  });
+});

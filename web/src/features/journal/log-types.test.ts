@@ -36,11 +36,18 @@ describe('journal entry types: one list, the backend\'s', () => {
     expect(parsed.content).toBe('Straw mulch');
   });
 
-  it('a saved draft is checked field by field', () => {
+  it('a saved draft is checked field by field: a bad optional field is dropped, the note is kept', () => {
     const kv = memoryKeyValueStore();
     kv.set('bagicha.draft.moment.p1', JSON.stringify({ type: 'HARVEST', content: 'x', unit: 'tonnes' }));
-    expect(loadDraft('p1', kv)).toBeNull();
+    expect(loadDraft('p1', kv)).toEqual({ type: 'HARVEST', content: 'x' });
     kv.set('bagicha.draft.moment.p1', JSON.stringify({ type: 'HARVEST', content: 'x', unit: 'kg', quantity: '3', quality: 'good' }));
     expect(loadDraft('p1', kv)).toEqual({ type: 'HARVEST', content: 'x', unit: 'kg', quantity: '3', quality: 'good' });
+  });
+
+  it('only an unknown type name reads as a note; a missing type is still a broken reply', async () => {
+    const { journalEntrySchema } = await import('./api');
+    const base = { id: 'j1', content: null, metadata: null, timestamp: 't', recorded_at: 't', plant_cycle_id: null, diagnosis_outcome_id: null };
+    expect(journalEntrySchema.safeParse({ ...base, type: null }).success).toBe(false);
+    expect(journalEntrySchema.safeParse(base).success).toBe(false);
   });
 });

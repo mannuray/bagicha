@@ -32,7 +32,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
   return (
     <div role="alert" className="flex flex-col items-center gap-3 rounded-xl bg-error-container px-4 py-5 text-center text-on-error-container">
       <Icon name="error" />
-      <p className="font-body text-sm">{messageFor(error)}</p>
+      <p className="font-body text-sm">{messageFor(error, t)}</p>
       {onRetry && (
         <Button variant="quiet" onClick={onRetry}>
           {t('common.retry')}

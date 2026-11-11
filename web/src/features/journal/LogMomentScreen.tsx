@@ -129,7 +129,7 @@ function MomentForm({ plantId, plantName, flower = false }: { plantId: string; p
 
       {problem !== null && (
         <p role="alert" className="rounded-xl bg-error-container px-4 py-3 font-body text-sm text-on-error-container">
-          {messageFor(problem)}
+          {messageFor(problem, t)}
         </p>
       )}
       <div className="sticky bottom-0 -mx-5 mt-auto bg-gradient-to-t from-surface via-surface/95 to-transparent px-5 pb-5 pt-4">

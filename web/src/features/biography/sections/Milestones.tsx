@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { cx, Icon } from '../../../ui';
 import type { PlantDetail } from '../../plants';
-import { milestoneView, type FirstKey, type MilestoneView } from '../milestone-view';
+import { milestoneView, plantedView, type FirstKey, type MilestoneView } from '../milestone-view';
 import { monthYear } from './format';
 
 const FIRSTS: FirstKey[] = ['firstFlowering', 'firstFruitSet', 'firstHarvest'];
@@ -13,12 +13,9 @@ const FIRSTS: FirstKey[] = ['firstFlowering', 'firstFruitSet', 'firstHarvest'];
  */
 export function Milestones({ plant, now }: { plant: PlantDetail; now: Date }) {
   const { t, i18n } = useTranslation();
-  const planted = plant.planting_date_precision === 'UNKNOWN' ? null : plant.planting_date;
-  const plantedText = planted
-    ? plant.planting_date_precision === 'YEAR'
-      ? String(new Date(planted).getUTCFullYear())
-      : monthYear(planted, i18n.language)
-    : t('biography.dateUnknown');
+  const planted = plantedView(plant);
+  const plantedText =
+    planted.kind === 'year' ? String(planted.year) : planted.kind === 'date' ? monthYear(planted.at, i18n.language) : t('biography.dateUnknown');
 
   const firstText = (view: MilestoneView): string => {
     switch (view.kind) {
@@ -38,7 +35,7 @@ export function Milestones({ plant, now }: { plant: PlantDetail; now: Date }) {
   };
 
   const items = [
-    { key: 'planted', reached: Boolean(planted), text: plantedText, estimated: false },
+    { key: 'planted', reached: planted.kind !== 'unknown', text: plantedText, estimated: false },
     ...FIRSTS.map((key) => {
       const view = milestoneView(plant, key, now);
       return { key, reached: view.kind !== 'notYet', text: firstText(view), estimated: view.kind === 'estimate' };

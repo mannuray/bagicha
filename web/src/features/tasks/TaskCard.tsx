@@ -3,7 +3,7 @@ import { messageFor } from '../../lib/error-messages';
 import { Button, cx } from '../../ui';
 import { useUpdateTaskStatus } from './api';
 import type { Task } from './schemas';
-import { closedLabel, dueLabel } from './this-week';
+import { closedLabel, dueLabel, taskBadge } from './this-week';
 
 /** Stitch Daily Path task card: title, urgency badge, due line, why it exists, Mark done / Skip. */
 export function TaskCard({
@@ -25,8 +25,7 @@ export function TaskCard({
     update.mutate({ task, status }, { onError });
   };
 
-  const overdue = due.key === 'overdue';
-  const badge = overdue ? 'urgent' : task.priority === 'HIGH' ? 'high' : null;
+  const badge = taskBadge(task, now);
 
   return (
     <article aria-label={task.title} className="rounded-[2rem_2.5rem_2rem_1.5rem] bg-surface-container-low p-5 shadow-[0_10px_40px_rgba(28,28,25,0.02)]">
@@ -49,7 +48,7 @@ export function TaskCard({
       {task.source_summary && <p className="mt-1 line-clamp-2 font-body text-xs text-on-surface-variant">{task.source_summary}</p>}
       {!onError && update.error && (
         <p role="alert" className="mt-2 font-body text-sm text-error">
-          {messageFor(update.error)}
+          {messageFor(update.error, t)}
         </p>
       )}
       <div className="mt-3 flex justify-end gap-2">

@@ -46,7 +46,7 @@ export function LanguageScreen() {
       )}
       {step.error !== null && (
         <p role="alert" className="mb-4 text-center font-body text-sm text-error">
-          {messageFor(step.error)}
+          {messageFor(step.error, t)}
         </p>
       )}
       <Button

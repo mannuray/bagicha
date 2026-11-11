@@ -68,7 +68,7 @@ export function OtpScreen() {
           </div>
           {verifyError !== null && (
             <p role="alert" className="mb-4 text-center font-body text-sm text-error">
-              {messageFor(verifyError)}
+              {messageFor(verifyError, t)}
             </p>
           )}
           <div className="mt-auto space-y-4 pt-6">
@@ -88,7 +88,7 @@ export function OtpScreen() {
             </p>
             {resendError !== null && (
               <p role="alert" className="text-center font-body text-sm text-error">
-                {messageFor(resendError)}
+                {messageFor(resendError, t)}
               </p>
             )}
           </div>

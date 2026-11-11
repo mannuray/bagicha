@@ -56,7 +56,7 @@ export function RegionScreen({ onDone }: { onDone?: () => void }) {
       </div>
       {f.error && (
         <p role="alert" className="mb-4 text-center font-body text-sm text-error">
-          {messageFor(f.error)}
+          {messageFor(f.error, t)}
         </p>
       )}
       <Button block busy={f.busy} disabled={!f.canSave} onClick={f.save}>

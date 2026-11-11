@@ -4,10 +4,10 @@ import { istHour } from '../../lib/format';
 import { useSession } from '../auth';
 import { useCropSyncOnce } from '../crops';
 import { gardenCounts, useAllPlants, usePlants, usesSeasonPack } from '../plants';
-import { useSeasonalGuide } from '../seasonal';
-import { useMyTasks } from '../tasks';
+import { useSeasonalGuide, useSeasonTasksOnce } from '../seasonal';
+import { hasPendingSoon, useMyTasks } from '../tasks';
+import { weekView } from './week-view';
 import { greetingFor } from './greeting';
-import { useSessionMaterialize } from './use-session-materialize';
 
 /**
  * ViewModel for Home: the garden summary, this week's tasks, the season guide and
@@ -17,11 +17,20 @@ export function useDashboard() {
   const { user } = useSession();
   const now = useNow();
   const plants = useAllPlants();
-  const season = useSessionMaterialize(plants.data?.filter(usesSeasonPack).map((p) => p.id));
+  const season = useSeasonTasksOnce(plants.data?.filter(usesSeasonPack).map((p) => p.id));
   useCropSyncOnce();
   const [adding, setAdding] = useState(false);
   const planned = usePlants(1, 'planned').data?.pagination.total_items ?? 0;
   const counts = plants.data ? gardenCounts(plants.data) : null;
+  const tasks = useMyTasks();
+  const week = weekView({
+    tasksError: tasks.error,
+    plantsError: plants.error,
+    seasonError: season.error,
+    hasPendingSoon: Boolean(tasks.data && hasPendingSoon(tasks.data.items, now)),
+    tasksLoaded: Boolean(tasks.data),
+    seasonSettled: season.settled,
+  });
   return {
     user,
     now,
@@ -30,7 +39,8 @@ export function useDashboard() {
     season,
     counts,
     planned,
-    tasks: useMyTasks(),
+    tasks,
+    week,
     guide: useSeasonalGuide(),
     adding,
     setAdding,

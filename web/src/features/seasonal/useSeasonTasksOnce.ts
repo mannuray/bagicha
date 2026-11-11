@@ -1,10 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { useApi } from '../../lib/api';
-import { reportError } from '../../lib/report-error';
 import { useSessionOnce } from '../../lib/session-once';
-import { materializeTasks } from '../seasonal';
+import { materializeTasks } from './api';
 import { invalidate, staleAfter } from '../../lib/stale';
+import { useReport } from '../../lib/reporter';
 
 export interface MaterializeState {
   /** Every request for the current plant set has finished. */
@@ -19,10 +19,11 @@ export interface MaterializeState {
  * Requests this season's tasks once per plant per session (idempotent on the
  * server), then refreshes the task list.
  */
-export function useSessionMaterialize(plantIds: string[] | undefined): MaterializeState {
+export function useSeasonTasksOnce(plantIds: string[] | undefined): MaterializeState {
   const api = useApi();
   const client = useQueryClient();
   const materialized = useSessionOnce();
+  const report = useReport();
   // "Not loaded" and "no plants" must differ, or an empty garden never settles.
   const key = plantIds === undefined ? 'loading' : `[${plantIds.join(',')}]`;
   const [attempt, setAttempt] = useState(0);
@@ -44,7 +45,7 @@ export function useSessionMaterialize(plantIds: string[] | undefined): Materiali
         materializeTasks(api, id).catch((err: unknown) => {
           materialized.delete(id);
           failure = err;
-          reportError(err, { plantId: id, step: 'materialize' });
+          report(err, { plantId: id, step: 'materialize' });
         }),
       ),
     ).then(() => {

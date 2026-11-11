@@ -105,7 +105,7 @@ export function CropDetailScreen() {
       <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-[480px] flex-wrap gap-3 bg-surface/90 px-4 pb-6 pt-3 backdrop-blur-xl">
         {error !== null && (
           <p role="alert" className="w-full font-body text-sm text-error">
-            {messageFor(error)}
+            {messageFor(error, t)}
           </p>
         )}
         {onList ? (

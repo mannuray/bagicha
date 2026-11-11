@@ -23,4 +23,17 @@ describe('scan photo previews', () => {
     act(() => result.current.setScan(null));
     expect(previews.revoke).toHaveBeenCalledWith('blob:2');
   });
+
+  it('releases the preview when the scan screen state goes away (sign-out, closing the app)', () => {
+    const previews: PreviewUrls = { create: vi.fn(() => 'blob:9'), revoke: vi.fn() };
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <TestProviders session={createTestSession()}>
+        <ScanStateProvider previews={previews}>{children}</ScanStateProvider>
+      </TestProviders>
+    );
+    const { result, unmount } = renderHook(() => useScanState(), { wrapper });
+    act(() => result.current.setScan({ mode: 'identify', base64: 'x', previewUrl: result.current.previewOf(new Blob(['a'])) }));
+    unmount();
+    expect(previews.revoke).toHaveBeenCalledWith('blob:9');
+  });
 });

@@ -47,3 +47,9 @@ export function closedLabel(task: Task, now: Date): { key: string; count?: numbe
   if (ago === 1) return { key: 'completedYesterday' };
   return { key: 'completedDays', count: ago };
 }
+
+/** The card's badge: overdue tasks are urgent; otherwise a HIGH priority task is "high". */
+export function taskBadge(task: { due_date: string; priority: string }, now: Date): 'urgent' | 'high' | null {
+  if (dueLabel(task.due_date, now).key === 'overdue') return 'urgent';
+  return task.priority === 'HIGH' ? 'high' : null;
+}

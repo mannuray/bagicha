@@ -12,6 +12,7 @@ import { testFetch } from './node-fetch';
 import { ClockProvider, systemClock } from '../lib/clock';
 import { createSessionOnce, SessionOnceProvider, type SessionOnce } from '../lib/session-once';
 import { memoryKeyValueStore, StorageProvider, type KeyValueStore } from '../lib/storage';
+import { ReporterProvider, type Reporter } from '../lib/reporter';
 import { APP_TABS } from '../app/nav-tabs';
 import { NavTabsProvider } from '../ui';
 
@@ -50,6 +51,8 @@ export interface TestAppOptions {
   now?: Date;
   /** Storage for drafts etc.; a fresh in-memory one when omitted. */
   storage?: KeyValueStore;
+  /** Where failures are reported; silent when omitted. */
+  report?: Reporter;
 }
 
 export function createTestSession(user: User | null = testUser()): SessionStore {
@@ -66,7 +69,8 @@ export function TestProviders({
   now,
   once,
   storage,
-}: { children: ReactNode; route?: TestAppOptions['route']; session: SessionStore; now?: Date; once?: SessionOnce; storage?: KeyValueStore }) {
+  report,
+}: { children: ReactNode; route?: TestAppOptions['route']; session: SessionStore; now?: Date; once?: SessionOnce; storage?: KeyValueStore; report?: Reporter }) {
   const queryClient = createQueryClient();
   queryClient.setDefaultOptions({ queries: { retry: false } });
   const api = createApiClient({
@@ -82,9 +86,11 @@ export function TestProviders({
           <ClockProvider value={now ? { now: () => new Date(now) } : systemClock}>
             <SessionOnceProvider value={once ?? createSessionOnce()}>
               <NavTabsProvider value={APP_TABS}>
+                <ReporterProvider value={report ?? (() => undefined)}>
                 <StorageProvider value={storage ?? memoryKeyValueStore()}>
                   <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
                 </StorageProvider>
+                </ReporterProvider>
               </NavTabsProvider>
             </SessionOnceProvider>
           </ClockProvider>
@@ -98,12 +104,12 @@ export function renderWithApp(
   ui: ReactElement,
   options: TestAppOptions & Omit<RenderOptions, 'wrapper'> = {},
 ) {
-  const { route, user = testUser(), now, storage, ...rest } = options;
+  const { route, user = testUser(), now, storage, report, ...rest } = options;
   const session = createTestSession(user);
   const once = createSessionOnce();
   const result = render(ui, {
     wrapper: ({ children }) => (
-      <TestProviders route={route} session={session} now={now} once={once} storage={storage}>
+      <TestProviders route={route} session={session} now={now} once={once} storage={storage} report={report}>
         {children}
       </TestProviders>
     ),

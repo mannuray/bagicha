@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import orchardPhoto from '../../assets/stitch/dashboard-orchard.jpg';
 import { EmptyState, ErrorState, Icon, LoadingState, Pebble, Screen, SeeAllLink } from '../../ui';
 import { AddToGardenSheet } from '../crops';
-import { hasPendingSoon, TaskGroups } from '../tasks';
+import { TaskGroups } from '../tasks';
 import { useDashboard } from './useDashboard';
 
 const PREVIEW = 5;
@@ -11,7 +11,7 @@ const PREVIEW = 5;
 /** Stitch "Home Dashboard – Sanctuary", with its orchard photo. The weather card is hidden until weather is real. */
 export function DashboardScreen() {
   const { t } = useTranslation();
-  const { user, now, greeting, plants, season, counts, planned, tasks, guide, adding, setAdding } = useDashboard();
+  const { user, now, greeting, plants, season, counts, planned, tasks, week, guide, adding, setAdding } = useDashboard();
   const trees = counts?.tree ?? null;
   const crops = counts?.crop ?? null;
   const flowers = counts?.flowers ?? null;
@@ -38,15 +38,15 @@ export function DashboardScreen() {
             </h2>
             <SeeAllLink to="/tasks" />
           </div>
-          {tasks.isError ? (
+          {week.kind === 'error' && week.source === 'tasks' ? (
             <ErrorState error={tasks.error} onRetry={() => void tasks.refetch()} />
-          ) : tasks.data && hasPendingSoon(tasks.data.items, now) ? (
+          ) : week.kind === 'tasks' && tasks.data ? (
             <TaskGroups tasks={tasks.data.items} now={now} limit={PREVIEW} />
-          ) : plants.isError ? (
+          ) : week.kind === 'error' && week.source === 'plants' ? (
             <ErrorState error={plants.error} onRetry={() => void plants.refetch()} />
-          ) : season.error ? (
+          ) : week.kind === 'error' ? (
             <ErrorState error={season.error} onRetry={season.retry} />
-          ) : !tasks.data || !season.settled ? (
+          ) : week.kind === 'loading' ? (
             <LoadingState />
           ) : (
             <EmptyState title={t('tasks.emptyTitle')} body={t('tasks.emptyBody')} />

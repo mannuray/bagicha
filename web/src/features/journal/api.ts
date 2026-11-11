@@ -9,7 +9,7 @@ export const journalEntrySchema = z.object({
   id: z.string(),
   // A type this app doesn't know yet (the backend added one) reads as a note,
   // so one new entry can't break the whole record.
-  type: logTypeSchema.catch('NOTE'),
+  type: z.string().transform((type): LogType => (logTypeSchema.safeParse(type).success ? (type as LogType) : 'NOTE')),
   content: z.string().nullable(),
   metadata: z.record(z.string(), z.unknown()).nullable(),
   timestamp: z.string(),

@@ -50,7 +50,7 @@ function PlantTasks({ plantId }: { plantId: string }) {
           </Button>
           {materialize.isError && (
             <p role="alert" className="mb-4 font-body text-sm text-error">
-              {messageFor(materialize.error)}
+              {messageFor(materialize.error, t)}
             </p>
           )}
           <QueryState query={{ ...query, data: query.data?.items }}>
@@ -106,7 +106,7 @@ function Frame({ subtitle, children }: { subtitle: string; children: (onError: (
       <main className="flex flex-col px-4 pb-10">
         {problem !== null && (
           <p role="alert" className="mb-4 rounded-xl bg-error-container px-4 py-3 font-body text-sm text-on-error-container">
-            {messageFor(problem)}
+            {messageFor(problem, t)}
           </p>
         )}
         {children(onError)}

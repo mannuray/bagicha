@@ -1,17 +1,17 @@
 import type { TFunction } from 'i18next';
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useSearchParams } from 'react-router';
+import { Link } from 'react-router';
 import { useNow } from '../../lib/clock';
 import { monthYear } from '../../lib/format';
 import { Button, cx, EmptyState, ErrorState, Icon, LoadingState, Screen } from '../../ui';
 import { usePlants } from './api';
 import type { Plant } from './schemas';
 import { plantStatus } from './status';
-import { LIST_GROUPS, listView, type ListGroup, type ListStatus } from './list-view';
+import { LIST_GROUPS, type ListStatus } from './list-view';
+import { usePlantList } from './usePlantList';
 
 type Status = ListStatus;
-type Group = ListGroup;
 const GROUPS = LIST_GROUPS;
 
 /** "Harvesting · day 40" for a growing crop; "Mature · planted 2015" for a tree. */
@@ -27,21 +27,7 @@ function statusLine(plant: Plant, t: TFunction, now: Date): string {
 export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
   const now = useNow();
   const { t } = useTranslation();
-  // Home's garden tile links here with ?group=trees|crops (and &tab=planned for Want to grow).
-  const [params, setParams] = useSearchParams();
-  const view = listView(params);
-  const group = view.group;
-  const [status, setStatus] = useState<Status>(view.status);
-  const [pages, setPages] = useState(1);
-  const choose = (next: Status) => {
-    setStatus(next);
-    setPages(1);
-  };
-  const chooseGroup = (next: Group) => {
-    setParams(next === 'all' ? {} : { group: next }, { replace: true });
-    setPages(1);
-  };
-  const kind = view.kind;
+  const { group, status, kind, pages, chooseGroup, chooseStatus: choose, more } = usePlantList();
 
   return (
     <Screen nav>
@@ -101,7 +87,7 @@ export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
           </Link>
         )}
         {Array.from({ length: pages }, (_, i) => (
-          <PlantPage key={`${group}-${status}-${i}`} status={status} kind={kind} page={i + 1} isLast={i + 1 === pages} onMore={() => setPages((p) => p + 1)} now={now} />
+          <PlantPage key={`${group}-${status}-${i}`} status={status} kind={kind} page={i + 1} isLast={i + 1 === pages} onMore={more} now={now} />
         ))}
       </main>
     </Screen>

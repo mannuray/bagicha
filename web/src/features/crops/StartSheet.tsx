@@ -84,7 +84,7 @@ export function StartSheet({ plantId, crop, path: initial, onClose }: { plantId:
 
         {error && (
           <p role="alert" className="font-body text-sm text-error">
-            {messageFor(error)}
+            {messageFor(error, t)}
           </p>
         )}
         {(step === 'place' || step === 'confirm') && (

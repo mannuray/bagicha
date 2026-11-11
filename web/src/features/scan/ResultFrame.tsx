@@ -31,7 +31,7 @@ export function ResultFrame({
         )}
         {error ? (
           <div role="alert" className="flex flex-col items-center gap-3 rounded-xl bg-error-container px-4 py-8 text-center text-on-error-container">
-            <p className="font-body text-base">{messageFor(error)}</p>
+            <p className="font-body text-base">{messageFor(error, t)}</p>
             <Button variant="quiet" onClick={onRetry}>
               {t('common.retry')}
             </Button>

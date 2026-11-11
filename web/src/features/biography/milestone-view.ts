@@ -46,3 +46,13 @@ export function milestoneView(plant: PlantDetail, key: FirstKey, now: Date): Mil
     to: Math.min(yearAfter(latest, max), now.getUTCFullYear()),
   };
 }
+
+export type PlantedView = { kind: 'year'; year: number } | { kind: 'date'; at: string } | { kind: 'unknown' };
+
+/** How the Planted card reads: a bare year, a month and year, or unknown. */
+export function plantedView(plant: Pick<PlantDetail, 'planting_date' | 'planting_date_precision'>): PlantedView {
+  if (!plant.planting_date || plant.planting_date_precision === 'UNKNOWN') return { kind: 'unknown' };
+  return plant.planting_date_precision === 'YEAR'
+    ? { kind: 'year', year: new Date(plant.planting_date).getUTCFullYear() }
+    : { kind: 'date', at: plant.planting_date };
+}

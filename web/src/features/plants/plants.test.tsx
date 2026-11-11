@@ -12,6 +12,10 @@ function Where() {
   return <p data-testid="where">{useLocation().pathname}</p>;
 }
 
+function Search() {
+  return <p data-testid="search">{useLocation().search}</p>;
+}
+
 const routes = (
   <Routes>
     <Route path="/plants" element={<PlantListScreen />} />
@@ -49,6 +53,26 @@ describe('my plants', () => {
     renderWithApp(routes, { route: '/plants' });
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(screen.queryByText(/add your first tree/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('the list remembers its place', () => {
+  it('the chosen tab is in the address, so opening a plant and coming back keeps it', async () => {
+    server.use(
+      http.get(`${API}/ledger/plants`, ({ request }) =>
+        new URL(request.url).searchParams.get('status') === 'ended'
+          ? HttpResponse.json(pageOf([plantRecord({ id: 'p9', name: 'Old Papita', ended_at: '2026-03-15T06:00:00.000Z', end_reason: 'OLD_AGE' })]))
+          : HttpResponse.json(pageOf([plantRecord()])),
+      ),
+    );
+    renderWithApp(
+      <Routes>
+        <Route path="/plants" element={<><PlantListScreen /><Search /></>} />
+      </Routes>,
+      { route: '/plants?group=trees' },
+    );
+    await userEvent.click(await screen.findByRole('tab', { name: /^past$/i }));
+    expect(screen.getByTestId('search')).toHaveTextContent('?group=trees&tab=ended');
   });
 });
 

@@ -131,7 +131,7 @@ function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState 
           )}
           {error && (
             <p role="alert" className="text-center font-body text-sm text-error">
-              {messageFor(error)}
+              {messageFor(error, t)}
             </p>
           )}
           <Button type="submit" block busy={busy} className="py-3 text-sm uppercase tracking-[0.2em]">

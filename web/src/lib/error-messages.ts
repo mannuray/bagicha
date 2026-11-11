@@ -1,9 +1,12 @@
-import i18n from './i18n';
+import type { TFunction } from 'i18next';
 import { AppStateError, isApiError } from './errors';
 
-/** The user-facing sentence for any thrown value, keyed by its backend or client code. */
-export function messageFor(err: unknown): string {
+/**
+ * The user-facing sentence for any thrown value, keyed by its backend or client
+ * code; unknown codes get the generic message. Takes the screen's translator.
+ */
+export function messageFor(err: unknown, t: TFunction): string {
   const code = isApiError(err) || err instanceof AppStateError ? err.code : null;
-  if (code && i18n.exists(`errors.${code}`)) return i18n.t(`errors.${code}`);
-  return i18n.t('errors.generic');
+  const generic = t('errors.generic');
+  return code ? t(`errors.${code}`, { defaultValue: generic }) : generic;
 }

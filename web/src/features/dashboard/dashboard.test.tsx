@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fail, ok, pagedResponse, pageOf, plantRecord, taskRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
@@ -122,6 +122,13 @@ describe('dashboard', () => {
     const week = await screen.findByRole('region', { name: /this week/i });
     expect(await within(week).findByRole('alert')).toBeInTheDocument();
     expect(within(week).queryByText(/nothing due this week/i)).not.toBeInTheDocument();
+  });
+
+  it('reports a failed season check through the reporter the app provides', async () => {
+    baseHandlers({ tasks: [], materializeFail: true });
+    const report = vi.fn();
+    renderWithApp(<DashboardScreen />, { report });
+    await waitFor(() => expect(report).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ step: 'materialize' })));
   });
 
   it('syncs crop reminders once per session and skips the tree pack for journey crops', async () => {

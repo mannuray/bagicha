@@ -3,10 +3,10 @@ import { useEffect } from 'react';
 import { z } from 'zod';
 import { useApi } from '../../lib/api';
 import { queryKeys } from '../../lib/query-keys';
-import { reportError } from '../../lib/report-error';
 import { useSessionOnce } from '../../lib/session-once';
 import { cropDetailSchema, cropItemSchema, placeSchema, rotationSchema } from './schemas';
 import { staleAfter, useInvalidate } from '../../lib/stale';
+import { useReport } from '../../lib/reporter';
 
 /** Every calendar crop with its sowing status for the user's region. */
 export function useCropCalendar() {
@@ -50,6 +50,7 @@ export function useCropSyncOnce() {
   const api = useApi();
   const materialized = useSessionOnce();
   const invalidate = useInvalidate();
+  const report = useReport();
   useEffect(() => {
     if (materialized.has(SYNC_KEY)) return;
     materialized.add(SYNC_KEY);
@@ -60,7 +61,7 @@ export function useCropSyncOnce() {
       })
       .catch((err: unknown) => {
         materialized.delete(SYNC_KEY);
-        reportError(err, { step: 'crop-sync' });
+        report(err, { step: 'crop-sync' });
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once per session
   }, [api, materialized]);
