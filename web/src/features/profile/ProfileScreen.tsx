@@ -1,10 +1,10 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import { systemClock } from '../../lib/clock';
+import { useNow } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Chip, Icon, Screen, TextField } from '../../ui';
-import { useSession, type RegionCluster } from '../auth';
+import { isPremium, useSession, type RegionCluster } from '../auth';
 import { useDistricts, useUpdateProfile } from './api';
 import { DistrictField } from './DistrictField';
 import { ProfilePhoto } from './ProfilePhoto';
@@ -22,6 +22,7 @@ export function ProfileScreen() {
   const [picked, setPicked] = useState<RegionCluster | null>(user?.region_cluster ?? null);
   const [lang, setLang] = useState(user?.language_pref ?? 'en');
   const [needDistrict, setNeedDistrict] = useState(false);
+  const now = useNow();
 
   if (!user) return null;
   const regionLabel = regionById(user.region_cluster);
@@ -42,7 +43,7 @@ export function ProfileScreen() {
     );
   };
 
-  const premium = user.premium_expires_at !== null && new Date(user.premium_expires_at) > systemClock.now();
+  const premium = isPremium(user, now);
   const open = () => setEditing(true);
 
   return (

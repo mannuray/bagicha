@@ -9,6 +9,7 @@ import type { TokenStore } from '../lib/token-store';
 import { createSessionStore, SessionProvider, type SessionStore, type User } from '../features/auth';
 import { API } from './msw/server';
 import { testFetch } from './node-fetch';
+import { ClockProvider, systemClock } from '../lib/clock';
 
 export function memoryTokenStore(initial: string | null = 'test-token'): TokenStore {
   let value = initial;
@@ -41,6 +42,8 @@ export const testUser = (over: Partial<User> = {}): User => ({
 export interface TestAppOptions {
   route?: string | { pathname: string; state?: unknown };
   user?: User | null;
+  /** A fixed clock for the screen ("now"); the real clock when omitted. */
+  now?: Date;
 }
 
 export function createTestSession(user: User | null = testUser()): SessionStore {
@@ -54,7 +57,8 @@ export function TestProviders({
   children,
   route = '/',
   session,
-}: { children: ReactNode; route?: TestAppOptions['route']; session: SessionStore }) {
+  now,
+}: { children: ReactNode; route?: TestAppOptions['route']; session: SessionStore; now?: Date }) {
   const queryClient = createQueryClient();
   queryClient.setDefaultOptions({ queries: { retry: false } });
   const api = createApiClient({
@@ -67,7 +71,9 @@ export function TestProviders({
     <QueryClientProvider client={queryClient}>
       <ApiProvider client={api}>
         <SessionProvider store={session}>
-          <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+          <ClockProvider value={now ? { now: () => new Date(now) } : systemClock}>
+            <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+          </ClockProvider>
         </SessionProvider>
       </ApiProvider>
     </QueryClientProvider>
@@ -78,11 +84,11 @@ export function renderWithApp(
   ui: ReactElement,
   options: TestAppOptions & Omit<RenderOptions, 'wrapper'> = {},
 ) {
-  const { route, user = testUser(), ...rest } = options;
+  const { route, user = testUser(), now, ...rest } = options;
   const session = createTestSession(user);
   const result = render(ui, {
     wrapper: ({ children }) => (
-      <TestProviders route={route} session={session}>
+      <TestProviders route={route} session={session} now={now}>
         {children}
       </TestProviders>
     ),

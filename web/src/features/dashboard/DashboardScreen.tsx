@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import orchardPhoto from '../../assets/stitch/dashboard-orchard.jpg';
-import { systemClock } from '../../lib/clock';
+import { useNow } from '../../lib/clock';
 import { EmptyState, ErrorState, Icon, LoadingState, Pebble, Screen, SeeAllLink } from '../../ui';
 import { useSession } from '../auth';
 import { AddToGardenSheet, useCropSyncOnce } from '../crops';
@@ -32,7 +32,7 @@ export function DashboardScreen() {
   const flowers = all ? seasonalFlowers + perennialFlowers : null;
   const tasks = useMyTasks();
   const guide = useSeasonalGuide();
-  const now = systemClock.now();
+  const now = useNow();
   const hour = now.getHours();
   const greeting = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
 

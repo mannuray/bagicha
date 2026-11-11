@@ -8,8 +8,10 @@ import { useVisionApi } from './api';
 import { ResultFrame } from './ResultFrame';
 import { useScanState } from './scan-state';
 import { useScanRequest } from './use-scan-request';
+import { useNow } from '../../lib/clock';
 
 export function DiagnoseResultScreen() {
+  const now = useNow();
   const { t } = useTranslation();
   const client = useQueryClient();
   const { scan } = useScanState();
@@ -56,7 +58,7 @@ export function DiagnoseResultScreen() {
                 <Icon name="check_circle" filled />
                 {t('scan.savedTo', { name: scan.plantName ?? '' })}
               </p>
-              {result.task_id && <FollowUp plantId={scan.plantId} taskId={result.task_id} />}
+              {result.task_id && <FollowUp plantId={scan.plantId} taskId={result.task_id} now={now} />}
             </>
           )}
         </div>
@@ -65,8 +67,8 @@ export function DiagnoseResultScreen() {
   );
 }
 
-function FollowUp({ plantId, taskId }: { plantId: string; taskId: string }) {
+function FollowUp({ plantId, taskId, now }: { plantId: string; taskId: string; now: Date }) {
   const tasks = usePlantTasks(plantId);
   const task = tasks.data?.items.find((x) => x.id === taskId);
-  return task ? <TaskCard task={task} showPlant={false} /> : null;
+  return task ? <TaskCard task={task} now={now} showPlant={false} /> : null;
 }

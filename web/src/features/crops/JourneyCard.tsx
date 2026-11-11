@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Button, cx, Icon, LoadingState } from '../../ui';
-import { systemClock } from '../../lib/clock';
 import { useAddJournalEntry, useTimeline } from '../journal';
 import { dueLabel, usePlantTasks } from '../tasks';
 import { useAllCycles, type PlantDetail } from '../plants';
@@ -13,7 +12,7 @@ import { StartSheet } from './StartSheet';
 type Step = 'planned' | 'seeds' | 'sown' | 'transplanted' | 'harvesting' | 'ended';
 
 /** Where a crop is on its way from Want to grow to harvest, and the next thing to do. */
-export function JourneyCard({ plant }: { plant: PlantDetail }) {
+export function JourneyCard({ plant, now }: { plant: PlantDetail; now: Date }) {
   const { t } = useTranslation();
   const calendar = useCropCalendar();
   const log = useAddJournalEntry(plant.id);
@@ -32,7 +31,6 @@ export function JourneyCard({ plant }: { plant: PlantDetail }) {
   const placeId = open?.place_id ?? null;
   const rotation = useRotation(placeId, plant.crop_id);
   if (!crop) return calendar.isPending ? <LoadingState /> : null;
-  const now = systemClock.now();
   const status = cropStatusLine(plant.crop_stage ?? null, open?.started_at ?? null, null, now);
   const next = nextStep(tasks.data?.items ?? []);
   const due = next?.due_date ? dueLabel(next.due_date, now) : null;

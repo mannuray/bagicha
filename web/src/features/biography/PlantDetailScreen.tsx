@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
-import { systemClock } from '../../lib/clock';
+import { useNow } from '../../lib/clock';
 import { Button, ErrorState, Icon, LoadingState, NotInGarden, Screen, isPlantMissing } from '../../ui';
 import { CropHero, JourneyCard } from '../crops';
 import { useTimeline } from '../journal';
@@ -61,7 +61,7 @@ function Biography({ plant }: { plant: PlantDetail }) {
   const { t } = useTranslation();
   const timeline = useTimeline(plant.id);
   const entries = timeline.data?.items ?? [];
-  const now = systemClock.now();
+  const now = useNow();
   const health = healthLabel(plant, entries, now);
   const heroKey = entries.map((e) => photoKeyOf(e)).find(Boolean) ?? null;
   const ended = Boolean(plant.ended_at);
@@ -86,7 +86,7 @@ function Biography({ plant }: { plant: PlantDetail }) {
         ) : crop ? (
           // A calendar crop follows its journey, not the tree sections.
           <>
-            <JourneyCard plant={plant} />
+            <JourneyCard plant={plant} now={now} />
             <UpcomingCare plantId={plant.id} now={now} />
           </>
         ) : flower ? (
@@ -99,14 +99,14 @@ function Biography({ plant }: { plant: PlantDetail }) {
         ) : (
           <>
             <MemoryCard plant={plant} now={now} />
-            <AtAGlance plant={plant} />
+            <AtAGlance plant={plant} now={now} />
             <ThisSeason plantId={plant.id} />
             <UpcomingCare plantId={plant.id} now={now} />
           </>
         )}
         {/* Flowers (seasonal or perennial) compare blooms; trees and vegetables compare yield. */}
         {plant.record_kind === 'FLOWER' ? <FlowerYears plantId={plant.id} /> : <YearOnYear plantId={plant.id} now={now} crop={crop} />}
-        {!crop && !flower && <Milestones plant={plant} />}
+        {!crop && !flower && <Milestones plant={plant} now={now} />}
         <SanctuaryRecord plantId={plant.id} />
         {!ended &&
           (ending ? (

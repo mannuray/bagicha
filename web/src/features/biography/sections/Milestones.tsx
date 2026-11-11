@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { systemClock } from '../../../lib/clock';
 import { cx, Icon } from '../../../ui';
 import type { PlantDetail } from '../../plants';
 import { milestoneView, type FirstKey, type MilestoneView } from '../milestone-view';
@@ -12,9 +11,8 @@ const FIRSTS: FirstKey[] = ['firstFlowering', 'firstFruitSet', 'firstHarvest'];
  * Lifetime firsts. A tree that predates Bagicha shows the gardener's answer or an
  * estimate (clearly marked), not "Not yet" (spec 2026-11-11-old-tree-milestones).
  */
-export function Milestones({ plant }: { plant: PlantDetail }) {
+export function Milestones({ plant, now }: { plant: PlantDetail; now: Date }) {
   const { t, i18n } = useTranslation();
-  const now = systemClock.now();
   const planted = plant.planting_date_precision === 'UNKNOWN' ? null : plant.planting_date;
   const plantedText = planted
     ? plant.planting_date_precision === 'YEAR'

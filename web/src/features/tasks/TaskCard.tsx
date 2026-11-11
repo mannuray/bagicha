@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { systemClock } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
 import { Button, cx } from '../../ui';
 import { useUpdateTaskStatus } from './api';
@@ -9,12 +8,12 @@ import { closedLabel, dueLabel } from './this-week';
 /** Stitch Daily Path task card: title, urgency badge, due line, why it exists, Mark done / Skip. */
 export function TaskCard({
   task,
-  now = systemClock.now(),
+  now,
   showPlant = true,
   onError,
 }: {
   task: Task;
-  now?: Date;
+  now: Date;
   showPlant?: boolean;
   onError?: (err: unknown) => void;
 }) {
@@ -66,7 +65,7 @@ export function TaskCard({
 }
 
 /** A done or skipped task in the closed history: muted, struck through, no actions. */
-export function ClosedTaskCard({ task, now = systemClock.now(), showPlant = true }: { task: Task; now?: Date; showPlant?: boolean }) {
+export function ClosedTaskCard({ task, now, showPlant = true }: { task: Task; now: Date; showPlant?: boolean }) {
   const { t } = useTranslation();
   const label = closedLabel(task, now);
   return (

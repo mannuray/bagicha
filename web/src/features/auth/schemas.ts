@@ -32,6 +32,11 @@ export const verifyResponseSchema = z.object({
   user: userSchema,
 });
 
+/** Premium while its expiry is in the future (null expiry on FREE = not premium). */
+export function isPremium(user: User, now: Date): boolean {
+  return user.premium_expires_at !== null && new Date(user.premium_expires_at) > now;
+}
+
 /** Onboarding is done once we know where the garden is and what grows in it. */
 export function isProfileComplete(user: User): boolean {
   return Boolean(user.district && user.region_cluster && user.garden_types.length > 0);

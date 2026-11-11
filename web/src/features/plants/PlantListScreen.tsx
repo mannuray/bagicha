@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
+import { useNow } from '../../lib/clock';
 import { istDayDiff } from '../../lib/ist';
 import { Button, cx, EmptyState, ErrorState, Icon, LoadingState, Screen } from '../../ui';
 import { usePlants } from './api';
@@ -12,9 +13,9 @@ type Group = 'all' | 'trees' | 'crops' | 'flowers';
 const GROUPS: Group[] = ['all', 'trees', 'crops', 'flowers'];
 
 /** "Harvesting · day 40" for a growing crop; "Mature · planted 2015" for a tree. */
-function statusLine(plant: Plant, t: TFunction): string {
+function statusLine(plant: Plant, t: TFunction, now: Date): string {
   if (plant.crop_stage) {
-    const day = plant.season_started_at ? Math.max(0, istDayDiff(new Date(plant.season_started_at), new Date())) : null;
+    const day = plant.season_started_at ? Math.max(0, istDayDiff(new Date(plant.season_started_at), now)) : null;
     const flowerBloom = plant.record_kind === 'FLOWER' && plant.crop_stage === 'HARVESTING';
     return [t(flowerBloom ? 'crops.stage.BLOOMING' : `crops.stage.${plant.crop_stage}`), day === null ? null : t('plants.list.day', { day })].filter(Boolean).join(' · ');
   }
@@ -30,6 +31,7 @@ function statusLine(plant: Plant, t: TFunction): string {
 /** Stitch "Orchard Gallery": growing plants by group (trees, crops), with Want to grow and Past tabs. */
 /** `addSlot` lets the app put the garden chooser here without plants importing crops. */
 export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
+  const now = useNow();
   const { t } = useTranslation();
   // Home's garden tile links here with ?group=trees|crops (and &tab=planned for Want to grow).
   const [params, setParams] = useSearchParams();
@@ -104,14 +106,14 @@ export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
           </Link>
         )}
         {Array.from({ length: pages }, (_, i) => (
-          <PlantPage key={`${group}-${status}-${i}`} status={status} kind={kind} page={i + 1} isLast={i + 1 === pages} onMore={() => setPages((p) => p + 1)} />
+          <PlantPage key={`${group}-${status}-${i}`} status={status} kind={kind} page={i + 1} isLast={i + 1 === pages} onMore={() => setPages((p) => p + 1)} now={now} />
         ))}
       </main>
     </Screen>
   );
 }
 
-function PlantPage({ status, kind, page, isLast, onMore }: { status: Status; kind?: 'tree' | 'crop' | 'flower'; page: number; isLast: boolean; onMore: () => void }) {
+function PlantPage({ status, kind, page, isLast, onMore, now }: { status: Status; kind?: 'tree' | 'crop' | 'flower'; page: number; isLast: boolean; onMore: () => void; now: Date }) {
   const { t } = useTranslation();
   const query = usePlants(page, status, kind);
 
@@ -142,7 +144,7 @@ function PlantPage({ status, kind, page, isLast, onMore }: { status: Status; kin
   return (
     <>
       {items.map((plant) => (
-        <PlantCard key={plant.id} plant={plant} />
+        <PlantCard key={plant.id} plant={plant} now={now} />
       ))}
       {isLast && pagination.has_next && (
         <Button variant="tertiary" block onClick={onMore}>
@@ -153,7 +155,7 @@ function PlantPage({ status, kind, page, isLast, onMore }: { status: Status; kin
   );
 }
 
-function PlantCard({ plant }: { plant: Plant }) {
+function PlantCard({ plant, now }: { plant: Plant; now: Date }) {
   const { t, i18n } = useTranslation();
   return (
     <Link
@@ -174,7 +176,7 @@ function PlantCard({ plant }: { plant: Plant }) {
                 reason: t(`biography.end.reason.${plant.end_reason ?? 'UNKNOWN_CAUSE'}`),
                 date: new Date(plant.ended_at).toLocaleDateString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN', { month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }),
               })
-            : statusLine(plant, t)}
+            : statusLine(plant, t, now)}
         </span>
       </span>
       <Icon name="chevron_right" className="text-outline" />

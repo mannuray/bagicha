@@ -144,7 +144,7 @@ describe('tasks screen', () => {
     const { TaskCard } = await import('.');
     server.use(http.put(`${API}/ledger/plants/p1/tasks/t1`, () => HttpResponse.json(fail('X'), { status: 500 })));
     const { taskSchema } = await import('.');
-    renderWithApp(<TaskCard task={taskSchema.parse(taskRecord())} />);
+    renderWithApp(<TaskCard task={taskSchema.parse(taskRecord())} now={new Date()} />);
     await userEvent.click(screen.getByRole('button', { name: /mark done/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent(/something went wrong/i);
   });

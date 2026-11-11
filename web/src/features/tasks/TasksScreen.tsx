@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
-import { systemClock } from '../../lib/clock';
+import { useNow } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
 import { Button, EmptyState, Icon, NotInGarden, QueryState, Screen, TopBar, isPlantMissing } from '../../ui';
 import { useMaterializeTasks, useMyTasks, usePlantTasks } from './api';
@@ -71,7 +71,7 @@ function DailyPath({
   onError: (err: unknown) => void;
 }) {
   const { t } = useTranslation();
-  const now = systemClock.now();
+  const now = useNow();
   const nothingDue = tasks.every((task) => task.status !== 'PENDING');
   return (
     <div className="space-y-8">

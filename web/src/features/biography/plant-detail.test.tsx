@@ -442,3 +442,15 @@ describe('an old tree', () => {
   });
 });
 });
+
+describe('the page clock', () => {
+  it('the milestone estimate follows the clock the app provides, not the machine\'s', async () => {
+    const MANGO = { first_fruit_months: [36, 60], productive_until_months: [480, 720], lifespan_months: [720, 1200], note_key: null };
+    handlers({ plant: { planting_date: '2017-01-01T00:00:00.000Z', life_profile: MANGO } });
+    // In mid-2019 a 2017 mango is not yet past its first fruit.
+    renderWithApp(routes, { route: '/plants/p1', now: new Date('2019-06-01T06:00:00Z') });
+    const milestones = await screen.findByRole('region', { name: /milestones/i });
+    const harvest = within(milestones).getByText(/first harvest/i).closest('li') as HTMLElement;
+    expect(within(harvest).getByText(/not yet/i)).toBeInTheDocument();
+  });
+});

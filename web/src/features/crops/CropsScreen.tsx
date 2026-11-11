@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
+import { useNow } from '../../lib/clock';
 import { ErrorState, Icon, LoadingState, Pill, Screen, TopBar, cx } from '../../ui';
 import { useSession } from '../auth';
 import { useAllPlants, usePlants } from '../plants';
@@ -18,6 +19,7 @@ const TAG_FILTERS: Record<View, Filter[]> = { CROP: ['container', 'beginner', 'q
 export function CropsScreen() {
   const { t } = useTranslation();
   const { user } = useSession();
+  const now = useNow();
   const calendar = useCropCalendar();
   const places = usePlaces();
   const planned = usePlants(1, 'planned');
@@ -46,7 +48,7 @@ export function CropsScreen() {
   const open = visible.filter((c) => c.status === 'open');
   const soon = visible.filter((c) => c.status === 'soon');
   const later = visible.filter((c) => c.status === 'later');
-  const [month] = useState(() => new Date().toLocaleString('en-IN', { month: 'long' }));
+  const month = now.toLocaleString('en-IN', { month: 'long' });
   const filterList: Filter[] = sun === null ? TAG_FILTERS[view] : [...TAG_FILTERS[view], 'sun'];
 
   return (

@@ -2,13 +2,12 @@ import { useTranslation } from 'react-i18next';
 import { cx, ErrorState, LoadingState } from '../../../ui';
 import type { PlantDetail } from '../../plants';
 import { usePlantIntelligence } from '../../seasonal';
-import { systemClock } from '../../../lib/clock';
 import { STAGES } from '../growth-stage';
 import { lifeLine } from '../life-line';
 import { humanize } from './format';
 
 /** Lifelong stage (a 5-step track) next to this season's phase, so the two read as different things. */
-export function AtAGlance({ plant }: { plant: PlantDetail }) {
+export function AtAGlance({ plant, now }: { plant: PlantDetail; now: Date }) {
   const { t } = useTranslation();
   const intel = usePlantIntelligence(plant.id);
   const pack = intel.data?.seasonal_pack;
@@ -27,7 +26,7 @@ export function AtAGlance({ plant }: { plant: PlantDetail }) {
           </li>
         ))}
       </ol>
-      <LifeLineText plant={plant} />
+      <LifeLineText plant={plant} now={now} />
       {intel.isError ? (
         <ErrorState error={intel.error} onRetry={() => void intel.refetch()} />
       ) : !pack ? (
@@ -44,9 +43,9 @@ export function AtAGlance({ plant }: { plant: PlantDetail }) {
 }
 
 /** Where the tree is in a typical life for its species (spec: tree-life-and-loss §2.5). */
-function LifeLineText({ plant }: { plant: PlantDetail }) {
+function LifeLineText({ plant, now }: { plant: PlantDetail; now: Date }) {
   const { t } = useTranslation();
-  const line = lifeLine(plant, systemClock.now());
+  const line = lifeLine(plant, now);
   if (!line) return null;
   const range = line.range ? t(`biography.life.range_${line.range.unit}`, { min: line.range.min, max: line.range.max }) : '';
   const age = t(`biography.life.age_${line.age.unit}`, { count: line.age.count });

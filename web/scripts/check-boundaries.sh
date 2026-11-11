@@ -17,6 +17,10 @@ out=$(grep -rnE "from ['\"]msw" src --include='*.ts' --include='*.tsx' | grep -v
 out=$(grep -rn "seasonal/weather" src --include='*.ts' --include='*.tsx' | grep -v -e "\.test\.tsx\?:" -e "src/test/" || true)
 [ -n "$out" ] && fail "the app must not call seasonal/weather (mock data)" "$out"
 
+# One clock per app (lib/clock): screens take "now" from useNow() or a prop, never read it.
+out=$(grep -rnE "systemClock|new Date\(\)|Date\.now\(\)" src --include='*.ts' --include='*.tsx' | grep -v -e "src/lib/clock.ts" -e "src/app/providers.tsx" -e "\.test\.tsx\?:" -e "src/test/" || true)
+[ -n "$out" ] && fail "the clock read outside lib/clock (use useNow() or a now prop)" "$out"
+
 node scripts/check-domain-imports.js || status=1
 [ $status -eq 0 ] && echo "boundaries: ok"
 exit $status
