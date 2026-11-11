@@ -41,6 +41,10 @@ export interface ApiClientOptions {
   onSlow?: (slow: boolean) => void;
   /** Where unexpected failures are reported (default: lib/report-error). */
   report?: (err: unknown, context: Record<string, unknown>) => void;
+  /** A fresh id for each request's X-Request-Id (default: crypto). */
+  requestId?: () => string;
+  /** The page origin a relative baseUrl resolves against (default: the current page's). */
+  origin?: string;
 }
 
 export const DEFAULT_TIMEOUT_MS = 90_000;
@@ -71,7 +75,7 @@ const successEnvelope = z.object({
 });
 
 /** crypto.randomUUID only exists on secure origins; a phone on plain-http LAN has getRandomValues. */
-function requestId(): string {
+function cryptoRequestId(): string {
   if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
@@ -81,6 +85,8 @@ function requestId(): string {
 export function createApiClient(opts: ApiClientOptions): ApiClient {
   const doFetch = opts.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
   const report = opts.report ?? reportError;
+  const nextRequestId = opts.requestId ?? cryptoRequestId;
+  const origin = opts.origin ?? globalThis.location?.origin ?? 'http://localhost';
 
   function contractError(status: number, path: string, cause: unknown): ApiError {
     report(cause, { path, kind: 'contract' });
@@ -115,12 +121,12 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
   async function request(path: string, init: RequestInit, query?: Query) {
     // A relative base ("/api/v1", the deployed app behind the Vercel rewrite) resolves
     // against this page's origin; an absolute one (local dev, tests) is used as is.
-    const url = new URL(opts.baseUrl + path, globalThis.location?.origin ?? 'http://localhost');
+    const url = new URL(opts.baseUrl + path, origin);
     for (const [key, value] of Object.entries(query ?? {})) {
       if (value !== undefined) url.searchParams.set(key, String(value));
     }
     const headers = new Headers(init.headers);
-    headers.set('X-Request-Id', requestId());
+    headers.set('X-Request-Id', nextRequestId());
     const token = opts.tokens.get();
     if (token) headers.set('Authorization', `Bearer ${token}`);
 

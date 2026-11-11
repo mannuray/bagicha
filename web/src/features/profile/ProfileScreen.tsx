@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNow } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Chip, Icon, Screen, TextField, formSubmit } from '../../ui';
-import { isPremium, useSession } from '../auth';
+import { useSession } from '../auth';
 import { DistrictField } from './DistrictField';
 import { ProfilePhoto } from './ProfilePhoto';
 import { RegionChooser } from './RegionChooser';
@@ -14,12 +13,11 @@ export function ProfileScreen() {
   const { t } = useTranslation();
   const { user } = useSession();
   const f = useProfileForm(user);
-  const now = useNow();
 
   if (!user) return null;
   const regionLabel = regionById(user.region_cluster);
 
-  const premium = isPremium(user, now);
+  const premium = f.premium;
   const open = f.open;
 
   return (

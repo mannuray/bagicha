@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useSession, type User } from '../auth';
+import { useNow } from '../../lib/clock';
+import { isPremium, useSession, type User } from '../auth';
 import { useUpdateProfile } from './api';
 import { useDistrictRegion } from './useDistrictRegion';
 
 /** ViewModel for editing the profile: name, district → region, language; a district is required. */
 export function useProfileForm(user: User | null) {
   const update = useUpdateProfile();
+  const now = useNow();
   const navigate = useNavigate();
   const { signOut } = useSession();
   const [editing, setEditing] = useState(false);
@@ -36,6 +38,8 @@ export function useProfileForm(user: User | null) {
   return {
     ...choice,
     editing,
+    /** Premium right now (not expired). */
+    premium: user ? isPremium(user, now) : false,
     open: () => setEditing(true),
     close: () => setEditing(false),
     name, setName,

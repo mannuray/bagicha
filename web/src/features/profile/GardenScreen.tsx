@@ -1,9 +1,7 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { messageFor } from '../../lib/error-messages';
 import { Button, cx, Icon, Screen } from '../../ui';
-import { useSession } from '../auth';
-import { useOnboardingStep } from './useOnboardingStep';
+import { useGardenStep } from './useOnboardingChoices';
 import heroPhoto from '../../assets/stitch/garden-hero.jpg';
 import treesPhoto from '../../assets/stitch/garden-trees.jpg';
 import veggiesPhoto from '../../assets/stitch/garden-veggies.jpg';
@@ -18,12 +16,8 @@ const TYPES = [
 /** Stitch "Your Green Blueprint", with its photos bundled locally. */
 export function GardenScreen() {
   const { t } = useTranslation();
-  const { user } = useSession();
-  const step = useOnboardingStep('garden');
-  const [types, setTypes] = useState<string[]>(user?.garden_types ?? []);
-
-  const toggle = (type: string) =>
-    setTypes((current) => (current.includes(type) ? current.filter((t) => t !== type) : [...current, type]));
+  const step = useGardenStep();
+  const { types, toggle } = step;
 
   return (
     <Screen>
@@ -87,9 +81,9 @@ export function GardenScreen() {
         <Button
           block
           busy={step.busy}
-          disabled={types.length === 0}
+          disabled={!step.canSave}
           className="py-3 text-base"
-          onClick={() => step.save({ garden_types: types })}
+          onClick={step.save}
         >
           {t('onboarding.garden.finish')}
           <Icon name="arrow_forward" />

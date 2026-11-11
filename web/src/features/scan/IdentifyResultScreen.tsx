@@ -1,18 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate } from 'react-router';
 import { Surface } from '../../ui';
-import { useVisionApi } from './api';
 import { ResultFrame } from './ResultFrame';
-import { useScanState } from './scan-state';
-import { useScanRequest } from './use-scan-request';
+import { useIdentifyResult } from './useScanResult';
 
 export function IdentifyResultScreen() {
   const { t } = useTranslation();
-  const { scan } = useScanState();
-  const vision = useVisionApi();
-  const isIdentify = scan?.mode === 'identify';
-  const identify = useScanRequest(isIdentify ? scan : null, (s) => vision.identify({ image_base64: s.base64 }));
-  if (!scan || !isIdentify) return <Navigate to="/scan" replace />;
+  const { scan, ...identify } = useIdentifyResult();
+  if (!scan) return <Navigate to="/scan" replace />;
 
   const result = identify.data;
   const care = result?.care_summary;

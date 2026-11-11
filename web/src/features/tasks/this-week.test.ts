@@ -83,3 +83,41 @@ describe('upcoming', () => {
     expect(upcoming(list, now, 3).map((x) => x.id)).toEqual(['late', 'week', 'later']);
   });
 });
+
+describe('hasPendingSoon and taskSections', () => {
+  const now = new Date('2026-11-12T06:30:00Z');
+  const list = [task('late', '2026-11-01T00:00:00Z'), task('week', '2026-11-14T00:00:00Z'), task('later', '2026-12-30T00:00:00Z')];
+
+  it('something is due this week or overdue', async () => {
+    const { hasPendingSoon } = await import('./this-week');
+    expect(hasPendingSoon(list, now)).toBe(true);
+    expect(hasPendingSoon([task('later', '2026-12-30T00:00:00Z')], now)).toBe(false);
+  });
+
+  it('the full list: overdue, then the plan; a capped list: overdue and this week only', async () => {
+    const { taskSections } = await import('./this-week');
+    expect(taskSections(list, now).map((s) => [s.key, s.items.map((x) => x.id)])).toEqual([
+      ['overdue', ['late']],
+      ['plan', ['week', 'later']],
+    ]);
+    expect(taskSections(list, now, 1).map((s) => [s.key, s.items.map((x) => x.id)])).toEqual([['week', ['late']]]);
+  });
+
+  it('empty sections are left out', async () => {
+    const { taskSections } = await import('./this-week');
+    expect(taskSections([task('later', '2026-12-30T00:00:00Z')], now).map((s) => s.key)).toEqual(['plan']);
+  });
+});
+
+describe('closedTasks', () => {
+  it('done and skipped tasks, most recent first, capped', async () => {
+    const { closedTasks } = await import('./this-week');
+    const list = [
+      task('open', '2026-11-20T00:00:00Z'),
+      task('old', '2026-10-01T00:00:00Z', { status: 'COMPLETED', completed_at: '2026-10-02T00:00:00Z' }),
+      task('new', '2026-11-01T00:00:00Z', { status: 'SKIPPED', completed_at: '2026-11-03T00:00:00Z' }),
+    ];
+    expect(closedTasks(list).map((x) => x.id)).toEqual(['new', 'old']);
+    expect(closedTasks(list, 1).map((x) => x.id)).toEqual(['new']);
+  });
+});

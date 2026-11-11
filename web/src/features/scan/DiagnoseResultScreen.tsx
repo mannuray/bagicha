@@ -2,22 +2,15 @@ import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router';
 import { Icon, Surface } from '../../ui';
 import { TaskCard, usePlantTasks } from '../tasks';
-import { useVisionApi } from './api';
 import { ResultFrame } from './ResultFrame';
-import { useScanState } from './scan-state';
-import { useScanRequest } from './use-scan-request';
+import { useDiagnoseResult } from './useScanResult';
 import { useNow } from '../../lib/clock';
 
 export function DiagnoseResultScreen() {
   const now = useNow();
   const { t } = useTranslation();
-  const { scan } = useScanState();
-  const vision = useVisionApi();
-  const isDiagnose = scan?.mode === 'diagnose';
-  const diagnose = useScanRequest(isDiagnose ? scan : null, (s) =>
-    vision.diagnose({ image_base64: s.base64, plant_id: s.plantId, ...(s.note ? { note: s.note } : {}) }),
-  );
-  if (!scan || !isDiagnose) return <Navigate to="/scan" replace />;
+  const { scan, ...diagnose } = useDiagnoseResult();
+  if (!scan) return <Navigate to="/scan" replace />;
 
   const result = diagnose.data;
   return (

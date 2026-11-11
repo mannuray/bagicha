@@ -1,9 +1,7 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Icon, cx } from '../../ui';
-import { useSession } from '../auth';
-import { useOnboardingStep } from './useOnboardingStep';
+import { useLanguageStep } from './useOnboardingChoices';
 import { OnboardingLayout } from './OnboardingLayout';
 
 const LANGUAGES = [
@@ -13,9 +11,8 @@ const LANGUAGES = [
 
 export function LanguageScreen() {
   const { t } = useTranslation();
-  const { user } = useSession();
-  const step = useOnboardingStep('language');
-  const [lang, setLang] = useState<string>(user?.language_pref ?? 'en');
+  const step = useLanguageStep();
+  const { lang, setLang } = step;
 
   return (
     <OnboardingLayout step={1} icon="translate" title={t('onboarding.language.title')} subtitle={t('onboarding.language.subtitle')}>
@@ -52,7 +49,7 @@ export function LanguageScreen() {
       <Button
         block
         busy={step.busy}
-        onClick={() => step.save({ language_pref: lang })}
+        onClick={step.save}
       >
         {t('common.continue')}
       </Button>

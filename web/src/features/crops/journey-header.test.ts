@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cropStatusLine, harvestsIn, journeyActions, journeyStep, journeySteps, openCycle } from './journey-header';
+import { cropStatusLine, harvestsIn, journeyActions, journeyStep, journeySteps, nextStep, openCycle } from './journey-header';
 
 describe('cropStatusLine', () => {
   it('counts IST calendar days, so a crop sown last night is on day 1 this morning', () => {
@@ -61,5 +61,14 @@ describe('journeyActions: what a crop stage lets you do', () => {
     expect(journeyActions('NURSERY', false)).toMatchObject({ transplant: true, endSeason: true, logHarvest: false, showProgress: true });
     expect(journeyActions('IN_GROUND', false)).toMatchObject({ logHarvest: true, endSeason: true, showProgress: true, start: false });
     expect(journeyActions('HARVESTING', false)).toMatchObject({ logHarvest: true, endSeason: true, showProgress: false });
+  });
+});
+
+describe('nextStep: the journey card\'s "next"', () => {
+  const t = (id: string, due: string | null, over: Record<string, unknown> = {}) =>
+    ({ id, due_date: due, status: 'PENDING', source: 'CROP_PLAN', ...over }) as unknown as Parameters<typeof nextStep>[0][number];
+  it('the earliest pending crop-plan task; season pack and closed tasks are ignored', () => {
+    expect(nextStep([t('b', '2026-11-20'), t('a', '2026-11-15'), t('x', '2026-11-01', { source: 'SEASONAL_PACK' }), t('y', '2026-11-02', { status: 'COMPLETED' })])?.id).toBe('a');
+    expect(nextStep([])).toBeNull();
   });
 });

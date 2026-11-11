@@ -217,4 +217,22 @@ describe('api client', () => {
     await expect(api.get('/ledger/plants/p1', plant)).rejects.toMatchObject({ code: 'CONTRACT_MISMATCH' });
     expect(report).toHaveBeenCalledWith(expect.anything(), { path: '/ledger/plants/p1', kind: 'contract' });
   });
+
+  it('takes its request ids and page origin as options', async () => {
+    let seen: { id: string | null; url: string } | undefined;
+    const fetchImpl: typeof fetch = async (url, init) => {
+      seen = { id: new Headers(init?.headers).get('X-Request-Id'), url: String(url) };
+      return new Response(JSON.stringify({ success: true, data: { ok: true } }), { status: 200 });
+    };
+    const api = createApiClient({
+      baseUrl: '/api/v1',
+      tokens: memoryTokens(null),
+      onUnauthorized: vi.fn(),
+      fetchImpl,
+      requestId: () => 'req-1',
+      origin: 'https://garden.test',
+    });
+    await api.get('/health', z.unknown());
+    expect(seen).toEqual({ id: 'req-1', url: 'https://garden.test/api/v1/health' });
+  });
 });

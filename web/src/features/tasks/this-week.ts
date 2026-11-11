@@ -59,3 +59,29 @@ export function upcoming(tasks: Task[], now: Date, n: number): Task[] {
   const { overdue, week, later } = thisWeek(tasks, now);
   return [...overdue, ...week, ...later].slice(0, n);
 }
+
+/** Anything overdue or due this week. */
+export function hasPendingSoon(tasks: Task[], now: Date): boolean {
+  const g = thisWeek(tasks, now);
+  return g.overdue.length + g.week.length > 0;
+}
+
+export interface TaskSection {
+  key: 'overdue' | 'plan' | 'week';
+  items: Task[];
+}
+
+/**
+ * How a task list is grouped: Overdue then the plan; or, capped at `limit`, one list
+ * of overdue and this week's tasks (Home). Empty sections are left out.
+ */
+export function taskSections(tasks: Task[], now: Date, limit?: number): TaskSection[] {
+  const groups = thisWeek(tasks, now);
+  const sections: TaskSection[] = limit
+    ? [{ key: 'week', items: [...groups.overdue, ...groups.week].slice(0, limit) }]
+    : [
+        { key: 'overdue', items: groups.overdue },
+        { key: 'plan', items: [...groups.week, ...groups.later] },
+      ];
+  return sections.filter((s) => s.items.length > 0);
+}
