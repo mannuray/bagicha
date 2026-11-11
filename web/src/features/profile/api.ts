@@ -31,6 +31,7 @@ const districtSchema = z.object({
   region: z.enum(REGION_CLUSTERS),
   label: z.string(),
   aliases: z.array(z.string()),
+  needsState: z.boolean().optional(),
 });
 const located = z.object({ district: z.string(), state: z.string(), region: z.enum(REGION_CLUSTERS), label: z.string() }).nullable();
 
@@ -44,9 +45,12 @@ export function useDistricts() {
   });
 }
 
-/** The district at a point (looked up on our server only), or null. */
+/** About 100 m: plenty to find a district, and no more of someone's home than that. */
+export const roundCoordinate = (value: number) => Math.round(value * 1000) / 1000;
+
+/** The district at a point, looked up on our server only. POSTed so the point never sits in a URL. */
 export function useLocateDistrict() {
   const api = useApi();
   return (latitude: number, longitude: number) =>
-    api.get(`/regions/locate?lat=${latitude}&lng=${longitude}`, located);
+    api.send('POST', '/regions/locate', { lat: roundCoordinate(latitude), lng: roundCoordinate(longitude) }, located);
 }

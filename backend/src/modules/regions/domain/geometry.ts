@@ -87,3 +87,41 @@ export function clipAtLatitude(
     .map((poly) => poly.map(clipRing).filter((ring) => ring.length >= 4))
     .filter((poly) => poly.length > 0 && poly[0].length >= 4);
 }
+
+const KM_PER_DEGREE = 111.32;
+
+/** Shortest distance in km from a point to any edge of the polygons (flat-earth, fine at district scale). */
+export function distanceKm([px, py]: Point, polygons: Polygon[]): number {
+  const kx = KM_PER_DEGREE * Math.cos((py * Math.PI) / 180);
+  let best = Infinity;
+  for (const poly of polygons)
+    for (const ring of poly)
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [ax, ay] = [
+          (ring[j][0] - px) * kx,
+          (ring[j][1] - py) * KM_PER_DEGREE,
+        ];
+        const [bx, by] = [
+          (ring[i][0] - px) * kx,
+          (ring[i][1] - py) * KM_PER_DEGREE,
+        ];
+        const [dx, dy] = [bx - ax, by - ay];
+        const t =
+          dx || dy
+            ? Math.max(
+                0,
+                Math.min(1, -(ax * dx + ay * dy) / (dx * dx + dy * dy)),
+              )
+            : 0;
+        best = Math.min(best, Math.hypot(ax + t * dx, ay + t * dy));
+      }
+  return best;
+}
+
+/** The box grown by `km` on every side. */
+export function growBBox([minX, minY, maxX, maxY]: BBox, km: number): BBox {
+  const dy = km / KM_PER_DEGREE;
+  const dx =
+    km / (KM_PER_DEGREE * Math.cos((((minY + maxY) / 2) * Math.PI) / 180));
+  return [minX - dx, minY - dy, maxX + dx, maxY + dy];
+}

@@ -82,7 +82,8 @@
       "locationUnavailable": "We couldn't get your location — that's fine, your region is enough.",
       "detected": "Detected {{district}}, {{state}} · {{region}}. Change it if that's wrong.",
       "noDistrict": "We couldn't find your district from your location. Type it instead.",
-      "suggestions": "District suggestions"
+      "suggestions": "District suggestions",
+      "listFailed": "We couldn't load the district list."
     },
     "garden": {
       "title": "Your Green Blueprint",

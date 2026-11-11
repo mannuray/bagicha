@@ -24,6 +24,8 @@ export interface DistrictOption {
   region: RegionCluster;
   label: string;
   aliases: string[];
+  /** Delhi's "East", "North East"…: only a match with the state ("North East, Delhi"). */
+  needsState?: boolean;
 }
 
 /** Lower-case words only; a trailing "district" or "city" is dropped ("Patna district" → "patna"). */
@@ -50,7 +52,9 @@ export function knownRegion(district: string, list: readonly DistrictOption[]): 
   if (byLabel) return byLabel.region;
   const [name, ...rest] = text.split(',').map((part) => part.trim());
   const state = rest.join(' ');
-  const matches = list.filter((d) => forms(d).includes(name) && (!state || norm(d.state).startsWith(state)));
+  const matches = list.filter(
+    (d) => forms(d).includes(name) && (state ? norm(d.state).startsWith(state) : !d.needsState),
+  );
   return matches.length === 1 ? matches[0].region : null;
 }
 

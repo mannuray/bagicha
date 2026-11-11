@@ -6,6 +6,7 @@ import { messageFor } from '../../lib/error-messages';
 import { Button, Chip, Icon, Screen, TextField } from '../../ui';
 import { useSession, type RegionCluster } from '../auth';
 import { useDistricts, useUpdateProfile } from './api';
+import { DistrictField } from './DistrictField';
 import { knownRegion, regionById, REGIONS } from './regions';
 
 export function ProfileScreen() {
@@ -110,12 +111,13 @@ export function ProfileScreen() {
         ) : (
           <form onSubmit={save} className="space-y-4 rounded-xl bg-surface-container-low p-4">
             <TextField label={t('profile.name')} value={name} onChange={(e) => setName(e.target.value)} />
-            <TextField
+            <DistrictField
               label={t('profile.district')}
               value={district}
+              list={districts.data ?? []}
               error={needDistrict ? t('profile.needDistrict') : null}
-              onChange={(e) => {
-                setDistrict(e.target.value);
+              onChange={(text) => {
+                setDistrict(text);
                 setNeedDistrict(false);
               }}
             />

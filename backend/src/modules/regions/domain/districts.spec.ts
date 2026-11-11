@@ -185,4 +185,14 @@ describe('matching what people type', () => {
     expect(matchDistrict('')).toBeNull();
     expect(matchDistrict('my garden')).toBeNull();
   });
+
+  it('places plains towns by where they really are', () => {
+    // Siliguri spans Darjeeling (hills district) and Jalpaiguri but is plains: no guess, the gardener picks.
+    expect(matchDistrict('Siliguri')).toBeNull();
+    expect(matchDistrict('Haldwani')).toBeNull();
+    expect(matchDistrict('Navi Mumbai')).toMatchObject({
+      name: 'Thane',
+      region: R.COASTAL_HUMID,
+    });
+  });
 });

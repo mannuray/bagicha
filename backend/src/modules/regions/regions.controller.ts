@@ -1,8 +1,16 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { DISTRICTS } from './domain/districts';
 import { districtLabel } from './domain/district-match';
 import { DistrictLocator } from './district-locator';
+import { LocateDto } from './dto/locate.dto';
 
 /** India's lat/lng box: anything outside is answered with null without a lookup. */
 const INDIA = { minLat: 6, maxLat: 38, minLng: 68, maxLng: 98 };
@@ -14,6 +22,7 @@ const LIST = DISTRICTS.filter((d) => d.selectable !== false).map((d) => ({
   region: d.region,
   label: districtLabel(d),
   aliases: d.aliases,
+  ...(d.needsState ? { needsState: true } : {}),
 }));
 
 @Controller('regions')
@@ -26,11 +35,13 @@ export class RegionsController {
     return LIST;
   }
 
-  /** The district at a point. The coordinates are not logged or stored here. */
-  @Get('locate')
-  locate(@Query('lat') latText: string, @Query('lng') lngText: string) {
-    const lat = Number(latText);
-    const lng = Number(lngText);
+  /**
+   * The district at a point. A POST body, so the coordinates never appear in a
+   * URL that request logs, monitoring or traces would record.
+   */
+  @Post('locate')
+  @HttpCode(200)
+  locate(@Body() { lat, lng }: LocateDto) {
     if (
       !(
         lat >= INDIA.minLat &&

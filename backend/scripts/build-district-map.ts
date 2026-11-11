@@ -3,7 +3,10 @@
  * → src/modules/regions/data/district-boundaries.json, simplified and linked to the
  * district list. Run by a developer; the output is committed.
  *
- *   npx ts-node -T scripts/build-district-map.ts <adm2.geojson> <adm1.geojson>
+ *   npx ts-node -T scripts/build-district-map.ts <adm2.geojson> <adm1.geojson> [simplify%]
+ *
+ * Use the FULL-resolution ADM2 file: the "simplified" one drops most Lakshadweep
+ * islands and enclave detail (Yanam).
  *
  * Simplification uses mapshaper through npx (not a project dependency).
  * Source: geoBoundaries IND ADM2 release 9469f09, ODbL 1.0 (spec §2.2).
@@ -22,9 +25,10 @@ const OUT = join(__dirname, '../src/modules/regions/data/district-boundaries.jso
 const MAX_BYTES = 1.5 * 1024 * 1024;
 const polygonsOf = (g: Geometry): Polygon[] => (g.type === 'Polygon' ? [g.coordinates as Polygon] : (g.coordinates as Polygon[]));
 
-const [adm2Path, adm1Path] = process.argv.slice(2);
+const [adm2Path, adm1Path, percent = '1.5%'] = process.argv.slice(2);
+if (!adm2Path || !adm1Path) throw new Error('Usage: build-district-map.ts <adm2.geojson> <adm1.geojson> [simplify%]');
 const simplified = join(mkdtempSync(join(tmpdir(), 'districts-')), 'adm2.json');
-execFileSync('npx', ['-y', 'mapshaper@0.6.102', adm2Path, '-simplify', '8%', 'keep-shapes', '-o', 'precision=0.0001', 'format=geojson', simplified], { stdio: 'inherit' });
+execFileSync('npx', ['-y', 'mapshaper@0.6.102', adm2Path, '-simplify', percent, 'keep-shapes', '-o', 'precision=0.0001', 'format=geojson', simplified], { stdio: 'inherit' });
 
 const states = (JSON.parse(readFileSync(adm1Path, 'utf8')) as { features: Feature[] }).features.map((f) => ({
   name: f.properties.shapeName,
@@ -45,8 +49,17 @@ const add = (shapeName: string, polygons: Polygon[]) => {
   out.set(key, entry);
 };
 
-for (const f of (JSON.parse(readFileSync(simplified, 'utf8')) as { features: Feature[] }).features) {
-  const polygons = polygonsOf(f.geometry);
+// Simplifying can drop whole islands from a district (Lakshadweep's 23 become 4):
+// each dropped island comes back with its original outline, rounded like the rest.
+const round = (polygons: Polygon[]): Polygon[] =>
+  polygons.map((poly) => poly.map((ring) => ring.map(([x, y]) => [Math.round(x * 1e4) / 1e4, Math.round(y * 1e4) / 1e4])));
+const originals = (JSON.parse(readFileSync(adm2Path, 'utf8')) as { features: Feature[] }).features;
+
+for (const [index, f] of (JSON.parse(readFileSync(simplified, 'utf8')) as { features: Feature[] }).features.entries()) {
+  const original = polygonsOf(originals[index].geometry);
+  const kept = polygonsOf(f.geometry);
+  const dropped = original.filter((poly) => !inPolygons(interiorPoint([poly]), kept));
+  const polygons = dropped.length ? [...kept, ...round(dropped)] : kept;
   if (f.properties.shapeName.trim() === 'DATA NOT AVAILABLE') {
     // Spec §2.5.4: treated as India — PoK (J&K) south of 35°N, Gilgit-Baltistan (Ladakh) north of it.
     add(f.properties.shapeName, clipAtLatitude(polygons, 35, 'south'));

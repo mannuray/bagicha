@@ -60,6 +60,18 @@ describe('DistrictLocator', () => {
   });
 
   it.each([
+    ['Kavaratti (Lakshadweep)', 10.563, 72.637, 'Lakshadweep'],
+    ['Agatti (Lakshadweep)', 10.86, 72.19, 'Lakshadweep'],
+    ['Minicoy (Lakshadweep)', 8.28, 73.05, 'Lakshadweep'],
+    ['Diu', 20.71, 70.98, 'Diu'],
+    ['Campbell Bay (Great Nicobar)', 7.0, 93.93, 'Nicobar'],
+    // The source draws Yanam a little east of the town's listed centre; a point in its mapped area.
+    ['Yanam', 16.7, 82.25, 'Yanam'],
+  ])('finds small islands and enclaves: %s', (_, lat, lng, district) => {
+    expect(locator.locate(lat, lng)?.district).toBe(district);
+  });
+
+  it.each([
     ['the Bay of Bengal', 15.0, 88.0],
     ['Kathmandu', 27.71, 85.32],
     ['a point off the map', 60, 10],

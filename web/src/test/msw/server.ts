@@ -19,6 +19,7 @@ export const TEST_DISTRICTS = [
     label: 'Chhatrapati Sambhajinagar, Maharashtra',
     aliases: ['Aurangabad'],
   },
+  { name: 'North East', state: 'Delhi', region: 'NORTH_INDIA', label: 'North East, Delhi', aliases: ['North East Delhi'], needsState: true },
 ];
 
 /**
