@@ -47,7 +47,7 @@ export function LoginScreen() {
             <label htmlFor="phone" className="sr-only">
               {t('auth.login.phoneLabel')}
             </label>
-            <div className="flex items-center rounded-full bg-surface-container px-4 py-3 transition-all focus-within:bg-surface-container-high focus-within:ring-2 focus-within:ring-primary/20">
+            <div className="flex items-center rounded-full bg-surface-container px-4 py-3 transition-all focus-within:bg-surface-container-high focus-within:ring-2 focus-within:ring-secondary/50">
               <span className="mr-3 pr-3 font-semibold text-primary/60">+91</span>
               <input
                 id="phone"
@@ -59,7 +59,7 @@ export function LoginScreen() {
                 onChange={(e) => setPhone(e.target.value)}
                 aria-invalid={invalid || undefined}
                 aria-describedby={invalid ? 'phone-error' : undefined}
-                className="w-full bg-transparent font-medium text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none"
+                className="w-full min-w-0 bg-transparent font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40 focus:outline-none focus-visible:outline-none"
               />
               <Icon name="smartphone" className="text-primary/40" />
             </div>

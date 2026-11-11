@@ -18,7 +18,20 @@ body {
   @apply bg-surface text-on-surface font-body antialiased;
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-secondary);
-  outline-offset: 2px;
+/* In the base layer so a control that draws its own focus (the phone pill)
+   can switch this off with a utility; unlayered CSS would always win. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 2px;
+  }
+
+  /* Browser autofill paints a grey or blue box inside our pill-shaped fields: keep them see-through. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-on-surface);
+    caret-color: var(--color-on-surface);
+    transition: background-color 600000s 0s;
+  }
 }
