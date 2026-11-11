@@ -157,6 +157,9 @@ This slice is for everyone's garden, not one user's.
 6. **Flowers:** the next slice after vegetables, with PINCHING, DEADHEADING and BLOOM_PEAK and seasonal beds.
 7. **Push notifications** for every reminder (also parked in the tree specs).
 8. **Full district and pincode climate mapping:** finer than the three climate groups.
+9. **Regional gardener's tips:** editorial content per region and month (from the Stitch screens; see `2026-11-11-vegetable-screens-design.md` §4).
+10. **Yield targets per crop and container size**, e.g. "3 kg over 5 cuts".
+11. **A curated card tag set**, e.g. "Fast grower", "Aromatic", "Deep pot".
 
 ## 4. Non-goals
 - Everything in §3.
