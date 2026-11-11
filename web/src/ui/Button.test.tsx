@@ -30,4 +30,13 @@ describe('Button', () => {
     const button = screen.getByRole('button', { name: 'Go' });
     expect(button).toHaveClass('min-h-11', 'rounded-full');
   });
+
+  it('has a small size for in-card actions: shorter, smaller text, a softer shadow', () => {
+    render(<Button size="sm">Done</Button>);
+    const button = screen.getByRole('button', { name: 'Done' });
+    expect(button.className).toMatch(/\bmin-h-10\b/);
+    expect(button.className).toMatch(/\btext-xs\b/);
+    expect(button.className).not.toMatch(/\bmin-h-11\b/);
+    expect(button.className).not.toMatch(/shadow-\[0_8px_40px/);
+  });
 });

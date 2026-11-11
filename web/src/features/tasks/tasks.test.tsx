@@ -38,6 +38,17 @@ describe('tasks screen', () => {
     expect(puts).toBe(1);
   });
 
+  it('uses compact action buttons, not a full-width bar', async () => {
+    server.use(http.get(`${API}/ledger/tasks`, () => HttpResponse.json(pageOf([taskRecord()]))));
+    renderWithApp(routes, { route: '/tasks' });
+    const card = await screen.findByRole('article', { name: /plan pest response/i });
+    for (const name of [/mark done/i, /skip/i]) {
+      const button = within(card).getByRole('button', { name });
+      expect(button.className).toMatch(/\bmin-h-10\b/);
+      expect(button.className).not.toMatch(/\bflex-1\b/);
+    }
+  });
+
   it('refetches with a message when the task is gone', async () => {
     let gets = 0;
     server.use(

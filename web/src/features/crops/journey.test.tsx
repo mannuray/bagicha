@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cycleRecord, ok, pagedResponse, pageOf, plantRecord, taskRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
@@ -152,6 +152,13 @@ describe('the crop page', () => {
   });
 
   describe('journey page', () => {
+    // Day counts are IST calendar days; at real midnight-1 am IST "n days and an hour ago"
+    // crosses a day boundary. Pin noon IST.
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true });
+      vi.setSystemTime(new Date('2026-11-10T06:30:00Z'));
+    });
+    afterEach(() => vi.useRealTimers());
     const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 3600 * 1000 - 3600 * 1000).toISOString();
     const openSeason = (started: string, place: string | null = 'pl1') =>
       server.use(
@@ -302,6 +309,11 @@ describe('the crop page', () => {
   });
 
   describe('a seasonal flower', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true });
+      vi.setSystemTime(new Date('2026-11-10T06:30:00Z'));
+    });
+    afterEach(() => vi.useRealTimers());
     it('blooms instead of harvesting, logs a bloom, and has no rotation note', async () => {
       handlers({ name: 'Marigold (Genda)', crop_id: 'marigold', crop_stage: 'HARVESTING', record_kind: 'FLOWER' }, { conflict: true });
       server.use(

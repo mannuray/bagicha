@@ -53,12 +53,12 @@ export function TaskCard({
           {messageFor(update.error)}
         </p>
       )}
-      <div className="mt-4 flex gap-3">
-        <Button variant="primary" busy={update.isPending} onClick={() => act('COMPLETED')} className="flex-1 uppercase tracking-wider">
-          {t('tasks.complete')}
-        </Button>
-        <Button variant="quiet" disabled={update.isPending} onClick={() => act('SKIPPED')} className="bg-surface uppercase tracking-wider text-on-surface-variant">
+      <div className="mt-3 flex justify-end gap-2">
+        <Button variant="quiet" size="sm" disabled={update.isPending} onClick={() => act('SKIPPED')} className="bg-surface uppercase tracking-wider text-on-surface-variant">
           {t('tasks.skip')}
+        </Button>
+        <Button variant="primary" size="sm" busy={update.isPending} onClick={() => act('COMPLETED')} className="uppercase tracking-wider">
+          {t('tasks.complete')}
         </Button>
       </div>
     </article>
