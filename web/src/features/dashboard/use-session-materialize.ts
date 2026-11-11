@@ -4,7 +4,7 @@ import { useApi } from '../../lib/api';
 import { queryKeys } from '../../lib/query-keys';
 import { reportError } from '../../lib/report-error';
 import { useSessionStore } from '../auth';
-import { materializeTasks } from '../tasks';
+import { materializeTasks } from '../seasonal';
 
 export interface MaterializeState {
   /** Every request for the current plant set has finished. */

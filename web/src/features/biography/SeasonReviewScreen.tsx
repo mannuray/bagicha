@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
-import { EmptyState, ErrorState, Icon, LoadingState, NotInGarden, Screen, Surface, TopBar, isPlantMissing } from '../../ui';
-import { useCycles, useMitigationPlan, type MitigationPlan } from '../plants';
+import { EmptyState, ErrorState, Icon, LoadingState, Screen, Surface, TopBar } from '../../ui';
+import { isPlantMissing, type MitigationPlan, NotInGarden, useCycles, useMitigationPlan } from '../plants';
 
 /** "Learn for next season": the mitigation plan for the latest cycle. */
 export function SeasonReviewScreen() {

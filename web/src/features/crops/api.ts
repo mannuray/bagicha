@@ -5,6 +5,7 @@ import { useApi } from '../../lib/api';
 import { queryKeys } from '../../lib/query-keys';
 import { reportError } from '../../lib/report-error';
 import { useSessionStore } from '../auth';
+import { useAllPlants, usePlants } from '../plants';
 import { cropDetailSchema, cropItemSchema, placeSchema, rotationSchema } from './schemas';
 
 /** Every calendar crop with its sowing status for the user's region. */
@@ -95,4 +96,12 @@ export function useRotation(placeId: string | null, cropId: string | null) {
     queryFn: () => api.get(`/garden/places/${placeId}/rotation?crop_id=${encodeURIComponent(cropId ?? '')}`, rotationSchema),
     enabled: Boolean(placeId && cropId),
   });
+}
+
+/** Crops already in the garden or on Want to grow, by crop id ("on your list"). */
+export function useCropsOnList(): Set<string> {
+  const planned = usePlants(1, 'planned');
+  const growing = useAllPlants();
+  const ids = [...(planned.data?.items ?? []), ...(growing.data ?? [])].map((p) => p.crop_id);
+  return new Set(ids.filter((id): id is string => Boolean(id)));
 }

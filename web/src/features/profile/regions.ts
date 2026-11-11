@@ -1,4 +1,5 @@
-import type { RegionCluster } from '../auth';
+import { z } from 'zod';
+import { REGION_CLUSTERS, type RegionCluster } from '../auth';
 
 export interface Region {
   id: RegionCluster;
@@ -18,15 +19,16 @@ export const REGIONS: readonly Region[] = [
 ];
 
 /** One district from GET /regions/districts. `label` is how it is saved ("Aurangabad, Bihar" for shared names). */
-export interface DistrictOption {
-  name: string;
-  state: string;
-  region: RegionCluster;
-  label: string;
-  aliases: string[];
+export const districtSchema = z.object({
+  name: z.string(),
+  state: z.string(),
+  region: z.enum(REGION_CLUSTERS),
+  label: z.string(),
+  aliases: z.array(z.string()),
   /** Delhi's "East", "North East"…: only a match with the state ("North East, Delhi"). */
-  needsState?: boolean;
-}
+  needsState: z.boolean().optional(),
+});
+export type DistrictOption = z.infer<typeof districtSchema>;
 
 /** Lower-case words only; a trailing "district" or "city" is dropped ("Patna district" → "patna"). */
 const norm = (text: string) =>

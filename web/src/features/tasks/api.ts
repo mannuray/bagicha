@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApi } from '../../lib/api';
-import type { ApiClient } from '../../lib/api-client';
 import { fetchAllPages } from '../../lib/paging';
 import { queryKeys } from '../../lib/query-keys';
-import { materializeSchema, taskSchema, type Task } from './schemas';
+import { materializeTasks } from '../seasonal';
+import { taskSchema, type Task } from './schemas';
 
 /** All of the user's tasks: "this week" groups them client-side, so a page cut would hide some. */
 export function useMyTasks() {
@@ -41,15 +41,6 @@ export function useUpdateTaskStatus() {
       api.send('PUT', `/ledger/plants/${task.plant_id}/tasks/${task.id}`, { status }, taskSchema),
     onSettled: (_data, _err, { task }) => invalidateTaskViews(client, task.plant_id),
   });
-}
-
-/**
- * The one call that asks the backend for a plant's tasks this season. Idempotent:
- * existing ones come back skipped. Used by the hook below, plant creation and the
- * dashboard's once-per-session check.
- */
-export function materializeTasks(api: ApiClient, plantId: string) {
-  return api.send('POST', `/seasonal/plant/${plantId}/materialize-tasks`, {}, materializeSchema);
 }
 
 export function useMaterializeTasks() {

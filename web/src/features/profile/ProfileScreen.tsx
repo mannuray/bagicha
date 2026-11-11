@@ -4,31 +4,30 @@ import { useNavigate } from 'react-router';
 import { useNow } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Chip, Icon, Screen, TextField } from '../../ui';
-import { isPremium, useSession, type RegionCluster } from '../auth';
-import { useDistricts, useUpdateProfile } from './api';
+import { isPremium, useSession } from '../auth';
+import { useUpdateProfile } from './api';
 import { DistrictField } from './DistrictField';
 import { ProfilePhoto } from './ProfilePhoto';
-import { knownRegion, regionById, REGIONS } from './regions';
+import { regionById, REGIONS } from './regions';
+import { useDistrictRegion } from './useDistrictRegion';
 
 export function ProfileScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, signOut } = useSession();
   const update = useUpdateProfile();
-  const districts = useDistricts();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user?.name ?? '');
-  const [district, setDistrict] = useState(user?.district ?? '');
-  const [picked, setPicked] = useState<RegionCluster | null>(user?.region_cluster ?? null);
+  const { districts, district, setDistrict, picked, setPicked, known, knownLabel, region } = useDistrictRegion(
+    user?.district ?? '',
+    user?.region_cluster ?? null,
+  );
   const [lang, setLang] = useState(user?.language_pref ?? 'en');
   const [needDistrict, setNeedDistrict] = useState(false);
   const now = useNow();
 
   if (!user) return null;
   const regionLabel = regionById(user.region_cluster);
-  // A district we know decides the region; the chips are only for districts we don't.
-  const known = knownRegion(district, districts.data ?? []);
-  const region = known ?? picked;
 
   const save = (event: FormEvent) => {
     event.preventDefault();
@@ -124,7 +123,7 @@ export function ProfileScreen() {
             {known ? (
               <p className="flex items-center gap-2 font-body text-sm text-primary">
                 <Icon name="check_circle" filled className="text-base" />
-                {t('onboarding.region.known', { district: district.trim(), region: t(regionById(known)?.labelKey ?? '') })}
+                {t('onboarding.region.known', { district: district.trim(), region: t(knownLabel?.labelKey ?? '') })}
               </p>
             ) : (
               district.trim() && (

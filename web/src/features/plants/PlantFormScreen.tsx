@@ -1,10 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
-import { Button, ErrorState, Icon, LoadingState, NotInGarden, Pill, Screen, TextField, TopBar, isPlantMissing } from '../../ui';
+import { Button, ErrorState, Icon, LoadingState, Pill, Screen, TextField, TopBar } from '../../ui';
 import saplingPhoto from '../../assets/stitch/add-tree-sapling.jpg';
 import { CataloguePicker } from './CataloguePicker';
 import { usePlant } from './api';
+import { isPlantMissing } from './missing';
+import { NotInGarden } from './NotInGarden';
 import { emptyForm, fromPlant, type FormState } from './form';
 import { usePlantForm } from './usePlantForm';
 

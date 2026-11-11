@@ -1,11 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { isApiError } from '../lib/errors';
-import { Icon } from './Icon';
+import { Icon } from '../../ui';
 
-/** True for the backend's "not your plant / no such plant" answer. */
-export const isPlantMissing = (err: unknown) => isApiError(err) && err.code === 'PLANT_NOT_FOUND';
-
+/** A plant that is not (or no longer) in your garden, with the way back to My plants. */
 export function NotInGarden() {
   const { t } = useTranslation();
   return (

@@ -24,6 +24,10 @@ export const queryKeys = {
     places: ['crops', 'places'] as const,
     rotation: (placeId: string, cropId: string) => ['crops', 'rotation', placeId, cropId] as const,
   },
-  catalogue: { search: (q: string) => ['catalogue', 'search', q] as const },
+  catalogue: {
+    search: (q: string) => ['catalogue', 'search', q] as const,
+    resolve: (q: string | null) => ['catalogue', 'resolve', q] as const,
+  },
+  regions: { districts: ['regions', 'districts'] as const },
   media: { url: (key: string) => ['media', 'url', key] as const },
 };

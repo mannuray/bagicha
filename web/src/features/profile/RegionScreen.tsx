@@ -4,11 +4,12 @@ import { useNavigate } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Icon, cx } from '../../ui';
 import { nextOnboardingStep, useSession, type RegionCluster } from '../auth';
-import { roundCoordinate, useDistricts, useLocateDistrict, useUpdateProfile, type ProfileChanges } from './api';
+import { roundCoordinate, useLocateDistrict, useUpdateProfile, type ProfileChanges } from './api';
 import { DistrictField } from './DistrictField';
 import { useGeolocator, type Coordinates } from './geolocation';
 import { OnboardingLayout } from './OnboardingLayout';
-import { knownRegion, regionById, REGIONS } from './regions';
+import { regionById, REGIONS } from './regions';
+import { useDistrictRegion } from './useDistrictRegion';
 
 type GeoState = 'idle' | 'locating' | 'detected' | 'noDistrict' | 'unavailable';
 
@@ -22,17 +23,14 @@ export function RegionScreen({ onDone }: { onDone?: () => void }) {
   const geolocator = useGeolocator();
   const { user } = useSession();
   const update = useUpdateProfile();
-  const [picked, setPicked] = useState<RegionCluster | null>(user?.region_cluster ?? null);
-  const [district, setDistrict] = useState(user?.district ?? '');
+  const { districts, district, setDistrict, picked, setPicked, knownLabel: autoRegion, region } = useDistrictRegion(
+    user?.district ?? '',
+    user?.region_cluster ?? null,
+  );
   const [coords, setCoords] = useState<Coordinates | null>(null);
   const [geo, setGeo] = useState<GeoState>('idle');
   const [detected, setDetected] = useState<{ district: string; state: string; region: RegionCluster } | null>(null);
-  const districts = useDistricts();
   const locateDistrict = useLocateDistrict();
-  const list = districts.data ?? [];
-  const known = knownRegion(district, list);
-  const region = known ?? picked;
-  const autoRegion = regionById(known);
 
   const locate = async () => {
     setGeo('locating');

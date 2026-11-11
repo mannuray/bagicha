@@ -3,8 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import { Button, cx, ErrorState, Icon, LoadingState, Screen, TopBar } from '../../ui';
-import { useAllPlants, usePlants } from '../plants';
-import { useAddToPlan, useCropDetail } from './api';
+import { useAddToPlan, useCropDetail, useCropsOnList } from './api';
 import { CropPhoto } from './CropPhoto';
 import { growingSteps, hindiName } from './names';
 import type { CropDetail } from './schemas';
@@ -17,10 +16,8 @@ export function CropDetailScreen() {
   const { cropId = '' } = useParams();
   const navigate = useNavigate();
   const detail = useCropDetail(cropId);
-  const planned = usePlants(1, 'planned');
-  const growing = useAllPlants();
+  const onList = useCropsOnList().has(cropId);
   const add = useAddToPlan();
-  const onList = [...(planned.data?.items ?? []), ...(growing.data ?? [])].some((p) => p.crop_id === cropId);
 
   if (detail.isError) return <Screen><TopBar /><ErrorState error={detail.error} onRetry={() => void detail.refetch()} /></Screen>;
   if (!detail.data) return <Screen><TopBar /><LoadingState /></Screen>;

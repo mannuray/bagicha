@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useApi } from '../../lib/api';
+import type { ApiClient } from '../../lib/api-client';
 import { queryKeys } from '../../lib/query-keys';
 
 export const guideSchema = z.object({
@@ -51,4 +52,18 @@ export function usePlantIntelligence(plantId: string) {
     queryFn: () => api.get(`/seasonal/plant/${plantId}/intelligence`, intelligenceSchema),
     enabled: Boolean(plantId),
   });
+}
+
+export const materializeSchema = z.object({
+  results: z.array(z.object({ sourceKey: z.string(), status: z.string(), taskId: z.string().optional() })),
+  created_count: z.number(),
+});
+
+/**
+ * The one call that asks the backend for a plant's tasks this season. Idempotent:
+ * existing ones come back skipped. Used by tasks (useMaterializeTasks), plant
+ * creation and the dashboard's once-per-session check.
+ */
+export function materializeTasks(api: ApiClient, plantId: string) {
+  return api.send('POST', `/seasonal/plant/${plantId}/materialize-tasks`, {}, materializeSchema);
 }

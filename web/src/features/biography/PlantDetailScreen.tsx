@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { useNow } from '../../lib/clock';
-import { Button, ErrorState, Icon, LoadingState, NotInGarden, Screen, isPlantMissing } from '../../ui';
+import { Button, ErrorState, Icon, LoadingState, Screen } from '../../ui';
 import { CropHero, JourneyCard } from '../crops';
 import { useTimeline } from '../journal';
-import { usePlant, type PlantDetail } from '../plants';
+import { isPlantMissing, plantCategory, type PlantDetail, NotInGarden, usePlant } from '../plants';
 import { healthLabel } from './health-label';
 import { AtAGlance } from './sections/AtAGlance';
 import { EndedBanner } from './sections/EndedBanner';
@@ -65,8 +65,9 @@ function Biography({ plant }: { plant: PlantDetail }) {
   const health = healthLabel(plant, entries, now);
   const heroKey = entries.map((e) => photoKeyOf(e)).find(Boolean) ?? null;
   const ended = Boolean(plant.ended_at);
-  const crop = Boolean(plant.crop_id);
-  const flower = plant.record_kind === 'FLOWER' && !crop;
+  const category = plantCategory(plant);
+  const crop = category === 'crop' || category === 'seasonalFlower';
+  const flower = category === 'perennialFlower';
   const [ending, setEnding] = useState(false);
 
   return (

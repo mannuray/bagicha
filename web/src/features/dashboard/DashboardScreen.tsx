@@ -6,7 +6,7 @@ import { useNow } from '../../lib/clock';
 import { EmptyState, ErrorState, Icon, LoadingState, Pebble, Screen, SeeAllLink } from '../../ui';
 import { useSession } from '../auth';
 import { AddToGardenSheet, useCropSyncOnce } from '../crops';
-import { useAllPlants, usePlants } from '../plants';
+import { gardenCounts, useAllPlants, usePlants } from '../plants';
 import { useSeasonalGuide } from '../seasonal';
 import { hasPendingSoon, TaskGroups, useMyTasks } from '../tasks';
 import { useSessionMaterialize } from './use-session-materialize';
@@ -25,11 +25,10 @@ export function DashboardScreen() {
   // The garden at a glance: trees, crops growing now, and Want to grow underneath.
   const planned = usePlants(1, 'planned').data?.pagination.total_items ?? 0;
   const all = plants.data;
-  const trees = all ? all.filter((p) => !p.crop_id && p.record_kind !== 'FLOWER').length : null;
-  const crops = all ? all.filter((p) => p.crop_id && p.record_kind !== 'FLOWER').length : null;
-  const seasonalFlowers = all ? all.filter((p) => p.record_kind === 'FLOWER' && p.crop_id).length : 0;
-  const perennialFlowers = all ? all.filter((p) => p.record_kind === 'FLOWER' && !p.crop_id).length : 0;
-  const flowers = all ? seasonalFlowers + perennialFlowers : null;
+  const counts = all ? gardenCounts(all) : null;
+  const trees = counts?.tree ?? null;
+  const crops = counts?.crop ?? null;
+  const flowers = counts?.flowers ?? null;
   const tasks = useMyTasks();
   const guide = useSeasonalGuide();
   const now = useNow();
@@ -118,7 +117,7 @@ export function DashboardScreen() {
               <GardenCount count={flowers} label={t('dashboard.flowers', { count: flowers ?? 0 })} to="/plants?group=flowers" />
               {(flowers ?? 0) > 0 && (
                 <p className="text-center font-label text-[11px] font-semibold text-secondary">
-                  {t('dashboard.flowerSplit', { seasonal: seasonalFlowers, perennial: perennialFlowers })}
+                  {t('dashboard.flowerSplit', { seasonal: counts?.seasonalFlower ?? 0, perennial: counts?.perennialFlower ?? 0 })}
                 </p>
               )}
             </div>

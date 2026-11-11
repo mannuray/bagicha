@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { materializeTasks } from '../tasks';
+import { materializeTasks } from '../seasonal';
 import { useApi } from '../../lib/api';
 import { fetchAllPages } from '../../lib/paging';
 import { queryKeys } from '../../lib/query-keys';
@@ -130,7 +130,7 @@ export function useCatalogueSearch(query: string) {
 export function useResolvePlant(query: string | null) {
   const api = useApi();
   return useQuery({
-    queryKey: ['catalogue', 'resolve', query],
+    queryKey: queryKeys.catalogue.resolve(query),
     queryFn: () => api.send('POST', '/plants/resolve', { query }, resolveSchema),
     enabled: Boolean(query && query.trim()),
     staleTime: Infinity,

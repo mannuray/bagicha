@@ -20,7 +20,3 @@ export const taskSchema = z.object({
 });
 export type Task = z.infer<typeof taskSchema>;
 
-export const materializeSchema = z.object({
-  results: z.array(z.object({ sourceKey: z.string(), status: z.string(), taskId: z.string().optional() })),
-  created_count: z.number(),
-});

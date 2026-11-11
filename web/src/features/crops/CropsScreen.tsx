@@ -4,8 +4,7 @@ import { Link, useSearchParams } from 'react-router';
 import { useNow } from '../../lib/clock';
 import { ErrorState, Icon, LoadingState, Pill, Screen, TopBar, cx } from '../../ui';
 import { useSession } from '../auth';
-import { useAllPlants, usePlants } from '../plants';
-import { useAddToPlan, useCropCalendar, usePlaces } from './api';
+import { useAddToPlan, useCropCalendar, useCropsOnList, usePlaces } from './api';
 import { CropPhoto } from './CropPhoto';
 import { hindiName, matchesSearch, suitsSun, sunniest } from './names';
 import type { CropItem } from './schemas';
@@ -22,8 +21,7 @@ export function CropsScreen() {
   const now = useNow();
   const calendar = useCropCalendar();
   const places = usePlaces();
-  const planned = usePlants(1, 'planned');
-  const growing = useAllPlants();
+  const onList = useCropsOnList();
   // "Grow flowers" in the chooser opens this page with ?kind=flower.
   const [params, setParams] = useSearchParams();
   const view: View = params.get('kind') === 'flower' ? 'FLOWER' : 'CROP';
@@ -34,9 +32,6 @@ export function CropsScreen() {
   };
   const [query, setQuery] = useState('');
   const [showLater, setShowLater] = useState(false);
-  const onList = new Set(
-    [...(planned.data?.items ?? []), ...(growing.data ?? [])].map((p) => p.crop_id).filter((id): id is string => Boolean(id)),
-  );
   const sun = sunniest(places.data ?? []);
   const toggle = (f: Filter) => setFilters((cur) => (cur.includes(f) ? cur.filter((x) => x !== f) : [...cur, f]));
   const visible = (calendar.data ?? []).filter(

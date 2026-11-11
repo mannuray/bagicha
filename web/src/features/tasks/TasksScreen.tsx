@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import { useNow } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
-import { Button, EmptyState, Icon, NotInGarden, QueryState, Screen, TopBar, isPlantMissing } from '../../ui';
+import { Button, EmptyState, Icon, QueryState, Screen, TopBar } from '../../ui';
 import { useMaterializeTasks, useMyTasks, usePlantTasks } from './api';
 import { ClosedHistory, TaskGroups } from './TaskGroups';
 import type { Task } from './schemas';
+import { NotInGarden, isPlantMissing } from '../plants';
 
 /** Stitch "The Daily Path": every task, or one plant's tasks at /plants/:id/tasks. */
 export function TasksScreen() {

@@ -2,8 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import leavesPhoto from '../../assets/stitch/moment-leaves.jpg';
-import { Button, ErrorState, Icon, LoadingState, NotInGarden, Pill, TextField, isPlantMissing } from '../../ui';
-import { usePlant } from '../plants';
+import { Button, ErrorState, Icon, LoadingState, Pill, TextField } from '../../ui';
+import { isPlantMissing, NotInGarden, usePlant } from '../plants';
 import { DROP_TYPES } from './moment';
 import { useLogMoment } from './useLogMoment';
 
