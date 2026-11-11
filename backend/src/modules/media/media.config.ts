@@ -4,6 +4,7 @@ export const MEDIA_PREFIXES = {
   post: 'posts',
   vision: 'vision',
   journal: 'journal',
+  avatar: 'avatars',
 } as const;
 
 export type MediaKind = keyof typeof MEDIA_PREFIXES;

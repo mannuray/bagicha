@@ -37,4 +37,9 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   language_pref?: string | null;
+
+  /** Key from `POST media/images` with kind=avatar; null removes the photo. */
+  @IsOptional()
+  @IsString()
+  avatar_key?: string | null;
 }

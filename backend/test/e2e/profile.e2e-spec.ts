@@ -45,4 +45,35 @@ describe('profile region', () => {
   it('rejects an unknown region', async () => {
     expect((await update({ region_cluster: 'MARS' })).status).toBe(422);
   });
+
+  describe('profile photo', () => {
+    const uuid = '0f8fad5b-d9cb-469f-a165-70867728950e';
+
+    it("saves the user's own avatar key and returns it", async () => {
+      const key = `avatars/${user.id}/${uuid}.jpg`;
+      const res = await update({ avatar_key: key });
+      expect(res.status).toBe(200);
+      expect(res.body.data.avatar_key).toBe(key);
+    });
+
+    it('clears the photo with null', async () => {
+      await update({ avatar_key: `avatars/${user.id}/${uuid}.jpg` });
+      const res = await update({ avatar_key: null });
+      expect(res.status).toBe(200);
+      expect(res.body.data.avatar_key).toBeNull();
+    });
+
+    it("refuses someone else's photo or a non-avatar image", async () => {
+      expect(
+        (await update({ avatar_key: `avatars/someone-else/${uuid}.jpg` }))
+          .status,
+      ).toBe(400);
+      expect(
+        (await update({ avatar_key: `journal/${user.id}/${uuid}.jpg` })).status,
+      ).toBe(400);
+      expect((await update({ avatar_key: 'https://evil/x.jpg' })).status).toBe(
+        400,
+      );
+    });
+  });
 });

@@ -245,6 +245,8 @@ model User {
   region_cluster RegionCluster?
   garden_types   String[] @default([])
   language_pref  String   @default("en")
+  /// Media key of the profile photo (avatars/{userId}/{uuid}.jpg); private, served by signed URL.
+  avatar_key     String?
   ranking_points Int      @default(0)
   badge_level    String   @default("Seedling")
   /// Paid status. Separate from badge_level, which is only the gamification rank.
