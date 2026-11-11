@@ -11,7 +11,7 @@ Staging runs on four hosted pieces, under the same accounts as OPD staging.
 | Photos | S3 bucket `bagicha-media-114823617214-ap-south-1-an` (`ap-south-1`, private), IAM user `bagicha-staging-media` limited to it | AWS account 114823617214 |
 | Code | github.com/mannuray/bagicha, branch `main` | GitHub `mannuray` |
 
-The browser only talks to the Vercel site. `web/vercel.json` forwards every `/api/...` request to `bagicha-api.onrender.com`, and the production build uses `VITE_API_URL=/api/v1` (`web/.env.production`), so there is no CORS.
+The browser calls the API on Render directly: the production build uses `VITE_API_URL=https://bagicha-api.onrender.com/api/v1` (`web/.env.production`), and the API allows the site by CORS (`WEB_ORIGINS=https://bagicha-web.vercel.app` in Render's environment). We used to forward `/api/...` through a Vercel rewrite, but Vercel's proxy returns 502 while the free Render plan wakes up (~30–45 s); a direct call waits it out (the app allows 90 s and shows "Waking up the server…").
 
 ## Before you deploy
 
@@ -76,7 +76,8 @@ After changing a setting on Render, redeploy the service.
 
 ```bash
 curl -s https://bagicha-api.onrender.com/api/v1/health/live                 # status ok
-curl -s -o /dev/null -w '%{http_code}\n' https://bagicha-web.vercel.app/api/v1/crops/calendar   # 401: reached the API
+curl -s -o /dev/null -w '%{http_code}\n' https://bagicha-api.onrender.com/api/v1/crops/calendar   # 401: reached the API
+curl -s -o /dev/null -D - -X OPTIONS https://bagicha-api.onrender.com/api/v1/auth/request-otp -H 'Origin: https://bagicha-web.vercel.app' -H 'Access-Control-Request-Method: POST' | grep -i access-control-allow-origin   # CORS allows the site
 ```
 
 Then sign in on the web app (the code is shown on screen), add a tree, and log a moment with a photo.
