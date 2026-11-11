@@ -25,7 +25,11 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await page.getByRole('button', { name: /english/i }).click();
   await page.getByRole('button', { name: /continue/i }).click();
   await checkScreen(page, '03-region');
-  await page.getByLabel(/district/i).fill('Patna');
+  // The full district list: type a few letters, pick the suggestion, and the region follows.
+  await page.getByLabel(/district/i).fill('Pat');
+  await page.getByRole('option', { name: /patna · bihar/i }).click();
+  await expect(page.getByLabel(/district/i)).toHaveValue('Patna');
+  await expect(page.getByText(/patna is in east india/i)).toBeVisible();
   await expect(page.getByText(/east india/i)).toBeVisible();
   await page.getByRole('button', { name: /continue/i }).click();
   await page.getByRole('button', { name: /fruit trees/i }).click();
