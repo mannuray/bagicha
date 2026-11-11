@@ -5,7 +5,11 @@ import {
   Plant,
   Prisma,
   SeasonalPack,
+  RecordKind,
+  TaskCategory,
+  TaskPriority,
   TaskSource,
+  TaskType,
   User,
 } from '@prisma/client';
 import { Queue } from 'bullmq';
@@ -24,6 +28,8 @@ import {
   CROPS,
   climateGroupFor,
   windowStatus,
+  flowerCareDue,
+  perennialFlower,
   taskCategoryFromCategory,
   taskPriorityFrom,
   taskTypeFromCategory,
@@ -91,7 +97,7 @@ export class SeasonalService implements OnModuleInit {
     const group = climateGroupFor(regionFor(user));
     const now = this.clock.now();
     const crops = CROPS.filter(
-      (c) => windowStatus(c, group, now).status === 'open',
+      (c) => c.kind === 'CROP' && windowStatus(c, group, now).status === 'open',
     ).map((c) => c.name);
     return { ...guide, crops };
   }
@@ -116,6 +122,9 @@ export class SeasonalService implements OnModuleInit {
     const growing = await this.plants.assertGrowing(userId, plantId);
     // Journey crops follow the crop calendar, never the tree season pack.
     if (growing.crop_id) return { results: [], created_count: 0 };
+    // Perennial flowers follow their own care calendar, never the fruit pack.
+    if (growing.record_kind === RecordKind.FLOWER)
+      return this.materializeFlowerCare(userId, growing);
     const { pack, overlay } = await this.loadIntelligence(userId, plantId);
     const now = this.clock.now();
     const toDraft = (
@@ -148,6 +157,38 @@ export class SeasonalService implements OnModuleInit {
         : []),
     ];
     const results = await this.tasks.createTasks(userId, plantId, drafts);
+    return {
+      results,
+      created_count: results.filter((r) => r.status === 'created').length,
+    };
+  }
+
+  private async materializeFlowerCare(userId: string, plant: Plant) {
+    const flower = perennialFlower(this.species.resolveSpeciesFamily(plant));
+    if (!flower) return { results: [], created_count: 0 };
+    const user = await this.users.findById(userId);
+    if (!user) throw new NotFoundError('USER_NOT_FOUND', 'User not found');
+    const group = climateGroupFor(regionFor(user));
+    const kinds = {
+      PRUNING: [TaskType.PRUNE, TaskCategory.PRUNING],
+      FEEDING: [TaskType.FEED, TaskCategory.FEEDING],
+      GENERAL: [TaskType.OBSERVE, TaskCategory.OBSERVATION],
+    } as const;
+    const drafts: TaskDraft[] = flowerCareDue(
+      flower,
+      group,
+      this.clock.now(),
+    ).map((c) => ({
+      type: kinds[c.category][0],
+      category: kinds[c.category][1],
+      priority: TaskPriority.MEDIUM,
+      title: c.title,
+      source: TaskSource.FLOWER_CARE,
+      sourceKey: c.sourceKey,
+      reason: `Usual ${c.key === 'prune' ? 'pruning' : c.key === 'feed' ? 'feeding' : 'care'} time for ${flower.name}.`,
+      dueDate: c.due,
+    }));
+    const results = await this.tasks.createTasks(userId, plant.id, drafts);
     return {
       results,
       created_count: results.filter((r) => r.status === 'created').length,

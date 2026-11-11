@@ -1,6 +1,8 @@
+import { bloomStatus, perennialFlower } from '../domain/flower-care';
+import { climateGroupFor } from '../domain/crop-calendar';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Plant } from '@prisma/client';
+import { Plant, RecordKind, User } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { ConflictError, NotFoundError } from '../../../common/errors';
 import { Metrics } from '../../../common/observability';
@@ -109,10 +111,19 @@ export class PlantRecordService implements OnModuleInit {
   }
 
   /** Plant detail as the API returns it: the plant plus its species life profile. */
-  async detailView(userId: string, plantId: string) {
-    const plant = await this.getDetail(userId, plantId);
+  async detailView(user: Pick<User, 'id' | 'region_cluster'>, plantId: string) {
+    const plant = await this.getDetail(user.id, plantId);
+    // A perennial flower's usual bloom months, for the user's climate (plains when unknown).
+    const flower =
+      plant.record_kind === RecordKind.FLOWER && !plant.crop_id
+        ? perennialFlower(this.species.resolveSpeciesFamily(plant))
+        : undefined;
+    const group = user.region_cluster
+      ? climateGroupFor(user.region_cluster)
+      : 'PLAINS';
     return {
       ...plant,
+      bloom: flower ? bloomStatus(flower, group, this.clock.now()) : null,
       life_profile: lifeProfileFor(
         plant.species_family ?? this.species.resolveSpeciesFamily(plant),
       ),

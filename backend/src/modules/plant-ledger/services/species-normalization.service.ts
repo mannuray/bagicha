@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { flowerFamilyIn } from '../domain/flower-care';
 
 interface TreeIdentityInput {
   name?: string | null;
+  /** FLOWER records are matched against perennial flowers, never the fruit families. */
+  record_kind?: string | null;
   species?: string | null;
   variety?: string | null;
 }
@@ -35,7 +38,7 @@ export class SpeciesNormalizationService {
       'kinnow',
       'mandarin',
     ],
-    litchi: ['litchi', 'lychee', 'shahi', 'china', 'rose scented'],
+    litchi: ['litchi', 'lychee', 'shahi', 'china'],
     guava: ['guava', 'allahabad safeda', 'lalit', 'lucknow 49'],
     pomegranate: ['pomegranate', 'anar', 'bhagawa'],
     banana: ['banana', 'plantain', 'grand naine', 'g9', 'robusta', 'kela'],
@@ -50,6 +53,12 @@ export class SpeciesNormalizationService {
   };
 
   resolveSpeciesFamily(input: TreeIdentityInput): string {
+    if (input.record_kind === 'FLOWER') {
+      const text = [input.name, input.species, input.variety]
+        .filter(Boolean)
+        .join(' ');
+      return flowerFamilyIn(text) ?? 'generic_flower';
+    }
     const haystack = this.buildHaystack(input);
 
     for (const [family, aliases] of Object.entries(this.familyAliases)) {

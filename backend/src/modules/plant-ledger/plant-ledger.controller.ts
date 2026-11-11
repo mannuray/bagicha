@@ -66,7 +66,7 @@ export class PlantLedgerController {
 
   @Get('plants/:id')
   getPlantDetail(@Request() req: AuthedRequest, @Param('id') id: string) {
-    return this.plants.detailView(req.user.id, id);
+    return this.plants.detailView(req.user, id);
   }
 
   @Get('plants/:id/seasonal-state')

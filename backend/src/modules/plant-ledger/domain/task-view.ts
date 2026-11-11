@@ -71,6 +71,10 @@ export function buildTaskSourceSummary(task: {
     );
   }
 
+  if (task.source === 'FLOWER_CARE') {
+    return 'Seasonal care for this flower, from its usual care calendar.';
+  }
+
   if (task.source === 'SEASONAL_PACK') {
     const currentPhase = task.seasonal_pack?.current_phase?.replace(/_/g, ' ');
     const upcomingPhase = task.seasonal_pack?.upcoming_phase?.replace(

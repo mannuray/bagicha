@@ -192,6 +192,7 @@ enum TaskCategory {
 enum TaskSource {
   SYSTEM
   CROP_PLAN
+  FLOWER_CARE
   SEASONAL_PACK
   PERSONALIZED_OVERLAY
   MANUAL

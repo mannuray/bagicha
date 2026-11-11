@@ -66,3 +66,27 @@ describe('laterStage', () => {
     ).toBe(LifecycleStage.FIRST_FLOWERING);
   });
 });
+
+describe('flowers', () => {
+  const flowerStage = (
+    species: string,
+    months: number,
+    extra: Record<string, Date> = {},
+  ) =>
+    service.calculateStage({
+      planting_date: monthsAgo(months),
+      species,
+      record_kind: 'FLOWER',
+      ...extra,
+    });
+
+  it('a flower is young, then flowering, never bearing', () => {
+    expect(flowerStage('Rose', 2)).toBe(LifecycleStage.JUVENILE);
+    expect(flowerStage('Rose', 6)).toBe(LifecycleStage.FIRST_FLOWERING);
+    expect(flowerStage('Rose', 120)).toBe(LifecycleStage.FIRST_FLOWERING);
+    expect(
+      flowerStage('Plumeria', 3, { first_flowering_at: monthsAgo(1) }),
+    ).toBe(LifecycleStage.FIRST_FLOWERING);
+    expect(flowerStage('Lotus', 3)).toBe(LifecycleStage.JUVENILE);
+  });
+});

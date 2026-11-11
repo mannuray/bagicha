@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { LifecycleStage } from '@prisma/client';
 import { Clock } from '../../../common/time';
+import { perennialFlower } from '../domain/flower-care';
 import { lifeProfileFor } from '../domain/species-life-profiles';
 import { SpeciesNormalizationService } from './species-normalization.service';
 
@@ -17,6 +18,7 @@ export interface StageInput {
   planting_date: Date | null;
   species: string;
   species_family?: string | null;
+  record_kind?: string | null;
   first_flowering_at?: Date | null;
   first_fruit_set_at?: Date | null;
   first_harvest_at?: Date | null;
@@ -42,7 +44,25 @@ export class LifecycleService {
    * and never earlier than what the gardener has recorded (flowering, harvest).
    */
   calculateStage(input: StageInput): LifecycleStage {
+    if (input.record_kind === 'FLOWER') return this.flowerStage(input);
     return laterStage(this.byAge(input), this.byMilestones(input));
+  }
+
+  /** Flowers are young, then blooming; never bearing (spec flowers §2.2). */
+  private flowerStage(input: StageInput): LifecycleStage {
+    if (input.first_flowering_at) return LifecycleStage.FIRST_FLOWERING;
+    if (!input.planting_date) return LifecycleStage.JUVENILE;
+    const months =
+      (this.clock.now().getTime() - new Date(input.planting_date).getTime()) /
+      MONTH_MS;
+    const family = this.species.resolveSpeciesFamily({
+      species: input.species,
+      record_kind: 'FLOWER',
+    });
+    const [min] = perennialFlower(family)?.first_bloom_months ?? [6, 12];
+    return months < min
+      ? LifecycleStage.JUVENILE
+      : LifecycleStage.FIRST_FLOWERING;
   }
 
   private byMilestones(input: StageInput): LifecycleStage {

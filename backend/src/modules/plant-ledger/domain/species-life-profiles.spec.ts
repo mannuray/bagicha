@@ -21,26 +21,36 @@ describe('lifeProfileFor', () => {
   });
 
   it('has no profile for an unknown family', () => {
-    expect(lifeProfileFor('rose')).toBeNull();
+    expect(lifeProfileFor('lotus')).toBeNull();
     expect(lifeProfileFor('generic_perennial')).toBeNull();
     expect(lifeProfileFor(null)).toBeNull();
   });
 
-  it('covers the fourteen families of the spec', () => {
+  it('covers the fourteen fruit families and the ten perennial flowers', () => {
     expect([...LIFE_PROFILE_FAMILIES].sort()).toEqual([
+      'adenium',
       'amla',
       'banana',
+      'bougainvillea',
       'citrus',
       'coconut',
       'custard_apple',
       'grape',
       'guava',
+      'hibiscus',
+      'ixora',
       'jackfruit',
+      'jasmine',
       'litchi',
       'mango',
       'moringa',
+      'oleander',
       'papaya',
+      'parijat',
+      'periwinkle',
+      'plumeria',
       'pomegranate',
+      'rose',
       'sapota',
     ]);
   });

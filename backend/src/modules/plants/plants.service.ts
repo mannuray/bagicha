@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PlantCatalogEntry, Prisma } from '@prisma/client';
 import { Page, PageQuery, toPage } from '../../common/pagination';
+import { PERENNIAL_FLOWERS } from '../plant-ledger';
 import { CatalogRepository } from './catalog.repository';
 
 type ResolveConfidence = 'high' | 'medium' | 'low';
@@ -286,6 +287,18 @@ export class PlantsService implements OnModuleInit {
         regions: ['south_deccan', 'east_india', 'central_india', 'west_india'],
         confidence_weight: 0.85,
       },
+      // Perennial flowers (flowers spec §2.2): one entry per family in flower-care.ts.
+      ...PERENNIAL_FLOWERS.map(
+        (f): PlantSeed => ({
+          species_family: f.family,
+          species: f.family,
+          display_name: f.name.charAt(0).toUpperCase() + f.name.slice(1),
+          plant_type: 'perennial_flower',
+          aliases: f.aliases.filter((a) => !/[\u0900-\u097F]/.test(a)),
+          languages: { hi: f.aliases.filter((a) => /[\u0900-\u097F]/.test(a)) },
+          confidence_weight: 0.85,
+        }),
+      ),
     ];
 
     await this.catalog.upsertAll(

@@ -1,3 +1,5 @@
+import { PERENNIAL_FLOWERS } from './flower-care';
+
 /**
  * How long each species family typically takes to fruit, stays productive and
  * lives, as [min, max] ranges in months. Typical Indian home-garden values for
@@ -104,6 +106,16 @@ const PROFILES: Record<string, LifeProfile> = {
     note_key: 'moringa',
   },
 };
+
+// Perennial flowers: first_fruit_months holds the first-bloom range; they bloom for their whole life.
+for (const f of PERENNIAL_FLOWERS) {
+  PROFILES[f.family] = {
+    first_fruit_months: f.first_bloom_months,
+    productive_until_months: f.lifespan_months,
+    lifespan_months: f.lifespan_months,
+    note_key: f.family === 'periwinkle' ? 'periwinkle' : null,
+  };
+}
 
 export const LIFE_PROFILE_FAMILIES: readonly string[] = Object.keys(PROFILES);
 

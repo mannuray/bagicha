@@ -21,3 +21,27 @@ describe('resolveSpeciesFamily for the new fruit families', () => {
     expect(family('Rose')).toBe('generic_perennial');
   });
 });
+
+describe('flowers', () => {
+  const svc = new SpeciesNormalizationService();
+  const flower = (species: string) =>
+    svc.resolveSpeciesFamily({ species, record_kind: 'FLOWER' });
+
+  it('files roses and Indian flower names by their flower family, never litchi', () => {
+    expect(flower('Rose')).toBe('rose');
+    expect(flower('Gulab')).toBe('rose');
+    expect(flower('China rose')).toBe('hibiscus');
+    expect(flower('Desert rose')).toBe('adenium');
+    expect(flower('Mogra')).toBe('jasmine');
+    expect(flower('Lotus')).toBe('generic_flower');
+  });
+
+  it('still files a rose-scented litchi tree as litchi', () => {
+    expect(
+      svc.resolveSpeciesFamily({ species: 'Litchi', variety: 'Rose scented' }),
+    ).toBe('litchi');
+    expect(svc.resolveSpeciesFamily({ species: 'Rose' })).toBe(
+      'generic_perennial',
+    );
+  });
+});

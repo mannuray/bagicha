@@ -106,7 +106,9 @@ export class TaskService {
     tx?: Tx,
   ): Promise<TaskCreationResult> {
     const existing =
-      draft.source === TaskSource.CROP_PLAN
+      // Plan and flower-care steps are one-off (flower care is keyed by year): never repeat them.
+      draft.source === TaskSource.CROP_PLAN ||
+      draft.source === TaskSource.FLOWER_CARE
         ? await this.tasks.findBySourceKey(
             userId,
             plantId,
