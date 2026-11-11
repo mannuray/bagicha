@@ -10,6 +10,7 @@ const NOW = new Date('2026-11-10T06:00:00Z');
 function build(plant: Record<string, unknown>) {
   const repo = {
     findOwnedDetail: jest.fn(() => Promise.resolve({ ...plant })),
+    findOwnedWithContext: jest.fn(() => Promise.resolve({ ...plant })),
     updateOwned: jest.fn(() => Promise.resolve(plant)),
   };
   const queue = { add: jest.fn(), getJobCounts: jest.fn() };
@@ -63,5 +64,36 @@ describe('PlantRecordService.getDetail stage', () => {
     const plant = await service.getDetail('u1', 'p1');
     expect(plant.lifecycle_stage).toBe(LifecycleStage.FIRST_FLOWERING);
     expect(repo.updateOwned).toHaveBeenCalled();
+  });
+});
+
+describe('PlantRecordService.getContextForAi for a flower', () => {
+  it('sends the bloom season, never the fruit-tree season', async () => {
+    const { service } = build({
+      id: 'p1',
+      name: 'Gulab',
+      species: 'Rose',
+      variety: null,
+      record_kind: 'FLOWER',
+      crop_id: null,
+      lifecycle_stage: LifecycleStage.FIRST_FLOWERING,
+      health_status: 'HEALTHY',
+      user: {
+        district: 'Patna',
+        latitude: null,
+        longitude: null,
+        region_cluster: 'EAST_INDIA',
+      },
+      cycles: [],
+      journal_entries: [],
+      diagnosis_outcomes: [],
+      tasks: [],
+    });
+    const context = await service.getContextForAi('u1', 'p1');
+    expect(context.plant.species_family).toBe('rose');
+    expect(context.seasonal_state).toEqual({
+      kind: 'perennial_flower',
+      bloom: { status: 'in_season', window_label: 'Nov–Mar' },
+    });
   });
 });

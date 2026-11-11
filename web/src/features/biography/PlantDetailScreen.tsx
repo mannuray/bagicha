@@ -104,7 +104,8 @@ function Biography({ plant }: { plant: PlantDetail }) {
             <UpcomingCare plantId={plant.id} now={now} />
           </>
         )}
-        {flower ? <FlowerYears plantId={plant.id} /> : <YearOnYear plantId={plant.id} now={now} crop={crop} />}
+        {/* Flowers (seasonal or perennial) compare blooms; trees and vegetables compare yield. */}
+        {plant.record_kind === 'FLOWER' ? <FlowerYears plantId={plant.id} /> : <YearOnYear plantId={plant.id} now={now} crop={crop} />}
         {!crop && !flower && <Milestones plant={plant} />}
         <SanctuaryRecord plantId={plant.id} />
         {!ended &&

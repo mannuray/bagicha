@@ -593,6 +593,27 @@ describe('crops', () => {
       ).toEqual({ conflict: false, last: null });
     });
   });
+  it('a flower season before a vegetable never warns about rotation', async () => {
+    const a = as(alice);
+    const bag = (
+      await a.post('/api/v1/garden/places', { name: 'Bag 9', kind: 'GROW_BAG' })
+    ).body.data;
+    const petunia = (await a.post('/api/v1/crops/plan', { crop_id: 'petunia' }))
+      .body.data;
+    const post = (id: string, type: string, metadata?: object) =>
+      a.post(`/api/v1/ledger/plants/${id}/journal`, {
+        type,
+        ...(metadata ? { metadata } : {}),
+      });
+    await post(petunia.id, 'TRANSPLANTING', { place_id: bag.id });
+    clock.set('2026-10-20T06:00:00Z');
+    await post(petunia.id, 'SEASON_END');
+    const res = await a.get(
+      `/api/v1/garden/places/${bag.id}/rotation?crop_id=tomato`,
+    );
+    expect(res.body.data).toEqual({ conflict: false, last: null });
+  });
+
   describe('final review fixes', () => {
     type Task = { id: string; title: string; status: string; due_date: string };
     const tasksOf = async (a: ReturnType<typeof as>, id: string) =>

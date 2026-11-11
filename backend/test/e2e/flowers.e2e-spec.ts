@@ -138,4 +138,27 @@ describe('perennial flowers', () => {
       (await prisma.task.findUnique({ where: { id: done.id } }))?.status,
     ).toBe('COMPLETED');
   });
+
+  it('stores a flower added with an old planting date as blooming, never bearing', async () => {
+    const res = await as(alice).post('/api/v1/ledger/plants', {
+      name: 'Gulab',
+      species: 'Rose',
+      record_kind: 'FLOWER',
+      planting_date: '2015',
+      planting_date_precision: 'YEAR',
+    });
+    expect(res.body.data.lifecycle_stage).toBe('FIRST_FLOWERING');
+  });
+
+  it('creates every feed of the year for a hibiscus', async () => {
+    clock.set('2026-03-05T06:00:00Z');
+    const hibiscus = await addFlower('Hibiscus');
+    expect((await materialize(hibiscus.id)).created_count).toBeGreaterThan(0);
+    clock.set('2026-05-05T06:00:00Z');
+    await materialize(hibiscus.id);
+    const feeds = (await tasksOf(hibiscus.id)).filter((t) =>
+      /feed/i.test(t.title),
+    );
+    expect(feeds.length).toBeGreaterThanOrEqual(2);
+  });
 });

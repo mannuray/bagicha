@@ -2,7 +2,7 @@ import { bloomStatus, perennialFlower } from '../domain/flower-care';
 import { climateGroupFor } from '../domain/crop-calendar';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Plant, RecordKind, User } from '@prisma/client';
+import { Plant, RecordKind, RegionCluster, User } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { ConflictError, NotFoundError } from '../../../common/errors';
 import { Metrics } from '../../../common/observability';
@@ -113,17 +113,12 @@ export class PlantRecordService implements OnModuleInit {
   /** Plant detail as the API returns it: the plant plus its species life profile. */
   async detailView(user: Pick<User, 'id' | 'region_cluster'>, plantId: string) {
     const plant = await this.getDetail(user.id, plantId);
-    // A perennial flower's usual bloom months, for the user's climate (plains when unknown).
-    const flower =
-      plant.record_kind === RecordKind.FLOWER && !plant.crop_id
-        ? perennialFlower(this.species.resolveSpeciesFamily(plant))
-        : undefined;
-    const group = user.region_cluster
-      ? climateGroupFor(user.region_cluster)
-      : 'PLAINS';
     return {
       ...plant,
-      bloom: flower ? bloomStatus(flower, group, this.clock.now()) : null,
+      bloom:
+        plant.record_kind === RecordKind.FLOWER && !plant.crop_id
+          ? this.bloomFor(plant, user.region_cluster)
+          : null,
       life_profile: lifeProfileFor(
         plant.species_family ?? this.species.resolveSpeciesFamily(plant),
       ),
@@ -163,6 +158,7 @@ export class PlantRecordService implements OnModuleInit {
       this.lifecycle.calculateStage({
         planting_date: planting.date,
         species: dto.species,
+        record_kind: dto.record_kind,
       });
 
     const plant = await this.plants.create(userId, {
@@ -225,6 +221,7 @@ export class PlantRecordService implements OnModuleInit {
       planting_date: planting.date,
       species,
       species_family: dto.species ? null : plant.species_family,
+      record_kind: dto.record_kind ?? plant.record_kind,
     });
     const stage =
       dto.lifecycle_stage ??
@@ -267,6 +264,17 @@ export class PlantRecordService implements OnModuleInit {
     return this.seasonalIntelligence.inferTreeSeasonalState(fields, user);
   }
 
+  /** A perennial flower's usual bloom months for the user's climate (plains when unknown); null if we don't know it. */
+  private bloomFor(
+    plant: Parameters<SpeciesNormalizationService['resolveSpeciesFamily']>[0],
+    region: RegionCluster | null,
+  ) {
+    const flower = perennialFlower(this.species.resolveSpeciesFamily(plant));
+    if (!flower) return null;
+    const group = region ? climateGroupFor(region) : 'PLAINS';
+    return bloomStatus(flower, group, this.clock.now());
+  }
+
   /** Plant history and season context sent to the AI for diagnosis. */
   async getContextForAi(userId: string, plantId: string) {
     const plant = await this.plants.findOwnedWithContext(userId, plantId);
@@ -286,10 +294,14 @@ export class PlantRecordService implements OnModuleInit {
         latitude: plant.user.latitude,
         longitude: plant.user.longitude,
       },
-      seasonal_state: this.seasonalIntelligence.inferTreeSeasonalState(
-        plant,
-        plant.user,
-      ),
+      // A perennial flower gets its bloom season, never the fruit-tree phases.
+      seasonal_state:
+        plant.record_kind === RecordKind.FLOWER && !plant.crop_id
+          ? {
+              kind: 'perennial_flower' as const,
+              bloom: this.bloomFor(plant, plant.user.region_cluster),
+            }
+          : this.seasonalIntelligence.inferTreeSeasonalState(plant, plant.user),
       recent_cycles: plant.cycles.map((cycle) => ({
         cycle_year: cycle.cycle_year,
         yield_quantity: cycle.yield_quantity,

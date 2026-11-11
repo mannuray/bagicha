@@ -317,5 +317,12 @@ describe('the crop page', () => {
       expect(await within(journey).findByText(/growing in terrace bag/i)).toBeInTheDocument();
       expect(within(journey).queryByText(/same family/i)).not.toBeInTheDocument();
     });
+
+    it('compares years by blooms, not harvests', async () => {
+      handlers({ name: 'Marigold (Genda)', crop_id: 'marigold', crop_stage: 'HARVESTING', record_kind: 'FLOWER' });
+      renderWithApp(routes, { route: '/plants/c1' });
+      expect(await screen.findByRole('region', { name: /blooms by year/i })).toBeInTheDocument();
+      expect(screen.queryByText(/log harvests to start comparing/i)).not.toBeInTheDocument();
+    });
   });
 });

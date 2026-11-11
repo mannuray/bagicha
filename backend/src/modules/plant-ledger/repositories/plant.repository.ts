@@ -15,7 +15,14 @@ const AI_CONTEXT_LOG_TYPES = [
 ];
 
 const aiContextInclude = {
-  user: { select: { district: true, latitude: true, longitude: true } },
+  user: {
+    select: {
+      district: true,
+      latitude: true,
+      longitude: true,
+      region_cluster: true,
+    },
+  },
   cycles: { orderBy: { cycle_year: 'desc' }, take: 2 },
   journal_entries: {
     where: { type: { in: AI_CONTEXT_LOG_TYPES } },
@@ -87,7 +94,14 @@ export class PlantRepository {
     return this.prisma.plant.findFirst({
       where: { id: plantId, user_id: userId },
       include: {
-        user: { select: { district: true, latitude: true, longitude: true } },
+        user: {
+          select: {
+            district: true,
+            latitude: true,
+            longitude: true,
+            region_cluster: true,
+          },
+        },
       },
     });
   }

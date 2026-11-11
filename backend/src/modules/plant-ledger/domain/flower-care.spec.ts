@@ -24,7 +24,7 @@ describe('perennial flowers', () => {
   it('lists care due this month and next, keyed by year', () => {
     const rose = perennialFlower('rose')!;
     const sept = flowerCareDue(rose, 'PLAINS', ist('2026-09-20'));
-    expect(sept.map((c) => c.sourceKey)).toEqual(['rose:prune:2026']);
+    expect(sept.map((c) => c.sourceKey)).toEqual(['rose:prune:2026-10']);
     expect(sept[0].due.toISOString()).toBe('2026-09-30T18:30:00.000Z');
     const nov = flowerCareDue(rose, 'PLAINS', ist('2026-11-05'));
     expect(nov.map((c) => c.key)).toContain('feed');
@@ -37,7 +37,7 @@ describe('perennial flowers', () => {
   it('keys a January task seen in December with the next year', () => {
     const champa = perennialFlower('plumeria')!;
     const due = flowerCareDue(champa, 'PLAINS', ist('2026-12-10'));
-    expect(due.map((c) => c.sourceKey)).toContain('plumeria:prune:2027');
+    expect(due.map((c) => c.sourceKey)).toContain('plumeria:prune:2027-01');
   });
 
   it('reports bloom status', () => {
@@ -50,5 +50,17 @@ describe('perennial flowers', () => {
       status: 'later',
       window_label: 'Mar–Jun',
     });
+  });
+
+  it('gives each care month its own key, so a second feed in the year is not lost', () => {
+    const hibiscus = perennialFlower('hibiscus')!;
+    const march = flowerCareDue(hibiscus, 'PLAINS', ist('2026-03-05')).map(
+      (c) => c.sourceKey,
+    );
+    const may = flowerCareDue(hibiscus, 'PLAINS', ist('2026-05-05')).map(
+      (c) => c.sourceKey,
+    );
+    expect(march).toContain('hibiscus:feed:2026-03');
+    expect(may).toContain('hibiscus:feed:2026-05');
   });
 });

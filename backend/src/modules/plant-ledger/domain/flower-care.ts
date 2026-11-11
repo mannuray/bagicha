@@ -257,7 +257,10 @@ function firstOfMonthIst(year: number, month: number): Date {
   return new Date(Date.UTC(year, month - 1, 1) - 5.5 * 60 * 60 * 1000);
 }
 
-/** Care whose month is this IST month or next, keyed by year so a yearly task comes back next year. */
+/**
+ * Care whose month is this IST month or next. Keyed by year and month, so each
+ * feed in a year is its own task and a yearly task comes back next year.
+ */
 export function flowerCareDue(
   flower: PerennialFlower,
   group: ClimateGroup,
@@ -277,7 +280,7 @@ export function flowerCareDue(
         title: c.title,
         category: c.category,
         due: thisMonth ? now : firstOfMonthIst(y, c.month),
-        sourceKey: `${flower.family}:${c.key}:${y}`,
+        sourceKey: `${flower.family}:${c.key}:${y}-${String(c.month).padStart(2, '0')}`,
       };
     });
 }

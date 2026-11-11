@@ -70,7 +70,9 @@ export class CropsService {
     );
     const season = await this.placesRepo.lastClosedSeason(placeId, since);
     const previous = cropById(season?.plant.crop_id);
-    if (!season || !previous) return { conflict: false, last: null };
+    // Rotation is about vegetable family pests in the soil; a flower season doesn't count.
+    if (!season || !previous || previous.kind === 'FLOWER')
+      return { conflict: false, last: null };
     const started = season.started_at ?? season.closed_at ?? new Date();
     return {
       conflict: previous.family === crop.family,
