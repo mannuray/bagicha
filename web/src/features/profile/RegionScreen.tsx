@@ -4,14 +4,17 @@ import { useNavigate } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Icon, TextField, cx } from '../../ui';
 import { isProfileComplete, useSession, type RegionCluster } from '../auth';
-import { useUpdateProfile, type ProfileChanges } from './api';
+import { useDistricts, useLocateDistrict, useUpdateProfile, type ProfileChanges } from './api';
 import { useGeolocator, type Coordinates } from './geolocation';
 import { OnboardingLayout } from './OnboardingLayout';
-import { knownRegion, regionById, REGIONS } from './regions';
+import { knownRegion, regionById, REGIONS, suggestDistricts, type DistrictOption } from './regions';
 
-type GeoState = 'idle' | 'locating' | 'added' | 'unavailable';
+type GeoState = 'idle' | 'locating' | 'detected' | 'noDistrict' | 'unavailable';
 
-/** Stitch "Locate Your Sanctuary", adapted: type the district; a known one sets the region, otherwise pick the closest. GPS optional. */
+/**
+ * Stitch "Locate Your Sanctuary", adapted: type the district (with suggestions from the full
+ * list) or detect it from the location; a known one sets the region, otherwise pick the closest.
+ */
 export function RegionScreen({ onDone }: { onDone?: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -22,15 +25,34 @@ export function RegionScreen({ onDone }: { onDone?: () => void }) {
   const [district, setDistrict] = useState(user?.district ?? '');
   const [coords, setCoords] = useState<Coordinates | null>(null);
   const [geo, setGeo] = useState<GeoState>('idle');
-  const known = knownRegion(district);
+  const [detected, setDetected] = useState<{ label: string; state: string } | null>(null);
+  const [typing, setTyping] = useState(false);
+  const districts = useDistricts();
+  const locateDistrict = useLocateDistrict();
+  const list = districts.data ?? [];
+  const known = knownRegion(district, list);
   const region = known ?? picked;
   const autoRegion = regionById(known);
+  // Nothing to suggest once the text is exactly a district on the list.
+  const exact = list.some((d) => d.label.toLowerCase() === district.trim().toLowerCase());
+  const suggestions = typing && !exact ? suggestDistricts(district, list) : [];
+
+  const choose = (d: DistrictOption) => {
+    setDistrict(d.label);
+    setTyping(false);
+  };
 
   const locate = async () => {
     setGeo('locating');
     const found = await geolocator.current();
     setCoords(found);
-    setGeo(found ? 'added' : 'unavailable');
+    if (!found) return setGeo('unavailable');
+    const hit = await locateDistrict(found.latitude, found.longitude).catch(() => null);
+    if (!hit) return setGeo('noDistrict');
+    setDistrict(hit.label);
+    setTyping(false);
+    setDetected({ label: hit.district, state: hit.state });
+    setGeo('detected');
   };
 
   const save = () => {
@@ -48,10 +70,34 @@ export function RegionScreen({ onDone }: { onDone?: () => void }) {
       <TextField
         label={t('onboarding.region.district')}
         value={district}
-        onChange={(e) => setDistrict(e.target.value)}
-        autoComplete="address-level2"
+        onChange={(e) => {
+          setDistrict(e.target.value);
+          setTyping(true);
+          setGeo((g) => (g === 'detected' ? 'idle' : g));
+        }}
+        autoComplete="off"
         className="mb-3"
       />
+      {suggestions.length > 0 && (
+        <ul role="listbox" aria-label={t('onboarding.region.suggestions')} className="mb-3 overflow-hidden rounded-xl bg-surface-container-low">
+          {suggestions.map((d) => (
+            <li key={`${d.name}|${d.state}`}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={false}
+                onClick={() => choose(d)}
+                className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-2 text-left font-body text-sm text-on-surface hover:bg-surface-container"
+              >
+                <span>
+                  {d.name} · {d.state}
+                </span>
+                <span className="font-label text-[11px] text-on-surface-variant">{t(regionById(d.region)?.labelKey ?? '')}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       {autoRegion ? (
         <p className="mb-4 flex items-center gap-2 rounded-xl bg-primary px-4 py-3 font-body text-sm text-on-primary">
           <Icon name="check_circle" filled />
@@ -86,7 +132,14 @@ export function RegionScreen({ onDone }: { onDone?: () => void }) {
           <Icon name="my_location" />
           {t('onboarding.region.useLocation')}
         </Button>
-        {geo === 'added' && <p className="font-body text-sm text-primary">{t('onboarding.region.locationAdded')}</p>}
+        {geo === 'detected' && detected && autoRegion && (
+          <p className="text-center font-body text-sm text-primary">
+            {t('onboarding.region.detected', { district: detected.label, state: detected.state, region: t(autoRegion.labelKey) })}
+          </p>
+        )}
+        {geo === 'noDistrict' && (
+          <p className="text-center font-body text-sm text-on-surface-variant">{t('onboarding.region.noDistrict')}</p>
+        )}
         {geo === 'unavailable' && (
           <p className="font-body text-sm text-on-surface-variant">{t('onboarding.region.locationUnavailable')}</p>
         )}

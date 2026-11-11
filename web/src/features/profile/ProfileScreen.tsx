@@ -5,7 +5,7 @@ import { systemClock } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Chip, Icon, Screen, TextField } from '../../ui';
 import { useSession, type RegionCluster } from '../auth';
-import { useUpdateProfile } from './api';
+import { useDistricts, useUpdateProfile } from './api';
 import { knownRegion, regionById, REGIONS } from './regions';
 
 export function ProfileScreen() {
@@ -13,6 +13,7 @@ export function ProfileScreen() {
   const navigate = useNavigate();
   const { user, signOut } = useSession();
   const update = useUpdateProfile();
+  const districts = useDistricts();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user?.name ?? '');
   const [district, setDistrict] = useState(user?.district ?? '');
@@ -23,7 +24,7 @@ export function ProfileScreen() {
   if (!user) return null;
   const regionLabel = regionById(user.region_cluster);
   // A district we know decides the region; the chips are only for districts we don't.
-  const known = knownRegion(district);
+  const known = knownRegion(district, districts.data ?? []);
   const region = known ?? picked;
 
   const save = (event: FormEvent) => {
@@ -171,6 +172,8 @@ export function ProfileScreen() {
             {t('profile.signOut')}
           </button>
         </div>
+        {/* The district map's licence (ODbL) asks for this credit. */}
+        <p className="pb-4 text-center font-label text-[11px] text-outline">{t('profile.attribution')}</p>
       </main>
     </Screen>
   );

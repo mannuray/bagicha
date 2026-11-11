@@ -1,11 +1,9 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes, useLocation } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { API, server } from '../../test/msw/server';
+import { API, server, TEST_DISTRICTS } from '../../test/msw/server';
 import { renderWithApp, testUser } from '../../test/render';
 import { REGION_CLUSTERS } from '../auth';
 import {
@@ -60,21 +58,15 @@ describe('regions', () => {
     expect(REGIONS.map((r) => r.id).sort()).toEqual([...REGION_CLUSTERS].sort());
   });
 
-  it('knows a district’s region, case- and spacing-insensitively, and nothing else', () => {
-    expect(knownRegion('Patna')).toBe('EAST_INDIA');
-    expect(knownRegion('  patna district ')).toBe('EAST_INDIA');
-    expect(knownRegion('Kochi')).toBe('COASTAL_HUMID');
-    expect(knownRegion('Muzaffarpur')).toBeNull();
-    expect(knownRegion('')).toBeNull();
-  });
-
-  it('knows exactly the places the backend knows', () => {
-    const source = readFileSync(resolve(__dirname, '../../../../backend/src/modules/seasonal/domain/region-cluster.ts'), 'utf8');
-    const backend = Object.fromEntries(
-      [...source.matchAll(/RegionCluster\.(\w+), \[([^\]]*)\]/g)].map(([, id, list]) => [id, [...list.matchAll(/'([^']+)'/g)].map((m) => m[1])]),
-    );
-    expect(Object.keys(backend)).toHaveLength(7);
-    expect(Object.fromEntries(REGIONS.map((r) => [r.id, [...r.places]]))).toEqual(backend);
+  it('knows a district’s region from the list, by name, alias or "Name, State", and nothing else', () => {
+    const list = TEST_DISTRICTS as never;
+    expect(knownRegion('Patna', list)).toBe('EAST_INDIA');
+    expect(knownRegion('  patna district ', list)).toBe('EAST_INDIA');
+    expect(knownRegion('Gurgaon', list)).toBe('NORTH_INDIA');
+    expect(knownRegion('Aurangabad, Bihar', list)).toBe('EAST_INDIA');
+    expect(knownRegion('Aurangabad', list)).toBeNull();
+    expect(knownRegion('My village', list)).toBeNull();
+    expect(knownRegion('', list)).toBeNull();
   });
 });
 
@@ -134,13 +126,13 @@ describe('onboarding', () => {
   it('an unknown district shows the region cards and needs a pick', async () => {
     const bodies = captureUpdates();
     renderWithApp(<Onboarding geo={denied} />, { route: '/onboarding/region', user: incomplete });
-    await userEvent.type(screen.getByLabelText(/district/i), 'Muzaffarpur');
+    await userEvent.type(screen.getByLabelText(/district/i), 'My village');
     const next = screen.getByRole('button', { name: /continue/i });
     expect(next).toBeDisabled();
     await userEvent.click(screen.getByRole('button', { name: /east india/i }));
     await userEvent.click(next);
     await waitFor(() => expect(bodies).toHaveLength(1));
-    expect(bodies[0]).toEqual({ region_cluster: 'EAST_INDIA', district: 'Muzaffarpur' });
+    expect(bodies[0]).toEqual({ region_cluster: 'EAST_INDIA', district: 'My village' });
   });
 
   it('still continues when location is denied, sending no coordinates', async () => {
@@ -154,16 +146,53 @@ describe('onboarding', () => {
     expect(bodies[0]).toEqual({ region_cluster: 'HILLS_COOL', district: 'Shimla' });
   });
 
-  it('sends coordinates when location is allowed', async () => {
+  it('detects the district from the location, and sends the coordinates', async () => {
     const bodies = captureUpdates();
-    const allowed: Geolocator = { current: () => Promise.resolve({ latitude: 25.6, longitude: 85.1 }) };
+    let asked = '';
+    server.use(
+      http.get(`${API}/regions/locate`, ({ request }) => {
+        asked = new URL(request.url).search;
+        return HttpResponse.json({ success: true, data: { district: 'Gaya', state: 'Bihar', region: 'EAST_INDIA', label: 'Gaya' } });
+      }),
+    );
+    const allowed: Geolocator = { current: () => Promise.resolve({ latitude: 24.79, longitude: 85.0 }) };
     renderWithApp(<Onboarding geo={allowed} />, { route: '/onboarding/region', user: incomplete });
     await userEvent.click(screen.getByRole('button', { name: /use my location/i }));
-    await screen.findByText(/location added/i);
-    await userEvent.type(screen.getByLabelText(/district/i), 'Patna');
+    expect(await screen.findByText(/detected gaya, bihar · east india/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/district/i)).toHaveValue('Gaya');
+    expect(asked).toBe('?lat=24.79&lng=85');
     await userEvent.click(screen.getByRole('button', { name: /continue/i }));
     await waitFor(() => expect(bodies).toHaveLength(1));
-    expect(bodies[0]).toMatchObject({ latitude: 25.6, longitude: 85.1 });
+    expect(bodies[0]).toEqual({ region_cluster: 'EAST_INDIA', district: 'Gaya', latitude: 24.79, longitude: 85.0 });
+  });
+
+  it('keeps what was typed when the location names no district', async () => {
+    server.use(http.get(`${API}/regions/locate`, () => HttpResponse.json({ success: true, data: null })));
+    const allowed: Geolocator = { current: () => Promise.resolve({ latitude: 51.5, longitude: -0.1 }) };
+    renderWithApp(<Onboarding geo={allowed} />, { route: '/onboarding/region', user: incomplete });
+    await userEvent.type(screen.getByLabelText(/district/i), 'My village');
+    await userEvent.click(screen.getByRole('button', { name: /use my location/i }));
+    expect(await screen.findByText(/couldn't find your district from your location/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/district/i)).toHaveValue('My village');
+  });
+
+  it('suggests districts as you type, and a pick sets the region', async () => {
+    renderWithApp(<Onboarding geo={denied} />, { route: '/onboarding/region', user: incomplete });
+    await userEvent.type(screen.getByLabelText(/district/i), 'ga');
+    await userEvent.click(await screen.findByRole('option', { name: /gaya · bihar/i }));
+    expect(screen.getByLabelText(/district/i)).toHaveValue('Gaya');
+    expect(screen.getByText(/east india/i)).toBeInTheDocument();
+    expect(screen.queryByRole('option')).not.toBeInTheDocument();
+  });
+
+  it('saves a shared district name with its state', async () => {
+    const bodies = captureUpdates();
+    renderWithApp(<Onboarding geo={denied} />, { route: '/onboarding/region', user: incomplete });
+    await userEvent.type(screen.getByLabelText(/district/i), 'aurang');
+    await userEvent.click(await screen.findByRole('option', { name: /aurangabad · bihar/i }));
+    await userEvent.click(screen.getByRole('button', { name: /continue/i }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0]).toEqual({ region_cluster: 'EAST_INDIA', district: 'Aurangabad, Bihar' });
   });
 
   it('marks each chosen focus as selected', async () => {
@@ -236,5 +265,10 @@ describe('profile', () => {
     await userEvent.click(screen.getByRole('button', { name: /^save$/i }));
     expect(await screen.findByText(/enter your district/i)).toBeInTheDocument();
     expect(puts).toBe(0);
+  });
+
+  it('credits the district boundary data', async () => {
+    renderWithApp(<Onboarding />, { route: '/profile' });
+    expect(await screen.findByText(/district boundaries: geoboundaries \(odbl\)/i)).toBeInTheDocument();
   });
 });
