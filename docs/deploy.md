@@ -30,10 +30,15 @@ The API never migrates on start. If the commit adds a folder under `backend/pris
 ```bash
 cd backend
 docker build --target migrate -t bagicha-migrate .
-docker run --rm --dns 1.1.1.1 -e DATABASE_URL='<Neon owner connection string>' bagicha-migrate
+docker run --rm --dns 1.1.1.1 \
+  --add-host ep-misty-mud-a1byhelm.ap-southeast-1.aws.neon.tech:13.228.184.177 \
+  -e DATABASE_URL='postgresql://neondb_owner:<password>@ep-misty-mud-a1byhelm.ap-southeast-1.aws.neon.tech/neondb?sslmode=require' \
+  bagicha-migrate
 ```
 
-Copy the owner connection string from the Neon console (project `bagicha-staging`, role `neondb_owner`, direct connection, not pooled). Run this in your own terminal, not through Claude, so the password never lands in a chat. It prints `All migrations have been successfully applied.`
+- Use the **direct** connection string from the Neon console (project `bagicha-staging`, role `neondb_owner`, Connection pooling OFF): the host has **no** `-pooler`, and drop `&channel_binding=require` so the string ends in `?sslmode=require`.
+- `--dns 1.1.1.1` is needed because the local router refuses `*.neon.tech`. `--add-host` pins the host to an IPv4 address: Neon also returns IPv6 addresses, which Docker on the Mac can't route, and Prisma's engine gives up with `P1001`. If Neon's address ever changes, look it up with `nslookup ep-misty-mud-a1byhelm.ap-southeast-1.aws.neon.tech 1.1.1.1`.
+- Run it in your own terminal, not through Claude, so the password never lands in a chat. It ends with `All migrations have been successfully applied.`
 
 ## Deploy the API (Render)
 
