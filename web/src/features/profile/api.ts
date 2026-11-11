@@ -20,14 +20,15 @@ export interface ProfileChanges {
 /** Saves profile fields and refreshes the signed-in user from the response. */
 export function useUpdateProfile() {
   const api = useApi();
-  const { updateUser } = useSession();
+  const { user: before, updateUser } = useSession();
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: (changes: ProfileChanges) =>
       api.send('PUT', '/user/profile/update', changes, userSchema),
-    onSuccess: (user, changes) => {
+    onSuccess: (user) => {
       updateUser(user);
-      if (changes.district !== undefined || changes.region_cluster !== undefined) invalidate(staleAfter.regionChange());
+      // Only a real change of place moves the season guide and crop calendar.
+      if (user.district !== before?.district || user.region_cluster !== before?.region_cluster) invalidate(staleAfter.regionChange());
     },
   });
 }
