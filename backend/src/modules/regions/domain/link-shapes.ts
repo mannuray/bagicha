@@ -28,10 +28,16 @@ const byName = (name: string) => DISTRICTS.find((d) => d.name === name) ?? null;
  */
 export function linkShape(shape: ShapeRef): District | null {
   if (shape.name.trim() === 'DATA NOT AVAILABLE')
-    return byName(shape.lat < 35 ? 'Pakistan-occupied Kashmir' : 'Gilgit-Baltistan and Aksai Chin');
+    return byName(
+      shape.lat < 35
+        ? 'Pakistan-occupied Kashmir'
+        : 'Gilgit-Baltistan and Aksai Chin',
+    );
   const name = norm(shape.name);
   const state = norm(shape.state);
-  const inState = DISTRICTS.filter((d) => norm(d.state) === state && forms(d).includes(name));
+  const inState = DISTRICTS.filter(
+    (d) => norm(d.state) === state && forms(d).includes(name),
+  );
   if (inState.length === 1) return inState[0];
   const anywhere = DISTRICTS.filter((d) => forms(d).includes(name));
   return anywhere.length === 1 ? anywhere[0] : null;

@@ -36,6 +36,15 @@ describe('resolveRegionCluster', () => {
     ['North Goa', RegionCluster.COASTAL_HUMID],
     ['Shimla', RegionCluster.HILLS_COOL],
     [null, RegionCluster.NORTH_INDIA],
+    // The full district list (district-map spec): no longer only 21 cities.
+    ['Gaya', RegionCluster.EAST_INDIA],
+    ['Varanasi', RegionCluster.EAST_INDIA],
+    ['Nagpur', RegionCluster.CENTRAL_INDIA],
+    ['Udupi', RegionCluster.COASTAL_HUMID],
+    ['Gurgaon', RegionCluster.NORTH_INDIA],
+    // A bare shared name is unknown, not guessed: the North fallback applies.
+    ['Aurangabad', RegionCluster.NORTH_INDIA],
+    ['Aurangabad, Bihar', RegionCluster.EAST_INDIA],
   ])('%s → %s', (district, cluster) => {
     expect(resolveRegionCluster(district)).toBe(cluster);
   });
@@ -55,5 +64,14 @@ describe('regionFor', () => {
     expect(regionFor({ region_cluster: null, district: 'Patna' })).toBe(
       RegionCluster.EAST_INDIA,
     );
+  });
+
+  it('keeps a stored region for an old profile with a bare shared name', () => {
+    expect(
+      regionFor({
+        region_cluster: RegionCluster.WEST_INDIA,
+        district: 'Aurangabad',
+      }),
+    ).toBe(RegionCluster.WEST_INDIA);
   });
 });
