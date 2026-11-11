@@ -266,9 +266,7 @@
     "trees_other": "Trees",
     "crops_one": "Crop growing",
     "crops_other": "Crops growing",
-    "planned": "+{{count}} planned",
-    "addTrees": "Add trees",
-    "addCrops": "Add crops"
+    "planned": "+{{count}} planned"
   },
   "journal": {
     "title": "Log a Moment",

@@ -93,9 +93,9 @@ export function DashboardScreen() {
         <section aria-label={t('dashboard.garden')} className="space-y-2 rounded-xl bg-surface-container-low p-3">
           <h2 className="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('dashboard.garden')}</h2>
           <div className="grid grid-cols-3 gap-2">
-            <GardenCount count={trees} label={t('dashboard.trees', { count: trees ?? 0 })} to="/plants?group=trees" addLabel={t('dashboard.addTrees')} onAdd={() => setAdding(true)} />
+            <GardenCount count={trees} label={t('dashboard.trees', { count: trees ?? 0 })} to="/plants?group=trees" />
             <div className="space-y-1">
-              <GardenCount count={crops} label={t('dashboard.crops', { count: crops ?? 0 })} to="/plants?group=crops" addLabel={t('dashboard.addCrops')} onAdd={() => setAdding(true)} planned={planned} />
+              <GardenCount count={crops} label={t('dashboard.crops', { count: crops ?? 0 })} to="/plants?group=crops" />
               {planned > 0 && (
                 <Link to="/plants?group=crops&tab=planned" className="block text-center font-label text-[11px] font-semibold text-secondary">
                   {t('dashboard.planned', { count: planned })}
@@ -116,18 +116,8 @@ export function DashboardScreen() {
   );
 }
 
-/** A pebble with a count that opens its group on the Plants tab, or a faint "+ Add" when the group is empty. */
-function GardenCount({ count, label, to, addLabel, onAdd, planned = 0 }: { count: number | null; label: string; to: string; addLabel: string; onAdd: () => void; planned?: number }) {
-  if (count === 0 && planned === 0) {
-    return (
-      <button type="button" onClick={onAdd} className="flex w-full flex-col items-center gap-1 rounded-xl p-2 text-primary/60">
-        <Pebble className="flex h-11 w-11 items-center justify-center opacity-60">
-          <Icon name="add" />
-        </Pebble>
-        <span className="font-label text-[11px] font-semibold leading-tight">{addLabel}</span>
-      </button>
-    );
-  }
+/** A pebble with a count that opens its group on the Plants tab (0 included: one add button serves the garden). */
+function GardenCount({ count, label, to }: { count: number | null; label: string; to: string }) {
   return (
     <Link to={to} className="flex flex-col items-center gap-1 rounded-xl p-2">
       <Pebble className="flex h-11 w-11 items-center justify-center">

@@ -164,11 +164,13 @@ describe('dashboard', () => {
       expect(await within(tile).findByRole('link', { name: /\+1 planned/i })).toHaveAttribute('href', '/plants?group=crops&tab=planned');
     });
 
-    it('offers to add a group that is empty', async () => {
+    it('shows an empty group as 0, with one add button for the whole garden', async () => {
       garden([plantRecord({ id: 'p1' })], []);
       renderWithApp(<DashboardScreen />);
       const tile = await screen.findByRole('region', { name: /your garden/i });
-      await userEvent.click(await within(tile).findByRole('button', { name: /add crops/i }));
+      expect(await within(tile).findByRole('link', { name: /0\s*crops growing/i })).toHaveAttribute('href', '/plants?group=crops');
+      expect(within(tile).getAllByRole('button')).toHaveLength(1);
+      await userEvent.click(within(tile).getByRole('button', { name: /add to garden/i }));
       expect(screen.getByRole('dialog', { name: /what are you growing/i })).toBeInTheDocument();
     });
   });
