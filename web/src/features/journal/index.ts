@@ -7,3 +7,5 @@ export { LogMomentScreen } from './LogMomentScreen';
 export { ImageCompressorProvider, useImageCompressor } from './compressor-context';
 export { useTimeline, useAddJournalEntry, journalEntrySchema } from './api';
 export type { JournalEntry, NewMoment } from './api';
+export { BLOOM_TYPES, DROP_TYPES, LOG_TYPES, logTypeSchema } from './log-types';
+export type { LogType } from './log-types';

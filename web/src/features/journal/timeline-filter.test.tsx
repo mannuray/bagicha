@@ -4,9 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { pageOf } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
-import { useTimeline } from '.';
+import { useTimeline, type LogType } from '.';
 
-function Probe({ types }: { types?: readonly string[] }) {
+function Probe({ types }: { types?: readonly LogType[] }) {
   const timeline = useTimeline('p1', types);
   return <p>{timeline.data ? `loaded ${timeline.data.items.length}` : 'loading'}</p>;
 }

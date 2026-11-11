@@ -1,10 +1,10 @@
 import { istNoonIso } from '../../lib/ist';
 import type { NewMoment } from './api';
 import type { MomentDraft } from './draft';
+import { DROP_TYPES } from './log-types';
 
 /** Log a moment as data: a blank draft and the entry it becomes (no React). */
 
-export const DROP_TYPES = new Set(['FLOWER_DROP', 'FRUIT_DROP']);
 
 export const blankMoment = (): MomentDraft => ({ type: 'NOTE', content: '', unit: 'kg' });
 

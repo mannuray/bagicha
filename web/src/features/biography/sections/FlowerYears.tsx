@@ -1,15 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { istParts } from '../../../lib/ist';
 import { ErrorState, LoadingState } from '../../../ui';
-import { useTimeline } from '../../journal';
-
-const BLOOM_TYPES = ['FLOWERING', 'BLOOM_PEAK'] as const;
+import { BLOOM_TYPES, useTimeline } from '../../journal';
 
 /** Year on year for a flower: how many blooms were logged each year, and when the first came. */
 export function FlowerYears({ plantId }: { plantId: string }) {
   const { t, i18n } = useTranslation();
   const blooms = useTimeline(plantId, BLOOM_TYPES);
-  const entries = (blooms.data?.items ?? []).filter((e) => (BLOOM_TYPES as readonly string[]).includes(e.type));
+  const entries = (blooms.data?.items ?? []).filter((e) => BLOOM_TYPES.includes(e.type));
   const years = new Map<number, { count: number; first: Date }>();
   for (const e of entries) {
     const at = new Date(e.timestamp);

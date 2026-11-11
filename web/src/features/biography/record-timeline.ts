@@ -1,15 +1,15 @@
 import { istParts } from '../../lib/ist';
-import type { JournalEntry } from '../journal';
+import { DROP_TYPES, type JournalEntry, type LogType } from '../journal';
 
 /** Record filters; each sends its types to the server (All sends none). */
 export const TIMELINE_FILTERS = [
   { id: 'all', types: [] },
-  { id: 'care', types: ['WATERING', 'PRUNING', 'FEEDING', 'TREATMENT'] },
-  { id: 'bloom', types: ['FLOWERING', 'FRUIT_SET', 'FLOWER_DROP', 'FRUIT_DROP', 'GERMINATION', 'THINNING', 'BOLTING'] },
+  { id: 'care', types: ['WATERING', 'PRUNING', 'FEEDING', 'TREATMENT', 'PINCHING', 'DEADHEADING'] },
+  { id: 'bloom', types: ['FLOWERING', 'BLOOM_PEAK', 'FRUIT_SET', 'FLOWER_DROP', 'FRUIT_DROP', 'GERMINATION', 'THINNING', 'BOLTING'] },
   { id: 'harvest', types: ['HARVEST'] },
   { id: 'health', types: ['PEST_DIAGNOSIS', 'DIAGNOSIS', 'WATERING_STRESS', 'WEATHER_DAMAGE'] },
   { id: 'notes', types: ['NOTE', 'PHOTO', 'PLANTING', 'PLANT_ENDED', 'SOWING', 'TRANSPLANTING', 'SEASON_END'] },
-] as const satisfies ReadonlyArray<{ id: string; types: readonly string[] }>;
+] as const satisfies ReadonlyArray<{ id: string; types: readonly LogType[] }>;
 
 export type TimelineFilter = (typeof TIMELINE_FILTERS)[number];
 
@@ -44,7 +44,7 @@ export function entryTags(e: JournalEntry): EntryTag[] {
     if (!amount) return [];
     return [{ key: 'harvest', values: { amount, ...(typeof m.quality === 'string' ? { quality: m.quality } : {}) } }];
   }
-  if ((e.type === 'FLOWER_DROP' || e.type === 'FRUIT_DROP') && typeof m.severity === 'string') {
+  if (DROP_TYPES.has(e.type) && typeof m.severity === 'string') {
     return [{ key: 'drop', values: { severity: m.severity } }];
   }
   return [];

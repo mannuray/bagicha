@@ -2,10 +2,11 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import { z } from 'zod';
 import { useApi } from '../../lib/api';
 import { queryKeys } from '../../lib/query-keys';
+import { logTypeSchema, type LogType } from './log-types';
 
 export const journalEntrySchema = z.object({
   id: z.string(),
-  type: z.string(),
+  type: logTypeSchema,
   content: z.string().nullable(),
   metadata: z.record(z.string(), z.unknown()).nullable(),
   timestamp: z.string(),
@@ -16,7 +17,7 @@ export const journalEntrySchema = z.object({
 export type JournalEntry = z.infer<typeof journalEntrySchema>;
 
 export interface NewMoment {
-  type: string;
+  type: LogType;
   content?: string;
   metadata?: Record<string, unknown>;
   event_at?: string;
@@ -26,7 +27,7 @@ export interface NewMoment {
  * The plant's moments, newest first, one page at a time ("Show earlier moments").
  * `types` filters on the server, so paging walks the filtered list.
  */
-export function useTimeline(plantId: string, types?: readonly string[]) {
+export function useTimeline(plantId: string, types?: readonly LogType[]) {
   const api = useApi();
   const filter = types && types.length > 0 ? types.join(',') : null;
   return useInfiniteQuery({

@@ -24,4 +24,15 @@ describe('healthLabel', () => {
   it('otherwise shows the plant’s own status', () => {
     expect(healthLabel({ health_status: 'Recovering' }, [], NOW)).toEqual({ label: 'Recovering', tone: 'good' });
   });
+
+  it('a serious pest diagnosis needs attention too', () => {
+    const pest = { type: 'PEST_DIAGNOSIS', metadata: { severity: 'HIGH' }, timestamp: daysAgo(3) };
+    expect(healthLabel({ health_status: 'Healthy' }, [pest], NOW).tone).toBe('attention');
+  });
+
+  it('counts the window in India calendar days, like the rest of the app', () => {
+    // 30 India days back from 10 Mar 05:30 IST is 8 Feb; 01:30 on 8 Feb IST still counts, though it is over 30×24 h ago.
+    const edge = { type: 'DIAGNOSIS', metadata: { severity: 'HIGH' }, timestamp: '2026-02-07T20:00:00Z' };
+    expect(healthLabel({ health_status: 'Healthy' }, [edge], NOW).tone).toBe('attention');
+  });
 });

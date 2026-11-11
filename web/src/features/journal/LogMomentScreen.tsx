@@ -4,15 +4,9 @@ import { messageFor } from '../../lib/error-messages';
 import leavesPhoto from '../../assets/stitch/moment-leaves.jpg';
 import { Button, ErrorState, Icon, LoadingState, Pill, TextField } from '../../ui';
 import { isPlantMissing, NotInGarden, usePlant } from '../plants';
-import { DROP_TYPES } from './moment';
+import { DROP_SEVERITIES, DROP_TYPES, FLOWER_LOGGABLE, HARVEST_QUALITIES, HARVEST_UNITS, TREE_LOGGABLE } from './log-types';
 import { useLogMoment } from './useLogMoment';
 
-const TYPES = ['NOTE', 'WATERING', 'FLOWERING', 'FRUIT_SET', 'FLOWER_DROP', 'FRUIT_DROP', 'HARVEST', 'PRUNING', 'FEEDING', 'TREATMENT', 'PHOTO'] as const;
-/** Flowers log blooms and bloom care, never fruit. */
-const FLOWER_TYPES = ['FLOWERING', 'BLOOM_PEAK', 'DEADHEADING', 'PINCHING', 'PRUNING', 'FEEDING', 'WATERING', 'TREATMENT', 'NOTE', 'PHOTO'] as const;
-const SEVERITIES = ['LOW', 'MEDIUM', 'HIGH'] as const;
-const UNITS = ['kg', 'pieces', 'crates'] as const;
-const QUALITIES = ['poor', 'fair', 'good', 'excellent'] as const;
 
 /** Stitch "Log a Moment – Quick Entry": a frosted sheet over the orchard photo. */
 export function LogMomentScreen() {
@@ -65,7 +59,7 @@ function MomentForm({ plantId, plantName, flower = false }: { plantId: string; p
       <fieldset>
         <legend className="sr-only">{t('journal.what')}</legend>
         <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
-          {(flower ? FLOWER_TYPES : TYPES).map((type) => (
+          {(flower ? FLOWER_LOGGABLE : TREE_LOGGABLE).map((type) => (
             <Pill key={type} selected={draft.type === type} onClick={() => set('type', type)}>
               {t(`journal.types.${type}`)}
             </Pill>
@@ -77,7 +71,7 @@ function MomentForm({ plantId, plantName, flower = false }: { plantId: string; p
         <fieldset>
           <legend className="mb-2 font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('journal.severity')}</legend>
           <div className="flex flex-wrap gap-2">
-            {SEVERITIES.map((s) => (
+            {DROP_SEVERITIES.map((s) => (
               <Pill key={s} selected={draft.severity === s} onClick={() => set('severity', s)}>
                 {t(`journal.severities.${s}`)}
               </Pill>
@@ -90,14 +84,14 @@ function MomentForm({ plantId, plantName, flower = false }: { plantId: string; p
         <div className="space-y-3 rounded-3xl bg-surface-container-low p-4">
           <TextField label={t('journal.quantity')} type="number" inputMode="decimal" min={0} value={draft.quantity ?? ''} onChange={(e) => set('quantity', e.target.value)} />
           <div className="flex flex-wrap gap-2">
-            {UNITS.map((u) => (
+            {HARVEST_UNITS.map((u) => (
               <Pill key={u} selected={draft.unit === u} onClick={() => set('unit', u)}>
                 {t(`journal.units.${u}`)}
               </Pill>
             ))}
           </div>
           <div className="flex flex-wrap gap-2">
-            {QUALITIES.map((q) => (
+            {HARVEST_QUALITIES.map((q) => (
               <Pill key={q} selected={draft.quality === q} onClick={() => set('quality', q)}>
                 {t(`journal.qualities.${q}`)}
               </Pill>

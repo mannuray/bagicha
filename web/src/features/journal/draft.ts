@@ -1,7 +1,8 @@
 import { localKeyValueStore, type KeyValueStore } from '../../lib/storage';
+import { logTypeSchema, type LogType } from './log-types';
 
 export interface MomentDraft {
-  type: string;
+  type: LogType;
   content: string;
   severity?: string;
   quantity?: string;
@@ -20,7 +21,10 @@ export function saveDraft(plantId: string, draft: MomentDraft, storage: KeyValue
 export function loadDraft(plantId: string, storage: KeyValueStore = localKeyValueStore): MomentDraft | null {
   try {
     const raw = storage.get(key(plantId));
-    return raw ? (JSON.parse(raw) as MomentDraft) : null;
+    if (!raw) return null;
+    const draft = JSON.parse(raw) as MomentDraft;
+    // A draft saved by an older app, or tampered with, must not reach the form.
+    return logTypeSchema.safeParse(draft?.type).success && typeof draft.content === 'string' ? draft : null;
   } catch {
     return null;
   }

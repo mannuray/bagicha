@@ -43,11 +43,22 @@ describe('TIMELINE_FILTERS', () => {
   it('has the spec families, with All sending no types', () => {
     expect(Object.fromEntries(TIMELINE_FILTERS.map((f) => [f.id, f.types]))).toEqual({
       all: [],
-      care: ['WATERING', 'PRUNING', 'FEEDING', 'TREATMENT'],
-      bloom: ['FLOWERING', 'FRUIT_SET', 'FLOWER_DROP', 'FRUIT_DROP', 'GERMINATION', 'THINNING', 'BOLTING'],
+      care: ['WATERING', 'PRUNING', 'FEEDING', 'TREATMENT', 'PINCHING', 'DEADHEADING'],
+      bloom: ['FLOWERING', 'BLOOM_PEAK', 'FRUIT_SET', 'FLOWER_DROP', 'FRUIT_DROP', 'GERMINATION', 'THINNING', 'BOLTING'],
       harvest: ['HARVEST'],
       health: ['PEST_DIAGNOSIS', 'DIAGNOSIS', 'WATERING_STRESS', 'WEATHER_DAMAGE'],
       notes: ['NOTE', 'PHOTO', 'PLANTING', 'PLANT_ENDED', 'SOWING', 'TRANSPLANTING', 'SEASON_END'],
     });
+  });
+});
+
+describe('record filters cover every entry type', () => {
+  it('each type sits under exactly one filter besides All', async () => {
+    const { LOG_TYPES } = await import('../journal');
+    const { TIMELINE_FILTERS } = await import('./record-timeline');
+    for (const type of LOG_TYPES) {
+      const homes = TIMELINE_FILTERS.filter((f) => f.id !== 'all' && (f.types as readonly string[]).includes(type));
+      expect([type, homes.length]).toEqual([type, 1]);
+    }
   });
 });

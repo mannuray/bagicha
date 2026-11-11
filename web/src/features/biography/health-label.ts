@@ -1,3 +1,5 @@
+import { isDiagnosis, withinIstDays } from './diagnosis';
+
 const ATTENTION_WINDOW_DAYS = 30;
 const SERIOUS = new Set(['MEDIUM', 'HIGH']);
 
@@ -12,12 +14,8 @@ export function healthLabel(
   entries: EntryLike[],
   now: Date,
 ): { label: string | null; tone: 'good' | 'attention' } {
-  const cutoff = now.getTime() - ATTENTION_WINDOW_DAYS * 864e5;
   const recentSerious = entries.some(
-    (e) =>
-      e.type === 'DIAGNOSIS' &&
-      SERIOUS.has(String(e.metadata?.severity ?? '')) &&
-      new Date(e.timestamp).getTime() >= cutoff,
+    (e) => isDiagnosis(e) && SERIOUS.has(String(e.metadata?.severity ?? '')) && withinIstDays(e, ATTENTION_WINDOW_DAYS, now),
   );
   return recentSerious ? { label: null, tone: 'attention' } : { label: plant.health_status, tone: 'good' };
 }
