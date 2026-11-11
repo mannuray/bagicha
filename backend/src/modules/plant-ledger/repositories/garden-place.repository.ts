@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { GardenPlace, GardenPlaceKind } from '@prisma/client';
+import { GardenPlace, GardenPlaceKind, GardenSun } from '@prisma/client';
 import { Tx } from '../../../common/prisma/transaction';
 import { PrismaService } from '../../../prisma/prisma.service';
 
@@ -27,7 +27,7 @@ export class GardenPlaceRepository {
 
   create(
     userId: string,
-    data: { name: string; kind: GardenPlaceKind },
+    data: { name: string; kind: GardenPlaceKind; sun_hours?: GardenSun | null },
   ): Promise<GardenPlace> {
     return this.prisma.gardenPlace.create({
       data: { ...data, user_id: userId },
@@ -37,7 +37,12 @@ export class GardenPlaceRepository {
   async updateOwned(
     userId: string,
     id: string,
-    data: { name?: string; kind?: GardenPlaceKind; archived_at?: Date | null },
+    data: {
+      name?: string;
+      kind?: GardenPlaceKind;
+      sun_hours?: GardenSun | null;
+      archived_at?: Date | null;
+    },
   ): Promise<GardenPlace | null> {
     const { count } = await this.prisma.gardenPlace.updateMany({
       where: { id, user_id: userId },

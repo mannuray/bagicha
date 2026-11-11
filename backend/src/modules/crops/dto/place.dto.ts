@@ -1,4 +1,4 @@
-import { GardenPlaceKind } from '@prisma/client';
+import { GardenPlaceKind, GardenSun } from '@prisma/client';
 import {
   IsBoolean,
   IsEnum,
@@ -16,6 +16,10 @@ export class CreatePlaceDto {
 
   @IsEnum(GardenPlaceKind)
   kind: GardenPlaceKind;
+
+  @IsOptional()
+  @IsEnum(GardenSun)
+  sun_hours?: GardenSun;
 }
 
 export class UpdatePlaceDto {
@@ -28,6 +32,10 @@ export class UpdatePlaceDto {
   @IsOptional()
   @IsEnum(GardenPlaceKind)
   kind?: GardenPlaceKind;
+
+  @IsOptional()
+  @IsEnum(GardenSun)
+  sun_hours?: GardenSun;
 
   /** True archives the place (it stays on past seasons); false brings it back. */
   @IsOptional()

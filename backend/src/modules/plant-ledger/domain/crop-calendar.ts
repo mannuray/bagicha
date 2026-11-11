@@ -56,9 +56,136 @@ export interface CropInfo {
     container: string;
     spacing_cm: [number, number];
   };
+  scientific_name: string;
+  /** One plain line about the crop, for its detail page. */
+  description: string;
+  /** FULL: 6+ hours of direct sun; PARTIAL: 3–5 hours is enough. */
+  sun: 'FULL' | 'PARTIAL';
 }
 
-type Raw = Omit<CropInfo, 'tags'> & { tags: Array<'container' | 'beginner'> };
+type Raw = Omit<
+  CropInfo,
+  'tags' | 'scientific_name' | 'description' | 'sun'
+> & {
+  tags: Array<'container' | 'beginner'>;
+};
+
+type Details = Pick<CropInfo, 'scientific_name' | 'description' | 'sun'>;
+const d = (
+  scientific_name: string,
+  description: string,
+  sun: 'FULL' | 'PARTIAL' = 'FULL',
+): Details => ({ scientific_name, description, sun });
+const DETAILS: Record<string, Details> = {
+  tomato: d(
+    'Solanum lycopersicum',
+    'The kitchen-garden staple: loves sun and something to climb.',
+  ),
+  brinjal: d(
+    'Solanum melongena',
+    'A sturdy, long-bearing plant that keeps giving for months.',
+  ),
+  chilli: d(
+    'Capsicum annuum',
+    'Easy in pots and generous once it starts flowering.',
+  ),
+  capsicum: d(
+    'Capsicum annuum',
+    'Sweet peppers that like steady warmth and regular feeding.',
+  ),
+  potato: d(
+    'Solanum tuberosum',
+    'Grown from seed tubers; earth it up and dig in late winter.',
+  ),
+  okra: d(
+    'Abelmoschus esculentus',
+    'A heat-lover that crops fast; pick the pods young.',
+  ),
+  bottle_gourd: d(
+    'Lagenaria siceraria',
+    'A vigorous climber for a trellis or a roof.',
+  ),
+  bitter_gourd: d(
+    'Momordica charantia',
+    'A climbing vine with bitter, healthy fruit.',
+  ),
+  ridge_gourd: d(
+    'Luffa acutangula',
+    'A fast climber; harvest while the ridges are tender.',
+  ),
+  cucumber: d(
+    'Cucumis sativus',
+    'Quick to fruit on a small trellis; keep the soil moist.',
+  ),
+  pumpkin: d('Cucurbita moschata', 'A sprawling vine that needs room to run.'),
+  peas: d(
+    'Pisum sativum',
+    'A cool-season climber; sweetest when picked young.',
+  ),
+  french_beans: d(
+    'Phaseolus vulgaris',
+    'Easy, quick beans; sow a new row every few weeks.',
+  ),
+  cauliflower: d(
+    'Brassica oleracea var. botrytis',
+    'A winter favourite that wants rich soil and steady water.',
+  ),
+  cabbage: d(
+    'Brassica oleracea var. capitata',
+    'A hardy winter crop that forms firm heads.',
+  ),
+  mustard_greens: d(
+    'Brassica juncea',
+    'Leafy sarson for saag; cut and it comes again.',
+    'PARTIAL',
+  ),
+  radish: d(
+    'Raphanus sativus',
+    'Ready in weeks; sow a little often for a steady supply.',
+  ),
+  carrot: d(
+    'Daucus carota',
+    'Needs deep, loose soil; thin early for straight roots.',
+  ),
+  palak: d(
+    'Spinacia oleracea',
+    'Fast, forgiving greens that are happy with some shade.',
+    'PARTIAL',
+  ),
+  methi: d(
+    'Trigonella foenum-graecum',
+    'Greens in under a month, even on a windowsill.',
+    'PARTIAL',
+  ),
+  coriander: d(
+    'Coriandrum sativum',
+    'Fresh dhaniya leaves; sow small batches every two weeks.',
+    'PARTIAL',
+  ),
+  lettuce: d(
+    'Lactuca sativa',
+    'Crisp salad leaves for the cool months.',
+    'PARTIAL',
+  ),
+  onion: d(
+    'Allium cepa',
+    'Raised from seed in a nursery, then moved to a bed.',
+  ),
+  garlic: d(
+    'Allium sativum',
+    'Plant single cloves in autumn; harvest bulbs in spring.',
+  ),
+  ginger: d(
+    'Zingiber officinale',
+    'Grown from rhizomes; likes warmth, moisture and dappled light.',
+    'PARTIAL',
+  ),
+  turmeric: d(
+    'Curcuma longa',
+    'Grown from rhizomes; a slow, leafy crop dug after the rains.',
+    'PARTIAL',
+  ),
+};
 
 const GOURD_WINDOWS: Record<ClimateGroup, Months[]> = {
   PLAINS: [
@@ -748,6 +875,7 @@ const QUICK_DAYS = 45;
 
 export const CROPS: readonly CropInfo[] = RAW.map((c) => ({
   ...c,
+  ...DETAILS[c.id],
   tags:
     c.days_to_first_harvest[0] < QUICK_DAYS
       ? [...c.tags, 'quick' as const]

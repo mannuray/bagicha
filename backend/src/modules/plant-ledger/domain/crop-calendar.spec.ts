@@ -98,3 +98,15 @@ describe('nextWindow', () => {
     expect(next?.start.toISOString()).toBe('2026-12-31T18:30:00.000Z');
   });
 });
+
+describe('crop descriptions and sun needs', () => {
+  it('every crop has a description, a scientific name and a sun need', () => {
+    for (const crop of CROPS) {
+      expect(crop.description.length).toBeGreaterThan(10);
+      expect(crop.scientific_name).toMatch(/^[A-Z][a-z]+ [a-z]+/);
+      expect(['FULL', 'PARTIAL']).toContain(crop.sun);
+    }
+    expect(cropById('palak')?.sun).toBe('PARTIAL');
+    expect(cropById('tomato')?.sun).toBe('FULL');
+  });
+});

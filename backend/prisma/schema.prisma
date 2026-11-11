@@ -124,6 +124,12 @@ enum CropStage {
   RESTING
 }
 
+enum GardenSun {
+  FULL
+  PARTIAL
+  SHADE
+}
+
 enum GardenPlaceKind {
   BED
   GROW_BAG
@@ -642,6 +648,8 @@ model GardenPlace {
   user_id     String
   name        String
   kind        GardenPlaceKind
+  /// Roughly how much direct sun the place gets; optional.
+  sun_hours   GardenSun?
   created_at  DateTime        @default(now())
   archived_at DateTime?
 

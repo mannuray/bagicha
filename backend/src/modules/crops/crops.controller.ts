@@ -29,6 +29,11 @@ export class CropsController {
     return this.crops.calendar(req.user);
   }
 
+  @Get('crops/calendar/:id')
+  detail(@Request() req: AuthedRequest, @Param('id') id: string) {
+    return this.crops.detail(req.user, id);
+  }
+
   @Get('garden/places')
   places(@Request() req: AuthedRequest) {
     return this.crops.places(req.user.id);

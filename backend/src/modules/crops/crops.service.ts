@@ -96,6 +96,7 @@ export class CropsService {
     return this.placesRepo.create(userId, {
       name: dto.name.trim(),
       kind: dto.kind,
+      sun_hours: dto.sun_hours ?? null,
     });
   }
 
@@ -103,6 +104,7 @@ export class CropsService {
     const updated = await this.placesRepo.updateOwned(userId, id, {
       name: dto.name?.trim(),
       kind: dto.kind,
+      sun_hours: dto.sun_hours,
       archived_at:
         dto.archived === undefined
           ? undefined
@@ -118,23 +120,53 @@ export class CropsService {
   calendar(user: User) {
     const group = climateGroupFor(regionFor(user));
     const now = this.clock.now();
-    return CROPS.map((crop) => {
-      const status = windowStatus(crop, group, now);
-      return {
-        id: crop.id,
-        name: crop.name,
-        aliases: crop.aliases,
-        family: crop.family,
-        method: crop.method,
-        tags: crop.tags,
-        guide: crop.guide,
-        days_to_first_harvest: crop.days_to_first_harvest,
-        status: status.status,
-        opens_in_days: status.opens_in_days ?? null,
-        next_month: status.next_month ?? null,
-        window_label: windowLabel(crop, group, status.window_index),
-      };
-    });
+    return CROPS.map((crop) => this.item(crop, group, now));
+  }
+
+  /** Everything about one crop, with its sowing windows for the user's region. */
+  detail(user: User, cropId: string) {
+    const crop = cropById(cropId);
+    if (!crop) throw new NotFoundError('CROP_NOT_FOUND', 'Crop not found');
+    const group = climateGroupFor(regionFor(user));
+    return {
+      ...this.item(crop, group, this.clock.now()),
+      germination_days: crop.germination_days,
+      transplant_after_days: crop.transplant_after_days,
+      harvest_span_days: crop.harvest_span_days,
+      thin_after_days: crop.thin_after_days,
+      succession_every_days: crop.succession_every_days,
+      care: crop.care,
+      windows: crop.windows[group].map(([start, end], index) => ({
+        start_month: start,
+        end_month: end,
+        label: windowLabel(crop, group, index),
+      })),
+    };
+  }
+
+  private item(
+    crop: CropInfo,
+    group: ReturnType<typeof climateGroupFor>,
+    now: Date,
+  ) {
+    const status = windowStatus(crop, group, now);
+    return {
+      id: crop.id,
+      name: crop.name,
+      aliases: crop.aliases,
+      family: crop.family,
+      method: crop.method,
+      tags: crop.tags,
+      guide: crop.guide,
+      days_to_first_harvest: crop.days_to_first_harvest,
+      scientific_name: crop.scientific_name,
+      description: crop.description,
+      sun: crop.sun,
+      status: status.status,
+      opens_in_days: status.opens_in_days ?? null,
+      next_month: status.next_month ?? null,
+      window_label: windowLabel(crop, group, status.window_index),
+    };
   }
 }
 

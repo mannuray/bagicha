@@ -631,4 +631,44 @@ describe('crops', () => {
       ).toHaveLength(2);
     });
   });
+  describe('crop detail and sunlight', () => {
+    it('returns a crop’s full detail for the user’s region', async () => {
+      const res = await as(alice).get('/api/v1/crops/calendar/tomato');
+      expect(res.status).toBe(200);
+      expect(res.body.data).toMatchObject({
+        id: 'tomato',
+        sun: 'FULL',
+        scientific_name: 'Solanum lycopersicum',
+        transplant_after_days: [25, 30],
+        germination_days: [5, 10],
+      });
+      expect(res.body.data.care.map((c: { key: string }) => c.key)).toContain(
+        'stake',
+      );
+      expect(
+        res.body.data.windows.map((w: { label: string }) => w.label),
+      ).toEqual(['Sep–Oct', 'Jan–Feb']);
+      expect(
+        (await as(alice).get('/api/v1/crops/calendar/dragonfruit')).status,
+      ).toBe(404);
+    });
+
+    it('lists sun needs in the calendar and keeps a place’s sunlight', async () => {
+      const list = await as(alice).get('/api/v1/crops/calendar');
+      expect(
+        list.body.data.find((c: { id: string }) => c.id === 'palak'),
+      ).toMatchObject({ sun: 'PARTIAL' });
+      const place = await as(alice).post('/api/v1/garden/places', {
+        name: 'Balcony',
+        kind: 'POT',
+        sun_hours: 'PARTIAL',
+      });
+      expect(place.body.data.sun_hours).toBe('PARTIAL');
+      const updated = await as(alice).put(
+        `/api/v1/garden/places/${place.body.data.id}`,
+        { sun_hours: 'FULL' },
+      );
+      expect(updated.body.data.sun_hours).toBe('FULL');
+    });
+  });
 });
