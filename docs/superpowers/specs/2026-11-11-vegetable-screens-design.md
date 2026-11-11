@@ -93,6 +93,23 @@ Starting a crop works, but it's hard to find (a text link on Home and a tab in M
   - the "Recommended" path rule;
   - Start now = add if needed, then the start sheet.
 
+### 6.1 Settled after the builder check (my calls; these override the sections above)
+1. **The crop journey page is a rebuild of the crop branch of `PlantDetailScreen`,** on the same `/plants/:id` route.
+   - **New:** a crop header replaces the tree Hero for crops: photo or gradient, name, and the stage line. There is no health badge and no age line.
+   - **Kept:** Seasons (YearOnYear), The Sanctuary Record and the Log a Moment button.
+   - **Renamed for crops:** the bottom "Mark as ended" reads **"Stop growing this crop"**, so it's distinct from End season.
+2. **Nursery sowing asks no place.**
+   - The seeds → nursery path has two steps (path, method).
+   - The transplant sheet (the `transplant` path) uses the same stepped style, and its step is where it grows.
+   - The header reads "In the nursery · day N" for NURSERY, "In the bed · day N · <place>" for IN_GROUND, "Harvesting · day N · <place>" for HARVESTING, and "Want to grow" or "Resting until next season" otherwise.
+3. **Photos are best-effort.**
+   - Try generating a crop photo in Stitch.
+   - Bundle whatever succeeds in `web/src/assets/crops/<id>.jpg` (≤ 60 KB each). Every crop without one shows the family-icon pebble.
+   - No test depends on a photo being present (tests check the fallback).
+   - If Stitch can't make standalone photos, ship the fallbacks and park "crop photos" in §4.
+4. **Start now is allowed outside the sowing window,** with a gentle note in the start sheet: "Outside the usual sowing time in your region; it may struggle".
+5. **The discovery header** is "<DISTRICT> · <MONTH> SOWING" (e.g. "PATNA · OCTOBER SOWING"). The guide's region-blind season name isn't used.
+
 ## 7. Done means
 
 - **Tests (written first)** for:
