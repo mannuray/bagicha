@@ -7,6 +7,7 @@
  * Spec: docs/superpowers/specs/2026-11-11-vegetables-design.md §2.1, §6.1.
  */
 import { RegionCluster } from '@prisma/client';
+import { FLOWERS } from './flower-calendar';
 
 export type ClimateGroup = 'PLAINS' | 'PENINSULAR' | 'HILLS';
 export type CropMethod =
@@ -25,7 +26,14 @@ export type CropFamily =
   | 'AMARYLLIDACEAE'
   | 'ASTERACEAE'
   | 'MALVACEAE'
-  | 'ZINGIBERACEAE';
+  | 'ZINGIBERACEAE'
+  // Seasonal flowers
+  | 'PORTULACACEAE'
+  | 'BALSAMINACEAE'
+  | 'CARYOPHYLLACEAE'
+  | 'LAMIACEAE'
+  | 'VIOLACEAE'
+  | 'RANUNCULACEAE';
 type Months = [number, number];
 
 export interface CareStep {
@@ -36,6 +44,8 @@ export interface CareStep {
 
 export interface CropInfo {
   id: string;
+  /** Vegetables are CROP; seasonal flowers (flower-calendar.ts) are FLOWER. */
+  kind: 'CROP' | 'FLOWER';
   name: string;
   aliases: string[];
   family: CropFamily;
@@ -50,7 +60,8 @@ export interface CropInfo {
   thin_after_days: number | null;
   succession_every_days: number | null;
   care: CareStep[];
-  tags: Array<'container' | 'beginner' | 'quick'>;
+  /** `quick` for fast vegetables; `long` for flowers that bloom 60+ days. */
+  tags: Array<'container' | 'beginner' | 'quick' | 'long'>;
   guide: {
     plants_for_family_of_4: string;
     container: string;
@@ -65,7 +76,7 @@ export interface CropInfo {
 
 type Raw = Omit<
   CropInfo,
-  'tags' | 'scientific_name' | 'description' | 'sun'
+  'kind' | 'tags' | 'scientific_name' | 'description' | 'sun'
 > & {
   tags: Array<'container' | 'beginner'>;
 };
@@ -873,14 +884,18 @@ const RAW: Raw[] = [
 
 const QUICK_DAYS = 45;
 
-export const CROPS: readonly CropInfo[] = RAW.map((c) => ({
+const VEGETABLES: readonly CropInfo[] = RAW.map((c) => ({
   ...c,
+  kind: 'CROP' as const,
   ...DETAILS[c.id],
   tags:
     c.days_to_first_harvest[0] < QUICK_DAYS
       ? [...c.tags, 'quick' as const]
       : c.tags,
 }));
+
+/** Vegetables, then seasonal flowers: everything with a sowing calendar. */
+export const CROPS: readonly CropInfo[] = [...VEGETABLES, ...FLOWERS];
 
 export function cropById(id: string | null | undefined): CropInfo | null {
   return CROPS.find((c) => c.id === id) ?? null;

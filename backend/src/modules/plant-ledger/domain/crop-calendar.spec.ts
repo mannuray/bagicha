@@ -1,4 +1,5 @@
 import { RegionCluster } from '@prisma/client';
+import { FLOWERS } from './flower-calendar';
 import {
   CROPS,
   climateGroupFor,
@@ -23,7 +24,7 @@ describe('climateGroupFor', () => {
 
 describe('the calendar data', () => {
   it('has 26 crops, each with a botanical family and a method, nursery crops with transplant timing', () => {
-    expect(CROPS).toHaveLength(26);
+    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(26);
     const families = [
       'SOLANACEAE',
       'BRASSICACEAE',
@@ -36,7 +37,7 @@ describe('the calendar data', () => {
       'MALVACEAE',
       'ZINGIBERACEAE',
     ];
-    for (const crop of CROPS) {
+    for (const crop of CROPS.filter((c) => c.kind === 'CROP')) {
       expect(families).toContain(crop.family);
       if (crop.method === 'NURSERY_TRANSPLANT')
         expect(crop.transplant_after_days).not.toBeNull();
@@ -108,5 +109,34 @@ describe('crop descriptions and sun needs', () => {
     }
     expect(cropById('palak')?.sun).toBe('PARTIAL');
     expect(cropById('tomato')?.sun).toBe('FULL');
+  });
+});
+
+describe('flowers on the calendar', () => {
+  it('lists 16 flowers, each complete', () => {
+    expect(FLOWERS).toHaveLength(16);
+    for (const f of FLOWERS) {
+      expect(f.kind).toBe('FLOWER');
+      expect(f.aliases.some((a) => /[\u0900-\u097F]/.test(a))).toBe(true);
+      for (const group of ['PLAINS', 'PENINSULAR', 'HILLS'] as const) {
+        expect(f.windows[group].length).toBeGreaterThan(0);
+        for (const [a, b] of f.windows[group]) {
+          expect(a).toBeGreaterThanOrEqual(1);
+          expect(b).toBeLessThanOrEqual(12);
+        }
+      }
+      expect(f.days_to_first_harvest[0]).toBeLessThan(
+        f.days_to_first_harvest[1],
+      );
+      expect(f.care.some((c) => c.key === 'deadhead')).toBe(true);
+      expect(f.scientific_name).not.toBe('');
+      expect(f.description).not.toBe('');
+    }
+  });
+
+  it('keeps vegetables as CROP, and finds flowers by id', () => {
+    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(26);
+    expect(cropById('marigold')?.kind).toBe('FLOWER');
+    expect(cropById('tomato')?.kind).toBe('CROP');
   });
 });

@@ -339,6 +339,47 @@ describe('crops', () => {
       );
     });
 
+    it('adds a seasonal flower as a FLOWER record with a crop id', async () => {
+      const a = as(alice);
+      const res = await a.post('/api/v1/crops/plan', { crop_id: 'marigold' });
+      expect(res.body.data).toMatchObject({
+        record_kind: 'FLOWER',
+        crop_id: 'marigold',
+        crop_stage: 'PLANNED',
+      });
+    });
+
+    it('a first bloom log moves a sown flower to blooming', async () => {
+      const a = as(alice);
+      const zinnia = (await a.post('/api/v1/crops/plan', { crop_id: 'zinnia' }))
+        .body.data;
+      await log(a, zinnia.id, 'SOWING', { method: 'DIRECT' });
+      expect((await log(a, zinnia.id, 'FLOWERING')).status).toBe(201);
+      expect((await plantOf(a, zinnia.id)).crop_stage).toBe('HARVESTING');
+    });
+
+    it('lists flowers apart from crops, and marks long bloomers', async () => {
+      const a = as(alice);
+      const marigold = (
+        await a.post('/api/v1/crops/plan', { crop_id: 'marigold' })
+      ).body.data;
+      await log(a, marigold.id, 'SOWING', { method: 'DIRECT' });
+      const palak = (await a.post('/api/v1/crops/plan', { crop_id: 'palak' }))
+        .body.data;
+      await log(a, palak.id, 'SOWING', { method: 'DIRECT' });
+      const ids = async (kind: string) =>
+        (await a.get(`/api/v1/ledger/plants?kind=${kind}`)).body.data.map(
+          (p: { id: string }) => p.id,
+        );
+      expect(await ids('flower')).toEqual([marigold.id]);
+      expect(await ids('crop')).toEqual([palak.id]);
+      const item = (await a.get('/api/v1/crops/calendar')).body.data.find(
+        (c: { id: string }) => c.id === 'marigold',
+      );
+      expect(item.kind).toBe('FLOWER');
+      expect(item.tags).toContain('long');
+    });
+
     it('lists plants by kind, with the open season start for growing crops', async () => {
       const a = as(alice);
       const tree = (

@@ -152,6 +152,7 @@ export class CropsService {
     const status = windowStatus(crop, group, now);
     return {
       id: crop.id,
+      kind: crop.kind,
       name: crop.name,
       aliases: crop.aliases,
       family: crop.family,

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CropStage, LogType, Plant, Prisma } from '@prisma/client';
+import { CropStage, LogType, Plant, Prisma, RecordKind } from '@prisma/client';
 import { Tx } from '../../../common/prisma/transaction';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Rows, SkipTake } from './types';
@@ -41,6 +41,14 @@ export type PlantDetail = Prisma.PlantGetPayload<{
 }>;
 
 /** Every query is filtered by owner; a miss returns null, never throws. */
+/** Trees have no calendar crop; vegetables do; flowers are FLOWER records with or without one. */
+const KIND_FILTER: Record<'tree' | 'crop' | 'flower', Prisma.PlantWhereInput> =
+  {
+    tree: { crop_id: null, record_kind: { not: RecordKind.FLOWER } },
+    crop: { crop_id: { not: null }, record_kind: { not: RecordKind.FLOWER } },
+    flower: { record_kind: RecordKind.FLOWER },
+  };
+
 @Injectable()
 export class PlantRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -88,7 +96,7 @@ export class PlantRepository {
     userId: string,
     page: SkipTake,
     status: 'active' | 'planned' | 'ended' = 'active',
-    kind?: 'tree' | 'crop',
+    kind?: 'tree' | 'crop' | 'flower',
   ): Promise<Rows<Plant & { season_started_at: Date | null }>> {
     const growing: CropStage[] = [
       CropStage.NURSERY,
@@ -107,14 +115,7 @@ export class PlantRepository {
               OR: [{ crop_id: null }, { crop_stage: { in: growing } }],
             };
     const where: Prisma.PlantWhereInput =
-      kind === undefined
-        ? byStatus
-        : {
-            AND: [
-              byStatus,
-              { crop_id: kind === 'tree' ? null : { not: null } },
-            ],
-          };
+      kind === undefined ? byStatus : { AND: [byStatus, KIND_FILTER[kind]] };
     const [rows, total] = await Promise.all([
       this.prisma.plant.findMany({
         where,

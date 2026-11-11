@@ -66,7 +66,7 @@ export class CropPlanService {
     const plant = await this.plants.create(userId, {
       name: crop.name,
       species: crop.name,
-      record_kind: RecordKind.CROP,
+      record_kind: crop.kind === 'FLOWER' ? RecordKind.FLOWER : RecordKind.CROP,
       growth_habit: GrowthHabit.ANNUAL,
       record_pattern: RecordPattern.RECURRING_SEASONAL,
       crop_id: crop.id,

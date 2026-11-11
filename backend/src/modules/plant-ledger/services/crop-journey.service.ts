@@ -31,6 +31,8 @@ const OPENERS = new Set<LogType>([
   LogType.TRANSPLANTING,
   LogType.HARVEST,
 ]);
+/** A flower's bloom log does what a harvest log does for a vegetable. */
+const BLOOMS = new Set<LogType>([LogType.FLOWERING, LogType.BLOOM_PEAK]);
 const RANK: Record<CropStage, number> = {
   PLANNED: 0,
   RESTING: 0,
@@ -43,6 +45,8 @@ const CARE_TITLES: Record<string, (name: string) => string> = {
   earth_up: (n) => `Earth up the ${n}`,
   trellis: (n) => `Give the ${n} a trellis to climb`,
   support: (n) => `Give the ${n} support to climb`,
+  pinch: (n) => `Pinch the ${n} tips for a bushier plant`,
+  deadhead: (n) => `Deadhead the ${n} to keep it blooming`,
 };
 
 type Meta = Record<string, unknown> | null;
@@ -78,7 +82,10 @@ export class CropJourneyService {
       where: { plant_id: plant.id, started_at: { not: null }, closed_at: null },
       orderBy: { started_at: 'desc' },
     });
-    if (open || !OPENERS.has(type)) return { cycle: open, opened: false };
+    const opens =
+      OPENERS.has(type) ||
+      (BLOOMS.has(type) && cropById(plant.crop_id)?.kind === 'FLOWER');
+    if (open || !opens) return { cycle: open, opened: false };
     const placeId = metaOf(metadata)?.place_id;
     if (typeof placeId === 'string') {
       const place = await this.places.findOwned(userId, placeId, tx);
@@ -127,7 +134,11 @@ export class CropJourneyService {
           ),
         );
 
-    switch (log.type) {
+    const type =
+      crop.kind === 'FLOWER' && BLOOMS.has(log.type)
+        ? LogType.HARVEST
+        : log.type;
+    switch (type) {
       case LogType.SOWING: {
         if (!opened) {
           // A succession row in an open season: no stage change, no repeated steps.
@@ -162,7 +173,7 @@ export class CropJourneyService {
             plant,
             cycle,
             'harvest_soon',
-            `${crop.name} should be ready to pick soon`,
+            this.readySoon(crop),
             addDays(at, crop.days_to_first_harvest[0]),
             TaskType.HARVEST,
             TaskCategory.HARVEST,
@@ -228,7 +239,7 @@ export class CropJourneyService {
               plant,
               cycle,
               'harvest_soon',
-              `${crop.name} should be ready to pick soon`,
+              this.readySoon(crop),
               addDays(at, Math.max(head, 7)),
               TaskType.HARVEST,
               TaskCategory.HARVEST,
@@ -279,6 +290,12 @@ export class CropJourneyService {
       default:
         return;
     }
+  }
+
+  private readySoon(crop: CropInfo): string {
+    return crop.kind === 'FLOWER'
+      ? `${crop.name} should start blooming soon`
+      : `${crop.name} should be ready to pick soon`;
   }
 
   private lower(crop: CropInfo) {
