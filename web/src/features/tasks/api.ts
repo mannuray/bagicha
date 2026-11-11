@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApi } from '../../lib/api';
+import type { ApiClient } from '../../lib/api-client';
 import { fetchAllPages } from '../../lib/paging';
 import { queryKeys } from '../../lib/query-keys';
 import { materializeSchema, taskSchema, type Task } from './schemas';
@@ -42,13 +43,20 @@ export function useUpdateTaskStatus() {
   });
 }
 
-/** Ask the backend for this season's tasks. Idempotent: existing ones come back skipped. */
+/**
+ * The one call that asks the backend for a plant's tasks this season. Idempotent:
+ * existing ones come back skipped. Used by the hook below, plant creation and the
+ * dashboard's once-per-session check.
+ */
+export function materializeTasks(api: ApiClient, plantId: string) {
+  return api.send('POST', `/seasonal/plant/${plantId}/materialize-tasks`, {}, materializeSchema);
+}
+
 export function useMaterializeTasks() {
   const api = useApi();
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (plantId: string) =>
-      api.send('POST', `/seasonal/plant/${plantId}/materialize-tasks`, {}, materializeSchema),
+    mutationFn: (plantId: string) => materializeTasks(api, plantId),
     onSuccess: (_data, plantId) => invalidateTaskViews(client, plantId),
   });
 }

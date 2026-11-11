@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { useApi } from '../../lib/api';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp, testUser } from '../../test/render';
-import { LoginScreen, OtpScreen, RequireAuth, RequireOnboarded } from '.';
+import { LoginScreen, OtpScreen, RequireAuth, RequireOnboarded, SplashScreen } from '.';
 
 const ok = (data: unknown) => HttpResponse.json({ success: true, data });
 const fail = (status: number, code: string) =>
@@ -212,5 +212,19 @@ describe('guards', () => {
       </Routes>,
     );
     expect(await screen.findByText(/please sign in again/i)).toBeInTheDocument();
+  });
+});
+
+describe('splash', () => {
+  it('sends a returning user who only lacks a region straight to the region step', async () => {
+    renderWithApp(
+      <Routes>
+        <Route path="/splash" element={<SplashScreen />} />
+        <Route path="/onboarding/language" element={<Where />} />
+        <Route path="/onboarding/region" element={<Where />} />
+      </Routes>,
+      { route: '/splash', user: testUser({ region_cluster: null }) },
+    );
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/onboarding/region'), { timeout: 3000 });
   });
 });

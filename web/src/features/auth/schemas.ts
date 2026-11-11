@@ -43,6 +43,21 @@ export function onlyLacksRegion(user: User): boolean {
 }
 
 /** Where an incomplete profile resumes: just the region step for returning users, else the start. */
-export function onboardingStart(user: User): string {
+function onboardingStart(user: User): string {
   return onlyLacksRegion(user) ? '/onboarding/region' : '/onboarding/language';
+}
+
+/** The one rule for where a user lands — splash, sign-in and the route guards all use it. */
+export function homeFor(user: User | null): string {
+  if (!user) return '/login';
+  return isProfileComplete(user) ? '/' : onboardingStart(user);
+}
+
+export type OnboardingStep = 'language' | 'region' | 'garden';
+
+/** Onboarding order (language → region → garden → home), given the user as just saved. */
+export function nextOnboardingStep(user: User, finished: OnboardingStep): string {
+  if (finished === 'language') return '/onboarding/region';
+  if (finished === 'region') return isProfileComplete(user) ? '/' : '/onboarding/garden';
+  return homeFor(user);
 }

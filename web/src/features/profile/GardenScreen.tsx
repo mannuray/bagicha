@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import { Button, cx, Icon, Screen } from '../../ui';
-import { useSession } from '../auth';
+import { nextOnboardingStep, useSession } from '../auth';
 import { useUpdateProfile } from './api';
 import heroPhoto from '../../assets/stitch/garden-hero.jpg';
 import treesPhoto from '../../assets/stitch/garden-trees.jpg';
@@ -91,7 +91,7 @@ export function GardenScreen() {
           busy={update.isPending}
           disabled={types.length === 0}
           className="py-3 text-base"
-          onClick={() => update.mutate({ garden_types: types }, { onSuccess: () => navigate('/', { replace: true }) })}
+          onClick={() => update.mutate({ garden_types: types }, { onSuccess: (saved) => navigate(nextOnboardingStep(saved, 'garden'), { replace: true }) })}
         >
           {t('onboarding.garden.finish')}
           <Icon name="arrow_forward" />

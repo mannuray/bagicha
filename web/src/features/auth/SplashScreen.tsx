@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { BagichaLogo } from '../../ui';
 import { useSession } from './session';
-import { isProfileComplete } from './schemas';
+import { homeFor } from './schemas';
 
 const SPLASH_MS = 1200;
 
@@ -14,8 +14,7 @@ export function SplashScreen() {
   const { user } = useSession();
 
   useEffect(() => {
-    const next = !user ? '/login' : isProfileComplete(user) ? '/' : '/onboarding/language';
-    const timer = setTimeout(() => navigate(next, { replace: true }), SPLASH_MS);
+    const timer = setTimeout(() => navigate(homeFor(user), { replace: true }), SPLASH_MS);
     return () => clearTimeout(timer);
   }, [navigate, user]);
 

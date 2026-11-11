@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { z } from 'zod';
+import { materializeTasks } from '../tasks';
 import { useApi } from '../../lib/api';
 import { fetchAllPages } from '../../lib/paging';
 import { queryKeys } from '../../lib/query-keys';
@@ -54,9 +54,7 @@ export function useCreatePlant() {
     mutationFn: async (input: PlantInput) => {
       const plant = await api.send('POST', '/ledger/plants', input, plantSchema);
       // Best effort: a failure here must not lose the new plant; the dashboard retries.
-      await api
-        .send('POST', `/seasonal/plant/${plant.id}/materialize-tasks`, {}, z.unknown())
-        .catch(() => undefined);
+      await materializeTasks(api, plant.id).catch(() => undefined);
       return plant;
     },
     onSuccess: (plant) => {

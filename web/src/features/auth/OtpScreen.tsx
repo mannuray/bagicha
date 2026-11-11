@@ -6,7 +6,7 @@ import { messageFor } from '../../lib/error-messages';
 import olivePhoto from '../../assets/stitch/otp-olive.jpg';
 import { Button, cx, Screen, TopBar } from '../../ui';
 import { useRequestOtp, useVerifyOtp } from './api';
-import { isProfileComplete, onboardingStart } from './schemas';
+import { homeFor } from './schemas';
 
 const OTP_LENGTH = 6;
 
@@ -30,7 +30,7 @@ export function OtpScreen() {
       { phone, otp: code },
       {
         onSuccess: ({ user }) =>
-          navigate(isProfileComplete(user) ? '/' : onboardingStart(user), { replace: true }),
+          navigate(homeFor(user), { replace: true }),
       },
     );
   };

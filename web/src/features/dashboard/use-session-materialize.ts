@@ -1,10 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
-import { z } from 'zod';
 import { useApi } from '../../lib/api';
 import { queryKeys } from '../../lib/query-keys';
 import { reportError } from '../../lib/report-error';
 import { useSessionStore } from '../auth';
+import { materializeTasks } from '../tasks';
 
 export interface MaterializeState {
   /** Every request for the current plant set has finished. */
@@ -41,7 +41,7 @@ export function useSessionMaterialize(plantIds: string[] | undefined): Materiali
     let failure: unknown = null;
     void Promise.allSettled(
       pending.map((id) =>
-        api.send('POST', `/seasonal/plant/${id}/materialize-tasks`, {}, z.unknown()).catch((err: unknown) => {
+        materializeTasks(api, id).catch((err: unknown) => {
           materialized.delete(id);
           failure = err;
           reportError(err, { plantId: id, step: 'materialize' });

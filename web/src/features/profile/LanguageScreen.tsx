@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Icon, cx } from '../../ui';
-import { useSession } from '../auth';
+import { nextOnboardingStep, useSession } from '../auth';
 import { useUpdateProfile } from './api';
 import { OnboardingLayout } from './OnboardingLayout';
 
@@ -54,7 +54,7 @@ export function LanguageScreen() {
       <Button
         block
         busy={update.isPending}
-        onClick={() => update.mutate({ language_pref: lang }, { onSuccess: () => navigate('/onboarding/region') })}
+        onClick={() => update.mutate({ language_pref: lang }, { onSuccess: (saved) => navigate(nextOnboardingStep(saved, 'language')) })}
       >
         {t('common.continue')}
       </Button>
