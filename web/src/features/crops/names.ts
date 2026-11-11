@@ -102,3 +102,8 @@ export function cropFacts(crop: {
   ];
   return facts.filter((f): f is CropFact => f !== null);
 }
+
+/** The chooser's "good to sow now": the first three vegetables open now, by short name. */
+export function sowNowNames(calendar: Array<{ name: string; kind: string; status: string }>): string[] {
+  return calendar.filter((c) => c.kind === 'CROP' && c.status === 'open').slice(0, 3).map(shortName);
+}

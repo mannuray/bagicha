@@ -1,12 +1,15 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useApi } from '../../lib/api';
 import { queryKeys } from '../../lib/query-keys';
 import { logTypeSchema, type LogType } from './log-types';
+import { staleAfter, useInvalidate } from '../../lib/stale';
 
 export const journalEntrySchema = z.object({
   id: z.string(),
-  type: logTypeSchema,
+  // A type this app doesn't know yet (the backend added one) reads as a note,
+  // so one new entry can't break the whole record.
+  type: logTypeSchema.catch('NOTE'),
   content: z.string().nullable(),
   metadata: z.record(z.string(), z.unknown()).nullable(),
   timestamp: z.string(),
@@ -47,20 +50,9 @@ export function useTimeline(plantId: string, types?: readonly LogType[]) {
 
 export function useAddJournalEntry(plantId: string) {
   const api = useApi();
-  const client = useQueryClient();
+  const invalidate = useInvalidate();
   return useMutation({
     mutationFn: (moment: NewMoment) => api.send('POST', `/ledger/plants/${plantId}/journal`, moment, journalEntrySchema),
-    onSuccess: () => {
-      for (const key of [
-        queryKeys.plants.timelineAll(plantId),
-        queryKeys.plants.cycles(plantId),
-        queryKeys.plants.tasks(plantId),
-        queryKeys.plants.detail(plantId),
-        queryKeys.plants.mitigation(plantId),
-        queryKeys.tasks.mineAll,
-      ]) {
-        void client.invalidateQueries({ queryKey: key });
-      }
-    },
+    onSuccess: () => invalidate(staleAfter.journalWrite(plantId)),
   });
 }

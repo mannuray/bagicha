@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
 import { useNow } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Chip, Icon, Screen, TextField } from '../../ui';
@@ -13,8 +12,7 @@ import { useProfileForm } from './useProfileForm';
 
 export function ProfileScreen() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { user, signOut } = useSession();
+  const { user } = useSession();
   const f = useProfileForm(user);
   const now = useNow();
 
@@ -120,10 +118,7 @@ export function ProfileScreen() {
         <div className="flex justify-center pt-2">
           <button
             type="button"
-            onClick={() => {
-              signOut();
-              navigate('/login', { replace: true });
-            }}
+            onClick={f.signOut}
             className="min-h-11 px-6 font-label text-[11px] font-extrabold uppercase tracking-[0.2em] text-on-surface-variant transition-colors hover:text-secondary"
           >
             {t('profile.signOut')}

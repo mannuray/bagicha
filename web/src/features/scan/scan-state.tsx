@@ -20,9 +20,25 @@ export interface ScanRequest {
   listeners: Set<() => void>;
 }
 
+/** Object URLs for photo previews (the browser's URL.createObjectURL), injectable for tests. */
+export interface PreviewUrls {
+  create(blob: Blob): string | null;
+  revoke(url: string): void;
+}
+
+const browserPreviews: PreviewUrls = {
+  create: (blob) => (typeof URL.createObjectURL === 'function' ? URL.createObjectURL(blob) : null),
+  revoke: (url) => {
+    if (typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(url);
+  },
+};
+
 interface ScanStateValue {
   scan: PendingScan | null;
+  /** Replacing or clearing the scan releases the old photo preview. */
   setScan: (scan: PendingScan | null) => void;
+  /** A preview URL for a photo, released when its scan is replaced. */
+  previewOf: (blob: Blob) => string | null;
   requests: WeakMap<PendingScan, ScanRequest>;
 }
 
@@ -32,13 +48,18 @@ const ScanStateContext = createContext<ScanStateValue | null>(null);
  * Keeps the compressed photo (and its request) between the scan and result
  * screens, so a retry reuses it. Belongs to the signed-in user: signing out forgets it.
  */
-export function ScanStateProvider({ children }: { children: ReactNode }) {
+export function ScanStateProvider({ children, previews = browserPreviews }: { children: ReactNode; previews?: PreviewUrls }) {
   const { user } = useSession();
   const [stored, setStored] = useState<{ owner: string; scan: PendingScan } | null>(null);
   const [requests] = useState(() => new WeakMap<PendingScan, ScanRequest>());
   const scan = stored && user && stored.owner === user.id ? stored.scan : null;
-  const setScan = (next: PendingScan | null) => setStored(next && user ? { owner: user.id, scan: next } : null);
-  return <ScanStateContext.Provider value={{ scan, setScan, requests }}>{children}</ScanStateContext.Provider>;
+  const setScan = (next: PendingScan | null) => {
+    const old = stored?.scan.previewUrl;
+    if (old && old !== next?.previewUrl) previews.revoke(old);
+    setStored(next && user ? { owner: user.id, scan: next } : null);
+  };
+  const previewOf = (blob: Blob) => previews.create(blob);
+  return <ScanStateContext.Provider value={{ scan, setScan, previewOf, requests }}>{children}</ScanStateContext.Provider>;
 }
 
 export function useScanState(): ScanStateValue {

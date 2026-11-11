@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
-import { ok, pageOf, plantRecord } from '../../test/fixtures';
+import { ok, pagedResponse, pageOf, plantRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { CropsScreen } from '.';
@@ -53,6 +53,21 @@ describe('what can I sow now?', () => {
     await userEvent.click(screen.getByRole('button', { name: /quick harvest/i }));
     expect(screen.queryByText('Tomato')).not.toBeInTheDocument();
     expect(screen.getByText('Spinach (Palak)')).toBeInTheDocument();
+  });
+
+  it('a crop far down a long Want to grow list still shows as on the list', async () => {
+    handlers();
+    const planned = Array.from({ length: 24 }, (_, i) =>
+      plantRecord({ id: `p${i}`, crop_id: i === 23 ? 'palak' : `crop${i}`, crop_stage: 'PLANNED', record_kind: 'CROP' }),
+    );
+    server.use(
+      http.get(`${API}/ledger/plants`, ({ request }) =>
+        HttpResponse.json(new URL(request.url).searchParams.get('status') === 'planned' ? pagedResponse(request, planned) : pageOf([])),
+      ),
+    );
+    renderWithApp(<CropsScreen />, { route: '/crops' });
+    const palakCard = (await screen.findByText('Spinach (Palak)')).closest('article') as HTMLElement;
+    expect(await within(palakCard).findByRole('img', { name: /on your list/i })).toBeInTheDocument();
   });
 
   it('adds a crop to Want to grow, and shows crops already on the list', async () => {

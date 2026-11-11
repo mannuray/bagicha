@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { materializeTasks } from '../seasonal';
 import { useApi } from '../../lib/api';
@@ -14,6 +14,7 @@ import {
   type PlantInput,
   type PlantEndReason,
 } from './schemas';
+import { staleAfter, useInvalidate } from '../../lib/stale';
 
 const PAGE_SIZE = 20;
 
@@ -37,6 +38,15 @@ export function useAllPlants() {
   });
 }
 
+/** Every plant on Want to grow, across all pages. */
+export function useAllPlanned() {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.plants.allPlanned,
+    queryFn: () => fetchAllPages(api, '/ledger/plants', plantSchema, { status: 'planned' }),
+  });
+}
+
 export function usePlant(id: string | undefined) {
   const api = useApi();
   return useQuery({
@@ -49,7 +59,7 @@ export function usePlant(id: string | undefined) {
 /** Creates the plant, then asks for this season's tasks so "this week" isn't empty. */
 export function useCreatePlant() {
   const api = useApi();
-  const client = useQueryClient();
+  const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async (input: PlantInput) => {
       const plant = await api.send('POST', '/ledger/plants', input, plantSchema);
@@ -57,11 +67,7 @@ export function useCreatePlant() {
       await materializeTasks(api, plant.id).catch(() => undefined);
       return plant;
     },
-    onSuccess: (plant) => {
-      void client.invalidateQueries({ queryKey: queryKeys.plants.all });
-      void client.invalidateQueries({ queryKey: queryKeys.tasks.mineAll });
-      void client.invalidateQueries({ queryKey: queryKeys.plants.tasks(plant.id) });
-    },
+    onSuccess: () => invalidate(staleAfter.gardenChange()),
   });
 }
 
@@ -75,35 +81,29 @@ export interface EndPlantInput {
 /** Records that a tree died or was removed; its pending tasks are cancelled. */
 export function useEndPlant(id: string) {
   const api = useApi();
-  const client = useQueryClient();
+  const invalidate = useInvalidate();
   return useMutation({
     mutationFn: (input: EndPlantInput) => api.send('POST', `/ledger/plants/${id}/end`, input, plantSchema),
-    onSuccess: () => {
-      void client.invalidateQueries({ queryKey: queryKeys.plants.all });
-      void client.invalidateQueries({ queryKey: queryKeys.tasks.mineAll });
-    },
+    onSuccess: () => invalidate(staleAfter.gardenChange()),
   });
 }
 
 /** Brings an ended tree back to the garden. */
 export function useRestorePlant(id: string) {
   const api = useApi();
-  const client = useQueryClient();
+  const invalidate = useInvalidate();
   return useMutation({
     mutationFn: () => api.send('POST', `/ledger/plants/${id}/restore`, {}, plantSchema),
-    onSuccess: () => {
-      void client.invalidateQueries({ queryKey: queryKeys.plants.all });
-      void client.invalidateQueries({ queryKey: queryKeys.tasks.mineAll });
-    },
+    onSuccess: () => invalidate(staleAfter.gardenChange()),
   });
 }
 
 export function useUpdatePlant(id: string) {
   const api = useApi();
-  const client = useQueryClient();
+  const invalidate = useInvalidate();
   return useMutation({
     mutationFn: (changes: Partial<PlantInput>) => api.send('PUT', `/ledger/plants/${id}`, changes, plantSchema),
-    onSuccess: () => void client.invalidateQueries({ queryKey: queryKeys.plants.all }),
+    onSuccess: () => invalidate(staleAfter.plantEdit()),
   });
 }
 

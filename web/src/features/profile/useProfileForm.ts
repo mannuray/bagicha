@@ -1,11 +1,14 @@
 import { useState, type FormEvent } from 'react';
-import type { User } from '../auth';
+import { useNavigate } from 'react-router';
+import { useSession, type User } from '../auth';
 import { useUpdateProfile } from './api';
 import { useDistrictRegion } from './useDistrictRegion';
 
 /** ViewModel for editing the profile: name, district → region, language; a district is required. */
 export function useProfileForm(user: User | null) {
   const update = useUpdateProfile();
+  const navigate = useNavigate();
+  const { signOut } = useSession();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user?.name ?? '');
   const [lang, setLang] = useState(user?.language_pref ?? 'en');
@@ -41,6 +44,11 @@ export function useProfileForm(user: User | null) {
     needDistrict,
     typeDistrict,
     save,
+    /** Sign out and go to login. */
+    signOut: () => {
+      signOut();
+      navigate('/login', { replace: true });
+    },
     busy: update.isPending,
     error: update.isError ? update.error : null,
   };

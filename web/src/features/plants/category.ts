@@ -27,3 +27,8 @@ export function usesSeasonPack(plant: Pick<Plant, 'record_kind' | 'crop_id'>): b
   const category = plantCategory(plant);
   return category === 'tree' || category === 'perennialFlower';
 }
+
+/** Catalogue suggestions for the form: perennial flowers for the Flower kind, everything else for Tree. */
+export function suggestionsFor<T extends { plant_type: string }>(items: T[], flowers: boolean): T[] {
+  return items.filter((item) => (item.plant_type === 'perennial_flower') === flowers);
+}

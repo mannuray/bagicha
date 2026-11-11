@@ -1,15 +1,18 @@
 import type { KeyValueStore } from '../../lib/storage';
-import { logTypeSchema, type LogType } from './log-types';
+import { z } from 'zod';
+import { DROP_SEVERITIES, HARVEST_QUALITIES, HARVEST_UNITS, logTypeSchema } from './log-types';
 
-export interface MomentDraft {
-  type: LogType;
-  content: string;
-  severity?: string;
-  quantity?: string;
-  unit?: string;
-  quality?: string;
-  date?: string;
-}
+/** What Log a moment keeps between visits; checked field by field when read back. */
+const momentDraftSchema = z.object({
+  type: logTypeSchema,
+  content: z.string(),
+  severity: z.enum(DROP_SEVERITIES).optional(),
+  quantity: z.string().optional(),
+  unit: z.enum(HARVEST_UNITS).optional(),
+  quality: z.enum(HARVEST_QUALITIES).optional(),
+  date: z.string().optional(),
+});
+export type MomentDraft = z.infer<typeof momentDraftSchema>;
 
 const key = (plantId: string) => `bagicha.draft.moment.${plantId}`;
 
@@ -22,9 +25,9 @@ export function loadDraft(plantId: string, storage: KeyValueStore): MomentDraft 
   try {
     const raw = storage.get(key(plantId));
     if (!raw) return null;
-    const draft = JSON.parse(raw) as MomentDraft;
     // A draft saved by an older app, or tampered with, must not reach the form.
-    return logTypeSchema.safeParse(draft?.type).success && typeof draft.content === 'string' ? draft : null;
+    const parsed = momentDraftSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : null;
   } catch {
     return null;
   }

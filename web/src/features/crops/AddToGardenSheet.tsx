@@ -3,13 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Icon } from '../../ui';
 import { useCropCalendar } from './api';
-import { shortName } from './names';
+import { sowNowNames } from './names';
 
 /** Stitch "Add to your garden": choose a tree or a vegetable. */
 export function AddToGardenSheet({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   const calendar = useCropCalendar();
-  const sowNow = (calendar.data ?? []).filter((c) => c.kind === 'CROP' && c.status === 'open').slice(0, 3).map(shortName);
+  const sowNow = sowNowNames(calendar.data ?? []);
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30 backdrop-blur-sm" onClick={onClose}>
       <section

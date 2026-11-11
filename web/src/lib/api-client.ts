@@ -39,6 +39,8 @@ export interface ApiClientOptions {
   slowAfterMs?: number;
   /** True when the first request turns slow, false when the last slow one ends. */
   onSlow?: (slow: boolean) => void;
+  /** Where unexpected failures are reported (default: lib/report-error). */
+  report?: (err: unknown, context: Record<string, unknown>) => void;
 }
 
 export const DEFAULT_TIMEOUT_MS = 90_000;
@@ -78,6 +80,12 @@ function requestId(): string {
 /** One typed client for the backend: unwraps the envelope, validates with zod, maps errors. */
 export function createApiClient(opts: ApiClientOptions): ApiClient {
   const doFetch = opts.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
+  const report = opts.report ?? reportError;
+
+  function contractError(status: number, path: string, cause: unknown): ApiError {
+    report(cause, { path, kind: 'contract' });
+    return new ApiError(status, 'CONTRACT_MISMATCH', `Unexpected response from ${path}`, cause);
+  }
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const slowAfterMs = opts.slowAfterMs ?? DEFAULT_SLOW_AFTER_MS;
   let slowCount = 0;
@@ -181,9 +189,4 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
       return validate(schema, res.data, res.status, path);
     },
   };
-}
-
-function contractError(status: number, path: string, cause: unknown): ApiError {
-  reportError(cause, { path, kind: 'contract' });
-  return new ApiError(status, 'CONTRACT_MISMATCH', `Unexpected response from ${path}`, cause);
 }

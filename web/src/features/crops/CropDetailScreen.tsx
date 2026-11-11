@@ -1,9 +1,9 @@
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import { Button, cx, ErrorState, Icon, LoadingState, Screen, TopBar } from '../../ui';
-import { useAddToPlan, useCropDetail, useCropsOnList } from './api';
+import { useCropPage } from './useCropPage';
 import { CropPhoto } from './CropPhoto';
 import { cropFacts, growingSteps, hindiName } from './names';
 import type { CropDetail } from './schemas';
@@ -14,10 +14,7 @@ type Step = { key: string; title: string; body: string };
 export function CropDetailScreen() {
   const { t } = useTranslation();
   const { cropId = '' } = useParams();
-  const navigate = useNavigate();
-  const detail = useCropDetail(cropId);
-  const onList = useCropsOnList().has(cropId);
-  const add = useAddToPlan();
+  const { detail, onList, addToList, startNow, busy, error } = useCropPage(cropId);
 
   if (detail.isError) return <Screen><TopBar /><ErrorState error={detail.error} onRetry={() => void detail.refetch()} /></Screen>;
   if (!detail.data) return <Screen><TopBar /><LoadingState /></Screen>;
@@ -34,7 +31,6 @@ export function CropDetailScreen() {
     label: t(f.labelKey),
     value: f.range ? t('crops.detail.days', { min: f.range[0], max: f.range[1] }) : t('crops.detail.aboutDays', { days: f.days }),
   }));
-  const startNow = () => add.mutate(crop.id, { onSuccess: (plant) => void navigate(`/plants/${plant.id}?start=1`) });
 
   return (
     <Screen className="pb-32">
@@ -107,22 +103,22 @@ export function CropDetailScreen() {
       </main>
 
       <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-[480px] flex-wrap gap-3 bg-surface/90 px-4 pb-6 pt-3 backdrop-blur-xl">
-        {add.isError && (
+        {error !== null && (
           <p role="alert" className="w-full font-body text-sm text-error">
-            {messageFor(add.error)}
+            {messageFor(error)}
           </p>
         )}
-        {onList || add.isSuccess ? (
+        {onList ? (
           <span className="flex min-h-12 flex-1 items-center justify-center gap-1 font-label text-sm font-bold text-primary">
             <Icon name="check_circle" filled className="text-base" />
             {t('crops.onList')}
           </span>
         ) : (
-          <Button variant="quiet" className="flex-1" busy={add.isPending} onClick={() => add.mutate(crop.id)}>
+          <Button variant="quiet" className="flex-1" busy={busy} onClick={addToList}>
             {t('crops.add')}
           </Button>
         )}
-        <Button className="flex-1" busy={add.isPending} onClick={startNow}>
+        <Button className="flex-1" busy={busy} onClick={startNow}>
           {t('crops.detail.startNow')}
         </Button>
       </div>

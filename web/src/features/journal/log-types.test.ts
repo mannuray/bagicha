@@ -26,4 +26,21 @@ describe('journal entry types: one list, the backend\'s', () => {
     kv.set('bagicha.draft.moment.p1', JSON.stringify({ type: 'NOPE', content: 'x' }));
     expect(loadDraft('p1', kv)).toBeNull();
   });
+
+  it('an entry of a type this app does not know yet still reads (as a note), so the record keeps working', async () => {
+    const { journalEntrySchema } = await import('./api');
+    const parsed = journalEntrySchema.parse({
+      id: 'j1', type: 'MULCHING', content: 'Straw mulch', metadata: null, timestamp: 't', recorded_at: 't', plant_cycle_id: null, diagnosis_outcome_id: null,
+    });
+    expect(parsed.type).toBe('NOTE');
+    expect(parsed.content).toBe('Straw mulch');
+  });
+
+  it('a saved draft is checked field by field', () => {
+    const kv = memoryKeyValueStore();
+    kv.set('bagicha.draft.moment.p1', JSON.stringify({ type: 'HARVEST', content: 'x', unit: 'tonnes' }));
+    expect(loadDraft('p1', kv)).toBeNull();
+    kv.set('bagicha.draft.moment.p1', JSON.stringify({ type: 'HARVEST', content: 'x', unit: 'kg', quantity: '3', quality: 'good' }));
+    expect(loadDraft('p1', kv)).toEqual({ type: 'HARVEST', content: 'x', unit: 'kg', quantity: '3', quality: 'good' });
+  });
 });

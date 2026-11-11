@@ -209,4 +209,12 @@ describe('api client', () => {
       expect(events).toEqual([]);
     });
   });
+
+  it('reports a broken contract through the reporter it is given', async () => {
+    server.use(http.get(`${API}/ledger/plants/p1`, () => ok({ id: 1 })));
+    const report = vi.fn();
+    const api = createApiClient({ baseUrl: API, tokens: memoryTokens(), onUnauthorized: vi.fn(), report });
+    await expect(api.get('/ledger/plants/p1', plant)).rejects.toMatchObject({ code: 'CONTRACT_MISMATCH' });
+    expect(report).toHaveBeenCalledWith(expect.anything(), { path: '/ledger/plants/p1', kind: 'contract' });
+  });
 });

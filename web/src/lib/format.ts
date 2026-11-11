@@ -14,3 +14,7 @@ export const monthName = (at: Date, lang: string) =>
 /** The hour of day (0–23) in India, for greetings. */
 export const istHour = (at: Date): number =>
   Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Asia/Kolkata' }).format(at));
+
+/** "Mar", a short month name in India time. */
+export const monthShort = (iso: string, lang: string) =>
+  new Date(iso).toLocaleDateString(locale(lang), { month: 'short', timeZone: 'Asia/Kolkata' });

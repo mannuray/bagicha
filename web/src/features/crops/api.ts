@@ -1,12 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { z } from 'zod';
 import { useApi } from '../../lib/api';
 import { queryKeys } from '../../lib/query-keys';
 import { reportError } from '../../lib/report-error';
 import { useSessionOnce } from '../../lib/session-once';
-import { useAllPlants, usePlants } from '../plants';
 import { cropDetailSchema, cropItemSchema, placeSchema, rotationSchema } from './schemas';
+import { staleAfter, useInvalidate } from '../../lib/stale';
 
 /** Every calendar crop with its sowing status for the user's region. */
 export function useCropCalendar() {
@@ -23,31 +23,23 @@ export function useCropDetail(cropId: string) {
   });
 }
 
-function useInvalidateGarden() {
-  const client = useQueryClient();
-  return () => {
-    void client.invalidateQueries({ queryKey: queryKeys.plants.all });
-    void client.invalidateQueries({ queryKey: queryKeys.tasks.mineAll });
-  };
-}
-
 /** Puts a crop on the Want to grow list (the server returns the existing record if it's already there). */
 export function useAddToPlan() {
   const api = useApi();
-  const invalidate = useInvalidateGarden();
+  const invalidate = useInvalidate();
   return useMutation({
     mutationFn: (cropId: string) => api.send('POST', '/crops/plan', { crop_id: cropId }, z.object({ id: z.string() }).passthrough()),
-    onSuccess: invalidate,
+    onSuccess: () => invalidate(staleAfter.gardenChange()),
   });
 }
 
 /** Removes a never-sown crop from Want to grow. */
 export function useRemoveFromPlan() {
   const api = useApi();
-  const invalidate = useInvalidateGarden();
+  const invalidate = useInvalidate();
   return useMutation({
     mutationFn: (plantId: string) => api.remove(`/crops/plan/${plantId}`),
-    onSuccess: invalidate,
+    onSuccess: () => invalidate(staleAfter.gardenChange()),
   });
 }
 
@@ -57,14 +49,14 @@ const SYNC_KEY = 'crop-plan-sync';
 export function useCropSyncOnce() {
   const api = useApi();
   const materialized = useSessionOnce();
-  const invalidate = useInvalidateGarden();
+  const invalidate = useInvalidate();
   useEffect(() => {
     if (materialized.has(SYNC_KEY)) return;
     materialized.add(SYNC_KEY);
     api
       .send('POST', '/crops/plan/sync', {}, z.object({ created_count: z.number() }))
       .then((res) => {
-        if (res.created_count > 0) invalidate();
+        if (res.created_count > 0) invalidate(staleAfter.gardenChange());
       })
       .catch((err: unknown) => {
         materialized.delete(SYNC_KEY);
@@ -81,10 +73,10 @@ export function usePlaces() {
 
 export function useCreatePlace() {
   const api = useApi();
-  const client = useQueryClient();
+  const invalidate = useInvalidate();
   return useMutation({
     mutationFn: (input: { name: string; kind: string; sun_hours?: string }) => api.send('POST', '/garden/places', input, placeSchema),
-    onSuccess: () => void client.invalidateQueries({ queryKey: queryKeys.crops.places }),
+    onSuccess: () => invalidate(staleAfter.places()),
   });
 }
 
@@ -98,10 +90,3 @@ export function useRotation(placeId: string | null, cropId: string | null) {
   });
 }
 
-/** Crops already in the garden or on Want to grow, by crop id ("on your list"). */
-export function useCropsOnList(): Set<string> {
-  const planned = usePlants(1, 'planned');
-  const growing = useAllPlants();
-  const ids = [...(planned.data?.items ?? []), ...(growing.data ?? [])].map((p) => p.crop_id);
-  return new Set(ids.filter((id): id is string => Boolean(id)));
-}

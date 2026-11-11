@@ -1,10 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { useApi } from '../../lib/api';
-import { queryKeys } from '../../lib/query-keys';
 import { reportError } from '../../lib/report-error';
 import { useSessionOnce } from '../../lib/session-once';
 import { materializeTasks } from '../seasonal';
+import { invalidate, staleAfter } from '../../lib/stale';
 
 export interface MaterializeState {
   /** Every request for the current plant set has finished. */
@@ -48,7 +48,7 @@ export function useSessionMaterialize(plantIds: string[] | undefined): Materiali
         }),
       ),
     ).then(() => {
-      void client.invalidateQueries({ queryKey: queryKeys.tasks.mineAll });
+      invalidate(client, staleAfter.taskChange(null));
       if (!cancelled) setResult({ key: runKey, error: failure });
     });
     return () => {

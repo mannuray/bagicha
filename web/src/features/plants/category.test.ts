@@ -27,3 +27,12 @@ describe('usesSeasonPack', () => {
     expect(usesSeasonPack(p('FLOWER', 'marigold'))).toBe(false);
   });
 });
+
+describe('suggestionsFor', () => {
+  it('the Flower kind suggests perennial flowers only; the Tree kind everything else', async () => {
+    const { suggestionsFor } = await import('./category');
+    const items = [{ plant_type: 'fruit_tree' }, { plant_type: 'perennial_flower' }, { plant_type: 'vegetable' }];
+    expect(suggestionsFor(items, true)).toEqual([{ plant_type: 'perennial_flower' }]);
+    expect(suggestionsFor(items, false)).toEqual([{ plant_type: 'fruit_tree' }, { plant_type: 'vegetable' }]);
+  });
+});

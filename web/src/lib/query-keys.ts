@@ -4,6 +4,7 @@ export const queryKeys = {
     all: ['plants'] as const,
     list: (status: 'active' | 'planned' | 'ended', page: number, kind: 'tree' | 'crop' | 'flower' | 'all' = 'all') => ['plants', 'list', status, page, kind] as const,
     everything: ['plants', 'everything'] as const,
+    allPlanned: ['plants', 'everything', 'planned'] as const,
     detail: (id: string) => ['plants', id, 'detail'] as const,
     timelineAll: (id: string) => ['plants', id, 'timeline'] as const,
     /** Under timelineAll, so invalidating timelineAll refreshes every filter. */

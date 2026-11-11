@@ -1,43 +1,23 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useSearchParams } from 'react-router';
+import { Link } from 'react-router';
 import { useNow } from '../../lib/clock';
 import { monthName } from '../../lib/format';
 import { ErrorState, Icon, LoadingState, Pill, Screen, TopBar, cx } from '../../ui';
 import { useSession } from '../auth';
-import { useAddToPlan, useCropCalendar, useCropsOnList, usePlaces } from './api';
+import { useAddToPlan } from './api';
 import { CropPhoto } from './CropPhoto';
-import { filterCalendar, hindiName, sunniest, type CalendarFilter } from './names';
+import { hindiName } from './names';
+import { useCropCalendarView } from './useCropCalendarView';
 import type { CropItem } from './schemas';
 
-type Filter = CalendarFilter;
-type View = 'CROP' | 'FLOWER';
-/** Vegetables filter by a quick harvest; flowers by a long bloom. */
-const TAG_FILTERS: Record<View, Filter[]> = { CROP: ['container', 'beginner', 'quick'], FLOWER: ['container', 'beginner', 'long'] };
 
 /** "What can I sow now?": the region's crops by sowing window, to add to Want to grow. */
 export function CropsScreen() {
   const { t, i18n } = useTranslation();
   const { user } = useSession();
   const now = useNow();
-  const calendar = useCropCalendar();
-  const places = usePlaces();
-  const onList = useCropsOnList();
-  // "Grow flowers" in the chooser opens this page with ?kind=flower.
-  const [params, setParams] = useSearchParams();
-  const view: View = params.get('kind') === 'flower' ? 'FLOWER' : 'CROP';
-  const [filters, setFilters] = useState<Filter[]>([]);
-  const chooseView = (next: View) => {
-    setParams(next === 'FLOWER' ? { kind: 'flower' } : {}, { replace: true });
-    setFilters([]);
-  };
-  const [query, setQuery] = useState('');
-  const [showLater, setShowLater] = useState(false);
-  const sun = sunniest(places.data ?? []);
-  const toggle = (f: Filter) => setFilters((cur) => (cur.includes(f) ? cur.filter((x) => x !== f) : [...cur, f]));
-  const { open, soon, later } = filterCalendar(calendar.data ?? [], { kind: view, query, filters, sun });
+  const { calendar, onList, view, chooseView, query, setQuery, filters, toggle, filterList, showLater, setShowLater, open, soon, later } = useCropCalendarView();
   const month = monthName(now, i18n.language);
-  const filterList: Filter[] = sun === null ? TAG_FILTERS[view] : [...TAG_FILTERS[view], 'sun'];
 
   return (
     <Screen nav>

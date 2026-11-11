@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { cx } from '../../ui';
 import { useCatalogueSearch } from './api';
 import type { CatalogueItem } from './schemas';
+import { suggestionsFor } from './category';
 
 /** Species field with catalogue suggestions; free text is still allowed. */
 export function CataloguePicker({
@@ -23,7 +24,7 @@ export function CataloguePicker({
   const id = useId();
   const [open, setOpen] = useState(false);
   const search = useCatalogueSearch(open ? value : '');
-  const items = (search.data?.items ?? []).filter((item) => (item.plant_type === 'perennial_flower') === flowers);
+  const items = suggestionsFor(search.data?.items ?? [], flowers);
 
   return (
     <div className="relative flex flex-col gap-2">

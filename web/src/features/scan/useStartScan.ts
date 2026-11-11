@@ -12,7 +12,7 @@ export function useStartScan() {
   const navigate = useNavigate();
   const compressor = useImageCompressor();
   const plants = useAllPlants();
-  const { setScan } = useScanState();
+  const { setScan, previewOf } = useScanState();
   const [mode, setMode] = useState<ScanMode>('diagnose');
   const [plantId, setPlantId] = useState('');
   const [note, setNote] = useState('');
@@ -38,7 +38,7 @@ export function useStartScan() {
       setScan({
         mode,
         base64: compressed.base64,
-        previewUrl: typeof URL.createObjectURL === 'function' ? URL.createObjectURL(compressed.blob) : null,
+        previewUrl: previewOf(compressed.blob),
         ...(mode === 'diagnose' ? { plantId, plantName, note: note.trim() || undefined } : {}),
       });
       navigate(mode === 'diagnose' ? '/scan/diagnose' : '/scan/identify');
