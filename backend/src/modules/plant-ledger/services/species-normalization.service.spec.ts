@@ -45,3 +45,20 @@ describe('flowers', () => {
     );
   });
 });
+
+describe('variety names typed as the species', () => {
+  it.each([
+    ['Hapus', 'mango'],
+    ['Banganapalli', 'mango'],
+    ['Kagzi', 'citrus'],
+    ['Gondhoraj', 'citrus'],
+    ['Santra', 'citrus'],
+    ['Chakotra', 'citrus'],
+    ['Malbhog', 'banana'],
+    ['Nendran', 'banana'],
+    ['Bhagwa', 'pomegranate'],
+    ['Kalipatti', 'sapota'],
+  ])('%s → %s', (species, expected) => {
+    expect(family(species)).toBe(expected);
+  });
+});

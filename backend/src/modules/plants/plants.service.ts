@@ -3,20 +3,9 @@ import { PlantCatalogEntry, Prisma } from '@prisma/client';
 import { Page, PageQuery, toPage } from '../../common/pagination';
 import { PERENNIAL_FLOWERS } from '../plant-ledger';
 import { CatalogRepository } from './catalog.repository';
+import { FRUIT_CATALOGUE, type PlantSeed } from './domain/fruit-catalogue';
 
 type ResolveConfidence = 'high' | 'medium' | 'low';
-
-interface PlantSeed {
-  species_family: string;
-  species: string;
-  variety?: string;
-  display_name: string;
-  plant_type: string;
-  aliases: string[];
-  languages?: Record<string, string[]>;
-  regions?: string[];
-  confidence_weight?: number;
-}
 
 @Injectable()
 export class PlantsService implements OnModuleInit {
@@ -86,207 +75,7 @@ export class PlantsService implements OnModuleInit {
   private async bootstrapCatalog() {
     // Safe to run on every boot: adds missing entries and refreshes existing ones.
     const seeds: PlantSeed[] = [
-      {
-        species_family: 'mango',
-        species: 'mango',
-        display_name: 'Mango',
-        plant_type: 'fruit_tree',
-        aliases: ['mango', 'aam', 'mango plant', 'aam ka ped'],
-        languages: { hi: ['आम', 'आम का पेड़'] },
-        regions: ['north_india', 'east_india', 'west_india'],
-        confidence_weight: 0.9,
-      },
-      {
-        species_family: 'mango',
-        species: 'mango',
-        variety: 'malda',
-        display_name: 'Malda Mango',
-        plant_type: 'fruit_tree',
-        aliases: ['malda', 'maldah', 'malda aam', 'malda mango'],
-        languages: { hi: ['मालदा', 'मालदा आम'] },
-        regions: ['east_india', 'north_india'],
-        confidence_weight: 0.98,
-      },
-      {
-        species_family: 'mango',
-        species: 'mango',
-        variety: 'langra',
-        display_name: 'Langra Mango',
-        plant_type: 'fruit_tree',
-        aliases: ['langra', 'langra aam', 'langda'],
-        languages: { hi: ['लंगड़ा', 'लंगड़ा आम'] },
-        regions: ['north_india', 'east_india'],
-        confidence_weight: 0.95,
-      },
-      {
-        species_family: 'mango',
-        species: 'mango',
-        variety: 'amrapali',
-        display_name: 'Amrapali Mango',
-        plant_type: 'fruit_tree',
-        aliases: ['amrapali', 'amrapali aam'],
-        languages: { hi: ['अम्रपाली', 'अम्रपाली आम'] },
-        regions: ['north_india', 'east_india'],
-        confidence_weight: 0.93,
-      },
-      {
-        species_family: 'citrus',
-        species: 'lemon',
-        display_name: 'Lemon',
-        plant_type: 'fruit_tree',
-        aliases: ['lemon', 'nimbu', 'lemon plant'],
-        languages: { hi: ['नींबू', 'निंबू'] },
-        regions: ['north_india', 'east_india', 'west_india', 'south_deccan'],
-        confidence_weight: 0.92,
-      },
-      {
-        species_family: 'citrus',
-        species: 'orange',
-        variety: 'kinnow',
-        display_name: 'Kinnow',
-        plant_type: 'fruit_tree',
-        aliases: ['kinnow', 'kinnu'],
-        languages: { hi: ['किन्नू'] },
-        regions: ['north_india'],
-        confidence_weight: 0.9,
-      },
-      {
-        species_family: 'citrus',
-        species: 'sweet_lime',
-        variety: 'mosambi',
-        display_name: 'Mosambi',
-        plant_type: 'fruit_tree',
-        aliases: ['mosambi', 'mausambi', 'sweet lime'],
-        languages: { hi: ['मौसंबी'] },
-        regions: ['west_india', 'north_india'],
-        confidence_weight: 0.9,
-      },
-      {
-        species_family: 'guava',
-        species: 'guava',
-        display_name: 'Guava',
-        plant_type: 'fruit_tree',
-        aliases: ['guava', 'amrood'],
-        languages: { hi: ['अमरूद'] },
-        regions: ['north_india', 'east_india', 'central_india'],
-        confidence_weight: 0.9,
-      },
-      {
-        species_family: 'litchi',
-        species: 'litchi',
-        display_name: 'Litchi',
-        plant_type: 'fruit_tree',
-        aliases: ['litchi', 'lychee'],
-        languages: { hi: ['लीची'] },
-        regions: ['east_india', 'north_india'],
-        confidence_weight: 0.9,
-      },
-      {
-        species_family: 'pomegranate',
-        species: 'pomegranate',
-        display_name: 'Pomegranate',
-        plant_type: 'fruit_tree',
-        aliases: ['pomegranate', 'anar'],
-        languages: { hi: ['अनार'] },
-        regions: ['north_india', 'west_india'],
-        confidence_weight: 0.88,
-      },
-      {
-        species_family: 'banana',
-        species: 'banana',
-        display_name: 'Banana',
-        plant_type: 'fruit_tree',
-        aliases: ['banana', 'kela', 'plantain'],
-        languages: { hi: ['केला'] },
-        regions: ['east_india', 'south_deccan', 'coastal_humid'],
-        confidence_weight: 0.88,
-      },
-      {
-        species_family: 'papaya',
-        species: 'papaya',
-        display_name: 'Papaya',
-        plant_type: 'fruit_tree',
-        aliases: ['papaya', 'papita', 'red lady'],
-        languages: { hi: ['पपीता'] },
-        regions: [
-          'east_india',
-          'south_deccan',
-          'coastal_humid',
-          'west_india',
-          'central_india',
-        ],
-        confidence_weight: 0.88,
-      },
-      {
-        species_family: 'grape',
-        species: 'grape',
-        display_name: 'Grape',
-        plant_type: 'fruit_tree',
-        aliases: ['grape', 'grapes', 'angoor', 'angur', 'grape vine'],
-        languages: { hi: ['अंगूर'] },
-        regions: ['west_india', 'south_deccan', 'north_india'],
-        confidence_weight: 0.86,
-      },
-      {
-        species_family: 'jackfruit',
-        species: 'jackfruit',
-        display_name: 'Jackfruit',
-        plant_type: 'fruit_tree',
-        aliases: ['jackfruit', 'jack fruit', 'kathal'],
-        languages: { hi: ['कटहल'] },
-        regions: ['east_india', 'coastal_humid', 'south_deccan'],
-        confidence_weight: 0.86,
-      },
-      {
-        species_family: 'coconut',
-        species: 'coconut',
-        display_name: 'Coconut',
-        plant_type: 'fruit_tree',
-        aliases: ['coconut', 'nariyal', 'coconut palm'],
-        languages: { hi: ['नारियल'] },
-        regions: ['coastal_humid', 'south_deccan'],
-        confidence_weight: 0.86,
-      },
-      {
-        species_family: 'sapota',
-        species: 'sapota',
-        display_name: 'Sapota (Chikoo)',
-        plant_type: 'fruit_tree',
-        aliases: ['sapota', 'chikoo', 'chiku', 'sapodilla'],
-        languages: { hi: ['चीकू'] },
-        regions: ['west_india', 'south_deccan', 'coastal_humid'],
-        confidence_weight: 0.86,
-      },
-      {
-        species_family: 'amla',
-        species: 'amla',
-        display_name: 'Amla',
-        plant_type: 'fruit_tree',
-        aliases: ['amla', 'aonla', 'indian gooseberry'],
-        languages: { hi: ['आंवला', 'आँवला'] },
-        regions: ['north_india', 'central_india', 'east_india'],
-        confidence_weight: 0.86,
-      },
-      {
-        species_family: 'custard_apple',
-        species: 'custard apple',
-        display_name: 'Custard apple (Sitaphal)',
-        plant_type: 'fruit_tree',
-        aliases: ['custard apple', 'sitaphal', 'sharifa', 'sugar apple'],
-        languages: { hi: ['सीताफल', 'शरीफा'] },
-        regions: ['central_india', 'west_india', 'south_deccan'],
-        confidence_weight: 0.85,
-      },
-      {
-        species_family: 'moringa',
-        species: 'moringa',
-        display_name: 'Moringa (Drumstick)',
-        plant_type: 'fruit_tree',
-        aliases: ['moringa', 'drumstick', 'sahjan', 'sehjan', 'munga'],
-        languages: { hi: ['सहजन', 'मुनगा'] },
-        regions: ['south_deccan', 'east_india', 'central_india', 'west_india'],
-        confidence_weight: 0.85,
-      },
+      ...FRUIT_CATALOGUE,
       // Perennial flowers (flowers spec §2.2): one entry per family in flower-care.ts.
       ...PERENNIAL_FLOWERS.map(
         (f): PlantSeed => ({
@@ -427,13 +216,16 @@ export class PlantsService implements OnModuleInit {
     if (
       !entry.languages ||
       typeof entry.languages !== 'object' ||
-      Array.isArray(entry.languages) ||
-      !language
+      Array.isArray(entry.languages)
     ) {
       return [];
     }
 
-    const value = (entry.languages as Record<string, unknown>)[language];
+    // No language asked for: names in every language count ("आम" finds mango).
+    const byLanguage = entry.languages as Record<string, unknown>;
+    const value = language
+      ? byLanguage[language]
+      : Object.values(byLanguage).flat();
     if (!Array.isArray(value)) {
       return [];
     }
@@ -460,11 +252,14 @@ export class PlantsService implements OnModuleInit {
     return 'low';
   }
 
+  /** Lower-case words, keeping letters in any script (Hindi names must survive). */
   private normalize(value: string) {
     return value
+      .normalize('NFC')
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .replace(/\s+/g, ' ');
+      .replace(/[^\p{L}\p{M}\p{N}\s]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 }

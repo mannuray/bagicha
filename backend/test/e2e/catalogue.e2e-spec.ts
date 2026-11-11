@@ -78,4 +78,26 @@ describe('plant catalogue', () => {
       expect(sahjan.body.data[0]).toMatchObject({ species_family: 'moringa' });
     });
   });
+
+  describe('fruit varieties and Hindi names', () => {
+    const top = async (q: string) =>
+      (
+        await request(app.getHttpServer()).get(
+          `/api/v1/plants/search?q=${encodeURIComponent(q)}`,
+        )
+      ).body.data[0];
+
+    it.each([
+      ['dasheri', { species_family: 'mango', variety: 'Dasheri' }],
+      ['hapus', { species_family: 'mango', variety: 'Alphonso' }],
+      ['kagzi', { species_family: 'citrus', variety: 'Kagzi' }],
+      ['gondhoraj', { species_family: 'citrus', variety: 'Gondhoraj' }],
+      ['g9', { species_family: 'banana', variety: 'Grand Naine' }],
+      ['red lady', { species_family: 'papaya', variety: 'Red Lady' }],
+      ['आम', { species_family: 'mango' }],
+      ['अमरूद', { species_family: 'guava' }],
+    ])('finds %s', async (q, expected) => {
+      expect(await top(q)).toMatchObject(expected);
+    });
+  });
 });
