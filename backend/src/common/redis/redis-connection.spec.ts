@@ -39,4 +39,15 @@ describe('redisConnection', () => {
       maxRetriesPerRequest: null,
     });
   });
+
+  it('picks the database number from the URL path, so two apps can share one Redis', () => {
+    expect(
+      redisConnection(config({ REDIS_URL: 'redis://red-shared:6379/1' })),
+    ).toEqual({
+      host: 'red-shared',
+      port: 6379,
+      db: 1,
+      maxRetriesPerRequest: null,
+    });
+  });
 });

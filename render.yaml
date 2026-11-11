@@ -28,11 +28,9 @@ services:
         value: "true"
       - key: MEDIA_REGION
         value: ap-south-1
+      # Free tier allows one Key Value per workspace: Bagicha shares opd-redis, apart on database 1.
       - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: bagicha-redis
-          property: connectionString
+        value: redis://red-dbhgb78473hc739u2ho0:6379/1
       - key: JWT_SECRET
         generateValue: true
       - key: DATABASE_URL
@@ -45,8 +43,3 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
-  - type: keyvalue
-    name: bagicha-redis
-    plan: free
-    region: singapore
-    ipAllowList: []

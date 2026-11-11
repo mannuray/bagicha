@@ -13,12 +13,15 @@ export function redisConnection(config: ConfigReader): RedisOptions {
   const url = config.get<string | undefined>('REDIS_URL');
   if (url) {
     const u = new URL(url);
+    // "/1" picks database 1: staging shares one Redis with another app, apart by database.
+    const db = Number(u.pathname.replace('/', '')) || 0;
     return {
       host: u.hostname,
       port: Number(u.port || 6379),
       ...(u.username ? { username: decodeURIComponent(u.username) } : {}),
       ...(u.password ? { password: decodeURIComponent(u.password) } : {}),
       ...(u.protocol === 'rediss:' ? { tls: {} } : {}),
+      ...(db ? { db } : {}),
       maxRetriesPerRequest: null,
     };
   }

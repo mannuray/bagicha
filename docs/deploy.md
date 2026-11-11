@@ -5,7 +5,8 @@ Staging runs on four hosted pieces, under the same accounts as OPD staging.
 | Piece | Where | Account |
 |---|---|---|
 | Web app | Vercel project `bagicha-web` (`web/`) | Vercel `mannuray`, team mannu-kumars-projects |
-| API + Redis | Render `bagicha-api` and `bagicha-redis` (free, Singapore), from `render.yaml` | Render, mannu.ray@gmail.com |
+| API | Render `bagicha-api` (free, Singapore), settings in `render.yaml` | Render, mannu.ray@gmail.com |
+| Redis | Shared with OPD: `opd-redis`, **database 1** (`REDIS_URL=redis://red-dbhgb78473hc739u2ho0:6379/1`). The free plan allows one Key Value per workspace. | Render |
 | Database | Neon project `bagicha-staging` (`lucky-band-03541719`, Singapore) | Neon, mannu.ray@gmail.com |
 | Photos | S3 bucket `bagicha-media-114823617214-ap-south-1-an` (`ap-south-1`, private), IAM user `bagicha-staging-media` limited to it | AWS account 114823617214 |
 | Code | github.com/mannuray/bagicha, branch `main` | GitHub `mannuray` |
@@ -61,7 +62,7 @@ Secrets live only in the Render dashboard and the Neon console, never in git. Se
 |---|---|---|
 | `DATABASE_URL` | Render | Neon **pooled** connection string. Secret. |
 | `JWT_SECRET` | Render (generated) | Signs sessions. Leave it alone. |
-| `REDIS_URL` | Render (from bagicha-redis) | Filled in automatically. |
+| `REDIS_URL` | `render.yaml` | `opd-redis` database 1; never database 0 (OPD's). |
 | `MEDIA_BUCKET`, `MEDIA_ACCESS_KEY`, `MEDIA_SECRET_KEY` | Render | The S3 bucket and an IAM key that can read and write only that bucket. Secret. |
 | `MEDIA_ENDPOINT`, `MEDIA_PORT`, `MEDIA_USE_SSL`, `MEDIA_REGION` | `render.yaml` | S3 in `ap-south-1`. |
 | `GEMINI_API_KEY` | Render | Plant scan and diagnosis. Secret. |
