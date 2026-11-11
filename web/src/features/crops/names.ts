@@ -37,7 +37,36 @@ export function growingSteps(crop: { kind?: string; method: string; care: Array<
   return [`material.${crop.method}`, 'plant', ...care, end];
 }
 
-/** The stage's translation key: a flower in HARVESTING is blooming. */
-export function stageKey(stage: string, kind: string | null | undefined): string {
-  return kind === 'FLOWER' && stage === 'HARVESTING' ? 'crops.stage.BLOOMING' : `crops.stage.${stage}`;
+
+export type CalendarFilter = 'container' | 'beginner' | 'quick' | 'long' | 'sun';
+
+interface CalendarCrop {
+  name: string;
+  aliases: string[];
+  kind: string;
+  status: string;
+  tags: string[];
+  sun: 'FULL' | 'PARTIAL';
+}
+
+/**
+ * The sowing calendar's view: one kind, matching the search and every chosen filter
+ * ("sun" = suits the sunniest place, ignored with no places), split by sowing status.
+ */
+export function filterCalendar<C extends CalendarCrop>(
+  items: C[],
+  criteria: { kind: string; query: string; filters: CalendarFilter[]; sun: Sun | null },
+): { open: C[]; soon: C[]; later: C[] } {
+  const { kind, query, filters, sun } = criteria;
+  const visible = items.filter(
+    (c) =>
+      c.kind === kind &&
+      matchesSearch(c, query) &&
+      filters.every((f) => (f === 'sun' ? sun === null || suitsSun(c, sun) : c.tags.includes(f))),
+  );
+  return {
+    open: visible.filter((c) => c.status === 'open'),
+    soon: visible.filter((c) => c.status === 'soon'),
+    later: visible.filter((c) => c.status === 'later'),
+  };
 }

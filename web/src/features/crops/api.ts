@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { useApi } from '../../lib/api';
 import { queryKeys } from '../../lib/query-keys';
 import { reportError } from '../../lib/report-error';
-import { useSessionStore } from '../auth';
+import { useSessionOnce } from '../../lib/session-once';
 import { useAllPlants, usePlants } from '../plants';
 import { cropDetailSchema, cropItemSchema, placeSchema, rotationSchema } from './schemas';
 
@@ -56,7 +56,7 @@ const SYNC_KEY = 'crop-plan-sync';
 /** Seed and sow reminders, synced once per session (like the season check). */
 export function useCropSyncOnce() {
   const api = useApi();
-  const { materialized } = useSessionStore();
+  const materialized = useSessionOnce();
   const invalidate = useInvalidateGarden();
   useEffect(() => {
     if (materialized.has(SYNC_KEY)) return;

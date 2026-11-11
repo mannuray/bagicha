@@ -6,9 +6,12 @@ import { createSessionStore, SessionProvider } from '../features/auth';
 import { createApiClient } from '../lib/api-client';
 import { ApiProvider } from '../lib/api';
 import { createQueryClient } from '../lib/query-client';
+import { clearOnUserChange, createSessionOnce, SessionOnceProvider } from '../lib/session-once';
 import { localTokenStore } from '../lib/token-store';
 import { ServerWakeBanner } from './server-wake';
 import { createServerWake } from './server-wake-store';
+import { APP_TABS } from './nav-tabs';
+import { NavTabsProvider } from '../ui';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1';
 
@@ -18,13 +21,15 @@ export function AppProviders({ children }: { children: ReactNode }) {
     const session = createSessionStore(localTokenStore);
     const queryClient = createQueryClient();
     const wake = createServerWake();
+    const once = createSessionOnce();
+    clearOnUserChange(session, once);
     const api = createApiClient({
       baseUrl: API_URL,
       tokens: localTokenStore,
       onUnauthorized: () => session.expire(),
       onSlow: wake.set,
     });
-    return { session, queryClient, api, wake };
+    return { session, queryClient, api, wake, once };
   });
 
   // Wake the server (asleep on the free Render plan) while the splash and login show.
@@ -46,7 +51,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <ApiProvider client={services.api}>
         <SessionProvider store={services.session}>
           <ServerWakeBanner wake={services.wake} />
-          <BrowserRouter>{children}</BrowserRouter>
+          <SessionOnceProvider value={services.once}>
+            <NavTabsProvider value={APP_TABS}>
+              <BrowserRouter>{children}</BrowserRouter>
+            </NavTabsProvider>
+          </SessionOnceProvider>
         </SessionProvider>
       </ApiProvider>
     </QueryClientProvider>

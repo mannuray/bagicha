@@ -10,6 +10,10 @@ import { createSessionStore, SessionProvider, type SessionStore, type User } fro
 import { API } from './msw/server';
 import { testFetch } from './node-fetch';
 import { ClockProvider, systemClock } from '../lib/clock';
+import { createSessionOnce, SessionOnceProvider, type SessionOnce } from '../lib/session-once';
+import { memoryKeyValueStore } from '../lib/storage';
+import { APP_TABS } from '../app/nav-tabs';
+import { NavTabsProvider } from '../ui';
 
 export function memoryTokenStore(initial: string | null = 'test-token'): TokenStore {
   let value = initial;
@@ -47,7 +51,7 @@ export interface TestAppOptions {
 }
 
 export function createTestSession(user: User | null = testUser()): SessionStore {
-  const store = createSessionStore(memoryTokenStore(user ? 'test-token' : null));
+  const store = createSessionStore(memoryTokenStore(user ? 'test-token' : null), memoryKeyValueStore());
   if (user) store.signIn('test-token', user);
   return store;
 }
@@ -58,7 +62,8 @@ export function TestProviders({
   route = '/',
   session,
   now,
-}: { children: ReactNode; route?: TestAppOptions['route']; session: SessionStore; now?: Date }) {
+  once,
+}: { children: ReactNode; route?: TestAppOptions['route']; session: SessionStore; now?: Date; once?: SessionOnce }) {
   const queryClient = createQueryClient();
   queryClient.setDefaultOptions({ queries: { retry: false } });
   const api = createApiClient({
@@ -72,7 +77,11 @@ export function TestProviders({
       <ApiProvider client={api}>
         <SessionProvider store={session}>
           <ClockProvider value={now ? { now: () => new Date(now) } : systemClock}>
-            <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+            <SessionOnceProvider value={once ?? createSessionOnce()}>
+              <NavTabsProvider value={APP_TABS}>
+                <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+              </NavTabsProvider>
+            </SessionOnceProvider>
           </ClockProvider>
         </SessionProvider>
       </ApiProvider>
@@ -86,13 +95,14 @@ export function renderWithApp(
 ) {
   const { route, user = testUser(), now, ...rest } = options;
   const session = createTestSession(user);
+  const once = createSessionOnce();
   const result = render(ui, {
     wrapper: ({ children }) => (
-      <TestProviders route={route} session={session} now={now}>
+      <TestProviders route={route} session={session} now={now} once={once}>
         {children}
       </TestProviders>
     ),
     ...rest,
   });
-  return { ...result, session };
+  return { ...result, session, once };
 }

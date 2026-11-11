@@ -17,12 +17,13 @@ export function TasksScreen() {
 
 function AllTasks() {
   const { t } = useTranslation();
+  const now = useNow();
   const query = useMyTasks();
   return (
     <Frame subtitle={t('tasks.subtitleAll')}>
       {(onError) => (
         <QueryState query={{ ...query, data: query.data?.items }}>
-          {(items) => <DailyPath tasks={items} emptyBody={t('tasks.emptyBody')} onError={onError} />}
+          {(items) => <DailyPath tasks={items} now={now} emptyBody={t('tasks.emptyBody')} onError={onError} />}
         </QueryState>
       )}
     </Frame>
@@ -31,6 +32,7 @@ function AllTasks() {
 
 function PlantTasks({ plantId }: { plantId: string }) {
   const { t } = useTranslation();
+  const now = useNow();
   const query = usePlantTasks(plantId);
   const materialize = useMaterializeTasks();
   const treeName = query.data?.items[0]?.tree_name;
@@ -52,7 +54,7 @@ function PlantTasks({ plantId }: { plantId: string }) {
             </p>
           )}
           <QueryState query={{ ...query, data: query.data?.items }}>
-            {(items) => <DailyPath tasks={items} showPlant={false} emptyBody={t('tasks.emptyPlantBody')} onError={onError} />}
+            {(items) => <DailyPath tasks={items} now={now} showPlant={false} emptyBody={t('tasks.emptyPlantBody')} onError={onError} />}
           </QueryState>
         </>
       )}
@@ -62,17 +64,18 @@ function PlantTasks({ plantId }: { plantId: string }) {
 
 function DailyPath({
   tasks,
+  now,
   showPlant = true,
   emptyBody,
   onError,
 }: {
   tasks: Task[];
+  now: Date;
   showPlant?: boolean;
   emptyBody: string;
   onError: (err: unknown) => void;
 }) {
   const { t } = useTranslation();
-  const now = useNow();
   const nothingDue = tasks.every((task) => task.status !== 'PENDING');
   return (
     <div className="space-y-8">

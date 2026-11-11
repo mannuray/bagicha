@@ -1,7 +1,5 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router';
-import { queryKeys } from '../../lib/query-keys';
 import { Icon, Surface } from '../../ui';
 import { TaskCard, usePlantTasks } from '../tasks';
 import { useVisionApi } from './api';
@@ -13,19 +11,12 @@ import { useNow } from '../../lib/clock';
 export function DiagnoseResultScreen() {
   const now = useNow();
   const { t } = useTranslation();
-  const client = useQueryClient();
   const { scan } = useScanState();
   const vision = useVisionApi();
   const isDiagnose = scan?.mode === 'diagnose';
-  const diagnose = useScanRequest(isDiagnose ? scan : null, async (s) => {
-    const res = await vision.diagnose({ image_base64: s.base64, plant_id: s.plantId, ...(s.note ? { note: s.note } : {}) });
-    if (s.plantId) {
-      for (const key of [queryKeys.plants.tasks(s.plantId), queryKeys.plants.timelineAll(s.plantId), queryKeys.tasks.mineAll]) {
-        void client.invalidateQueries({ queryKey: key });
-      }
-    }
-    return res;
-  });
+  const diagnose = useScanRequest(isDiagnose ? scan : null, (s) =>
+    vision.diagnose({ image_base64: s.base64, plant_id: s.plantId, ...(s.note ? { note: s.note } : {}) }),
+  );
   if (!scan || !isDiagnose) return <Navigate to="/scan" replace />;
 
   const result = diagnose.data;

@@ -1,3 +1,5 @@
+import { localKeyValueStore, type KeyValueStore } from './storage';
+
 /** Where the session token lives. Web uses localStorage; a Capacitor build can swap in secure storage. */
 export interface TokenStore {
   get(): string | null;
@@ -7,26 +9,13 @@ export interface TokenStore {
 
 const KEY = 'bagicha.token';
 
-export const localTokenStore: TokenStore = {
-  get() {
-    try {
-      return localStorage.getItem(KEY);
-    } catch {
-      return null;
-    }
-  },
-  set(token) {
-    try {
-      localStorage.setItem(KEY, token);
-    } catch {
-      // Storage unavailable (private mode): the session lasts for this tab only.
-    }
-  },
-  clear() {
-    try {
-      localStorage.removeItem(KEY);
-    } catch {
-      // Nothing to clear.
-    }
-  },
-};
+/** A token store over key-value storage (web: localStorage). */
+export function createTokenStore(storage: KeyValueStore): TokenStore {
+  return {
+    get: () => storage.get(KEY),
+    set: (token) => storage.set(KEY, token),
+    clear: () => storage.remove(KEY),
+  };
+}
+
+export const localTokenStore: TokenStore = createTokenStore(localKeyValueStore);

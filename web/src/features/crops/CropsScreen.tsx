@@ -2,21 +2,22 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
 import { useNow } from '../../lib/clock';
+import { monthName } from '../../lib/format';
 import { ErrorState, Icon, LoadingState, Pill, Screen, TopBar, cx } from '../../ui';
 import { useSession } from '../auth';
 import { useAddToPlan, useCropCalendar, useCropsOnList, usePlaces } from './api';
 import { CropPhoto } from './CropPhoto';
-import { hindiName, matchesSearch, suitsSun, sunniest } from './names';
+import { filterCalendar, hindiName, sunniest, type CalendarFilter } from './names';
 import type { CropItem } from './schemas';
 
-type Filter = 'container' | 'beginner' | 'quick' | 'long' | 'sun';
+type Filter = CalendarFilter;
 type View = 'CROP' | 'FLOWER';
 /** Vegetables filter by a quick harvest; flowers by a long bloom. */
 const TAG_FILTERS: Record<View, Filter[]> = { CROP: ['container', 'beginner', 'quick'], FLOWER: ['container', 'beginner', 'long'] };
 
 /** "What can I sow now?": the region's crops by sowing window, to add to Want to grow. */
 export function CropsScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useSession();
   const now = useNow();
   const calendar = useCropCalendar();
@@ -34,16 +35,8 @@ export function CropsScreen() {
   const [showLater, setShowLater] = useState(false);
   const sun = sunniest(places.data ?? []);
   const toggle = (f: Filter) => setFilters((cur) => (cur.includes(f) ? cur.filter((x) => x !== f) : [...cur, f]));
-  const visible = (calendar.data ?? []).filter(
-    (c) =>
-      c.kind === view &&
-      matchesSearch(c, query) &&
-      filters.every((f) => (f === 'sun' ? sun === null || suitsSun(c, sun) : c.tags.includes(f))),
-  );
-  const open = visible.filter((c) => c.status === 'open');
-  const soon = visible.filter((c) => c.status === 'soon');
-  const later = visible.filter((c) => c.status === 'later');
-  const month = now.toLocaleString('en-IN', { month: 'long' });
+  const { open, soon, later } = filterCalendar(calendar.data ?? [], { kind: view, query, filters, sun });
+  const month = monthName(now, i18n.language);
   const filterList: Filter[] = sun === null ? TAG_FILTERS[view] : [...TAG_FILTERS[view], 'sun'];
 
   return (

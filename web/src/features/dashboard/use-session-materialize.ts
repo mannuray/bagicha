@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useApi } from '../../lib/api';
 import { queryKeys } from '../../lib/query-keys';
 import { reportError } from '../../lib/report-error';
-import { useSessionStore } from '../auth';
+import { useSessionOnce } from '../../lib/session-once';
 import { materializeTasks } from '../seasonal';
 
 export interface MaterializeState {
@@ -22,7 +22,7 @@ export interface MaterializeState {
 export function useSessionMaterialize(plantIds: string[] | undefined): MaterializeState {
   const api = useApi();
   const client = useQueryClient();
-  const { materialized } = useSessionStore();
+  const materialized = useSessionOnce();
   // "Not loaded" and "no plants" must differ, or an empty garden never settles.
   const key = plantIds === undefined ? 'loading' : `[${plantIds.join(',')}]`;
   const [attempt, setAttempt] = useState(0);

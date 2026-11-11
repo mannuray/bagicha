@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { cx } from '../../../ui';
 import type { PlantDetail } from '../../plants';
-import { FLOWER_STAGES, flowerStage } from '../flower-stage';
+import { FLOWER_STAGES, flowerStage } from '../../plants';
 
 /** The flower's at-a-glance: its stage, usual bloom months and lifespan. Never the fruit season pack. */
 export function FlowerGlance({ plant }: { plant: PlantDetail }) {

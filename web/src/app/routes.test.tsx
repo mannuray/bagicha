@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { ok, pageOf, plantRecord } from '../test/fixtures';
@@ -51,6 +51,7 @@ describe('routes', () => {
     renderWithApp(<AppRoutes />, { route });
     await screen.findAllByRole('heading');
     expect(screen.queryByRole('navigation', { name: /main/i }) !== null).toBe(shown);
+    if (shown) expect(within(screen.getByRole('navigation', { name: /main/i })).getAllByRole('link')).toHaveLength(4);
   });
 
   it('shows not-found for unknown routes', async () => {

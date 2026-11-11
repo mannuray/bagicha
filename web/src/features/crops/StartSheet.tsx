@@ -1,14 +1,10 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { messageFor } from '../../lib/error-messages';
 import { Button, cx, Icon } from '../../ui';
-import { useAddJournalEntry } from '../journal';
-import { useCropDetail, usePlaces } from './api';
 import { PlacePicker } from './PlacePicker';
 import type { CropItem } from './schemas';
-
-type Path = 'seeds' | 'seedlings' | 'transplant';
-type Method = 'NURSERY' | 'DIRECT';
+import type { StartPath } from './start-flow';
+import { useStartCrop } from './useStartCrop';
 
 /**
  * Start a crop's season from wherever the gardener is: with seeds (sow now),
@@ -16,32 +12,11 @@ type Method = 'NURSERY' | 'DIRECT';
  * `transplant` is the follow-up step for a crop already in the nursery.
  * Stitch "Start growing" stepped sheet: path → method (nursery crops, seeds only) → place.
  */
-export function StartSheet({ plantId, crop, path: initial, onClose }: { plantId: string; crop: CropItem; path?: Path; onClose: () => void }) {
+export function StartSheet({ plantId, crop, path: initial, onClose }: { plantId: string; crop: CropItem; path?: StartPath; onClose: () => void }) {
   const { t } = useTranslation();
-  const log = useAddJournalEntry(plantId);
-  const places = usePlaces();
-  const nurseryCrop = crop.method === 'NURSERY_TRANSPLANT';
-  const detail = useCropDetail(crop.id);
-  const [path, setPath] = useState<Path | null>(initial ?? null);
-  // Only nursery crops grown from seed choose a method; everything else sows direct.
-  const [method, setMethod] = useState<Method | null>(nurseryCrop ? null : 'DIRECT');
-  const [place, setPlace] = useState<string | null>(null);
-  const transplanting = path === 'transplant';
+  const { nurseryCrop, setPath, method, setMethod, place, setPlace, chosen, transplanting, step, steps, at, sunNote, transplantDays, save, busy, error } =
+    useStartCrop(plantId, crop, initial, onClose);
   const title = transplanting ? t('crops.start.transplantTitle', { crop: crop.name }) : t('crops.start.title', { crop: crop.name });
-
-  const askMethod = path === 'seeds' && nurseryCrop;
-  const step = !path ? 'path' : askMethod && method === null ? 'method' : askMethod && method === 'NURSERY' ? 'confirm' : 'place';
-  const steps = transplanting ? ['place'] : ['path', ...(nurseryCrop && path !== 'seedlings' ? ['method'] : []), ...(method === 'NURSERY' && path === 'seeds' ? [] : ['place'])];
-  const at = Math.max(0, steps.indexOf(step === 'confirm' ? 'method' : step));
-  const chosen = places.data?.find((p) => p.id === place);
-  const sunNote = crop.sun === 'FULL' && chosen && (chosen.sun_hours === 'PARTIAL' || chosen.sun_hours === 'SHADE');
-  const transplantDays = detail.data?.transplant_after_days;
-
-  const save = () => {
-    const metadata = place ? { place_id: place } : {};
-    const entry = path === 'seeds' ? { type: 'SOWING', metadata: { method: method ?? 'DIRECT', ...metadata } } : { type: 'TRANSPLANTING', metadata };
-    log.mutate(entry, { onSuccess: onClose });
-  };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30 backdrop-blur-sm" onClick={onClose}>
@@ -99,7 +74,7 @@ export function StartSheet({ plantId, crop, path: initial, onClose }: { plantId:
         {step === 'place' && (
           <>
             <PlacePicker cropId={crop.id} value={place} onChange={setPlace} />
-            {sunNote && (
+            {sunNote && chosen && (
               <p className="rounded-[1rem] bg-secondary-container/25 px-3 py-2 font-body text-sm text-on-secondary-fixed-variant">
                 {t('crops.start.sunNote', { place: chosen.name, sun: t(`crops.place.sunLevel.${chosen.sun_hours}`), crop: crop.name })}
               </p>
@@ -107,13 +82,13 @@ export function StartSheet({ plantId, crop, path: initial, onClose }: { plantId:
           </>
         )}
 
-        {log.isError && (
+        {error && (
           <p role="alert" className="font-body text-sm text-error">
-            {messageFor(log.error)}
+            {messageFor(error)}
           </p>
         )}
         {(step === 'place' || step === 'confirm') && (
-          <Button busy={log.isPending} onClick={save} className="w-full">
+          <Button busy={busy} onClick={save} className="w-full">
             {transplanting ? t('common.save') : t('crops.start.go')}
           </Button>
         )}

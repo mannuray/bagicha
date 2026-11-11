@@ -14,3 +14,5 @@ export { cx } from './cx';
 export { Pill } from './Pill';
 export { SeeAllLink } from './SeeAllLink';
 export { BagichaLogo } from './BagichaLogo';
+export { NavTabsProvider } from './nav-tabs';
+export type { NavTab } from './nav-tabs';

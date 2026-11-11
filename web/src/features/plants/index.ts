@@ -8,3 +8,5 @@ export { gardenCounts, plantCategory } from './category';
 export type { GardenCounts, PlantCategory } from './category';
 export { NotInGarden } from './NotInGarden';
 export { isPlantMissing } from './missing';
+export { cropDay, cropStageKey, FLOWER_STAGES, flowerStage, plantStatus } from './status';
+export type { PlantStatus } from './status';

@@ -3,10 +3,11 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
 import { useNow } from '../../lib/clock';
-import { istDayDiff } from '../../lib/ist';
+import { monthYear } from '../../lib/format';
 import { Button, cx, EmptyState, ErrorState, Icon, LoadingState, Screen } from '../../ui';
 import { usePlants } from './api';
 import type { Plant } from './schemas';
+import { plantStatus } from './status';
 
 type Status = 'active' | 'planned' | 'ended';
 type Group = 'all' | 'trees' | 'crops' | 'flowers';
@@ -14,18 +15,10 @@ const GROUPS: Group[] = ['all', 'trees', 'crops', 'flowers'];
 
 /** "Harvesting · day 40" for a growing crop; "Mature · planted 2015" for a tree. */
 function statusLine(plant: Plant, t: TFunction, now: Date): string {
-  if (plant.crop_stage) {
-    const day = plant.season_started_at ? Math.max(0, istDayDiff(new Date(plant.season_started_at), now)) : null;
-    const flowerBloom = plant.record_kind === 'FLOWER' && plant.crop_stage === 'HARVESTING';
-    return [t(flowerBloom ? 'crops.stage.BLOOMING' : `crops.stage.${plant.crop_stage}`), day === null ? null : t('plants.list.day', { day })].filter(Boolean).join(' · ');
-  }
-  const year = plant.planting_date && plant.planting_date_precision !== 'UNKNOWN' ? new Date(plant.planting_date).getUTCFullYear() : null;
-  // A perennial flower is young, then blooming; trees use their lifecycle stage.
-  const stage =
-    plant.record_kind === 'FLOWER'
-      ? t(plant.lifecycle_stage === 'SAPLING' || plant.lifecycle_stage === 'JUVENILE' ? 'biography.flower.stage.YOUNG' : 'biography.flower.stage.BLOOMING')
-      : t(`plants.stage.${plant.lifecycle_stage}`);
-  return [stage, year ? t('plants.list.planted', { year }) : null].filter(Boolean).join(' · ');
+  const { stageKey, day, plantedYear } = plantStatus(plant, now);
+  return [t(stageKey), day === null ? null : t('plants.list.day', { day }), plantedYear ? t('plants.list.planted', { year: plantedYear }) : null]
+    .filter(Boolean)
+    .join(' · ');
 }
 
 /** Stitch "Orchard Gallery": growing plants by group (trees, crops), with Want to grow and Past tabs. */
@@ -174,7 +167,7 @@ function PlantCard({ plant, now }: { plant: Plant; now: Date }) {
           {plant.ended_at
             ? t('plants.list.pastLine', {
                 reason: t(`biography.end.reason.${plant.end_reason ?? 'UNKNOWN_CAUSE'}`),
-                date: new Date(plant.ended_at).toLocaleDateString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN', { month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }),
+                date: monthYear(plant.ended_at, i18n.language),
               })
             : statusLine(plant, t, now)}
         </span>

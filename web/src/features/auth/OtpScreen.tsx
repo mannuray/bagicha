@@ -7,13 +7,18 @@ import olivePhoto from '../../assets/stitch/otp-olive.jpg';
 import { Button, cx, Screen, TopBar } from '../../ui';
 import { useRequestOtp, useVerifyOtp } from './api';
 import { homeFor } from './schemas';
+import { z } from 'zod';
 
 const OTP_LENGTH = 6;
+
+/** What Login hands over in navigation state; anything else counts as nothing. */
+const otpStateSchema = z.object({ phone: z.string().optional(), devOtp: z.string().optional() });
 
 export function OtpScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const state = useLocation().state as { phone?: string; devOtp?: string } | null;
+  const parsed = otpStateSchema.safeParse(useLocation().state);
+  const state = parsed.success ? parsed.data : null;
   const phone = state?.phone;
   const verify = useVerifyOtp();
   const resend = useRequestOtp();

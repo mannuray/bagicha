@@ -1,3 +1,5 @@
+import { localKeyValueStore, type KeyValueStore } from '../../lib/storage';
+
 export interface MomentDraft {
   type: string;
   content: string;
@@ -11,27 +13,19 @@ export interface MomentDraft {
 const key = (plantId: string) => `bagicha.draft.moment.${plantId}`;
 
 /** Typed text survives a session expiry or a reload (photos are not kept). */
-export function saveDraft(plantId: string, draft: MomentDraft): void {
-  try {
-    localStorage.setItem(key(plantId), JSON.stringify(draft));
-  } catch {
-    // Storage unavailable: the draft lives only in the form.
-  }
+export function saveDraft(plantId: string, draft: MomentDraft, storage: KeyValueStore = localKeyValueStore): void {
+  storage.set(key(plantId), JSON.stringify(draft));
 }
 
-export function loadDraft(plantId: string): MomentDraft | null {
+export function loadDraft(plantId: string, storage: KeyValueStore = localKeyValueStore): MomentDraft | null {
   try {
-    const raw = localStorage.getItem(key(plantId));
+    const raw = storage.get(key(plantId));
     return raw ? (JSON.parse(raw) as MomentDraft) : null;
   } catch {
     return null;
   }
 }
 
-export function clearDraft(plantId: string): void {
-  try {
-    localStorage.removeItem(key(plantId));
-  } catch {
-    // Nothing to clear.
-  }
+export function clearDraft(plantId: string, storage: KeyValueStore = localKeyValueStore): void {
+  storage.remove(key(plantId));
 }

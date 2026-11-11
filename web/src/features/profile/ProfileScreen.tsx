@@ -1,49 +1,28 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { useNow } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Chip, Icon, Screen, TextField } from '../../ui';
 import { isPremium, useSession } from '../auth';
-import { useUpdateProfile } from './api';
 import { DistrictField } from './DistrictField';
 import { ProfilePhoto } from './ProfilePhoto';
-import { regionById, REGIONS } from './regions';
-import { useDistrictRegion } from './useDistrictRegion';
+import { RegionChooser } from './RegionChooser';
+import { regionById } from './regions';
+import { useProfileForm } from './useProfileForm';
 
 export function ProfileScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, signOut } = useSession();
-  const update = useUpdateProfile();
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(user?.name ?? '');
-  const { districts, district, setDistrict, picked, setPicked, known, knownLabel, region } = useDistrictRegion(
-    user?.district ?? '',
-    user?.region_cluster ?? null,
-  );
-  const [lang, setLang] = useState(user?.language_pref ?? 'en');
-  const [needDistrict, setNeedDistrict] = useState(false);
+  const f = useProfileForm(user);
   const now = useNow();
 
   if (!user) return null;
   const regionLabel = regionById(user.region_cluster);
 
-  const save = (event: FormEvent) => {
-    event.preventDefault();
-    // A profile without a district is incomplete and would bounce the user back to onboarding.
-    if (!district.trim()) {
-      setNeedDistrict(true);
-      return;
-    }
-    update.mutate(
-      { name: name.trim() || null, district: district.trim(), region_cluster: region, language_pref: lang },
-      { onSuccess: () => setEditing(false) },
-    );
-  };
-
   const premium = isPremium(user, now);
-  const open = () => setEditing(true);
+  const open = f.open;
 
   return (
     <Screen nav>
@@ -86,7 +65,7 @@ export function ProfileScreen() {
           </div>
         </section>
 
-        {!editing ? (
+        {!f.editing ? (
           <div className="space-y-4">
             <Group title={t('profile.groups.journal')}>
               <Row icon="language" label={t('profile.language')} value={user.language_pref === 'hi' ? 'हिन्दी' : 'English'} onClick={open} />
@@ -108,53 +87,30 @@ export function ProfileScreen() {
             </Group>
           </div>
         ) : (
-          <form onSubmit={save} className="space-y-4 rounded-xl bg-surface-container-low p-4">
-            <TextField label={t('profile.name')} value={name} onChange={(e) => setName(e.target.value)} />
+          <form onSubmit={f.save} className="space-y-4 rounded-xl bg-surface-container-low p-4">
+            <TextField label={t('profile.name')} value={f.name} onChange={(e) => f.setName(e.target.value)} />
             <DistrictField
               label={t('profile.district')}
-              value={district}
-              list={districts.data ?? []}
-              error={needDistrict ? t('profile.needDistrict') : null}
-              onChange={(text) => {
-                setDistrict(text);
-                setNeedDistrict(false);
-              }}
+              value={f.district}
+              list={f.districts.data ?? []}
+              error={f.needDistrict ? t('profile.needDistrict') : null}
+              onChange={f.typeDistrict}
             />
-            {known ? (
-              <p className="flex items-center gap-2 font-body text-sm text-primary">
-                <Icon name="check_circle" filled className="text-base" />
-                {t('onboarding.region.known', { district: district.trim(), region: t(knownLabel?.labelKey ?? '') })}
-              </p>
-            ) : (
-              district.trim() && (
-                <fieldset className="space-y-2">
-                  <legend className="mb-2 font-body text-sm text-on-surface-variant">
-                    {t('onboarding.region.unknown', { district: district.trim() })}
-                  </legend>
-                  <div className="flex flex-wrap gap-2">
-                    {REGIONS.map((r) => (
-                      <Chip key={r.id} selected={picked === r.id} onClick={() => setPicked(r.id)}>
-                        {t(r.labelKey)}
-                      </Chip>
-                    ))}
-                  </div>
-                </fieldset>
-              )
-            )}
+            <RegionChooser district={f.district} knownLabel={f.knownLabel} picked={f.picked} onPick={f.setPicked} variant="chips" />
             <div className="flex gap-2">
-              <Chip selected={lang === 'en'} onClick={() => setLang('en')}>English</Chip>
-              <Chip selected={lang === 'hi'} onClick={() => setLang('hi')}>हिन्दी</Chip>
+              <Chip selected={f.lang === 'en'} onClick={() => f.setLang('en')}>English</Chip>
+              <Chip selected={f.lang === 'hi'} onClick={() => f.setLang('hi')}>हिन्दी</Chip>
             </div>
-            {update.isError && (
+            {f.error && (
               <p role="alert" className="font-body text-sm text-error">
-                {messageFor(update.error)}
+                {messageFor(f.error)}
               </p>
             )}
             <div className="flex gap-3">
-              <Button type="submit" busy={update.isPending}>
+              <Button type="submit" busy={f.busy}>
                 {t('common.save')}
               </Button>
-              <Button variant="tertiary" onClick={() => setEditing(false)}>
+              <Button variant="tertiary" onClick={f.close}>
                 {t('common.cancel')}
               </Button>
             </div>

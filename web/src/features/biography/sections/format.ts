@@ -7,10 +7,4 @@ export const photoKeyOf = (e: JournalEntry) => {
   return typeof key === 'string' ? key : null;
 };
 
-const locale = (lang: string) => (lang === 'hi' ? 'hi-IN' : 'en-IN');
-
-export const shortDate = (iso: string, lang: string) =>
-  new Date(iso).toLocaleDateString(locale(lang), { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
-
-export const monthYear = (iso: string, lang: string) =>
-  new Date(iso).toLocaleDateString(locale(lang), { month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
+export { monthYear, shortDate } from '../../../lib/format';

@@ -77,7 +77,7 @@ describe('dashboard', () => {
     const { TestProviders } = await import('../../test/render');
     const { render } = await import('@testing-library/react');
     render(
-      <TestProviders session={first.session}>
+      <TestProviders session={first.session} once={first.once}>
         <DashboardScreen />
       </TestProviders>,
     );
@@ -134,7 +134,7 @@ describe('dashboard', () => {
     first.unmount();
     const { TestProviders } = await import('../../test/render');
     const { render } = await import('@testing-library/react');
-    render(<TestProviders session={first.session}><DashboardScreen /></TestProviders>);
+    render(<TestProviders session={first.session} once={first.once}><DashboardScreen /></TestProviders>);
     await screen.findByRole('heading', { name: /asha/i });
     await new Promise((r) => setTimeout(r, 50));
     expect(syncs).toBe(1);

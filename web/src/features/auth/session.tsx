@@ -1,4 +1,5 @@
 import { createContext, useContext, useSyncExternalStore, type ReactNode } from 'react';
+import { localKeyValueStore, type KeyValueStore } from '../../lib/storage';
 import type { TokenStore } from '../../lib/token-store';
 import { userSchema, type User } from './schemas';
 
@@ -18,48 +19,35 @@ export interface SessionStore {
   updateUser(user: User): void;
   signOut(): void;
   expire(): void;
-  /** Plants whose seasonal tasks were already requested this session. */
-  readonly materialized: Set<string>;
 }
 
-function loadCachedUser(tokens: TokenStore): User | null {
+function loadCachedUser(tokens: TokenStore, storage: KeyValueStore): User | null {
   if (!tokens.get()) return null;
   try {
-    const parsed = userSchema.safeParse(JSON.parse(localStorage.getItem(USER_KEY) ?? 'null'));
+    const parsed = userSchema.safeParse(JSON.parse(storage.get(USER_KEY) ?? 'null'));
     return parsed.success ? parsed.data : null;
   } catch {
     return null;
   }
 }
 
-function cacheUser(user: User | null) {
-  try {
-    if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
-    else localStorage.removeItem(USER_KEY);
-  } catch {
-    // Storage unavailable: the session lives in memory for this tab.
-  }
-}
-
 /** The signed-in user and token. Lives outside React so the API client can expire it. */
-export function createSessionStore(tokens: TokenStore): SessionStore {
-  let state: SessionState = { user: loadCachedUser(tokens), expired: false };
+export function createSessionStore(tokens: TokenStore, storage: KeyValueStore = localKeyValueStore): SessionStore {
+  const cacheUser = (user: User | null) => (user ? storage.set(USER_KEY, JSON.stringify(user)) : storage.remove(USER_KEY));
+  let state: SessionState = { user: loadCachedUser(tokens, storage), expired: false };
   const listeners = new Set<() => void>();
-  const materialized = new Set<string>();
   const set = (next: SessionState) => {
     state = next;
     listeners.forEach((l) => l());
   };
   return {
     tokens,
-    materialized,
     get: () => state,
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
     signIn(token, user) {
-      materialized.clear();
       tokens.set(token);
       cacheUser(user);
       set({ user, expired: false });
@@ -69,7 +57,6 @@ export function createSessionStore(tokens: TokenStore): SessionStore {
       set({ ...state, user });
     },
     signOut() {
-      materialized.clear();
       tokens.clear();
       cacheUser(null);
       set({ user: null, expired: false });
