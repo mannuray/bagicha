@@ -43,7 +43,7 @@ docker run --rm --dns 1.1.1.1 \
 
 ## Deploy the API (Render)
 
-Render builds `backend/Dockerfile` when `main` is pushed and waits for `/api/v1/health/live`. To redeploy without a commit, use Manual Deploy → Deploy latest commit on `bagicha-api` in the Render dashboard.
+Render builds `backend/Dockerfile` and waits for `/api/v1/health/live`. The service was created with the Render CLI and, as of the first deploy, **did not auto-deploy on push**: after pushing `main`, start the deploy yourself with `render deploys create srv-dbq3qch5efls739jf6l0 --commit <sha> --confirm` (or Manual Deploy in the dashboard). Connecting the repo under bagicha-api → Settings → Build & Deploy may restore auto-deploy. To redeploy without a commit, use Manual Deploy → Deploy latest commit on `bagicha-api` in the Render dashboard.
 
 ## Deploy the web app (Vercel)
 
