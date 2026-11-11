@@ -218,7 +218,12 @@
       "datePlanted": "Date planted",
       "dateHint": "Leave blank if you're not sure.",
       "save": "Add to Sanctuary",
-      "saveEdit": "Save changes"
+      "saveEdit": "Save changes",
+      "fruited": "Has it fruited yet?",
+      "fruitedYes": "Yes",
+      "fruitedNotYet": "Not yet",
+      "fruitedNotSure": "Not sure",
+      "fruitedSince": "Since about which year? (optional)"
     },
     "backToPlants": "Back to My Plants"
   },
@@ -473,7 +478,13 @@
       "bloomsLogged_one": "{{count}} bloom logged",
       "bloomsLogged_other": "{{count}} blooms logged",
       "firstIn": "first in {{month}}"
-    }
+    },
+    "since": "Since {{year}}",
+    "beforeBagicha": "Before Bagicha",
+    "around": "Around {{from}}–{{to}}",
+    "aroundYear": "Around {{year}}",
+    "estimated": "estimated",
+    "editMilestones": "Edit"
   },
   "scan": {
     "kicker": "Plant doctor",

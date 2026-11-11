@@ -45,6 +45,9 @@ export const plantSchema = z.object({
   end_entry_id: nullableOptional,
   replaced_by_id: nullableOptional,
   crop_id: nullableOptional,
+  /** Trees: does it already fruit? Null = not sure / never asked. */
+  bearing_status: z.enum(['BEARING', 'NOT_YET']).nullable().optional().transform((v) => v ?? null),
+  bearing_since_year: z.number().nullable().optional().transform((v) => v ?? null),
   /** When a growing crop's open season started (list rows only). */
   season_started_at: z.string().nullable().optional(),
   crop_stage: z
@@ -96,6 +99,8 @@ export interface PlantInput {
   record_kind: 'TREE' | 'FLOWER' | 'CROP';
   planting_date?: string | null;
   planting_date_precision?: 'EXACT_DATE' | 'MONTH_YEAR' | 'YEAR' | 'UNKNOWN';
+  bearing_status?: 'BEARING' | 'NOT_YET' | null;
+  bearing_since_year?: number | null;
   /** An ended plant this one replaces. */
   replaces_id?: string;
 }

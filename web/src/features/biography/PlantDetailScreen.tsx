@@ -46,7 +46,7 @@ function BackButton() {
     <Link
       to="/plants"
       aria-label={t('common.back')}
-      className="fixed left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-surface/80 text-primary shadow-[0_4px_20px_rgba(28,28,25,0.08)] backdrop-blur-xl"
+      className="absolute left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-surface/80 text-primary shadow-[0_4px_20px_rgba(28,28,25,0.08)] backdrop-blur-xl"
     >
       <Icon name="arrow_back" />
     </Link>

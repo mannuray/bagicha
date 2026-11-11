@@ -34,6 +34,11 @@ describe('lifeLine', () => {
     expect(line).toMatchObject({ phase: 'productive', age: { unit: 'years', count: 11 }, range: { unit: 'years', min: 40, max: 60 } });
   });
 
+  it('a young tree the gardener says already fruits is productive, not "before fruit"', () => {
+    const line = lifeLine(plant({ bearing_status: 'BEARING', planting_date: '2025-01-01T00:00:00.000Z' }), NOW);
+    expect(line?.phase).toBe('productive');
+  });
+
   it('past the productive age, suggests a replacement', () => {
     const line = lifeLine(plant({ life_profile: PAPAYA, planting_date: '2022-06-01T00:00:00.000Z', planting_date_precision: 'MONTH_YEAR' }), NOW);
     expect(line).toMatchObject({ phase: 'past', range: { unit: 'years', min: 2, max: 3 } });

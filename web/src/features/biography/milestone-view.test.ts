@@ -1,0 +1,45 @@
+import { describe, expect, it } from 'vitest';
+import type { PlantDetail } from '../plants';
+import { plantRecord } from '../../test/fixtures';
+import { milestoneView } from './milestone-view';
+
+const NOW = new Date('2026-11-11T06:00:00Z');
+const MANGO = { first_fruit_months: [36, 60], productive_until_months: [480, 720], lifespan_months: [720, 1200], note_key: null };
+const BANANA = { first_fruit_months: [9, 15], productive_until_months: [36, 60], lifespan_months: [60, 96], note_key: 'banana' };
+const plant = (over: Record<string, unknown>) =>
+  ({
+    ...plantRecord(),
+    _count: { journal_entries: 0 },
+    first_flowering_at: null, first_fruit_set_at: null, first_harvest_at: null, latest_harvest_at: null,
+    planting_date: '2017-01-01T00:00:00.000Z', planting_date_precision: 'YEAR',
+    bearing_status: null, bearing_since_year: null, life_profile: MANGO,
+    ...over,
+  }) as unknown as PlantDetail;
+
+describe('milestoneView: what a "first" card says', () => {
+  it('a recorded date always wins', () => {
+    expect(milestoneView(plant({ first_harvest_at: '2024-05-01T00:00:00.000Z', bearing_status: 'BEARING' }), 'firstHarvest', NOW))
+      .toEqual({ kind: 'recorded', at: '2024-05-01T00:00:00.000Z' });
+  });
+
+  it('"already fruits, since 2019" → since 2019; without a year → before Bagicha', () => {
+    expect(milestoneView(plant({ bearing_status: 'BEARING', bearing_since_year: 2019 }), 'firstFlowering', NOW)).toEqual({ kind: 'since', year: 2019 });
+    expect(milestoneView(plant({ bearing_status: 'BEARING' }), 'firstFruitSet', NOW)).toEqual({ kind: 'before' });
+  });
+
+  it('not sure, and older than the latest usual first fruit → an estimate from the planted year', () => {
+    expect(milestoneView(plant({}), 'firstHarvest', NOW)).toEqual({ kind: 'estimate', from: 2020, to: 2022 });
+  });
+
+  it('rounds month ranges outward (banana 9–15 months)', () => {
+    expect(milestoneView(plant({ life_profile: BANANA, planting_date: '2020-01-01T00:00:00.000Z' }), 'firstHarvest', NOW))
+      .toEqual({ kind: 'estimate', from: 2020, to: 2022 });
+  });
+
+  it('young, "not yet", no profile or no planting date → not yet', () => {
+    expect(milestoneView(plant({ planting_date: '2025-01-01T00:00:00.000Z' }), 'firstHarvest', NOW)).toEqual({ kind: 'notYet' });
+    expect(milestoneView(plant({ bearing_status: 'NOT_YET' }), 'firstHarvest', NOW)).toEqual({ kind: 'notYet' });
+    expect(milestoneView(plant({ life_profile: null }), 'firstHarvest', NOW)).toEqual({ kind: 'notYet' });
+    expect(milestoneView(plant({ planting_date: null, planting_date_precision: 'UNKNOWN' }), 'firstHarvest', NOW)).toEqual({ kind: 'notYet' });
+  });
+});

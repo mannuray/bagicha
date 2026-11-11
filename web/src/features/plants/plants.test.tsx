@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes, useLocation } from 'react-router';
@@ -289,4 +289,33 @@ describe('flowers', () => {
     expect(screen.getByText(/blooming · day 3/i)).toBeInTheDocument();
     expect(screen.getByText(/blooming · planted 2022/i)).toBeInTheDocument();
   });
+
+describe('an old tree on the add form', () => {
+  it('asks whether it has fruited, and sends "yes, since 2019"', async () => {
+    let created: Record<string, unknown> | undefined;
+    server.use(
+      http.post(`${API}/ledger/plants`, async ({ request }) => {
+        created = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(ok(plantRecord({ id: 'new1' })), { status: 201 });
+      }),
+      http.post(`${API}/seasonal/plant/new1/materialize-tasks`, () => HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 })),
+    );
+    renderWithApp(routes, { route: '/plants/new' });
+    await userEvent.type(screen.getByLabelText(/tree name/i), 'Aam');
+    await userEvent.type(screen.getByLabelText(/^species/i), 'Mango');
+    await userEvent.type(screen.getByLabelText(/year planted/i), '2017');
+    const question = screen.getByRole('group', { name: /has it fruited yet/i });
+    expect(within(question).getByRole('button', { name: /not sure/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByLabelText(/since about which year/i)).toBeNull();
+    await userEvent.click(within(question).getByRole('button', { name: /^yes$/i }));
+    await userEvent.type(screen.getByLabelText(/since about which year/i), '2019');
+    await userEvent.click(screen.getByRole('button', { name: /add to sanctuary/i }));
+    await waitFor(() => expect(created).toMatchObject({ bearing_status: 'BEARING', bearing_since_year: 2019 }));
+  });
+
+  it('"not sure" sends no answer, and flowers are not asked', async () => {
+    renderWithApp(routes, { route: '/plants/new?kind=FLOWER' });
+    expect(screen.queryByRole('group', { name: /has it fruited yet/i })).toBeNull();
+  });
+});
 });

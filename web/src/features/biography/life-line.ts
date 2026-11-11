@@ -37,7 +37,7 @@ export function lifeLine(plant: PlantDetail, now: Date): LifeLine | null {
   if (!profile || !age) return null;
   const container = CONTAINERS.has(plant.planted_context);
   const months = ageInMonths(age);
-  const fruitRecorded = Boolean(plant.first_fruit_set_at || plant.first_harvest_at);
+  const fruitRecorded = Boolean(plant.first_fruit_set_at || plant.first_harvest_at || plant.bearing_status === 'BEARING');
   const base = { age, container, noteKey: profile.note_key };
   if (!fruitRecorded && months < profile.first_fruit_months[1]) {
     return { ...base, phase: 'beforeFruit', range: formatRange(profile.first_fruit_months) };

@@ -399,4 +399,46 @@ describe('a perennial flower', () => {
     expect(screen.queryByText(/bloom season|next bloom/i)).not.toBeInTheDocument();
     expect(within(screen.getByRole('list', { name: /stage/i })).getByText('Young').closest('[aria-current="step"]')).not.toBeNull();
   });
+
+describe('an old tree', () => {
+  const MANGO = { first_fruit_months: [36, 60], productive_until_months: [480, 720], lifespan_months: [720, 1200], note_key: null };
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true });
+    vi.setSystemTime(new Date('2026-11-10T06:00:00Z'));
+  });
+  afterEach(() => vi.useRealTimers());
+
+  const card = (milestones: HTMLElement, name: RegExp) => within(milestones).getByText(name).closest('li') as HTMLElement;
+
+  it('estimates the firsts of a tree planted in 2017, marked as an estimate, with a way to correct it', async () => {
+    handlers({ plant: { planting_date: '2017-01-01T00:00:00.000Z', life_profile: MANGO } });
+    renderWithApp(routes, { route: '/plants/p1' });
+    const milestones = await screen.findByRole('region', { name: /milestones/i });
+    const harvest = card(milestones, /first harvest/i);
+    expect(within(harvest).getByText('Around 2020–2022')).toBeInTheDocument();
+    expect(within(harvest).getByText(/estimated/i)).toBeInTheDocument();
+    expect(within(milestones).getByRole('link', { name: /edit/i })).toHaveAttribute('href', '/plants/p1/edit');
+  });
+
+  it('uses the gardener\'s answer: since 2019, or before Bagicha', async () => {
+    handlers({ plant: { life_profile: MANGO, bearing_status: 'BEARING', bearing_since_year: 2019 } });
+    renderWithApp(routes, { route: '/plants/p1' });
+    const milestones = await screen.findByRole('region', { name: /milestones/i });
+    expect(within(card(milestones, /first flowering/i)).getByText('Since 2019')).toBeInTheDocument();
+  });
+
+  it('says before Bagicha when it fruits but the year is unknown', async () => {
+    handlers({ plant: { life_profile: MANGO, bearing_status: 'BEARING' } });
+    renderWithApp(routes, { route: '/plants/p1' });
+    const milestones = await screen.findByRole('region', { name: /milestones/i });
+    expect(within(card(milestones, /first fruit set/i)).getByText('Before Bagicha')).toBeInTheDocument();
+  });
+
+  it('the back button scrolls with the page instead of floating over the cards', async () => {
+    handlers();
+    renderWithApp(routes, { route: '/plants/p1' });
+    const back = await screen.findByRole('link', { name: /back/i });
+    expect(back.className).not.toMatch(/\bfixed\b/);
+  });
+});
 });

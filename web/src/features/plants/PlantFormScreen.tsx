@@ -11,6 +11,11 @@ import type { PlantDetail, PlantInput } from './schemas';
 type Precision = 'YEAR' | 'MONTH_YEAR' | 'EXACT_DATE';
 // Crops come through Want to grow (the crop calendar), not this form.
 const KINDS = ['TREE', 'FLOWER'] as const;
+const BEARING_CHOICES = [
+  { value: 'BEARING', label: 'plants.form.fruitedYes' },
+  { value: 'NOT_YET', label: 'plants.form.fruitedNotYet' },
+  { value: null, label: 'plants.form.fruitedNotSure' },
+] as const;
 
 interface FormState {
   name: string;
@@ -19,9 +24,12 @@ interface FormState {
   record_kind: PlantInput['record_kind'];
   precision: Precision;
   date: string;
+  /** "Has it fruited yet?" — null is "Not sure". */
+  bearing: 'BEARING' | 'NOT_YET' | null;
+  since: string;
 }
 
-const emptyForm: FormState = { name: '', species: '', variety: '', record_kind: 'TREE', precision: 'YEAR', date: '' };
+const emptyForm: FormState = { name: '', species: '', variety: '', record_kind: 'TREE', precision: 'YEAR', date: '', bearing: null, since: '' };
 
 function fromPlant(p: PlantDetail): FormState {
   const precision: Precision =
@@ -33,6 +41,8 @@ function fromPlant(p: PlantDetail): FormState {
     record_kind: p.record_kind,
     precision,
     date: p.planting_date_input ?? '',
+    bearing: p.bearing_status,
+    since: p.bearing_since_year ? String(p.bearing_since_year) : '',
   };
 }
 
@@ -44,6 +54,9 @@ function toInput(f: FormState): PlantInput {
     record_kind: f.record_kind,
     planting_date: f.date.trim() || null,
     planting_date_precision: f.date.trim() ? f.precision : 'UNKNOWN',
+    // Trees only; a since-year only with "Yes".
+    bearing_status: f.record_kind === 'TREE' ? f.bearing : null,
+    bearing_since_year: f.record_kind === 'TREE' && f.bearing === 'BEARING' && /^\d{4}$/.test(f.since.trim()) ? Number(f.since.trim()) : null,
   };
 }
 
@@ -194,6 +207,29 @@ function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState 
               hint={t('plants.form.dateHint')}
             />
           </div>
+          {form.record_kind === 'TREE' && (
+            <div role="group" aria-labelledby="fruited-label" className="space-y-2">
+              <p id="fruited-label" className="font-label text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
+                {t('plants.form.fruited')}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {BEARING_CHOICES.map(({ value, label }) => (
+                  <Pill key={label} selected={form.bearing === value} onClick={() => set('bearing', value)}>
+                    {t(label)}
+                  </Pill>
+                ))}
+              </div>
+              {form.bearing === 'BEARING' && (
+                <TextField
+                  label={t('plants.form.fruitedSince')}
+                  type="number"
+                  inputMode="numeric"
+                  value={form.since}
+                  onChange={(e) => set('since', e.target.value)}
+                />
+              )}
+            </div>
+          )}
           {mutation.isError && (
             <p role="alert" className="text-center font-body text-sm text-error">
               {messageFor(mutation.error)}
