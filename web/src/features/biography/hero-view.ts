@@ -1,4 +1,4 @@
-import { plantCategory, type PlantDetail } from '../plants';
+import type { PlantDetail } from '../plants';
 
 export type HeroPhoto = { kind: 'own'; url: string } | { kind: 'stock' } | { kind: 'none' };
 
@@ -11,7 +11,8 @@ export function heroPhoto(
   photo: { url: string | null | undefined; key: string | null; failed: boolean },
 ): HeroPhoto {
   if (photo.url) return { kind: 'own', url: photo.url };
-  const tree = plantCategory(plant) === 'tree';
+  // Only a recorded tree (not a journey crop) gets the stock mango.
+  const tree = plant.record_kind === 'TREE' && !plant.crop_id;
   return tree && (!photo.key || photo.failed) ? { kind: 'stock' } : { kind: 'none' };
 }
 

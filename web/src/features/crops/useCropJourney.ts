@@ -4,7 +4,7 @@ import { useAddJournalEntry, useTimeline } from '../journal';
 import type { PlantDetail } from '../plants';
 import { dueLabel, usePlantTasks } from '../tasks';
 import { useRemoveFromPlan, useRotation } from './api';
-import { cropStatusLine, harvestsIn, journeyStep, journeySteps, nextStep } from './journey-header';
+import { cropStatusLine, harvestsIn, journeyActions, journeyStep, journeySteps, nextStep } from './journey-header';
 import { useCropContext } from './useCropContext';
 
 /**
@@ -15,7 +15,7 @@ export function useCropJourney(plant: PlantDetail, now: Date) {
   const { crop, loading, open, place, placeId, neverSown } = useCropContext(plant);
   const log = useAddJournalEntry(plant.id);
   const [params, setParams] = useSearchParams();
-  const startable = !plant.crop_stage || plant.crop_stage === 'PLANNED' || plant.crop_stage === 'RESTING';
+  const startable = journeyActions(plant.crop_stage ?? 'PLANNED', false).start;
   // Arriving from "Start now" on the crop page (?start=1) opens the start sheet once.
   const [sheet, setSheet] = useState<'start' | 'transplant' | null>(params.get('start') === '1' && startable ? 'start' : null);
   const tasks = usePlantTasks(plant.id);
@@ -33,6 +33,7 @@ export function useCropJourney(plant: PlantDetail, now: Date) {
     crop,
     loading,
     stage,
+    actions: journeyActions(stage, neverSown),
     steps,
     at: steps.indexOf(journeyStep(plant.crop_stage ?? null, nursery)),
     // Seasonal flowers bloom where vegetables are harvested, and skip rotation.

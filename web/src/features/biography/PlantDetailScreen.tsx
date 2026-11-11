@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation, useNavigate, useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { Button, ErrorState, Icon, LoadingState, Screen } from '../../ui';
 import { CropHero, JourneyCard } from '../crops';
-import { isPlantMissing, type PlantDetail, NotInGarden, usePlant } from '../plants';
+import { useStorage } from '../../lib/storage';
+import { isPlantMissing, LIST_VIEW_KEY, type PlantDetail, NotInGarden, usePlant } from '../plants';
 import { AtAGlance } from './sections/AtAGlance';
 import { EndedBanner } from './sections/EndedBanner';
 import { EndSheet } from './sections/EndSheet';
@@ -36,19 +37,14 @@ export function PlantDetailScreen() {
   return <Biography plant={plant.data} />;
 }
 
-/** Back to where you came from in the app (the list keeps its tab), else to My plants. */
+/** Back to My plants, on the view last used there (its tab and group). */
 function BackButton() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const cameFromApp = useLocation().key !== 'default';
+  const saved = useStorage().get(LIST_VIEW_KEY) ?? '';
+  const lastView = saved.startsWith('?') ? saved : '';
   return (
     <Link
-      to="/plants"
-      onClick={(event) => {
-        if (!cameFromApp) return;
-        event.preventDefault();
-        void navigate(-1);
-      }}
+      to={`/plants${lastView}`}
       aria-label={t('common.back')}
       className="absolute left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-surface/80 text-primary shadow-[0_4px_20px_rgba(28,28,25,0.08)] backdrop-blur-xl"
     >

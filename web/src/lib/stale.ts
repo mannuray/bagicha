@@ -27,6 +27,8 @@ export const staleAfter = {
       : [queryKeys.tasks.mineAll],
   /** A scan diagnosis saved for a plant (an entry and maybe a follow-up task). */
   diagnosis: (plantId: string): QueryKey[] => [queryKeys.plants.tasks(plantId), queryKeys.plants.timelineAll(plantId), queryKeys.tasks.mineAll],
+  /** The user's district or region changed: the season guide and crop calendar follow the region. */
+  regionChange: (): QueryKey[] => [queryKeys.guide, queryKeys.crops.calendar],
   /** A garden place added. */
   places: (): QueryKey[] => [queryKeys.crops.places],
 };

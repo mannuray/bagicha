@@ -9,7 +9,7 @@ import { StartSheet } from './StartSheet';
 export function JourneyCard({ plant, now }: { plant: PlantDetail; now: Date }) {
   const { t } = useTranslation();
   const j = useCropJourney(plant, now);
-  const { crop, stage, steps, at, flower, status, next, due, harvestCount, place, rotation, neverSown, sheet } = j;
+  const { crop, actions, steps, at, flower, status, next, due, harvestCount, place, rotation, sheet } = j;
   if (!crop) return j.loading ? <LoadingState /> : null;
 
   return (
@@ -31,7 +31,7 @@ export function JourneyCard({ plant, now }: { plant: PlantDetail; now: Date }) {
           {t('crops.journey.next', { title: next.title, due: due ? t(`tasks.due.${due.key}`, { count: due.count }) : '' })}
         </p>
       )}
-      {status.day !== null && (stage === 'NURSERY' || stage === 'IN_GROUND') && (
+      {status.day !== null && actions.showProgress && (
         <p className="font-body text-sm text-on-surface-variant">
           {t(flower ? 'crops.journey.progressBloom' : 'crops.journey.progress', { day: status.day, min: crop.days_to_first_harvest[0], max: crop.days_to_first_harvest[1] })}
         </p>
@@ -60,19 +60,19 @@ export function JourneyCard({ plant, now }: { plant: PlantDetail; now: Date }) {
         <StartSheet plantId={plant.id} crop={crop} path={sheet === 'transplant' ? 'transplant' : undefined} onClose={j.closeSheet} />
       ) : (
         <div className="flex flex-wrap gap-2">
-          {(stage === 'PLANNED' || stage === 'RESTING') && <Button onClick={() => j.openSheet('start')}>{t('crops.journey.start')}</Button>}
-          {stage === 'NURSERY' && <Button onClick={() => j.openSheet('transplant')}>{t('crops.journey.transplant')}</Button>}
-          {(stage === 'IN_GROUND' || stage === 'HARVESTING') && (
+          {actions.start && <Button onClick={() => j.openSheet('start')}>{t('crops.journey.start')}</Button>}
+          {actions.transplant && <Button onClick={() => j.openSheet('transplant')}>{t('crops.journey.transplant')}</Button>}
+          {actions.logHarvest && (
             <Link to={`/plants/${plant.id}/log`} className="bg-primary-gradient inline-flex min-h-11 items-center rounded-full px-5 font-label text-sm font-bold text-on-primary">
               {t(flower ? 'crops.journey.bloom' : 'crops.journey.harvest')}
             </Link>
           )}
-          {(stage === 'NURSERY' || stage === 'IN_GROUND' || stage === 'HARVESTING') && (
+          {actions.endSeason && (
             <Button variant="tertiary" busy={j.ending} onClick={j.endSeason}>
               {t('crops.journey.end')}
             </Button>
           )}
-          {stage === 'PLANNED' && neverSown && (
+          {actions.remove && (
             <Button
               variant="tertiary"
               busy={j.removing}

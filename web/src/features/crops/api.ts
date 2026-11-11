@@ -86,7 +86,7 @@ export function useRotation(placeId: string | null, cropId: string | null) {
   const api = useApi();
   return useQuery({
     queryKey: queryKeys.crops.rotation(placeId ?? '', cropId ?? ''),
-    queryFn: () => api.get(`/garden/places/${placeId}/rotation?crop_id=${encodeURIComponent(cropId ?? '')}`, rotationSchema),
+    queryFn: () => api.get(`/garden/places/${encodeURIComponent(placeId ?? '')}/rotation`, rotationSchema, { crop_id: cropId ?? '' }),
     enabled: Boolean(placeId && cropId),
   });
 }

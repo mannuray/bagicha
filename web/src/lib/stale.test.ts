@@ -28,3 +28,9 @@ describe('what each change makes stale, in one place', () => {
     expect(staleAfter.diagnosis('p1')).toEqual([queryKeys.plants.tasks('p1'), queryKeys.plants.timelineAll('p1'), queryKeys.tasks.mineAll]);
   });
 });
+
+describe('a region change', () => {
+  it('refreshes the season guide and the crop calendar (both depend on the region)', () => {
+    expect(staleAfter.regionChange()).toEqual([queryKeys.guide, queryKeys.crops.calendar]);
+  });
+});

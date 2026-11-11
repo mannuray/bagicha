@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cropStatusLine, harvestsIn, journeyStep, journeySteps, openCycle } from './journey-header';
+import { cropStatusLine, harvestsIn, journeyActions, journeyStep, journeySteps, openCycle } from './journey-header';
 
 describe('cropStatusLine', () => {
   it('counts IST calendar days, so a crop sown last night is on day 1 this morning', () => {
@@ -49,5 +49,17 @@ describe('openCycle and harvestsIn', () => {
     ];
     expect(harvestsIn(entries, 'now')).toBe(1);
     expect(harvestsIn(entries, null)).toBe(0);
+  });
+});
+
+describe('journeyActions: what a crop stage lets you do', () => {
+  it('planned or resting: start; planned and never sown: also remove', () => {
+    expect(journeyActions('PLANNED', true)).toEqual({ start: true, transplant: false, logHarvest: false, endSeason: false, remove: true, showProgress: false });
+    expect(journeyActions('RESTING', false)).toMatchObject({ start: true, remove: false, endSeason: false });
+  });
+  it('nursery: transplant, end; in the ground: harvest, end, progress', () => {
+    expect(journeyActions('NURSERY', false)).toMatchObject({ transplant: true, endSeason: true, logHarvest: false, showProgress: true });
+    expect(journeyActions('IN_GROUND', false)).toMatchObject({ logHarvest: true, endSeason: true, showProgress: true, start: false });
+    expect(journeyActions('HARVESTING', false)).toMatchObject({ logHarvest: true, endSeason: true, showProgress: false });
   });
 });

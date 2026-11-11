@@ -4,6 +4,7 @@ import { useApi } from '../../lib/api';
 import { REGION_CLUSTERS, useSession, userSchema, type RegionCluster } from '../auth';
 import { queryKeys } from '../../lib/query-keys';
 import { districtSchema } from './regions';
+import { staleAfter, useInvalidate } from '../../lib/stale';
 
 export interface ProfileChanges {
   name?: string | null;
@@ -20,10 +21,14 @@ export interface ProfileChanges {
 export function useUpdateProfile() {
   const api = useApi();
   const { updateUser } = useSession();
+  const invalidate = useInvalidate();
   return useMutation({
     mutationFn: (changes: ProfileChanges) =>
       api.send('PUT', '/user/profile/update', changes, userSchema),
-    onSuccess: (user) => updateUser(user),
+    onSuccess: (user, changes) => {
+      updateUser(user);
+      if (changes.district !== undefined || changes.region_cluster !== undefined) invalidate(staleAfter.regionChange());
+    },
   });
 }
 

@@ -456,27 +456,23 @@ describe('the page clock', () => {
 });
 
 describe('the plant page back arrow', () => {
-  it('returns to the list as it was left (tab kept)', async () => {
+  it('always goes to My plants, on the view you last used there', async () => {
     handlers();
-    const { useLocation, Link: RouterLink } = await import('react-router');
-    function List() {
-      return (
-        <>
-          <p data-testid="search">{useLocation().search}</p>
-          <RouterLink to="/plants/p1">open</RouterLink>
-        </>
-      );
+    const { useLocation } = await import('react-router');
+    const { memoryKeyValueStore } = await import('../../lib/storage');
+    function Search() {
+      return <p data-testid="search">{useLocation().search}</p>;
     }
+    const storage = memoryKeyValueStore();
+    storage.set('bagicha.plants.view', '?group=trees&tab=ended');
     renderWithApp(
       <Routes>
-        <Route path="/plants" element={<List />} />
+        <Route path="/plants" element={<Search />} />
         <Route path="/plants/:id" element={<PlantDetailScreen />} />
       </Routes>,
-      { route: '/plants?tab=ended' },
+      { route: '/plants/p1', storage },
     );
-    await userEvent.click(screen.getByRole('link', { name: 'open' }));
     await userEvent.click(await screen.findByRole('link', { name: /back/i }));
-    expect(await screen.findByTestId('search')).toHaveTextContent('?tab=ended');
+    expect(await screen.findByTestId('search')).toHaveTextContent('?group=trees&tab=ended');
   });
 });
-

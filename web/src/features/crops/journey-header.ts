@@ -56,3 +56,18 @@ export function harvestsIn(entries: Array<{ type: string; plant_cycle_id: string
   if (!cycleId) return 0;
   return entries.filter((e) => e.type === 'HARVEST' && e.plant_cycle_id === cycleId).length;
 }
+
+/** What a crop's stage lets the gardener do on its journey card. */
+export function journeyActions(stage: string, neverSown: boolean) {
+  const growing = stage === 'NURSERY' || stage === 'IN_GROUND' || stage === 'HARVESTING';
+  return {
+    start: stage === 'PLANNED' || stage === 'RESTING',
+    transplant: stage === 'NURSERY',
+    logHarvest: stage === 'IN_GROUND' || stage === 'HARVESTING',
+    endSeason: growing,
+    /** Only a planned crop that was never sown can come off the list. */
+    remove: stage === 'PLANNED' && neverSown,
+    /** "Day N of about X–Y" while it grows toward its first harvest. */
+    showProgress: stage === 'NURSERY' || stage === 'IN_GROUND',
+  };
+}
