@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import olivePhoto from '../../assets/stitch/otp-olive.jpg';
-import { Button, cx, Screen, TopBar } from '../../ui';
+import { Button, cx, Screen, TopBar, formSubmit } from '../../ui';
 import { OTP_LENGTH, useOtpForm } from './useOtpForm';
 
 export function OtpScreen() {
@@ -32,7 +32,7 @@ export function OtpScreen() {
             </p>
           )}
         </section>
-        <form onSubmit={submit} className="flex flex-1 flex-col" noValidate>
+        <form onSubmit={formSubmit(submit)} className="flex flex-1 flex-col" noValidate>
           <label htmlFor="otp" className="sr-only">
             {t('auth.otp.label')}
           </label>

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { messageFor } from '../../lib/error-messages';
-import { Button, Icon, Screen } from '../../ui';
+import { Button, Icon, Screen, formSubmit } from '../../ui';
 import { AuthHero } from './AuthHero';
 import { useLoginForm } from './useLoginForm';
 
@@ -23,7 +23,7 @@ export function LoginScreen() {
             {t('errors.UNAUTHORIZED')}
           </p>
         )}
-        <form onSubmit={submit} className="space-y-5" noValidate>
+        <form onSubmit={formSubmit(submit)} className="space-y-5" noValidate>
           <div className="space-y-2">
             <label htmlFor="phone" className="sr-only">
               {t('auth.login.phoneLabel')}

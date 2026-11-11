@@ -1,22 +1,11 @@
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
 import { BagichaLogo } from '../../ui';
-import { useSession } from './session';
-import { homeFor } from './schemas';
-
-const SPLASH_MS = 1200;
+import { useSplashRedirect } from './useSplashRedirect';
 
 /** Stitch "Natural Sanctuary" splash: brand moment, then on to the right place. */
 export function SplashScreen() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { user } = useSession();
-
-  useEffect(() => {
-    const timer = setTimeout(() => navigate(homeFor(user), { replace: true }), SPLASH_MS);
-    return () => clearTimeout(timer);
-  }, [navigate, user]);
+  useSplashRedirect();
 
   return (
     <div className="bg-primary-gradient relative flex min-h-dvh flex-col items-center justify-center overflow-hidden text-on-primary">

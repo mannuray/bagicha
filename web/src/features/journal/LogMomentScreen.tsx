@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import leavesPhoto from '../../assets/stitch/moment-leaves.jpg';
-import { Button, ErrorState, Icon, LoadingState, Pill, TextField } from '../../ui';
+import { Button, ErrorState, Icon, LoadingState, Pill, TextField, formSubmit } from '../../ui';
 import { isPlantMissing, NotInGarden, usePlant } from '../plants';
 import { DROP_SEVERITIES, DROP_TYPES, FLOWER_LOGGABLE, HARVEST_QUALITIES, HARVEST_UNITS, TREE_LOGGABLE } from './log-types';
 import { useLogMoment } from './useLogMoment';
@@ -54,7 +54,7 @@ function MomentForm({ plantId, plantName, flower = false }: { plantId: string; p
   const { draft, set, photo, setPhoto, problem, busy, submit } = useLogMoment(plantId);
 
   return (
-    <form onSubmit={(e) => void submit(e)} className="flex flex-1 flex-col gap-5 pt-1" noValidate>
+    <form onSubmit={formSubmit(submit)} className="flex flex-1 flex-col gap-5 pt-1" noValidate>
       <p className="font-body text-sm text-on-surface-variant">{t('journal.forPlant', { name: plantName })}</p>
       <fieldset>
         <legend className="sr-only">{t('journal.what')}</legend>

@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useImageCompressor } from '../journal';
 import { useAllPlants } from '../plants';
@@ -22,8 +22,7 @@ export function useStartScan() {
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
+  const submit = async () => {
     if (inFlight.current || !photo) return;
     if (mode === 'diagnose' && !plantId) {
       setNeedTree(true);

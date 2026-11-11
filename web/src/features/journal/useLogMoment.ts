@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useStorage } from '../../lib/storage';
 import { useAddJournalEntry } from './api';
@@ -24,8 +24,7 @@ export function useLogMoment(plantId: string) {
   useEffect(() => saveDraft(plantId, draft, storage), [plantId, draft, storage]);
   const set = <K extends keyof MomentDraft>(k: K, v: MomentDraft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
+  const submit = async () => {
     if (inFlight.current) return;
     inFlight.current = true;
     setBusy(true);

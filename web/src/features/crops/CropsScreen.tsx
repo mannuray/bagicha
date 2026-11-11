@@ -4,11 +4,11 @@ import { useNow } from '../../lib/clock';
 import { monthName } from '../../lib/format';
 import { ErrorState, Icon, LoadingState, Pill, Screen, TopBar, cx } from '../../ui';
 import { useSession } from '../auth';
-import { useAddToPlan } from './api';
 import { CropPhoto } from './CropPhoto';
 import { hindiName } from './names';
 import { useCropCalendarView } from './useCropCalendarView';
 import type { CropItem } from './schemas';
+import { useAddCropToPlan } from './useAddCropToPlan';
 
 
 /** "What can I sow now?": the region's crops by sowing window, to add to Want to grow. */
@@ -131,7 +131,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 
 function CropCard({ crop, onList, className }: { crop: CropItem; onList: boolean; className?: string }) {
   const { t } = useTranslation();
-  const add = useAddToPlan();
+  const plan = useAddCropToPlan(crop.id, onList);
   const hindi = hindiName(crop);
   const when =
     crop.status === 'soon'
@@ -153,7 +153,7 @@ function CropCard({ crop, onList, className }: { crop: CropItem; onList: boolean
         </div>
       </Link>
       <div className="absolute bottom-3 right-3">
-        {onList || add.isSuccess ? (
+        {plan.onList ? (
           <span role="img" aria-label={t('crops.onList')} title={t('crops.onList')} className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Icon name="check" />
           </span>
@@ -161,8 +161,8 @@ function CropCard({ crop, onList, className }: { crop: CropItem; onList: boolean
           <button
             type="button"
             aria-label={t('crops.add')}
-            disabled={add.isPending}
-            onClick={() => add.mutate(crop.id)}
+            disabled={plan.busy}
+            onClick={plan.add}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-gradient text-on-primary shadow-md disabled:opacity-60"
           >
             <Icon name="add" />

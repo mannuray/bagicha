@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { messageFor } from '../../lib/error-messages';
 import { Button, cx } from '../../ui';
-import { useUpdateTaskStatus } from './api';
 import type { Task } from './schemas';
 import { closedLabel, dueLabel, taskBadge } from './this-week';
+import { useTaskActions } from './useTaskActions';
 
 /** Stitch Daily Path task card: title, urgency badge, due line, why it exists, Mark done / Skip. */
 export function TaskCard({
@@ -18,12 +18,8 @@ export function TaskCard({
   onError?: (err: unknown) => void;
 }) {
   const { t } = useTranslation();
-  const update = useUpdateTaskStatus();
+  const actions = useTaskActions(task, onError);
   const due = dueLabel(task.due_date, now);
-  const act = (status: 'COMPLETED' | 'SKIPPED') => {
-    if (update.isPending) return;
-    update.mutate({ task, status }, { onError });
-  };
 
   const badge = taskBadge(task, now);
 
@@ -46,16 +42,16 @@ export function TaskCard({
         {[showPlant ? task.tree_name : null, t(`tasks.due.${due.key}`, { count: due.count })].filter(Boolean).join(' · ')}
       </p>
       {task.source_summary && <p className="mt-1 line-clamp-2 font-body text-xs text-on-surface-variant">{task.source_summary}</p>}
-      {!onError && update.error && (
+      {!onError && actions.error && (
         <p role="alert" className="mt-2 font-body text-sm text-error">
-          {messageFor(update.error, t)}
+          {messageFor(actions.error, t)}
         </p>
       )}
       <div className="mt-3 flex justify-end gap-2">
-        <Button variant="quiet" size="sm" disabled={update.isPending} onClick={() => act('SKIPPED')} className="bg-surface uppercase tracking-wider text-on-surface-variant">
+        <Button variant="quiet" size="sm" disabled={actions.busy} onClick={actions.skip} className="bg-surface uppercase tracking-wider text-on-surface-variant">
           {t('tasks.skip')}
         </Button>
-        <Button variant="primary" size="sm" busy={update.isPending} onClick={() => act('COMPLETED')} className="uppercase tracking-wider">
+        <Button variant="primary" size="sm" busy={actions.busy} onClick={actions.complete} className="uppercase tracking-wider">
           {t('tasks.complete')}
         </Button>
       </div>

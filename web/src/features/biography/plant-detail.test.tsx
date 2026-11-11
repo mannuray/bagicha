@@ -454,3 +454,29 @@ describe('the page clock', () => {
     expect(within(harvest).getByText(/not yet/i)).toBeInTheDocument();
   });
 });
+
+describe('the plant page back arrow', () => {
+  it('returns to the list as it was left (tab kept)', async () => {
+    handlers();
+    const { useLocation, Link: RouterLink } = await import('react-router');
+    function List() {
+      return (
+        <>
+          <p data-testid="search">{useLocation().search}</p>
+          <RouterLink to="/plants/p1">open</RouterLink>
+        </>
+      );
+    }
+    renderWithApp(
+      <Routes>
+        <Route path="/plants" element={<List />} />
+        <Route path="/plants/:id" element={<PlantDetailScreen />} />
+      </Routes>,
+      { route: '/plants?tab=ended' },
+    );
+    await userEvent.click(screen.getByRole('link', { name: 'open' }));
+    await userEvent.click(await screen.findByRole('link', { name: /back/i }));
+    expect(await screen.findByTestId('search')).toHaveTextContent('?tab=ended');
+  });
+});
+

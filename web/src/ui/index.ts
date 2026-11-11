@@ -16,3 +16,4 @@ export { SeeAllLink } from './SeeAllLink';
 export { BagichaLogo } from './BagichaLogo';
 export { NavTabsProvider } from './nav-tabs';
 export type { NavTab } from './nav-tabs';
+export { formSubmit } from './form-submit';

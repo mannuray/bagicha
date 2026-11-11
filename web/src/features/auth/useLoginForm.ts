@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { toE164India, useRequestOtp } from './api';
 import { loginState } from './nav-state';
@@ -13,8 +13,7 @@ export function useLoginForm() {
   const [phone, setPhone] = useState('');
   const [invalid, setInvalid] = useState(false);
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
+  const submit = () => {
     const e164 = toE164India(phone);
     setInvalid(!e164);
     if (!e164) return;

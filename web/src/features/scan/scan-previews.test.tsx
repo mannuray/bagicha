@@ -36,4 +36,21 @@ describe('scan photo previews', () => {
     unmount();
     expect(previews.revoke).toHaveBeenCalledWith('blob:9');
   });
+
+  it('signing back in as the same user does not bring back a scan whose photo was released', () => {
+    const previews: PreviewUrls = { create: vi.fn(() => 'blob:7'), revoke: vi.fn() };
+    const session = createTestSession();
+    const user = session.get().user!;
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <TestProviders session={session}>
+        <ScanStateProvider previews={previews}>{children}</ScanStateProvider>
+      </TestProviders>
+    );
+    const { result } = renderHook(() => useScanState(), { wrapper });
+    act(() => result.current.setScan({ mode: 'identify', base64: 'x', previewUrl: result.current.previewOf(new Blob(['a'])) }));
+    act(() => session.expire());
+    expect(previews.revoke).toHaveBeenCalledWith('blob:7');
+    act(() => session.signIn('t2', user));
+    expect(result.current.scan).toBeNull();
+  });
 });

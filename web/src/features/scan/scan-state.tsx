@@ -52,6 +52,9 @@ export function ScanStateProvider({ children, previews = browserPreviews }: { ch
   const { user } = useSession();
   const [stored, setStored] = useState<{ owner: string; scan: PendingScan } | null>(null);
   const [requests] = useState(() => new WeakMap<PendingScan, ScanRequest>());
+  // Signing out (or in as someone else) forgets the scan for good, so its released
+  // preview can never come back (adjusted during render, React's documented pattern).
+  if (stored && stored.owner !== user?.id) setStored(null);
   const scan = stored && user && stored.owner === user.id ? stored.scan : null;
   const setScan = (next: PendingScan | null) => setStored(next && user ? { owner: user.id, scan: next } : null);
   // A preview lives as long as its scan is the current one for this user: replaced,

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNow } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
-import { Button, Chip, Icon, Screen, TextField } from '../../ui';
+import { Button, Chip, Icon, Screen, TextField, formSubmit } from '../../ui';
 import { isPremium, useSession } from '../auth';
 import { DistrictField } from './DistrictField';
 import { ProfilePhoto } from './ProfilePhoto';
@@ -85,7 +85,7 @@ export function ProfileScreen() {
             </Group>
           </div>
         ) : (
-          <form onSubmit={f.save} className="space-y-4 rounded-xl bg-surface-container-low p-4">
+          <form onSubmit={formSubmit(f.save)} className="space-y-4 rounded-xl bg-surface-container-low p-4">
             <TextField label={t('profile.name')} value={f.name} onChange={(e) => f.setName(e.target.value)} />
             <DistrictField
               label={t('profile.district')}

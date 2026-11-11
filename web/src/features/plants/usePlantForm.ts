@@ -1,15 +1,18 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useCreatePlant, usePlant, useResolvePlant, useUpdatePlant } from './api';
-import { diff, toInput, validate, type FormErrors, type FormState } from './form';
+import { diff, emptyForm, toInput, validate, type FormErrors, type FormState } from './form';
 
 /**
  * ViewModel for the add / edit tree form: state, prefill (Scan's ?prefill=,
  * a replacement's ?replaces=), validation, create-or-update and where to go next.
  */
-export function usePlantForm(plantId: string | undefined, initial: FormState) {
+export function usePlantForm(plantId: string | undefined, existing: FormState | null) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  // Editing starts from the plant; adding starts blank, on Flower when opened with ?kind=FLOWER
+  // ("Perennials like rose or mogra? Add one").
+  const [initial] = useState<FormState>(() => existing ?? (params.get('kind') === 'FLOWER' ? { ...emptyForm, record_kind: 'FLOWER' } : emptyForm));
   const prefill = plantId ? null : params.get('prefill');
   const replacesId = plantId ? null : params.get('replaces');
   const resolved = useResolvePlant(prefill);
@@ -38,10 +41,14 @@ export function usePlantForm(plantId: string | undefined, initial: FormState) {
   }
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
+  /** Switching year / month / exact date clears what was typed for the old one. */
+  const choosePrecision = (precision: FormState['precision']) => setForm((f) => ({ ...f, precision, date: '' }));
+  /** A catalogue pick fills species and (when it has one) variety. */
+  const pick = (item: { species: string; variety?: string | null }) =>
+    setForm((f) => ({ ...f, species: item.species, variety: item.variety ?? f.variety }));
   const mutation = plantId ? update : create;
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
+  const submit = () => {
     const nextErrors = validate(form);
     setErrors(nextErrors);
     if (nextErrors.name || nextErrors.species) return;
@@ -57,5 +64,5 @@ export function usePlantForm(plantId: string | undefined, initial: FormState) {
     }
   };
 
-  return { form, set, setForm, errors, submit, busy: mutation.isPending, error: mutation.isError ? mutation.error : null };
+  return { form, set, pick, choosePrecision, errors, submit, busy: mutation.isPending, error: mutation.isError ? mutation.error : null };
 }

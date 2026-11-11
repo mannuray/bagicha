@@ -2,13 +2,14 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { messageFor } from '../../../lib/error-messages';
 import { Button, Icon } from '../../../ui';
-import { useRestorePlant, type PlantDetail } from '../../plants';
+import type { PlantDetail } from '../../plants';
+import { usePlantRestore } from '../usePlantRestore';
 import { monthYear } from './format';
 
 /** A calm note at the top of an ended tree's page, with Restore and Plant a replacement. */
 export function EndedBanner({ plant }: { plant: PlantDetail }) {
   const { t, i18n } = useTranslation();
-  const restore = useRestorePlant(plant.id);
+  const restore = usePlantRestore(plant.id);
   if (!plant.ended_at) return null;
   const reason = plant.end_reason ?? 'UNKNOWN_CAUSE';
   const verb = t(`biography.end.verb.${reason === 'REMOVED' || reason === 'REPLACED' ? reason : 'died'}`);
@@ -29,7 +30,7 @@ export function EndedBanner({ plant }: { plant: PlantDetail }) {
           {t('biography.end.replacedBy', { name: plant.replaced_by.name })}
         </Link>
       )}
-      {restore.isError && (
+      {restore.error !== null && (
         <p role="alert" className="font-body text-sm text-error">
           {messageFor(restore.error, t)}
         </p>
@@ -40,7 +41,7 @@ export function EndedBanner({ plant }: { plant: PlantDetail }) {
             {t('biography.end.replace')}
           </Link>
         )}
-        <Button variant="tertiary" busy={restore.isPending} onClick={() => restore.mutate()}>
+        <Button variant="tertiary" busy={restore.busy} onClick={restore.restore}>
           {t('biography.end.restore')}
         </Button>
       </div>

@@ -1,5 +1,4 @@
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
 import { materializeTasks } from '../seasonal';
 import { useApi } from '../../lib/api';
 import { fetchAllPages } from '../../lib/paging';
@@ -15,6 +14,7 @@ import {
   type PlantEndReason,
 } from './schemas';
 import { staleAfter, useInvalidate } from '../../lib/stale';
+import { useDebounced } from '../../lib/use-debounced';
 
 const PAGE_SIZE = 20;
 
@@ -105,15 +105,6 @@ export function useUpdatePlant(id: string) {
     mutationFn: (changes: Partial<PlantInput>) => api.send('PUT', `/ledger/plants/${id}`, changes, plantSchema),
     onSuccess: () => invalidate(staleAfter.plantEdit()),
   });
-}
-
-function useDebounced<T>(value: T, ms: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), ms);
-    return () => clearTimeout(timer);
-  }, [value, ms]);
-  return debounced;
 }
 
 export function useCatalogueSearch(query: string) {

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { isApiError } from '../../lib/errors';
 import { useRequestOtp, useVerifyOtp } from './api';
@@ -17,8 +17,7 @@ export function useOtpForm() {
   const [devOtp, setDevOtp] = useState(state?.devOtp);
   const phone = state?.phone ?? null;
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
+  const submit = () => {
     if (!phone || code.length !== OTP_LENGTH) return;
     verify.mutate({ phone, otp: code }, { onSuccess: ({ user }) => navigate(homeFor(user), { replace: true }) });
   };

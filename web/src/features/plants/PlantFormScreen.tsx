@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { useParams, useSearchParams } from 'react-router';
+import { useParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
-import { Button, ErrorState, Icon, LoadingState, Pill, Screen, TextField, TopBar } from '../../ui';
+import { Button, ErrorState, Icon, LoadingState, Pill, Screen, TextField, TopBar, formSubmit } from '../../ui';
 import saplingPhoto from '../../assets/stitch/add-tree-sapling.jpg';
 import { CataloguePicker } from './CataloguePicker';
 import { usePlant } from './api';
 import { isPlantMissing } from './missing';
 import { NotInGarden } from './NotInGarden';
-import { emptyForm, fromPlant, type FormState } from './form';
+import { fromPlant, type FormState } from './form';
 import { usePlantForm } from './usePlantForm';
 
 // Crops come through Want to grow (the crop calendar), not this form.
@@ -21,9 +21,6 @@ const BEARING_CHOICES = [
 export function PlantFormScreen() {
   const { id } = useParams();
   const existing = usePlant(id);
-  // "Perennials like rose or mogra? Add one" opens the form with ?kind=FLOWER.
-  const [search] = useSearchParams();
-  const newForm: FormState = search.get('kind') === 'FLOWER' ? { ...emptyForm, record_kind: 'FLOWER' } : emptyForm;
   if (id && existing.isError) {
     return (
       <Screen>
@@ -39,12 +36,12 @@ export function PlantFormScreen() {
     );
   }
   if (id && !existing.data) return <Screen><LoadingState /></Screen>;
-  return <PlantForm plantId={id} initial={existing.data ? fromPlant(existing.data) : newForm} />;
+  return <PlantForm plantId={id} existing={existing.data ? fromPlant(existing.data) : null} />;
 }
 
-function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState }) {
+function PlantForm({ plantId, existing }: { plantId?: string; existing: FormState | null }) {
   const { t } = useTranslation();
-  const { form, set, setForm, errors, submit, busy, error } = usePlantForm(plantId, initial);
+  const { form, set, pick, choosePrecision, errors, submit, busy, error } = usePlantForm(plantId, existing);
 
   const dateLabel = { YEAR: 'plants.form.yearPlanted', MONTH_YEAR: 'plants.form.monthPlanted', EXACT_DATE: 'plants.form.datePlanted' }[form.precision];
 
@@ -68,7 +65,7 @@ function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState 
         <p className="mb-6 font-body text-base text-on-surface-variant">
           {plantId ? t('plants.form.editSubtitle') : t('plants.form.newSubtitle')}
         </p>
-        <form onSubmit={submit} className="space-y-5" noValidate>
+        <form onSubmit={formSubmit(submit)} className="space-y-5" noValidate>
           <div className="space-y-2">
             <p className="font-label text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">{t('plants.form.kind')}</p>
             <div className="flex flex-wrap gap-2">
@@ -85,14 +82,14 @@ function PlantForm({ plantId, initial }: { plantId?: string; initial: FormState 
             error={errors.species && t(errors.species)}
             onChange={(v) => set('species', v)}
             flowers={form.record_kind === 'FLOWER'}
-            onPick={(item) => setForm((f) => ({ ...f, species: item.species, variety: item.variety ?? f.variety }))}
+            onPick={pick}
           />
           <TextField label={t('plants.form.variety')} value={form.variety} onChange={(e) => set('variety', e.target.value)} />
           <div className="space-y-2">
             <p className="font-label text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">{t('plants.form.whenPlanted')}</p>
             <div className="flex flex-wrap gap-2">
               {(['YEAR', 'MONTH_YEAR', 'EXACT_DATE'] as const).map((p) => (
-                <Pill key={p} selected={form.precision === p} onClick={() => setForm((f) => ({ ...f, precision: p, date: '' }))}>
+                <Pill key={p} selected={form.precision === p} onClick={() => choosePrecision(p)}>
                   {t(`plants.precision.${p}`)}
                 </Pill>
               ))}

@@ -4,10 +4,11 @@ import { useParams } from 'react-router';
 import { useNow } from '../../lib/clock';
 import { messageFor } from '../../lib/error-messages';
 import { Button, EmptyState, Icon, QueryState, Screen, TopBar } from '../../ui';
-import { useMaterializeTasks, useMyTasks, usePlantTasks } from './api';
+import { useMyTasks, usePlantTasks } from './api';
 import { ClosedHistory, TaskGroups } from './TaskGroups';
 import type { Task } from './schemas';
 import { NotInGarden, isPlantMissing } from '../plants';
+import { useRefreshSeason } from './useRefreshSeason';
 
 /** Stitch "The Daily Path": every task, or one plant's tasks at /plants/:id/tasks. */
 export function TasksScreen() {
@@ -34,7 +35,7 @@ function PlantTasks({ plantId }: { plantId: string }) {
   const { t } = useTranslation();
   const now = useNow();
   const query = usePlantTasks(plantId);
-  const materialize = useMaterializeTasks();
+  const season = useRefreshSeason(plantId);
   const treeName = query.data?.items[0]?.tree_name;
   const subtitle = treeName ? t('tasks.subtitlePlant', { name: treeName }) : t('tasks.plantTitle');
   if (query.isError && isPlantMissing(query.error)) {
@@ -44,13 +45,13 @@ function PlantTasks({ plantId }: { plantId: string }) {
     <Frame subtitle={subtitle}>
       {(onError) => (
         <>
-          <Button variant="tertiary" busy={materialize.isPending} onClick={() => materialize.mutate(plantId)} className="-ml-2 mb-2 self-start">
+          <Button variant="tertiary" busy={season.busy} onClick={season.refresh} className="-ml-2 mb-2 self-start">
             <Icon name="autorenew" />
             {t('tasks.refreshSeason')}
           </Button>
-          {materialize.isError && (
+          {season.error !== null && (
             <p role="alert" className="mb-4 font-body text-sm text-error">
-              {messageFor(materialize.error, t)}
+              {messageFor(season.error, t)}
             </p>
           )}
           <QueryState query={{ ...query, data: query.data?.items }}>

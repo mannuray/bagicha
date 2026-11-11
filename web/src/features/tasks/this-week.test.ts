@@ -73,3 +73,13 @@ describe('taskBadge', () => {
     expect(taskBadge({ due_date: '2026-11-20T00:00:00Z', priority: 'MEDIUM' }, now)).toBeNull();
   });
 });
+
+describe('upcoming', () => {
+  it('the next n pending tasks: overdue first, then this week, then later', async () => {
+    const { upcoming } = await import('./this-week');
+    const now = new Date('2026-11-12T06:30:00Z');
+    const t = (id: string, due: string) => task(id, due);
+    const list = [t('later', '2026-12-30T00:00:00Z'), t('week', '2026-11-14T00:00:00Z'), t('late', '2026-11-01T00:00:00Z'), t('later2', '2027-01-30T00:00:00Z')];
+    expect(upcoming(list, now, 3).map((x) => x.id)).toEqual(['late', 'week', 'later']);
+  });
+});

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useSession, type User } from '../auth';
 import { useUpdateProfile } from './api';
@@ -21,8 +21,7 @@ export function useProfileForm(user: User | null) {
     setNeedDistrict(false);
   };
 
-  const save = (event: FormEvent) => {
-    event.preventDefault();
+  const save = () => {
     // A profile without a district is incomplete and would bounce the user back to onboarding.
     if (!district.trim()) {
       setNeedDistrict(true);

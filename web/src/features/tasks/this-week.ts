@@ -53,3 +53,9 @@ export function taskBadge(task: { due_date: string; priority: string }, now: Dat
   if (dueLabel(task.due_date, now).key === 'overdue') return 'urgent';
   return task.priority === 'HIGH' ? 'high' : null;
 }
+
+/** The next `n` pending tasks: overdue first, then this week, then later. */
+export function upcoming(tasks: Task[], now: Date, n: number): Task[] {
+  const { overdue, week, later } = thisWeek(tasks, now);
+  return [...overdue, ...week, ...later].slice(0, n);
+}

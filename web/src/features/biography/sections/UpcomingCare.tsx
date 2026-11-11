@@ -1,13 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { ErrorState, LoadingState, SeeAllLink } from '../../../ui';
-import { TaskCard, thisWeek, usePlantTasks } from '../../tasks';
+import { TaskCard, upcoming, usePlantTasks } from '../../tasks';
 
 /** The next three pending tasks for this tree. */
 export function UpcomingCare({ plantId, now }: { plantId: string; now: Date }) {
   const { t } = useTranslation();
   const tasks = usePlantTasks(plantId);
-  const groups = tasks.data ? thisWeek(tasks.data.items, now) : null;
-  const upcoming = groups ? [...groups.overdue, ...groups.week, ...groups.later].slice(0, 3) : [];
+  const next = tasks.data ? upcoming(tasks.data.items, now, 3) : [];
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">
@@ -18,11 +17,11 @@ export function UpcomingCare({ plantId, now }: { plantId: string; now: Date }) {
         <ErrorState error={tasks.error} onRetry={() => void tasks.refetch()} />
       ) : !tasks.data ? (
         <LoadingState />
-      ) : upcoming.length === 0 ? (
+      ) : next.length === 0 ? (
         <p className="font-body text-sm text-on-surface-variant">{t('tasks.emptyPlantBody')}</p>
       ) : (
         <div className="space-y-3">
-          {upcoming.map((task) => (
+          {next.map((task) => (
             <TaskCard key={task.id} task={task} now={now} showPlant={false} />
           ))}
         </div>

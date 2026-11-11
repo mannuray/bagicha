@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { messageFor } from '../../lib/error-messages';
-import { Button, ErrorState, Icon, Screen, TextField, cx } from '../../ui';
+import { Button, ErrorState, Icon, Screen, TextField, cx, formSubmit } from '../../ui';
 import { useStartScan } from './useStartScan';
 
 /** Stitch "Vision Scan": choose identify or diagnose, pick the tree, take a photo. */
@@ -14,7 +14,7 @@ export function ScanScreen() {
         <p className="font-label text-xs font-bold uppercase tracking-widest text-secondary">{t('scan.kicker')}</p>
         <h1 className="font-headline text-2xl text-primary">{t('scan.title')}</h1>
       </header>
-      <form onSubmit={(e) => void submit(e)} className="space-y-4 px-4" noValidate>
+      <form onSubmit={formSubmit(submit)} className="space-y-4 px-4" noValidate>
         <div className="grid grid-cols-2 gap-3">
           {(['diagnose', 'identify'] as const).map((m) => (
             <button
