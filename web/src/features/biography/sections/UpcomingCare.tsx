@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
-import { ErrorState, LoadingState } from '../../../ui';
+import { ErrorState, LoadingState, SeeAllLink } from '../../../ui';
 import { TaskCard, thisWeek, usePlantTasks } from '../../tasks';
 
 /** The next three pending tasks for this tree. */
@@ -11,11 +10,9 @@ export function UpcomingCare({ plantId, now }: { plantId: string; now: Date }) {
   const upcoming = groups ? [...groups.overdue, ...groups.week, ...groups.later].slice(0, 3) : [];
   return (
     <section>
-      <div className="mb-3 flex items-baseline justify-between">
+      <div className="mb-3 flex items-center justify-between">
         <h2 className="font-headline text-xl text-primary">{t('biography.upcomingCare')}</h2>
-        <Link to={`/plants/${plantId}/tasks`} className="font-label text-sm font-bold text-secondary">
-          {t('common.seeAll')}
-        </Link>
+        <SeeAllLink to={`/plants/${plantId}/tasks`} />
       </div>
       {tasks.isError ? (
         <ErrorState error={tasks.error} onRetry={() => void tasks.refetch()} />

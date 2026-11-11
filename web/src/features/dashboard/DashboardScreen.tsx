@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import orchardPhoto from '../../assets/stitch/dashboard-orchard.jpg';
 import { systemClock } from '../../lib/clock';
-import { EmptyState, ErrorState, Icon, LoadingState, Pebble, Screen } from '../../ui';
+import { EmptyState, ErrorState, Icon, LoadingState, Pebble, Screen, SeeAllLink } from '../../ui';
 import { useSession } from '../auth';
 import { AddToGardenSheet, useCropSyncOnce } from '../crops';
 import { useAllPlants, usePlants } from '../plants';
@@ -52,13 +52,11 @@ export function DashboardScreen() {
 
       <main className="relative z-10 -mt-6 space-y-5 px-4">
         <section aria-labelledby="week-heading" className="space-y-2 rounded-xl bg-surface pt-3">
-          <div className="flex items-baseline justify-between">
-            <h2 id="week-heading" className="ml-2 font-label text-sm font-bold uppercase tracking-widest text-outline">
+          <div className="flex items-center justify-between px-2">
+            <h2 id="week-heading" className="font-label text-sm font-bold uppercase tracking-widest text-outline">
               {t('dashboard.thisWeek')}
             </h2>
-            <Link to="/tasks" className="font-label text-sm font-bold text-secondary">
-              {t('common.seeAll')}
-            </Link>
+            <SeeAllLink to="/tasks" />
           </div>
           {tasks.isError ? (
             <ErrorState error={tasks.error} onRetry={() => void tasks.refetch()} />
