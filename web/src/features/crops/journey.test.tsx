@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { cycleRecord, ok, pagedResponse, pageOf, plantRecord } from '../../test/fixtures';
+import { cycleRecord, ok, pagedResponse, pageOf, plantRecord, taskRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { PlantDetailScreen } from '../biography';
@@ -146,5 +146,82 @@ describe('the crop page', () => {
     expect(await within(yoy).findByText(/^Sept? 2026$/)).toBeInTheDocument();
     expect(within(yoy).getByText('Jan 2026')).toBeInTheDocument();
     expect(within(yoy).getAllByText(/better/i).length).toBeGreaterThan(0);
+  });
+
+  describe('journey page', () => {
+    const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 3600 * 1000 - 3600 * 1000).toISOString();
+    const openSeason = (started: string, place: string | null = 'pl1') =>
+      server.use(
+        http.get(`${API}/ledger/plants/c1/cycles`, ({ request }) =>
+          HttpResponse.json(pagedResponse(request, [cycleRecord({ id: 's1', started_at: started, closed_at: null, place_id: place })])),
+        ),
+      );
+    const harvest = (id: string, cycle: string) => ({
+      id, type: 'HARVEST', content: null, metadata: null, timestamp: daysAgo(1), recorded_at: daysAgo(1), plant_cycle_id: cycle, diagnosis_outcome_id: null,
+    });
+
+    it('heads a nursery crop with its stage and day, and no place', async () => {
+      handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'NURSERY' });
+      openSeason(daysAgo(5), null);
+      renderWithApp(routes, { route: '/plants/c1' });
+      expect(await screen.findByText('In the nursery · day 5')).toBeInTheDocument();
+    });
+
+    it('heads a crop in the bed with its place', async () => {
+      handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'IN_GROUND' });
+      openSeason(daysAgo(12));
+      renderWithApp(routes, { route: '/plants/c1' });
+      expect(await screen.findByText('In the bed · day 12 · Terrace bag')).toBeInTheDocument();
+      expect(await screen.findByText(/day 12 of about 30–40/i)).toBeInTheDocument();
+    });
+
+    it('shows the next step from the crop plan', async () => {
+      handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'IN_GROUND' });
+      openSeason(daysAgo(12));
+      server.use(
+        http.get(`${API}/ledger/plants/c1/tasks`, () =>
+          HttpResponse.json(pageOf([
+            taskRecord({ id: 't2', source: 'CROP_PLAN', title: 'Pick the first leaves', plant_id: 'c1', due_date: new Date(Date.now() + 9 * 86400000).toISOString() }),
+            taskRecord({ id: 't1', source: 'CROP_PLAN', title: 'Thin the seedlings', plant_id: 'c1', due_date: new Date(Date.now() + 3 * 86400000 + 3600000).toISOString() }),
+          ])),
+        ),
+      );
+      renderWithApp(routes, { route: '/plants/c1' });
+      const journey = await screen.findByRole('region', { name: /journey/i });
+      expect(await within(journey).findByText(/next: thin the seedlings · due in 3 days/i)).toBeInTheDocument();
+    });
+
+    it('counts this season\'s harvests', async () => {
+      handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'HARVESTING' });
+      openSeason(daysAgo(40));
+      server.use(http.get(`${API}/ledger/plants/c1/timeline`, () => HttpResponse.json(pageOf([harvest('h1', 's1'), harvest('h2', 's1'), harvest('h0', 'old')]))));
+      renderWithApp(routes, { route: '/plants/c1' });
+      expect(await screen.findByText(/2 harvests this season/i)).toBeInTheDocument();
+    });
+
+    it('says when the place is a good choice for rotation', async () => {
+      handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'IN_GROUND' });
+      server.use(
+        http.get(`${API}/garden/places/pl1/rotation`, () =>
+          HttpResponse.json(ok({ conflict: false, last: { crop_id: 'peas', crop_name: 'Peas', family: 'FABACEAE', season_label: 'Feb 2026' } })),
+        ),
+      );
+      openSeason(daysAgo(3));
+      renderWithApp(routes, { route: '/plants/c1' });
+      expect(await screen.findByText(/good choice: peas grew here last, a different family/i)).toBeInTheDocument();
+    });
+
+    it('opens the start sheet when arriving with ?start=1', async () => {
+      handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'PLANNED' });
+      renderWithApp(routes, { route: '/plants/c1?start=1' });
+      expect(await screen.findByRole('dialog', { name: /start growing/i })).toBeInTheDocument();
+    });
+
+    it('calls ending a crop "Stop growing this crop"', async () => {
+      handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'IN_GROUND' });
+      renderWithApp(routes, { route: '/plants/c1' });
+      expect(await screen.findByRole('button', { name: /stop growing this crop/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /mark as ended/i })).not.toBeInTheDocument();
+    });
   });
 });

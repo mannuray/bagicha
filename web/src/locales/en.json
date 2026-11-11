@@ -427,7 +427,8 @@
       "replace": "Plant a replacement",
       "restore": "Restore",
       "replacedBy": "Replaced by {{name}}",
-      "replaces": "Replaces {{name}}"
+      "replaces": "Replaces {{name}}",
+      "openCrop": "Stop growing this crop"
     },
     "seasons": "Seasons"
   },
@@ -554,7 +555,13 @@
       "harvest": "Log a harvest",
       "end": "End season",
       "growingIn": "Growing in {{place}}",
-      "remove": "Remove from Want to grow"
+      "remove": "Remove from Want to grow",
+      "day": "day {{day}}",
+      "next": "Next: {{title}} · {{due}}",
+      "progress": "Day {{day}} of about {{min}}–{{max}} to the first harvest",
+      "harvests_one": "{{count}} harvest this season",
+      "harvests_other": "{{count}} harvests this season",
+      "goodRotation": "Good choice: {{crop}} grew here last, a different family."
     },
     "chooser": {
       "open": "Add to garden",

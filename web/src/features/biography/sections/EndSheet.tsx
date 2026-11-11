@@ -11,7 +11,7 @@ import { humanize, shortDate } from './format';
 const REASONS: PlantEndReason[] = ['DISEASE_OR_PEST', 'WEATHER', 'WATER', 'OLD_AGE', 'UNKNOWN_CAUSE', 'REMOVED', 'REPLACED'];
 
 /** Record that a tree died or was removed. Calm by design: its history stays. */
-export function EndSheet({ plantId, entries, now, onClose }: { plantId: string; entries: JournalEntry[]; now: Date; onClose: () => void }) {
+export function EndSheet({ plantId, entries, now, crop = false, onClose }: { plantId: string; entries: JournalEntry[]; now: Date; crop?: boolean; onClose: () => void }) {
   const { t, i18n } = useTranslation();
   const end = useEndPlant(plantId);
   const diagnosis = recentDiagnosis(entries, now);
@@ -38,9 +38,9 @@ export function EndSheet({ plantId, entries, now, onClose }: { plantId: string; 
   };
 
   return (
-    <section role="dialog" aria-label={t('biography.end.title')} className="space-y-4 rounded-[2rem] bg-surface-container-low p-5">
+    <section role="dialog" aria-label={t(crop ? 'biography.end.openCrop' : 'biography.end.title')} className="space-y-4 rounded-[2rem] bg-surface-container-low p-5">
       <div>
-        <h2 className="font-headline text-xl text-primary">{t('biography.end.title')}</h2>
+        <h2 className="font-headline text-xl text-primary">{t(crop ? 'biography.end.openCrop' : 'biography.end.title')}</h2>
         <p className="mt-1 font-body text-sm text-on-surface-variant">{t('biography.end.intro')}</p>
       </div>
       <div className="flex flex-wrap gap-2">

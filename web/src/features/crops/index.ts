@@ -4,3 +4,4 @@ export type { CropItem, Place, Rotation } from './schemas';
 export { JourneyCard } from './JourneyCard';
 export { AddToGardenSheet, AddToGardenButton } from './AddToGardenSheet';
 export { CropDetailScreen } from './CropDetailScreen';
+export { CropHero } from './CropHero';

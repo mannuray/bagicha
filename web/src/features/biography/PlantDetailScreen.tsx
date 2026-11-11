@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { systemClock } from '../../lib/clock';
 import { Button, ErrorState, Icon, LoadingState, NotInGarden, Screen, isPlantMissing } from '../../ui';
-import { JourneyCard } from '../crops';
+import { CropHero, JourneyCard } from '../crops';
 import { useTimeline } from '../journal';
 import { usePlant, type PlantDetail } from '../plants';
 import { healthLabel } from './health-label';
@@ -69,7 +69,7 @@ function Biography({ plant }: { plant: PlantDetail }) {
   return (
     <Screen className="pb-28">
       <BackButton />
-      <Hero plant={plant} health={health} photoKey={heroKey} now={now} />
+      {crop && !ended ? <CropHero plant={plant} now={now} /> : <Hero plant={plant} health={health} photoKey={heroKey} now={now} />}
       <main className="space-y-7 px-4">
         {plant.replaces.map((old) => (
           <Link key={old.id} to={`/plants/${old.id}`} className="inline-flex min-h-11 items-center gap-1 font-label text-sm font-bold text-secondary">
@@ -99,11 +99,11 @@ function Biography({ plant }: { plant: PlantDetail }) {
         <SanctuaryRecord plantId={plant.id} />
         {!ended &&
           (ending ? (
-            <EndSheet plantId={plant.id} entries={entries} now={now} onClose={() => setEnding(false)} />
+            <EndSheet plantId={plant.id} entries={entries} now={now} crop={crop} onClose={() => setEnding(false)} />
           ) : (
             <div className="flex justify-center">
               <Button variant="quiet" onClick={() => setEnding(true)}>
-                {t('biography.end.open')}
+                {t(crop ? 'biography.end.openCrop' : 'biography.end.open')}
               </Button>
             </div>
           ))}
