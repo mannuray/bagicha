@@ -105,6 +105,79 @@ const PROFILES: Record<string, LifeProfile> = {
     lifespan_months: years([10, 20]),
     note_key: 'moringa',
   },
+  // Catalogue phase 2: common home fruit trees (grafted plants where common; seedlings take longer).
+  jamun: {
+    first_fruit_months: years([4, 8]),
+    productive_until_months: years([50, 60]),
+    lifespan_months: years([60, 100]),
+    note_key: null,
+  },
+  ber: {
+    first_fruit_months: years([2, 3]),
+    productive_until_months: years([20, 25]),
+    lifespan_months: years([25, 40]),
+    note_key: null,
+  },
+  bael: {
+    first_fruit_months: years([4, 7]),
+    productive_until_months: years([40, 60]),
+    lifespan_months: years([60, 100]),
+    note_key: null,
+  },
+  fig: {
+    first_fruit_months: years([2, 3]),
+    productive_until_months: years([15, 25]),
+    lifespan_months: years([30, 50]),
+    note_key: null,
+  },
+  mulberry: {
+    first_fruit_months: years([2, 3]),
+    productive_until_months: years([20, 30]),
+    lifespan_months: years([30, 50]),
+    note_key: null,
+  },
+  star_fruit: {
+    first_fruit_months: years([3, 4]),
+    productive_until_months: years([20, 30]),
+    lifespan_months: years([30, 40]),
+    note_key: null,
+  },
+  karonda: {
+    first_fruit_months: years([2, 3]),
+    productive_until_months: years([15, 20]),
+    lifespan_months: years([20, 30]),
+    note_key: null,
+  },
+  phalsa: {
+    first_fruit_months: years([1, 2]),
+    productive_until_months: years([15, 20]),
+    lifespan_months: years([20, 25]),
+    note_key: null,
+  },
+  wood_apple: {
+    first_fruit_months: years([5, 10]),
+    productive_until_months: years([50, 60]),
+    lifespan_months: years([60, 100]),
+    note_key: null,
+  },
+  tamarind: {
+    first_fruit_months: years([5, 12]),
+    productive_until_months: years([60, 80]),
+    lifespan_months: years([80, 150]),
+    note_key: null,
+  },
+  kokum: {
+    first_fruit_months: years([5, 8]),
+    productive_until_months: years([40, 50]),
+    lifespan_months: years([50, 80]),
+    note_key: null,
+  },
+  dragon_fruit: {
+    first_fruit_months: [12, 18],
+    productive_until_months: years([15, 20]),
+    lifespan_months: years([20, 25]),
+    note_key: null,
+  },
 };
 
 // Perennial flowers: first_fruit_months holds the first-bloom range; they bloom for their whole life.

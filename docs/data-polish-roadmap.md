@@ -6,7 +6,7 @@ The live app (bagicha-web.vercel.app) works end to end; this is the list of data
 
 1. District → region map — **done, live**
 2. Home season guidance — **done, live**
-3. Tree catalogue — **in progress** (phase 1 done)
+3. Tree catalogue — **in progress** (phases 1–2 done)
 4. + 5. + 6. Tree care, first tasks and life profiles — together, tree type by tree type, after item 3
 7. Crop and flower photos
 8. Task-title wording
@@ -36,12 +36,17 @@ Each tree type touches four things: the **catalogue entry** (add-tree search, Hi
 
 | Phase | What | Status |
 |---|---|---|
-| 1 | Popular varieties for the 14 known fruit types, with Hindi names; Hindi search works | **Done** (79 entries, live after deploy) |
-| 2 | Common home fruit trees we don't have: jamun, ber, bael, fig, mulberry, star fruit (kamrakh), karonda, phalsa, wood apple (kaith), tamarind, kokum, dragon fruit | Next |
-| 3 | Hill and cool-climate fruit: apple, pear, peach, plum, apricot, cherry, walnut, almond, kiwi, persimmon | Planned |
+| 1 | Popular varieties for the 14 known fruit types, with Hindi names; Hindi search works | **Done, live** (79 entries) |
+| 2 | Common home fruit trees we don't have: jamun, ber, bael, fig, mulberry, star fruit (kamrakh), karonda, phalsa, wood apple (kaith), tamarind, kokum, dragon fruit | **Done** (106 entries, 26 fruit types) |
+| 3 | Hill and cool-climate fruit: apple, pear, peach, plum, apricot, cherry, walnut, almond, kiwi, persimmon | Next |
 | 4 | Shade, ornamental and sacred trees: neem, peepal, ashoka, curry leaf and others (no fruit stages; care more like the perennial flowers) | Planned |
 
 **For each new tree type (phases 2–4):** catalogue entries with Hindi names, name-matching aliases, a life profile. Care stays generic until item 4.
+
+### Phase 2 detail (done)
+- Jamun (Konkan Bahadoli, Jamwant), ber (Apple Ber, Gola, Umran, Banarasi Karaka), bael (NB-5), fig (Poona, Brown Turkey), mulberry (black, long), star fruit (kamrakh), karonda, phalsa, wood apple (kaith), tamarind (PKM-1, sweet), kokum, dragon fruit (red and white flesh), each with Hindi names and a life profile.
+- Name matching is whole-word now ("ber" no longer matches inside "mulberry" or "cucumber").
+- Variety labels all read "Fruit (Variety)": Mango (Malda), Orange (Kinnow), Sweet lime (Mosambi)…
 
 ### Phase 1 detail (done)
 - Mango: Dasheri, Chausa, Alphonso (Hapus), Kesar, Himsagar, Banganapalli, Totapuri, Fazli, Mallika, Neelum, plus Malda, Langra, Amrapali.

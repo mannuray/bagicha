@@ -62,3 +62,31 @@ describe('variety names typed as the species', () => {
     expect(family(species)).toBe(expected);
   });
 });
+
+describe('common home fruit trees (catalogue phase 2)', () => {
+  it.each([
+    ['Jamun', 'jamun'],
+    ['Ber', 'ber'],
+    ['Apple ber', 'ber'],
+    ['Bael', 'bael'],
+    ['Fig', 'fig'],
+    ['Anjeer', 'fig'],
+    ['Mulberry', 'mulberry'],
+    ['Shahtoot', 'mulberry'],
+    ['Kamrakh', 'star_fruit'],
+    ['Karonda', 'karonda'],
+    ['Phalsa', 'phalsa'],
+    ['Kaith', 'wood_apple'],
+    ['Imli', 'tamarind'],
+    ['Kokum', 'kokum'],
+    ['Pitaya', 'dragon_fruit'],
+  ])('%s → %s', (species, expected) => {
+    expect(family(species)).toBe(expected);
+  });
+
+  it('matches whole words only: "ber" never hides inside mulberry or cucumber', () => {
+    expect(family('Mulberry')).toBe('mulberry');
+    expect(family('Cucumber')).toBe('generic_perennial');
+    expect(family('Figment')).toBe('generic_perennial');
+  });
+});

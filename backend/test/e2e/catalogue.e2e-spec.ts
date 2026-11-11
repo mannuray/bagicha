@@ -96,6 +96,12 @@ describe('plant catalogue', () => {
       ['red lady', { species_family: 'papaya', variety: 'Red Lady' }],
       ['आम', { species_family: 'mango' }],
       ['अमरूद', { species_family: 'guava' }],
+      ['jamun', { species_family: 'jamun' }],
+      ['जामुन', { species_family: 'jamun' }],
+      ['इमली', { species_family: 'tamarind' }],
+      ['shahtoot', { species_family: 'mulberry' }],
+      ['apple ber', { species_family: 'ber', variety: 'Apple Ber' }],
+      ['malda', { species_family: 'mango', display_name: 'Mango (Malda)' }],
     ])('finds %s', async (q, expected) => {
       expect(await top(q)).toMatchObject(expected);
     });

@@ -9,6 +9,10 @@ interface TreeIdentityInput {
   variety?: string | null;
 }
 
+/** Whole words only: "ber" must not match inside "mulberry" or "cucumber". */
+const hasWords = (haystack: string, alias: string) =>
+  ` ${haystack} `.includes(` ${alias} `);
+
 @Injectable()
 export class SpeciesNormalizationService {
   private readonly familyAliases: Record<string, string[]> = {
@@ -73,6 +77,19 @@ export class SpeciesNormalizationService {
     amla: ['amla', 'aonla', 'indian gooseberry'],
     custard_apple: ['custard apple', 'sitaphal', 'sharifa', 'sugar apple'],
     moringa: ['moringa', 'drumstick', 'sahjan', 'sehjan', 'munga'],
+    // Catalogue phase 2: common home fruit trees.
+    jamun: ['jamun', 'java plum', 'black plum', 'jambul', 'jamoon'],
+    ber: ['ber', 'jujube', 'bor', 'apple ber', 'umran', 'gola ber'],
+    bael: ['bael', 'bel', 'bilva', 'bengal quince'],
+    fig: ['fig', 'anjeer', 'anjir', 'poona fig'],
+    mulberry: ['mulberry', 'shahtoot', 'shehtoot', 'tut'],
+    star_fruit: ['star fruit', 'starfruit', 'kamrakh', 'kamranga', 'carambola'],
+    karonda: ['karonda', 'karanda', 'carissa', 'karaunda'],
+    phalsa: ['phalsa', 'falsa', 'grewia'],
+    wood_apple: ['wood apple', 'kaith', 'kath bel', 'elephant apple', 'kavath'],
+    tamarind: ['tamarind', 'imli', 'chinch'],
+    kokum: ['kokum', 'kokam', 'ratamba', 'bhirand'],
+    dragon_fruit: ['dragon fruit', 'pitaya', 'pitahaya', 'kamalam'],
   };
 
   resolveSpeciesFamily(input: TreeIdentityInput): string {
@@ -85,7 +102,7 @@ export class SpeciesNormalizationService {
     const haystack = this.buildHaystack(input);
 
     for (const [family, aliases] of Object.entries(this.familyAliases)) {
-      if (aliases.some((alias) => haystack.includes(alias))) {
+      if (aliases.some((alias) => hasWords(haystack, alias))) {
         return family;
       }
     }
@@ -107,7 +124,7 @@ export class SpeciesNormalizationService {
     const haystack = this.buildHaystack(input);
 
     for (const aliases of Object.values(this.familyAliases)) {
-      const matched = aliases.find((alias) => haystack.includes(alias));
+      const matched = aliases.find((alias) => hasWords(haystack, alias));
       if (matched) {
         return matched;
       }

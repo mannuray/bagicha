@@ -16,16 +16,29 @@ const FAMILIES = [
   'amla',
   'custard_apple',
   'moringa',
+  // Phase 2: common home fruit trees
+  'jamun',
+  'ber',
+  'bael',
+  'fig',
+  'mulberry',
+  'star_fruit',
+  'karonda',
+  'phalsa',
+  'wood_apple',
+  'tamarind',
+  'kokum',
+  'dragon_fruit',
 ];
 
 describe('the fruit catalogue', () => {
-  it('has a plain entry for each of the 14 fruit families, plus their popular varieties', () => {
+  it('has a plain entry for each fruit family, plus their popular varieties', () => {
     for (const family of FAMILIES) {
       expect(
         FRUIT_CATALOGUE.some((e) => e.species_family === family && !e.variety),
       ).toBe(true);
     }
-    expect(FRUIT_CATALOGUE.length).toBeGreaterThanOrEqual(60);
+    expect(FRUIT_CATALOGUE.length).toBeGreaterThanOrEqual(95);
   });
 
   it('uses only families that have a life profile, and never repeats a name', () => {
@@ -42,5 +55,10 @@ describe('the fruit catalogue', () => {
     for (const e of FRUIT_CATALOGUE.filter((x) => !x.variety)) {
       expect(e.languages?.hi?.some((n) => /[ऀ-ॿ]/.test(n))).toBe(true);
     }
+  });
+
+  it('names every variety the same way: "Mango (Malda)"', () => {
+    for (const e of FRUIT_CATALOGUE.filter((x) => x.variety))
+      expect(e.display_name).toMatch(/^[A-Z][\w ]+ \(.+\)$/);
   });
 });
