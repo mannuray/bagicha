@@ -489,11 +489,11 @@
   },
   "crops": {
     "title": "What can I sow now?",
-    "intro": "Crops for your region, by when to sow them. Add the ones you'd like to grow, and we'll remind you when to get seeds and sow.",
     "filter": {
       "container": "Container-friendly",
       "beginner": "Easy for beginners",
-      "quick": "Quick harvest"
+      "quick": "Quick harvest",
+      "sun": "Suits my sunlight"
     },
     "section": {
       "open": "Sow now",
@@ -565,6 +565,19 @@
       "vegetable": "Grow a vegetable",
       "vegetableHint": "Seasonal crops: we'll tell you when to sow and remind you to get seeds.",
       "sowNow": "Sow now: {{crops}}"
-    }
+    },
+    "monthSowing": "{{month}} sowing",
+    "toSowNow_one": "{{count}} crop to sow now",
+    "toSowNow_other": "{{count}} crops to sow now",
+    "search": "Search crops",
+    "laterList": "Later: {{names}}",
+    "methodShort": {
+      "NURSERY_TRANSPLANT": "nursery",
+      "DIRECT_SOW": "direct",
+      "TUBER": "tubers",
+      "CLOVE": "cloves",
+      "RHIZOME": "rhizomes"
+    },
+    "firstHarvestShort": "First harvest {{min}}–{{max}} days"
   }
 }

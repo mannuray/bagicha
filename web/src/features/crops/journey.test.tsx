@@ -7,7 +7,7 @@ import { cycleRecord, ok, pagedResponse, pageOf, plantRecord } from '../../test/
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { PlantDetailScreen } from '../biography';
-import { cropItem } from './crops.test';
+import { cropItem } from './test-fixtures';
 
 const tomatoItem = cropItem({ id: 'tomato', name: 'Tomato', family: 'SOLANACEAE', method: 'NURSERY_TRANSPLANT', guide: { plants_for_family_of_4: '4–6 plants', container: '12–14 inch pot or grow-bag per plant', spacing_cm: [45, 60] } });
 

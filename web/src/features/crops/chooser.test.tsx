@@ -8,7 +8,7 @@ import { renderWithApp } from '../../test/render';
 import { DashboardScreen } from '../dashboard';
 import { PlantListScreen } from '../plants';
 import { AddToGardenButton } from '.';
-import { cropItem } from './crops.test';
+import { cropItem } from './test-fixtures';
 
 function handlers() {
   server.use(
