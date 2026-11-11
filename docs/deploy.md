@@ -7,7 +7,7 @@ Staging runs on four hosted pieces, under the same accounts as OPD staging.
 | Web app | Vercel project `bagicha-web` (`web/`) | Vercel `mannuray`, team mannu-kumars-projects |
 | API + Redis | Render `bagicha-api` and `bagicha-redis` (free, Singapore), from `render.yaml` | Render, mannu.ray@gmail.com |
 | Database | Neon project `bagicha-staging` (`lucky-band-03541719`, Singapore) | Neon, mannu.ray@gmail.com |
-| Photos | S3 bucket in `ap-south-1` | AWS account 114823617214 |
+| Photos | S3 bucket `bagicha-media-114823617214-ap-south-1-an` (`ap-south-1`, private), IAM user `bagicha-staging-media` limited to it | AWS account 114823617214 |
 | Code | github.com/mannuray/bagicha, branch `main` | GitHub `mannuray` |
 
 The browser only talks to the Vercel site. `web/vercel.json` forwards every `/api/...` request to `bagicha-api.onrender.com`, and the production build uses `VITE_API_URL=/api/v1` (`web/.env.production`), so there is no CORS.
