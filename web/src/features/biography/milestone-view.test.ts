@@ -28,7 +28,8 @@ describe('milestoneView: what a "first" card says', () => {
   });
 
   it('not sure, and older than the latest usual first fruit → an estimate from the planted year', () => {
-    expect(milestoneView(plant({}), 'firstHarvest', NOW)).toEqual({ kind: 'estimate', from: 2020, to: 2022 });
+    // A bare year spans the whole year: earliest 1 Jan 2017 + 3 y, latest 31 Dec 2017 + 5 y.
+    expect(milestoneView(plant({}), 'firstHarvest', NOW)).toEqual({ kind: 'estimate', from: 2020, to: 2023 });
   });
 
   it('rounds month ranges outward (banana 9–15 months)', () => {
@@ -41,5 +42,19 @@ describe('milestoneView: what a "first" card says', () => {
     expect(milestoneView(plant({ bearing_status: 'NOT_YET' }), 'firstHarvest', NOW)).toEqual({ kind: 'notYet' });
     expect(milestoneView(plant({ life_profile: null }), 'firstHarvest', NOW)).toEqual({ kind: 'notYet' });
     expect(milestoneView(plant({ planting_date: null, planting_date_precision: 'UNKNOWN' }), 'firstHarvest', NOW)).toEqual({ kind: 'notYet' });
+  });
+
+  it('a bare planted year counts from its end: banana "2025" is not past first fruit in Nov 2026', () => {
+    expect(milestoneView(plant({ life_profile: BANANA, planting_date: '2025-01-01T00:00:00.000Z', planting_date_precision: 'YEAR' }), 'firstHarvest', NOW))
+      .toEqual({ kind: 'notYet' });
+  });
+
+  it('never estimates a year that has not come yet', () => {
+    const view = milestoneView(
+      plant({ life_profile: BANANA, planting_date: '2025-06-01T00:00:00.000Z', planting_date_precision: 'MONTH_YEAR' }),
+      'firstHarvest',
+      NOW,
+    );
+    expect(view).toEqual({ kind: 'estimate', from: 2026, to: 2026 });
   });
 });

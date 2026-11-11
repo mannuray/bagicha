@@ -33,9 +33,16 @@ export function milestoneView(plant: PlantDetail, key: FirstKey, now: Date): Mil
   if (plant.bearing_status === 'NOT_YET' || !profile || !plant.planting_date || plant.planting_date_precision === 'UNKNOWN') {
     return { kind: 'notYet' };
   }
-  const planted = new Date(plant.planting_date);
+  // A bare year is stored as 1 January; the tree may have gone in as late as December.
+  const earliest = new Date(plant.planting_date);
+  const latest =
+    plant.planting_date_precision === 'YEAR' ? new Date(Date.UTC(earliest.getUTCFullYear() + 1, 0, 1)) : earliest;
   const [min, max] = profile.first_fruit_months;
-  if ((now.getTime() - planted.getTime()) / MONTH_MS <= max) return { kind: 'notYet' };
-  const year = planted.getUTCFullYear();
-  return { kind: 'estimate', from: year + Math.floor(min / 12), to: year + Math.ceil(max / 12) };
+  if ((now.getTime() - latest.getTime()) / MONTH_MS <= max) return { kind: 'notYet' };
+  const yearAfter = (from: Date, months: number) => new Date(from.getTime() + months * MONTH_MS).getUTCFullYear();
+  return {
+    kind: 'estimate',
+    from: yearAfter(earliest, min),
+    to: Math.min(yearAfter(latest, max), now.getUTCFullYear()),
+  };
 }

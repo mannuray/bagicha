@@ -246,11 +246,14 @@ export class PlantRecordService implements OnModuleInit {
         record_kind: recordKind,
         planting_date: planting.date,
         now: this.clock.now(),
+        yearIsStored: dto.bearing_since_year === undefined,
       },
     );
     // "It already fruits, since 2019": firsts logged later were not firsts.
+    const answered =
+      dto.bearing_status !== undefined || dto.bearing_since_year !== undefined;
     const cleared =
-      dto.bearing_status === 'BEARING'
+      answered && bearing.bearing_status === 'BEARING'
         ? firstsToClear(plant, bearing.bearing_since_year)
         : {};
     const ageInputsChanged =

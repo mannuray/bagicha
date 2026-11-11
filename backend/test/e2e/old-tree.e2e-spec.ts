@@ -129,4 +129,31 @@ describe('old trees', () => {
     expect(plant.bearing_status).toBeNull();
     expect(plant.bearing_since_year).toBeNull();
   });
+
+  it('"yes" with no year keeps firsts that were logged in Bagicha', async () => {
+    const id = (await addTree({ planting_date: '2023' })).body.data
+      .id as string;
+    await prisma.plant.update({
+      where: { id },
+      data: { first_flowering_at: new Date('2024-03-01') },
+    });
+    await call('put', `/plants/${id}`, { bearing_status: 'BEARING' });
+    expect((await row(id)).first_flowering_at).toEqual(new Date('2024-03-01'));
+  });
+
+  it('correcting the planted year past a stored since-year drops that year instead of failing', async () => {
+    const id = (
+      await addTree({
+        planting_date: '2017',
+        bearing_status: 'BEARING',
+        bearing_since_year: 2019,
+      })
+    ).body.data.id as string;
+    const res = await call('put', `/plants/${id}`, { planting_date: '2020' });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      bearing_status: 'BEARING',
+      bearing_since_year: null,
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import type { BearingStatus } from '@prisma/client';
+import type { BearingStatus, PlantingDatePrecision } from '@prisma/client';
 import type { LifeProfile } from './species-life-profiles';
 import { ValidationError } from '../../../common/errors';
 
@@ -7,7 +7,21 @@ const MONTH_MS = (365.25 / 12) * 24 * 60 * 60 * 1000;
 export interface BearingInput {
   bearing_status: BearingStatus | null;
   planting_date: Date | null;
+  planting_date_precision?: PlantingDatePrecision | null;
   profile: LifeProfile | null;
+}
+
+/**
+ * The earliest the tree can have been planted, for "is it past its first fruit?":
+ * a bare year is stored as 1 January, so count from the end of that year instead —
+ * never call a young tree old.
+ */
+export function plantedNoEarlierThan(
+  date: Date,
+  precision: PlantingDatePrecision | null | undefined,
+): Date {
+  if (precision !== 'YEAR') return new Date(date);
+  return new Date(Date.UTC(new Date(date).getUTCFullYear() + 1, 0, 1));
 }
 
 /**
@@ -20,8 +34,11 @@ export function predatesFirsts(input: BearingInput, now: Date): boolean {
   if (input.bearing_status === 'BEARING') return true;
   if (input.bearing_status === 'NOT_YET') return false;
   if (!input.planting_date || !input.profile) return false;
-  const months =
-    (now.getTime() - new Date(input.planting_date).getTime()) / MONTH_MS;
+  const planted = plantedNoEarlierThan(
+    input.planting_date,
+    input.planting_date_precision,
+  );
+  const months = (now.getTime() - planted.getTime()) / MONTH_MS;
   return months > input.profile.first_fruit_months[1];
 }
 
@@ -36,7 +53,13 @@ export interface BearingAnswer {
  */
 export function resolveBearing(
   answer: BearingAnswer,
-  context: { record_kind: string; planting_date: Date | null; now: Date },
+  context: {
+    record_kind: string;
+    planting_date: Date | null;
+    now: Date;
+    /** The year was stored before, not sent now: drop it if it no longer fits. */
+    yearIsStored?: boolean;
+  },
 ): BearingAnswer {
   if (context.record_kind !== 'TREE') {
     return { bearing_status: null, bearing_since_year: null };
@@ -55,6 +78,12 @@ export function resolveBearing(
     year > context.now.getUTCFullYear() ||
     (planted !== null && year < planted)
   ) {
+    if (context.yearIsStored) {
+      return {
+        bearing_status: answer.bearing_status,
+        bearing_since_year: null,
+      };
+    }
     throw new ValidationError(
       'BEARING_SINCE_YEAR_INVALID',
       'The fruiting year must be between the planted year and this year',
@@ -66,7 +95,7 @@ export function resolveBearing(
 /**
  * Firsts recorded after the year the gardener says the tree began fruiting are
  * not firsts (logged before this question existed); they are cleared. With no
- * year, every recorded first is cleared.
+ * year nothing is cleared: firsts logged in Bagicha may well be real.
  */
 export function firstsToClear(
   plant: {
@@ -90,10 +119,7 @@ export function firstsToClear(
     'first_harvest_at',
   ] as const) {
     const at = plant[key];
-    if (
-      at &&
-      (sinceYear === null || new Date(at).getUTCFullYear() > sinceYear)
-    ) {
+    if (at && sinceYear !== null && new Date(at).getUTCFullYear() > sinceYear) {
       clear[key] = null;
     }
   }

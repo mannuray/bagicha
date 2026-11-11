@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { BearingStatus, LifecycleStage } from '@prisma/client';
+import {
+  BearingStatus,
+  LifecycleStage,
+  PlantingDatePrecision,
+} from '@prisma/client';
 import { Clock } from '../../../common/time';
 import { perennialFlower } from '../domain/flower-care';
 import { lifeProfileFor } from '../domain/species-life-profiles';
@@ -24,6 +28,7 @@ export interface StageInput {
   first_fruit_set_at?: Date | null;
   first_harvest_at?: Date | null;
   bearing_status?: BearingStatus | null;
+  planting_date_precision?: PlantingDatePrecision | null;
 }
 
 /** The later of two stages: automatic recalculation never moves a tree backwards. */
@@ -69,6 +74,7 @@ export class LifecycleService {
       {
         bearing_status: input.bearing_status ?? null,
         planting_date: input.planting_date,
+        planting_date_precision: input.planting_date_precision,
         profile: lifeProfileFor(family),
       },
       this.clock.now(),

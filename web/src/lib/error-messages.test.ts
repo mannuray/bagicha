@@ -14,3 +14,9 @@ describe('messageFor', () => {
     expect(messageFor('boom')).toBe(generic);
   });
 });
+
+describe('old tree since-year', () => {
+  it('has its own message', () => {
+    expect(messageFor(new ApiError(422, 'BEARING_SINCE_YEAR_INVALID', 'x'))).toMatch(/planted.*this year/i);
+  });
+});

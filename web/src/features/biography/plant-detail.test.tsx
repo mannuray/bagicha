@@ -415,7 +415,7 @@ describe('an old tree', () => {
     renderWithApp(routes, { route: '/plants/p1' });
     const milestones = await screen.findByRole('region', { name: /milestones/i });
     const harvest = card(milestones, /first harvest/i);
-    expect(within(harvest).getByText('Around 2020–2022')).toBeInTheDocument();
+    expect(within(harvest).getByText('Around 2020–2023')).toBeInTheDocument();
     expect(within(harvest).getByText(/estimated/i)).toBeInTheDocument();
     expect(within(milestones).getByRole('link', { name: /edit/i })).toHaveAttribute('href', '/plants/p1/edit');
   });

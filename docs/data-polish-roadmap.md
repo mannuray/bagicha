@@ -30,6 +30,9 @@ The live app (bagicha-web.vercel.app) works end to end; this is the list of data
 - 84 cards (7 regions × 12 months): a headline and 2–3 points. Gardening practice only: no weather, temperatures or forecasts; no frost or snow where there is none.
 - "Good to sow now" still comes from the crop calendar.
 
+### Old trees (live after next deploy)
+- "Has it fruited yet?" on the tree form; milestones show "Since 2019", "Before Bagicha" or an estimate ("Around 2020–2023", marked estimated) instead of "Not yet"; logs on trees that already fruit are not their "first". Spec: `docs/superpowers/specs/2026-11-11-old-tree-milestones-design.md`.
+
 ## 3. Tree catalogue (in progress)
 
 Each tree type touches four things: the **catalogue entry** (add-tree search, Hindi and regional names), **name matching** (typed text → tree type), a **life profile** (first fruit, productive years, lifespan) and **care** (item 4). The catalogue grows in phases; each phase ships on its own.
