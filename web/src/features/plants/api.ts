@@ -18,11 +18,12 @@ import {
 const PAGE_SIZE = 20;
 
 /** Growing plants by default; `ended` lists past trees. */
-export function usePlants(page: number, status: 'active' | 'planned' | 'ended' = 'active') {
+/** One page of plants; `kind` narrows to trees or calendar crops. */
+export function usePlants(page: number, status: 'active' | 'planned' | 'ended' = 'active', kind?: 'tree' | 'crop') {
   const api = useApi();
   return useQuery({
-    queryKey: queryKeys.plants.list(status, page),
-    queryFn: () => api.getPage('/ledger/plants', plantSchema, { page, page_size: PAGE_SIZE, status }),
+    queryKey: queryKeys.plants.list(status, page, kind ?? 'all'),
+    queryFn: () => api.getPage('/ledger/plants', plantSchema, { page, page_size: PAGE_SIZE, status, ...(kind ? { kind } : {}) }),
     placeholderData: keepPreviousData,
   });
 }

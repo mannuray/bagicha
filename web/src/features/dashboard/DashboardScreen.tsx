@@ -6,7 +6,7 @@ import { systemClock } from '../../lib/clock';
 import { EmptyState, ErrorState, Icon, LoadingState, Pebble, Screen } from '../../ui';
 import { useSession } from '../auth';
 import { AddToGardenSheet, useCropSyncOnce } from '../crops';
-import { useAllPlants } from '../plants';
+import { useAllPlants, usePlants } from '../plants';
 import { useSeasonalGuide } from '../seasonal';
 import { hasPendingSoon, TaskGroups, useMyTasks } from '../tasks';
 import { useSessionMaterialize } from './use-session-materialize';
@@ -22,6 +22,10 @@ export function DashboardScreen() {
   const season = useSessionMaterialize(plants.data?.filter((p) => !p.crop_id).map((p) => p.id));
   useCropSyncOnce();
   const [adding, setAdding] = useState(false);
+  // The garden at a glance: trees, crops growing now, and Want to grow underneath.
+  const planned = usePlants(1, 'planned').data?.pagination.total_items ?? 0;
+  const trees = plants.data ? plants.data.filter((p) => !p.crop_id).length : null;
+  const crops = plants.data ? plants.data.filter((p) => p.crop_id).length : null;
   const tasks = useMyTasks();
   const guide = useSeasonalGuide();
   const now = systemClock.now();
@@ -86,22 +90,50 @@ export function DashboardScreen() {
           )}
         </section>
 
-        <section className="grid grid-cols-2 gap-3" aria-label={t('dashboard.garden')}>
-          <div className="flex items-center gap-3 rounded-xl bg-surface-container-low p-3">
-            <Pebble className="h-11 w-11 shrink-0">
-              <span className="font-display text-lg text-primary">{plants.data?.length ?? '–'}</span>
-            </Pebble>
-            <p className="font-headline text-sm leading-tight text-on-surface-variant">{t('dashboard.plantsInGarden')}</p>
+        <section aria-label={t('dashboard.garden')} className="space-y-2 rounded-xl bg-surface-container-low p-3">
+          <h2 className="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('dashboard.garden')}</h2>
+          <div className="grid grid-cols-3 gap-2">
+            <GardenCount count={trees} label={t('dashboard.trees', { count: trees ?? 0 })} to="/plants?group=trees" addLabel={t('dashboard.addTrees')} onAdd={() => setAdding(true)} />
+            <div className="space-y-1">
+              <GardenCount count={crops} label={t('dashboard.crops', { count: crops ?? 0 })} to="/plants?group=crops" addLabel={t('dashboard.addCrops')} onAdd={() => setAdding(true)} planned={planned} />
+              {planned > 0 && (
+                <Link to="/plants?group=crops&tab=planned" className="block text-center font-label text-[11px] font-semibold text-secondary">
+                  {t('dashboard.planned', { count: planned })}
+                </Link>
+              )}
+            </div>
+            <button type="button" onClick={() => setAdding(true)} className="flex flex-col items-center justify-center gap-1 rounded-xl p-2 text-primary">
+              <span className="bg-primary-gradient flex h-11 w-11 items-center justify-center rounded-full text-on-primary">
+                <Icon name="add" />
+              </span>
+              <span className="font-label text-[11px] font-semibold leading-tight">{t('crops.chooser.open')}</span>
+            </button>
           </div>
-          <button type="button" onClick={() => setAdding(true)} className="flex w-full items-center gap-3 text-left rounded-xl bg-surface-container-low p-3 text-primary">
-            <span className="bg-primary-gradient flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-on-primary">
-              <Icon name="add" />
-            </span>
-            <span className="font-headline text-sm leading-tight">{t('crops.chooser.open')}</span>
-          </button>
         </section>
       </main>
       {adding && <AddToGardenSheet onClose={() => setAdding(false)} />}
     </Screen>
+  );
+}
+
+/** A pebble with a count that opens its group on the Plants tab, or a faint "+ Add" when the group is empty. */
+function GardenCount({ count, label, to, addLabel, onAdd, planned = 0 }: { count: number | null; label: string; to: string; addLabel: string; onAdd: () => void; planned?: number }) {
+  if (count === 0 && planned === 0) {
+    return (
+      <button type="button" onClick={onAdd} className="flex w-full flex-col items-center gap-1 rounded-xl p-2 text-primary/60">
+        <Pebble className="flex h-11 w-11 items-center justify-center opacity-60">
+          <Icon name="add" />
+        </Pebble>
+        <span className="font-label text-[11px] font-semibold leading-tight">{addLabel}</span>
+      </button>
+    );
+  }
+  return (
+    <Link to={to} className="flex flex-col items-center gap-1 rounded-xl p-2">
+      <Pebble className="flex h-11 w-11 items-center justify-center">
+        <span className="font-display text-lg text-primary">{count ?? '–'}</span>
+      </Pebble>
+      <span className="text-center font-label text-[11px] font-semibold leading-tight text-on-surface-variant">{label}</span>
+    </Link>
   );
 }

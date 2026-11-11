@@ -13,7 +13,10 @@ import {
 import { Clock } from '../../../common/time';
 import { parsePlantingDate } from '../domain/planting-date';
 import { CreatePlantDto } from '../dto/create-plant.dto';
-import type { PlantListStatus } from '../dto/list-plants-query.dto';
+import type {
+  PlantListStatus,
+  PlantListKind,
+} from '../dto/list-plants-query.dto';
 import { UpdatePlantDto } from '../dto/update-plant.dto';
 import {
   TASK_GENERATION_QUEUE,
@@ -118,12 +121,13 @@ export class PlantRecordService implements OnModuleInit {
 
   async list(
     userId: string,
-    q: PageQuery & { status?: PlantListStatus },
-  ): Promise<Page<Plant>> {
+    q: PageQuery & { status?: PlantListStatus; kind?: PlantListKind },
+  ): Promise<Page<Plant & { season_started_at: Date | null }>> {
     const { rows, total } = await this.plants.listOwned(
       userId,
       toSkipTake(q),
       q.status ?? 'active',
+      q.kind,
     );
     return toPage(rows, total, q);
   }

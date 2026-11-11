@@ -1,4 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { fail, ok, pagedResponse, pageOf, plantRecord, taskRecord } from '../../test/fixtures';
@@ -141,5 +142,34 @@ describe('dashboard', () => {
     const calls = baseHandlers({ plants });
     renderWithApp(<DashboardScreen />);
     await waitFor(() => expect(calls.materialize).toHaveLength(130), { timeout: 4000 });
+  });
+
+  describe('your garden', () => {
+    const crop = (id: string, stage: string) => plantRecord({ id, name: id, record_kind: 'CROP', crop_id: 'palak', crop_stage: stage });
+    const garden = (active: unknown[], planned: unknown[]) => {
+      baseHandlers({ plants: active });
+      server.use(
+        http.get(`${API}/ledger/plants`, ({ request }) =>
+          HttpResponse.json(pagedResponse(request, new URL(request.url).searchParams.get('status') === 'planned' ? planned : active)),
+        ),
+      );
+    };
+
+    it('counts trees and growing crops, each linking to its group on the Plants tab', async () => {
+      garden([plantRecord({ id: 'p1' }), plantRecord({ id: 'p2' }), crop('c1', 'HARVESTING')], [crop('c2', 'PLANNED')]);
+      renderWithApp(<DashboardScreen />);
+      const tile = await screen.findByRole('region', { name: /your garden/i });
+      expect(await within(tile).findByRole('link', { name: /2\s*trees/i })).toHaveAttribute('href', '/plants?group=trees');
+      expect(within(tile).getByRole('link', { name: /1\s*crop growing/i })).toHaveAttribute('href', '/plants?group=crops');
+      expect(await within(tile).findByRole('link', { name: /\+1 planned/i })).toHaveAttribute('href', '/plants?group=crops&tab=planned');
+    });
+
+    it('offers to add a group that is empty', async () => {
+      garden([plantRecord({ id: 'p1' })], []);
+      renderWithApp(<DashboardScreen />);
+      const tile = await screen.findByRole('region', { name: /your garden/i });
+      await userEvent.click(await within(tile).findByRole('button', { name: /add crops/i }));
+      expect(screen.getByRole('dialog', { name: /what are you growing/i })).toBeInTheDocument();
+    });
   });
 });

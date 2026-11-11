@@ -63,7 +63,7 @@ describe('past trees', () => {
     );
     renderWithApp(routes, { route: '/plants' });
     expect(await screen.findByText('Aam')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('tab', { name: /past trees/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /^past$/i }));
     expect(await screen.findByText('Old Papita')).toBeInTheDocument();
     expect(screen.getByText(/old age · mar 2026/i)).toBeInTheDocument();
     expect(screen.queryByText('Aam')).not.toBeInTheDocument();
@@ -209,5 +209,47 @@ describe('add a plant', () => {
     renderWithApp(routes, { route: '/plants/p1/edit' });
     expect(await screen.findByText(/isn't in your garden/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /try again/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('groups', () => {
+  it('opens on the group from the link, and asks the server for that kind', async () => {
+    const kinds: Array<string | null> = [];
+    server.use(
+      http.get(`${API}/ledger/plants`, ({ request }) => {
+        const url = new URL(request.url);
+        kinds.push(url.searchParams.get('kind'));
+        return url.searchParams.get('kind') === 'crop'
+          ? HttpResponse.json(pageOf([plantRecord({ id: 'c1', name: 'Palak', species: 'Spinach (Palak)', record_kind: 'CROP', crop_id: 'palak', crop_stage: 'HARVESTING', season_started_at: new Date(Date.now() - 3 * 86400000).toISOString() })]))
+          : HttpResponse.json(pageOf([plantRecord()]));
+      }),
+    );
+    renderWithApp(routes, { route: '/plants?group=crops' });
+    expect(await screen.findByText('Palak')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^crops$/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText(/harvesting · day 3/i)).toBeInTheDocument();
+    expect(kinds).toContain('crop');
+    await userEvent.click(screen.getByRole('button', { name: /^trees$/i }));
+    expect(await screen.findByText('Aam')).toBeInTheDocument();
+    expect(kinds).toContain('tree');
+  });
+
+  it('shows when a tree was planted', async () => {
+    server.use(http.get(`${API}/ledger/plants`, () => HttpResponse.json(pageOf([plantRecord()]))));
+    renderWithApp(routes, { route: '/plants' });
+    expect(await screen.findByText(/planted 2015/i)).toBeInTheDocument();
+  });
+
+  it('opens on Want to grow from the planned link', async () => {
+    server.use(
+      http.get(`${API}/ledger/plants`, ({ request }) =>
+        new URL(request.url).searchParams.get('status') === 'planned'
+          ? HttpResponse.json(pageOf([plantRecord({ id: 'c2', name: 'Methi', record_kind: 'CROP', crop_id: 'methi', crop_stage: 'PLANNED' })]))
+          : HttpResponse.json(pageOf([plantRecord()])),
+      ),
+    );
+    renderWithApp(routes, { route: '/plants?group=crops&tab=planned' });
+    expect(await screen.findByText('Methi')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /want to grow/i })).toHaveAttribute('aria-selected', 'true');
   });
 });

@@ -45,6 +45,8 @@ export const plantSchema = z.object({
   end_entry_id: nullableOptional,
   replaced_by_id: nullableOptional,
   crop_id: nullableOptional,
+  /** When a growing crop's open season started (list rows only). */
+  season_started_at: z.string().nullable().optional(),
   crop_stage: z
     .enum(['PLANNED', 'NURSERY', 'IN_GROUND', 'HARVESTING', 'RESTING'])
     .nullable()

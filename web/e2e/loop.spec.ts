@@ -100,7 +100,7 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await expect(page.getByRole('link', { name: /log a moment/i })).toBeHidden();
   await checkScreen(page, '11b-ended-tree');
   await page.goto('/plants');
-  await page.getByRole('tab', { name: /past trees/i }).click();
+  await page.getByRole('tab', { name: /^past$/i }).click();
   await page.getByRole('link', { name: /aam/i }).click();
   await page.getByRole('button', { name: /restore/i }).click();
   await expect(page.getByRole('link', { name: /log a moment/i })).toBeVisible();

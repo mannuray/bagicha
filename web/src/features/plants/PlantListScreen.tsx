@@ -1,20 +1,44 @@
+import type { TFunction } from 'i18next';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
+import { istDayDiff } from '../../lib/ist';
 import { Button, cx, EmptyState, ErrorState, Icon, LoadingState, Screen } from '../../ui';
 import { usePlants } from './api';
 import type { Plant } from './schemas';
 
-/** Stitch "Orchard Gallery": growing trees, and past trees on their own tab. */
+type Status = 'active' | 'planned' | 'ended';
+type Group = 'all' | 'trees' | 'crops';
+const GROUPS: Group[] = ['all', 'trees', 'crops'];
+
+/** "Harvesting · day 40" for a growing crop; "Mature · planted 2015" for a tree. */
+function statusLine(plant: Plant, t: TFunction): string {
+  if (plant.crop_stage) {
+    const day = plant.season_started_at ? Math.max(0, istDayDiff(new Date(plant.season_started_at), new Date())) : null;
+    return [t(`crops.stage.${plant.crop_stage}`), day === null ? null : t('plants.list.day', { day })].filter(Boolean).join(' · ');
+  }
+  const year = plant.planting_date && plant.planting_date_precision !== 'UNKNOWN' ? new Date(plant.planting_date).getUTCFullYear() : null;
+  return [t(`plants.stage.${plant.lifecycle_stage}`), year ? t('plants.list.planted', { year }) : null].filter(Boolean).join(' · ');
+}
+
+/** Stitch "Orchard Gallery": growing plants by group (trees, crops), with Want to grow and Past tabs. */
 /** `addSlot` lets the app put the garden chooser here without plants importing crops. */
 export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<'active' | 'planned' | 'ended'>('active');
+  // Home's garden tile links here with ?group=trees|crops (and &tab=planned for Want to grow).
+  const [params, setParams] = useSearchParams();
+  const group: Group = GROUPS.includes(params.get('group') as Group) ? (params.get('group') as Group) : 'all';
+  const [status, setStatus] = useState<Status>(params.get('tab') === 'planned' ? 'planned' : params.get('tab') === 'ended' ? 'ended' : 'active');
   const [pages, setPages] = useState(1);
-  const choose = (next: 'active' | 'planned' | 'ended') => {
+  const choose = (next: Status) => {
     setStatus(next);
     setPages(1);
   };
+  const chooseGroup = (next: Group) => {
+    setParams(next === 'all' ? {} : { group: next }, { replace: true });
+    setPages(1);
+  };
+  const kind = group === 'trees' ? 'tree' : group === 'crops' ? 'crop' : undefined;
 
   return (
     <Screen nav>
@@ -34,6 +58,22 @@ export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
         )}
       </header>
       <main className="space-y-3 px-4">
+        <div className="flex gap-2">
+          {GROUPS.map((g) => (
+            <button
+              key={g}
+              type="button"
+              aria-pressed={group === g}
+              onClick={() => chooseGroup(g)}
+              className={cx(
+                'min-h-9 rounded-full px-4 font-label text-xs font-semibold transition-colors duration-150',
+                group === g ? 'bg-secondary text-on-secondary' : 'bg-surface-container text-on-surface-variant',
+              )}
+            >
+              {t(`plants.list.group.${g}`)}
+            </button>
+          ))}
+        </div>
         <div role="tablist" className="flex gap-2">
           {(['active', 'planned', 'ended'] as const).map((s) => (
             <button
@@ -58,16 +98,16 @@ export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
           </Link>
         )}
         {Array.from({ length: pages }, (_, i) => (
-          <PlantPage key={`${status}-${i}`} status={status} page={i + 1} isLast={i + 1 === pages} onMore={() => setPages((p) => p + 1)} />
+          <PlantPage key={`${group}-${status}-${i}`} status={status} kind={kind} page={i + 1} isLast={i + 1 === pages} onMore={() => setPages((p) => p + 1)} />
         ))}
       </main>
     </Screen>
   );
 }
 
-function PlantPage({ status, page, isLast, onMore }: { status: 'active' | 'planned' | 'ended'; page: number; isLast: boolean; onMore: () => void }) {
+function PlantPage({ status, kind, page, isLast, onMore }: { status: Status; kind?: 'tree' | 'crop'; page: number; isLast: boolean; onMore: () => void }) {
   const { t } = useTranslation();
-  const query = usePlants(page, status);
+  const query = usePlants(page, status, kind);
 
   if (query.isError) return <ErrorState error={query.error} onRetry={() => void query.refetch()} />;
   if (query.isPending) return <LoadingState />;
@@ -128,9 +168,7 @@ function PlantCard({ plant }: { plant: Plant }) {
                 reason: t(`biography.end.reason.${plant.end_reason ?? 'UNKNOWN_CAUSE'}`),
                 date: new Date(plant.ended_at).toLocaleDateString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN', { month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }),
               })
-            : plant.crop_stage
-              ? t(`crops.stage.${plant.crop_stage}`)
-              : t(`plants.stage.${plant.lifecycle_stage}`)}
+            : statusLine(plant, t)}
         </span>
       </span>
       <Icon name="chevron_right" className="text-outline" />

@@ -339,6 +339,25 @@ describe('crops', () => {
       );
     });
 
+    it('lists plants by kind, with the open season start for growing crops', async () => {
+      const a = as(alice);
+      const tree = (
+        await a.post('/api/v1/ledger/plants', { name: 'Aam', species: 'Mango' })
+      ).body.data;
+      const palak = (await a.post('/api/v1/crops/plan', { crop_id: 'palak' }))
+        .body.data;
+      await log(a, palak.id, 'SOWING', { method: 'DIRECT' });
+      const crops = (await a.get('/api/v1/ledger/plants?kind=crop')).body.data;
+      expect(crops.map((p: { id: string }) => p.id)).toEqual([palak.id]);
+      expect(crops[0].season_started_at).toEqual(expect.any(String));
+      const trees = (await a.get('/api/v1/ledger/plants?kind=tree')).body.data;
+      expect(trees.map((p: { id: string }) => p.id)).toEqual([tree.id]);
+      expect(trees[0].season_started_at).toBeNull();
+      expect((await a.get('/api/v1/ledger/plants?kind=shrub')).status).toBe(
+        422,
+      );
+    });
+
     it('direct crop: sows straight into a place, with thinning and no transplant', async () => {
       const a = as(alice);
       const bag = (

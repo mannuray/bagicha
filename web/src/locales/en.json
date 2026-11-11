@@ -159,11 +159,18 @@
       "emptyBody": "Add the trees you tend to start their story.",
       "addFirst": "Add your first tree",
       "growing": "Growing",
-      "past": "Past trees",
+      "past": "Past",
       "pastLine": "{{reason}} · {{date}}",
       "emptyPast": "No past trees. Trees you mark as ended are kept here.",
       "planned": "Want to grow",
-      "emptyPlanned": "Nothing on your list yet."
+      "emptyPlanned": "Nothing on your list yet.",
+      "group": {
+        "all": "All",
+        "trees": "Trees",
+        "crops": "Crops"
+      },
+      "day": "day {{day}}",
+      "planted": "planted {{year}}"
     },
     "stage": {
       "SAPLING": "Sapling",
@@ -254,8 +261,14 @@
     "season": "{{season}} guidance",
     "sowNow": "Good to sow now: {{crops}}",
     "garden": "Your garden",
-    "plantsInGarden": "Plants in your garden",
-    "sowNowLink": "Good to sow now: {{crops}}"
+    "sowNowLink": "Good to sow now: {{crops}}",
+    "trees_one": "Tree",
+    "trees_other": "Trees",
+    "crops_one": "Crop growing",
+    "crops_other": "Crops growing",
+    "planned": "+{{count}} planned",
+    "addTrees": "Add trees",
+    "addCrops": "Add crops"
   },
   "journal": {
     "title": "Log a Moment",

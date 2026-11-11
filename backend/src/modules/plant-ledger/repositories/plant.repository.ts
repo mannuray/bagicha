@@ -88,14 +88,15 @@ export class PlantRepository {
     userId: string,
     page: SkipTake,
     status: 'active' | 'planned' | 'ended' = 'active',
-  ): Promise<Rows<Plant>> {
+    kind?: 'tree' | 'crop',
+  ): Promise<Rows<Plant & { season_started_at: Date | null }>> {
     const growing: CropStage[] = [
       CropStage.NURSERY,
       CropStage.IN_GROUND,
       CropStage.HARVESTING,
     ];
     const waiting: CropStage[] = [CropStage.PLANNED, CropStage.RESTING];
-    const where: Prisma.PlantWhereInput =
+    const byStatus: Prisma.PlantWhereInput =
       status === 'ended'
         ? { user_id: userId, ended_at: { not: null } }
         : status === 'planned'
@@ -105,6 +106,15 @@ export class PlantRepository {
               ended_at: null,
               OR: [{ crop_id: null }, { crop_stage: { in: growing } }],
             };
+    const where: Prisma.PlantWhereInput =
+      kind === undefined
+        ? byStatus
+        : {
+            AND: [
+              byStatus,
+              { crop_id: kind === 'tree' ? null : { not: null } },
+            ],
+          };
     const [rows, total] = await Promise.all([
       this.prisma.plant.findMany({
         where,
@@ -112,11 +122,28 @@ export class PlantRepository {
           status === 'ended'
             ? [{ ended_at: 'desc' as const }]
             : [{ created_at: 'desc' as const }],
+        // A growing crop's open season, so lists can say "day 12".
+        include: {
+          cycles: {
+            where: { started_at: { not: null }, closed_at: null },
+            select: { started_at: true },
+            orderBy: { started_at: 'desc' as const },
+            take: 1,
+          },
+        },
         ...page,
       }),
       this.prisma.plant.count({ where }),
     ]);
-    return { rows, total };
+    return {
+      rows: rows.map(({ cycles, ...plant }) => ({
+        ...plant,
+        season_started_at: plant.crop_id
+          ? (cycles[0]?.started_at ?? null)
+          : null,
+      })),
+      total,
+    };
   }
 
   create(userId: string, data: NewPlantData, tx?: Tx): Promise<Plant> {
