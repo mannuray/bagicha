@@ -138,4 +138,17 @@ describe('api client', () => {
       Object.defineProperty(crypto, 'randomUUID', { value: original, configurable: true });
     }
   });
+
+  it('works with a relative base URL, as the deployed web app uses (/api/v1 behind the Vercel rewrite)', async () => {
+    const seen: string[] = [];
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
+      seen.push(String(input));
+      return new Response(JSON.stringify({ success: true, data: { id: 'p1', name: 'Aam' } }), {
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    const api = createApiClient({ baseUrl: '/api/v1', tokens: memoryTokens(), onUnauthorized: vi.fn(), fetchImpl });
+    await expect(api.get('/ledger/plants/p1', plant, { page: 2 })).resolves.toEqual({ id: 'p1', name: 'Aam' });
+    expect(seen[0]).toBe(`${window.location.origin}/api/v1/ledger/plants/p1?page=2`);
+  });
 });

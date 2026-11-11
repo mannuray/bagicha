@@ -71,7 +71,9 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
   const doFetch = opts.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
 
   async function request(path: string, init: RequestInit, query?: Query) {
-    const url = new URL(opts.baseUrl + path);
+    // A relative base ("/api/v1", the deployed app behind the Vercel rewrite) resolves
+    // against this page's origin; an absolute one (local dev, tests) is used as is.
+    const url = new URL(opts.baseUrl + path, globalThis.location?.origin ?? 'http://localhost');
     for (const [key, value] of Object.entries(query ?? {})) {
       if (value !== undefined) url.searchParams.set(key, String(value));
     }
