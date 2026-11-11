@@ -82,7 +82,7 @@ export function useCreatePlace() {
   const api = useApi();
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (input: { name: string; kind: string }) => api.send('POST', '/garden/places', input, placeSchema),
+    mutationFn: (input: { name: string; kind: string; sun_hours?: string }) => api.send('POST', '/garden/places', input, placeSchema),
     onSuccess: () => void client.invalidateQueries({ queryKey: queryKeys.crops.places }),
   });
 }

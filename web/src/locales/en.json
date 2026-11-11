@@ -527,17 +527,42 @@
       "where": "Where will it grow?",
       "add": "+ Add a place",
       "name": "Place name",
-      "save": "Add",
-      "rotation": "{{crop}} (same family) grew here in {{season}} — try a different family here, and this crop somewhere else."
+      "save": "Add place",
+      "rotation": "{{crop}} (same family) grew here in {{season}} — try a different family here, and this crop somewhere else.",
+      "kind": {
+        "BED": "Bed",
+        "GROW_BAG": "Grow-bag",
+        "POT": "Pot",
+        "CONTAINER": "Container",
+        "GROUND": "Ground"
+      },
+      "sun": {
+        "FULL": "Full sun",
+        "PARTIAL": "Partial sun",
+        "SHADE": "Shade"
+      },
+      "sunLevel": {
+        "FULL": "full sun",
+        "PARTIAL": "partial sun",
+        "SHADE": "shade"
+      }
     },
     "start": {
       "title": "Start growing {{crop}}",
       "transplantTitle": "Transplant {{crop}}",
-      "seeds": "I have seeds — sow now",
-      "seedlings": "Bought seedlings — transplant now",
-      "later": "Get seeds first (we'll remind you)",
+      "seeds": "I have seeds",
+      "seedlings": "Bought seedlings",
+      "later": "Remind me to get seeds",
       "nursery": "Nursery tray",
-      "direct": "Straight in the bed"
+      "direct": "Straight in the bed",
+      "kicker": "Start this season",
+      "recommended": "Recommended",
+      "quickest": "Recommended · Quickest",
+      "progress": "Step {{at}} of {{of}}",
+      "trayHint": "{{crop}} does best raised in a tray, then moved after {{min}}–{{max}} days.",
+      "sunNote": "{{place}} gets {{sun}}; {{crop}} prefers 6+ hours.",
+      "outOfSeason": "Outside the usual sowing time in your region; it may struggle.",
+      "go": "Start season →"
     },
     "journey": {
       "title": "Journey",

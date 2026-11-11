@@ -9,9 +9,9 @@ import { renderWithApp } from '../../test/render';
 import { PlantDetailScreen } from '../biography';
 import { cropItem } from './test-fixtures';
 
-const tomatoItem = cropItem({ id: 'tomato', name: 'Tomato', family: 'SOLANACEAE', method: 'NURSERY_TRANSPLANT', guide: { plants_for_family_of_4: '4–6 plants', container: '12–14 inch pot or grow-bag per plant', spacing_cm: [45, 60] } });
+const tomatoItem = cropItem({ id: 'tomato', name: 'Tomato', family: 'SOLANACEAE', method: 'NURSERY_TRANSPLANT', sun: 'FULL', guide: { plants_for_family_of_4: '4–6 plants', container: '12–14 inch pot or grow-bag per plant', spacing_cm: [45, 60] } });
 
-function handlers(plant: Record<string, unknown>, opts: { conflict?: boolean } = {}) {
+function handlers(plant: Record<string, unknown>, opts: { conflict?: boolean; places?: Array<Record<string, unknown>> } = {}) {
   const posts: Array<Record<string, unknown>> = [];
   server.use(
     http.get(`${API}/ledger/plants/c1`, () => HttpResponse.json(ok({ ...plantRecord({ id: 'c1', record_kind: 'CROP', planting_date: null, planting_date_precision: 'UNKNOWN', ...plant }), _count: { journal_entries: 0 } }))),
@@ -19,7 +19,10 @@ function handlers(plant: Record<string, unknown>, opts: { conflict?: boolean } =
     http.get(`${API}/ledger/plants/c1/tasks`, () => HttpResponse.json(pageOf([]))),
     http.get(`${API}/ledger/plants/c1/cycles`, ({ request }) => HttpResponse.json(pagedResponse(request, []))),
     http.get(`${API}/crops/calendar`, () => HttpResponse.json(ok([cropItem(), tomatoItem]))),
-    http.get(`${API}/garden/places`, () => HttpResponse.json(ok([{ id: 'pl1', name: 'Terrace bag', kind: 'GROW_BAG', archived_at: null }]))),
+    http.get(`${API}/garden/places`, () => HttpResponse.json(ok(opts.places ?? [{ id: 'pl1', name: 'Terrace bag', kind: 'GROW_BAG', archived_at: null }]))),
+    http.get(`${API}/crops/calendar/:id`, ({ params }) =>
+      HttpResponse.json(ok({ ...(params.id === 'tomato' ? tomatoItem : cropItem()), germination_days: [5, 10], transplant_after_days: params.id === 'tomato' ? [25, 30] : null, harvest_span_days: 60, thin_after_days: null, succession_every_days: null, care: [], windows: [] })),
+    ),
     http.get(`${API}/garden/places/pl1/rotation`, () =>
       HttpResponse.json(ok(opts.conflict ? { conflict: true, last: { crop_id: 'potato', crop_name: 'Potato', family: 'SOLANACEAE', season_label: 'Oct 2026' } } : { conflict: false, last: null })),
     ),
@@ -48,7 +51,7 @@ describe('the crop page', () => {
     await userEvent.click(within(sheet).getByRole('button', { name: /i have seeds/i }));
     expect(within(sheet).queryByRole('button', { name: /nursery tray/i })).not.toBeInTheDocument();
     await userEvent.click(await within(sheet).findByRole('button', { name: /terrace bag/i }));
-    await userEvent.click(within(sheet).getByRole('button', { name: /^save$/i }));
+    await userEvent.click(within(sheet).getByRole('button', { name: /start season/i }));
     await waitFor(() => expect(posts).toEqual([{ type: 'SOWING', metadata: { method: 'DIRECT', place_id: 'pl1' } }]));
   });
 
@@ -60,7 +63,7 @@ describe('the crop page', () => {
     await userEvent.click(within(sheet).getByRole('button', { name: /bought seedlings/i }));
     await userEvent.click(await within(sheet).findByRole('button', { name: /terrace bag/i }));
     expect(await within(sheet).findByText(/potato \(same family\) grew here in oct 2026/i)).toBeInTheDocument();
-    await userEvent.click(within(sheet).getByRole('button', { name: /^save$/i }));
+    await userEvent.click(within(sheet).getByRole('button', { name: /start season/i }));
     await waitFor(() => expect(posts).toEqual([{ type: 'TRANSPLANTING', metadata: { place_id: 'pl1' } }]));
   });
 
@@ -222,6 +225,79 @@ describe('the crop page', () => {
       renderWithApp(routes, { route: '/plants/c1' });
       expect(await screen.findByRole('button', { name: /stop growing this crop/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /mark as ended/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('start sheet', () => {
+    const openSheet = async () => {
+      await userEvent.click(await screen.findByRole('button', { name: /^start$/i }));
+      return screen.getByRole('dialog', { name: /start growing/i });
+    };
+
+    it('recommends seeds for a direct-sown crop', async () => {
+      handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'PLANNED' });
+      renderWithApp(routes, { route: '/plants/c1' });
+      const sheet = await openSheet();
+      expect(within(sheet).getByText(/start this season/i)).toBeInTheDocument();
+      expect(within(within(sheet).getByRole('button', { name: /i have seeds/i })).getByText(/recommended/i)).toBeInTheDocument();
+      expect(within(within(sheet).getByRole('button', { name: /bought seedlings/i })).queryByText(/recommended/i)).not.toBeInTheDocument();
+    });
+
+    it('recommends bought seedlings as quickest for a nursery crop, and hints at the tray', async () => {
+      handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'PLANNED' });
+      renderWithApp(routes, { route: '/plants/c1' });
+      const sheet = await openSheet();
+      expect(within(within(sheet).getByRole('button', { name: /bought seedlings/i })).getByText(/quickest/i)).toBeInTheDocument();
+      await userEvent.click(within(sheet).getByRole('button', { name: /i have seeds/i }));
+      expect(await within(sheet).findByText(/tomato does best raised in a tray, then moved after 25–30 days/i)).toBeInTheDocument();
+    });
+
+    it('a nursery tray asks no place and starts the season', async () => {
+      const posts = handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'PLANNED' });
+      renderWithApp(routes, { route: '/plants/c1' });
+      const sheet = await openSheet();
+      await userEvent.click(within(sheet).getByRole('button', { name: /i have seeds/i }));
+      await userEvent.click(within(sheet).getByRole('button', { name: /nursery tray/i }));
+      expect(within(sheet).queryByRole('button', { name: /terrace bag/i })).not.toBeInTheDocument();
+      await userEvent.click(within(sheet).getByRole('button', { name: /start season/i }));
+      await waitFor(() => expect(posts).toEqual([{ type: 'SOWING', metadata: { method: 'NURSERY' } }]));
+    });
+
+    it('notes when a full-sun crop goes into a partly sunny place', async () => {
+      handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'PLANNED' }, { places: [{ id: 'pl1', name: 'Balcony', kind: 'POT', sun_hours: 'PARTIAL', archived_at: null }] });
+      renderWithApp(routes, { route: '/plants/c1' });
+      const sheet = await openSheet();
+      await userEvent.click(within(sheet).getByRole('button', { name: /bought seedlings/i }));
+      await userEvent.click(await within(sheet).findByRole('button', { name: /balcony/i }));
+      expect(within(sheet).getByText(/balcony gets partial sun; tomato prefers 6\+ hours/i)).toBeInTheDocument();
+    });
+
+    it('notes when it is outside the sowing time', async () => {
+      handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'PLANNED' });
+      server.use(http.get(`${API}/crops/calendar`, () => HttpResponse.json(ok([{ ...tomatoItem, status: 'later', next_month: 2, window_label: 'Jan–Feb' }]))));
+      renderWithApp(routes, { route: '/plants/c1' });
+      const sheet = await openSheet();
+      expect(within(sheet).getByText(/outside the usual sowing time in your region; it may struggle/i)).toBeInTheDocument();
+    });
+
+    it('adds a place with its kind and sun', async () => {
+      handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'PLANNED' });
+      let created: unknown;
+      server.use(
+        http.post(`${API}/garden/places`, async ({ request }) => {
+          created = await request.json();
+          return HttpResponse.json(ok({ id: 'pl2', name: 'Back bed', kind: 'BED', sun_hours: 'FULL', archived_at: null }), { status: 201 });
+        }),
+      );
+      renderWithApp(routes, { route: '/plants/c1' });
+      const sheet = await openSheet();
+      await userEvent.click(within(sheet).getByRole('button', { name: /i have seeds/i }));
+      await userEvent.click(await within(sheet).findByRole('button', { name: /add a place/i }));
+      await userEvent.type(within(sheet).getByLabelText(/place name/i), 'Back bed');
+      await userEvent.click(within(sheet).getByRole('button', { name: /^bed$/i }));
+      await userEvent.click(within(sheet).getByRole('button', { name: /^full sun$/i }));
+      await userEvent.click(within(sheet).getByRole('button', { name: /add place/i }));
+      await waitFor(() => expect(created).toEqual({ name: 'Back bed', kind: 'BED', sun_hours: 'FULL' }));
     });
   });
 });
