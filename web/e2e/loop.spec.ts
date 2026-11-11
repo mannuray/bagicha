@@ -137,6 +137,33 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await page.getByRole('tab', { name: /want to grow/i }).click();
   await expect(page.getByRole('link', { name: /spinach \(palak\)/i })).toBeVisible();
 
+  // Flowers: a seasonal calendula (sown Sep–Nov) from seed to its first bloom, then a perennial rose.
+  await page.goto('/');
+  await page.getByRole('button', { name: /add to garden/i }).click();
+  await page.getByRole('link', { name: /grow flowers/i }).click();
+  await expect(page.getByRole('button', { name: /^flowers$/i })).toHaveAttribute('aria-pressed', 'true');
+  await checkScreen(page, '17-flowers-discover');
+  await page.getByRole('link', { name: /^calendula/i }).click();
+  await page.getByRole('button', { name: /start now/i }).click();
+  const sow = page.getByRole('dialog', { name: /start growing/i });
+  await sow.getByRole('button', { name: /i have seeds/i }).click();
+  await sow.getByRole('button', { name: /terrace bag/i }).click();
+  await sow.getByRole('button', { name: /start season/i }).click();
+  await page.getByRole('link', { name: /log a moment/i }).click();
+  await page.getByRole('button', { name: /^flowering$/i }).click();
+  await page.getByRole('button', { name: /save to biography/i }).click();
+  await expect(page.getByText(/^Blooming · day 0/)).toBeVisible();
+  await checkScreen(page, '18-flower-journey');
+  await page.goto('/plants/new?kind=FLOWER');
+  await page.getByLabel(/tree name/i).fill('Gulab');
+  await page.getByLabel(/^species/i).fill('rose');
+  await page.getByRole('option', { name: /^rose$/i }).click();
+  await page.getByLabel(/year planted/i).fill('2022');
+  await page.getByRole('button', { name: /add to sanctuary/i }).click();
+  await expect(page.getByText(/bloom season|next bloom/i)).toBeVisible();
+  await expect(page.locator('header img[src*="tree-hero"]')).toHaveCount(0);
+  await checkScreen(page, '19-rose');
+
   await page.goto('/profile');
   await checkScreen(page, '12-profile');
 });
