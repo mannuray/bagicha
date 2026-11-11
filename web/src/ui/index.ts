@@ -14,3 +14,4 @@ export { cx } from './cx';
 export { NotInGarden, isPlantMissing } from './NotInGarden';
 export { Pill } from './Pill';
 export { SeeAllLink } from './SeeAllLink';
+export { BagichaLogo } from './BagichaLogo';

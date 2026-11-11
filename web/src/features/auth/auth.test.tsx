@@ -41,6 +41,11 @@ function AuthRoutes() {
 }
 
 describe('login', () => {
+  it('shows the Bagicha logo, the same mark as the browser icon', () => {
+    renderWithApp(<LoginScreen />, { route: '/login', user: null });
+    expect(screen.getByRole('img', { name: /bagicha logo/i })).toBeInTheDocument();
+  });
+
   it('shows the Stitch mango-leaf photo behind the login header', () => {
     const { container } = renderWithApp(<LoginScreen />, { route: '/login', user: null });
     expect(container.querySelector('header img[src*="login-leaf"]')).not.toBeNull();
