@@ -6,6 +6,7 @@ import type { DistrictOption } from './regions';
 
 export interface ProfileChanges {
   name?: string | null;
+  avatar_key?: string | null;
   district?: string | null;
   region_cluster?: RegionCluster | null;
   latitude?: number;

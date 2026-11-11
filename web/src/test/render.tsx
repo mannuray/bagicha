@@ -34,6 +34,7 @@ export const testUser = (over: Partial<User> = {}): User => ({
   subscription_tier: 'FREE',
   premium_expires_at: null,
   badge_level: 'Seedling',
+  avatar_key: null,
   ...over,
 });
 

@@ -22,6 +22,8 @@ export const userSchema = z.object({
   subscription_tier: z.enum(['FREE', 'PREMIUM']),
   premium_expires_at: z.string().nullable(),
   badge_level: z.string(),
+  /** Private media key of the profile photo; shown through a signed URL. */
+  avatar_key: z.string().nullable().default(null),
 });
 export type User = z.infer<typeof userSchema>;
 

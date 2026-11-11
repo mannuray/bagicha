@@ -3,7 +3,8 @@
     "name": "Bagicha",
     "reload": "Reload",
     "notFound": "Page not found",
-    "home": "Go home"
+    "home": "Go home",
+    "waking": "Waking up the server. The first open can take up to a minute…"
   },
   "common": {
     "retry": "Try again",
@@ -30,7 +31,8 @@
     "CONTRACT_MISMATCH": "The app and server disagree. Please update or try again later.",
     "UNAUTHORIZED": "Please sign in again.",
     "IMAGE_UNSUPPORTED": "That file isn't a photo we can use.",
-    "IMAGE_TOO_LARGE": "That photo is too large, even after shrinking it."
+    "IMAGE_TOO_LARGE": "That photo is too large, even after shrinking it.",
+    "TIMEOUT": "The server is taking too long. Please try again in a moment."
   },
   "nav": {
     "label": "Main",
@@ -153,7 +155,9 @@
       "subscriptions": "Orchard Subscriptions",
       "sanctuary": "Sanctuary Logic"
     },
-    "attribution": "District boundaries: geoBoundaries (ODbL)"
+    "attribution": "District boundaries: geoBoundaries (ODbL)",
+    "photo": "Profile photo",
+    "changePhoto": "Change profile photo"
   },
   "plants": {
     "list": {

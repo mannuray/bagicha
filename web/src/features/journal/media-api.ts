@@ -14,7 +14,7 @@ export type UploadedImage = z.infer<typeof uploadSchema>;
 
 const signedUrlSchema = z.object({ url: z.string(), expires_in_seconds: z.number() });
 
-export type MediaKind = 'journal' | 'vision' | 'post';
+export type MediaKind = 'journal' | 'vision' | 'post' | 'avatar';
 
 /** The multipart body `POST media/images` expects. */
 export function toUploadForm(kind: MediaKind, blob: Blob): FormData {

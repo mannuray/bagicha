@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { API, server, TEST_DISTRICTS } from '../../test/msw/server';
 import { renderWithApp, testUser } from '../../test/render';
 import { REGION_CLUSTERS } from '../auth';
+import { ImageCompressorProvider, type ImageCompressor } from '../journal';
 import {
   GardenScreen,
   GeolocatorProvider,
@@ -304,5 +305,48 @@ describe('profile', () => {
     await userEvent.click(screen.getByRole('button', { name: /^save$/i }));
     await waitFor(() => expect(bodies).toHaveLength(1));
     expect(bodies[0]).toMatchObject({ district: 'Aurangabad, Bihar', region_cluster: 'EAST_INDIA' });
+  });
+});
+
+describe('profile photo', () => {
+  const key = 'avatars/u1/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
+  const compressor: ImageCompressor = {
+    compress: () => Promise.resolve({ blob: new Blob(['jpg'], { type: 'image/jpeg' }), base64: 'anBn', width: 10, height: 10 }),
+  };
+
+  it('uploads the picked photo as an avatar, saves its key, and shows it', async () => {
+    const kinds: string[] = [];
+    const saved: Record<string, unknown>[] = [];
+    server.use(
+      http.post(`${API}/media/images`, async ({ request }) => {
+        kinds.push(/name="kind"\r\n\r\n(\w+)/.exec(await request.text())?.[1] ?? '');
+        return HttpResponse.json({ success: true, data: { key, url: 'x', width: 10, height: 10, is_public: false } }, { status: 201 });
+      }),
+      http.put(`${API}/user/profile/update`, async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        saved.push(body);
+        return HttpResponse.json({ success: true, data: { ...testUser(), ...body } });
+      }),
+      http.get(`${API}/media/download-url/*`, () =>
+        HttpResponse.json({ success: true, data: { url: 'https://cdn.test/me.jpg', expires_in_seconds: 3600 } }),
+      ),
+    );
+    renderWithApp(
+      <ImageCompressorProvider value={compressor}>
+        <ProfileScreen />
+      </ImageCompressorProvider>,
+      { user: testUser() },
+    );
+
+    await userEvent.upload(screen.getByLabelText(/change profile photo/i), new File(['x'], 'me.jpg', { type: 'image/jpeg' }));
+
+    await waitFor(() => expect(saved).toEqual([{ avatar_key: key }]));
+    expect(kinds).toEqual(['avatar']);
+    expect(await screen.findByRole('img', { name: /profile photo/i })).toHaveAttribute('src', 'https://cdn.test/me.jpg');
+  });
+
+  it('shows the person icon when there is no photo', () => {
+    renderWithApp(<ProfileScreen />, { user: testUser() });
+    expect(screen.queryByRole('img', { name: /profile photo/i })).toBeNull();
   });
 });

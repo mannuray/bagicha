@@ -7,6 +7,7 @@ import { Button, Chip, Icon, Screen, TextField } from '../../ui';
 import { useSession, type RegionCluster } from '../auth';
 import { useDistricts, useUpdateProfile } from './api';
 import { DistrictField } from './DistrictField';
+import { ProfilePhoto } from './ProfilePhoto';
 import { knownRegion, regionById, REGIONS } from './regions';
 
 export function ProfileScreen() {
@@ -52,9 +53,7 @@ export function ProfileScreen() {
       <main className="space-y-6 px-4">
         <section className="flex flex-col items-center space-y-3 text-center">
           <div className="relative">
-            <div className="pebble-large flex h-24 w-24 items-center justify-center bg-primary-gradient text-on-primary shadow-xl">
-              <Icon name="person" filled className="text-4xl" />
-            </div>
+            <ProfilePhoto avatarKey={user.avatar_key} />
             <button
               type="button"
               onClick={open}

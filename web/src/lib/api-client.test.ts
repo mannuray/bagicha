@@ -151,4 +151,62 @@ describe('api client', () => {
     await expect(api.get('/ledger/plants/p1', plant, { page: 2 })).resolves.toEqual({ id: 'p1', name: 'Aam' });
     expect(seen[0]).toBe(`${window.location.origin}/api/v1/ledger/plants/p1?page=2`);
   });
+
+  describe('a slow server (Render free plan wakes up in ~45 s)', () => {
+    /** A fetch that never answers until aborted, like a sleeping server behind a proxy. */
+    const hanging: typeof fetch = (_url, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+      });
+
+    it('gives up after the timeout with a TIMEOUT error', async () => {
+      const api = createApiClient({ baseUrl: API, tokens: memoryTokens(), onUnauthorized: vi.fn(), fetchImpl: hanging, timeoutMs: 30 });
+      await expect(api.get('/health', z.unknown())).rejects.toMatchObject({ status: 0, code: 'TIMEOUT' });
+    });
+
+    it('defaults to a timeout long enough for a cold start', async () => {
+      vi.useFakeTimers();
+      try {
+        const api = createApiClient({ baseUrl: API, tokens: memoryTokens(), onUnauthorized: vi.fn(), fetchImpl: hanging });
+        const result = api.get('/health', z.unknown()).catch((e: unknown) => e);
+        await vi.advanceTimersByTimeAsync(80_000);
+        let settled = false;
+        void result.then(() => (settled = true));
+        await vi.advanceTimersByTimeAsync(0);
+        expect(settled).toBe(false);
+        await vi.advanceTimersByTimeAsync(20_000);
+        expect(await result).toMatchObject({ code: 'TIMEOUT' });
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('reports a request that is taking long, and when it ends', async () => {
+      const events: string[] = [];
+      let answer: (r: Response) => void = () => {};
+      const slow: typeof fetch = () => new Promise((resolve) => (answer = resolve));
+      const api = createApiClient({
+        baseUrl: API,
+        tokens: memoryTokens(),
+        onUnauthorized: vi.fn(),
+        fetchImpl: slow,
+        slowAfterMs: 20,
+        onSlow: (slowNow) => events.push(slowNow ? 'slow' : 'done'),
+      });
+      const pending = api.get('/health', z.unknown());
+      await new Promise((r) => setTimeout(r, 40));
+      expect(events).toEqual(['slow']);
+      answer(new Response(JSON.stringify({ success: true, data: { status: 'ok' } }), { status: 200 }));
+      await pending;
+      expect(events).toEqual(['slow', 'done']);
+    });
+
+    it('says nothing about a request that answers quickly', async () => {
+      const events: boolean[] = [];
+      server.use(http.get(`${API}/health`, () => ok({ status: 'ok' })));
+      const api = createApiClient({ baseUrl: API, tokens: memoryTokens(), onUnauthorized: vi.fn(), slowAfterMs: 1000, onSlow: (s) => events.push(s) });
+      await api.get('/health', z.unknown());
+      expect(events).toEqual([]);
+    });
+  });
 });

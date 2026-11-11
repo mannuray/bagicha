@@ -1,11 +1,14 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { BrowserRouter } from 'react-router';
+import { z } from 'zod';
 import { createSessionStore, SessionProvider } from '../features/auth';
 import { createApiClient } from '../lib/api-client';
 import { ApiProvider } from '../lib/api';
 import { createQueryClient } from '../lib/query-client';
 import { localTokenStore } from '../lib/token-store';
+import { ServerWakeBanner } from './server-wake';
+import { createServerWake } from './server-wake-store';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1';
 
@@ -14,9 +17,20 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [services] = useState(() => {
     const session = createSessionStore(localTokenStore);
     const queryClient = createQueryClient();
-    const api = createApiClient({ baseUrl: API_URL, tokens: localTokenStore, onUnauthorized: () => session.expire() });
-    return { session, queryClient, api };
+    const wake = createServerWake();
+    const api = createApiClient({
+      baseUrl: API_URL,
+      tokens: localTokenStore,
+      onUnauthorized: () => session.expire(),
+      onSlow: wake.set,
+    });
+    return { session, queryClient, api, wake };
   });
+
+  // Wake the server (asleep on the free Render plan) while the splash and login show.
+  useEffect(() => {
+    services.api.get('/health/live', z.unknown()).catch(() => undefined);
+  }, [services]);
 
   // Never show one user's cached data to the next.
   useEffect(
@@ -31,6 +45,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={services.queryClient}>
       <ApiProvider client={services.api}>
         <SessionProvider store={services.session}>
+          <ServerWakeBanner wake={services.wake} />
           <BrowserRouter>{children}</BrowserRouter>
         </SessionProvider>
       </ApiProvider>

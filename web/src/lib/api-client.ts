@@ -33,7 +33,16 @@ export interface ApiClientOptions {
   tokens: TokenStore;
   onUnauthorized: () => void;
   fetchImpl?: typeof fetch;
+  /** Give up after this long. Long enough for the free Render plan to wake (~45 s). */
+  timeoutMs?: number;
+  /** A request still waiting after this long counts as slow. */
+  slowAfterMs?: number;
+  /** True when the first request turns slow, false when the last slow one ends. */
+  onSlow?: (slow: boolean) => void;
 }
+
+export const DEFAULT_TIMEOUT_MS = 90_000;
+const DEFAULT_SLOW_AFTER_MS = 4_000;
 
 const pageMetaSchema = z.object({
   page: z.number(),
@@ -69,6 +78,31 @@ function requestId(): string {
 /** One typed client for the backend: unwraps the envelope, validates with zod, maps errors. */
 export function createApiClient(opts: ApiClientOptions): ApiClient {
   const doFetch = opts.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const slowAfterMs = opts.slowAfterMs ?? DEFAULT_SLOW_AFTER_MS;
+  let slowCount = 0;
+
+  /** Fetches with a timeout, telling onSlow while any request is taking long. */
+  async function timedFetch(url: URL, init: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    let slow = false;
+    const slowTimer = setTimeout(() => {
+      slow = true;
+      if (slowCount++ === 0) opts.onSlow?.(true);
+    }, slowAfterMs);
+    try {
+      return await doFetch(url, { ...init, signal: controller.signal });
+    } catch (err) {
+      throw controller.signal.aborted
+        ? new ApiError(0, 'TIMEOUT', 'The server took too long to answer', err)
+        : new ApiError(0, 'NETWORK_ERROR', 'Network request failed', err);
+    } finally {
+      clearTimeout(timeout);
+      clearTimeout(slowTimer);
+      if (slow && --slowCount === 0) opts.onSlow?.(false);
+    }
+  }
 
   async function request(path: string, init: RequestInit, query?: Query) {
     // A relative base ("/api/v1", the deployed app behind the Vercel rewrite) resolves
@@ -82,12 +116,7 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
     const token = opts.tokens.get();
     if (token) headers.set('Authorization', `Bearer ${token}`);
 
-    let response: Response;
-    try {
-      response = await doFetch(url, { ...init, headers });
-    } catch (err) {
-      throw new ApiError(0, 'NETWORK_ERROR', 'Network request failed', err);
-    }
+    const response = await timedFetch(url, { ...init, headers });
 
     // Fail closed on auth before anything can go wrong reading the body.
     if (response.status === 401) {
