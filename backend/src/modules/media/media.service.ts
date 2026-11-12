@@ -143,6 +143,19 @@ export class MediaService implements OnModuleInit {
     return `${prefix}/${ownerId}/${id}.jpg`;
   }
 
+  /** The address of a public (post) image this server stores. */
+  publicUrlFor(key: string): string {
+    return this.buildPublicUrl(key);
+  }
+
+  /** True only for an address of one of this server's public images. */
+  isOwnPublicUrl(url: string): boolean {
+    const prefix = this.buildPublicUrl('');
+    const key = url.startsWith(prefix) ? url.slice(prefix.length) : null;
+    const parsed = key === null ? null : parseMediaKey(key);
+    return parsed !== null && PUBLIC_PREFIXES.has(parsed.kind);
+  }
+
   private buildPublicUrl(key: string): string {
     const base = this.publicBaseUrl.replace(/\/+$/, '');
     return `${base}/${this.bucket}/${key}`;

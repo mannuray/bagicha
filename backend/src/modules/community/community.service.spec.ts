@@ -1,3 +1,4 @@
+import { FixedClock } from '../../common/time';
 import { TransactionRunner } from '../../common/prisma/transaction';
 import { AiProvider } from '../ai';
 import { AuditService } from '../audit';
@@ -28,7 +29,7 @@ function build() {
         reports.push({ target: data.target_id, reporter: data.reporter_id });
       return Promise.resolve(!dup);
     }),
-    countPending: jest.fn(() => Promise.resolve(reports.length)),
+    countPendingFromEstablished: jest.fn(() => Promise.resolve(reports.length)),
   };
   const audit = { record: jest.fn(() => Promise.resolve()) };
   const service = new CommunityService(
@@ -44,6 +45,8 @@ function build() {
       run: (fn: (tx: unknown) => unknown) => fn('tx'),
     } as unknown as TransactionRunner,
     { recent: jest.fn(() => Promise.resolve([])) } as any,
+    {} as any,
+    new FixedClock(new Date('2026-11-12T00:00:00Z')),
   );
   return { service, audit, posts };
 }

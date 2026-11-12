@@ -6,8 +6,11 @@ import {
   IsBoolean,
   IsArray,
   ArrayMaxSize,
-  IsUrl,
+  MaxLength,
 } from 'class-validator';
+
+/** posts/<user id>/<uuid>.jpg is well under this. */
+const MEDIA_KEY_MAX = 120;
 
 export class CreatePostDto {
   @IsNotEmpty()
@@ -22,9 +25,11 @@ export class CreatePostDto {
   @IsBoolean()
   is_alert?: boolean;
 
+  /** Keys of your own `post` uploads (POST /media/upload); the server builds the URLs. */
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(4)
-  @IsUrl({}, { each: true })
-  image_urls?: string[];
+  @IsString({ each: true })
+  @MaxLength(MEDIA_KEY_MAX, { each: true })
+  image_keys?: string[];
 }

@@ -22,13 +22,27 @@ export class ReportRepository {
     return count === 1;
   }
 
-  countPending(
+  /**
+   * Pending reports on the target from accounts created before `createdBefore`:
+   * fresh accounts are cheap to make, so they can't hide someone's post.
+   */
+  async countPendingFromEstablished(
     type: ReportTargetType,
     targetId: string,
+    createdBefore: Date,
     tx?: Tx,
   ): Promise<number> {
-    return (tx ?? this.prisma).report.count({
+    const db = tx ?? this.prisma;
+    const reports = await db.report.findMany({
       where: { target_type: type, target_id: targetId, status: 'PENDING' },
+      select: { reporter_id: true },
+    });
+    if (reports.length === 0) return 0;
+    return db.user.count({
+      where: {
+        id: { in: reports.map((r) => r.reporter_id) },
+        created_at: { lt: createdBefore },
+      },
     });
   }
 }

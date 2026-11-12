@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ReportTargetType } from '@prisma/client';
-import { NotFoundError } from '../../common/errors';
+import { NotFoundError, ValidationError } from '../../common/errors';
 import { Page, PageQuery, toPage, toSkipTake } from '../../common/pagination';
 import { Tx, TransactionRunner } from '../../common/prisma/transaction';
 import { AiProvider } from '../ai';
@@ -15,9 +15,13 @@ import { CommentRepository } from './repositories/comment.repository';
 import { ExpertRepository } from './repositories/expert.repository';
 import { FeedPost, PostRepository } from './repositories/post.repository';
 import { ReportRepository } from './repositories/report.repository';
+import { MediaService, parseMediaKey } from '../media';
+import { addDays, Clock } from '../../common/time';
 import { toAskAiAnswer } from '../ai';
 
 const HIDE_REPORT_THRESHOLD = 3;
+/** Only reports from accounts at least this old count towards hiding. */
+const ESTABLISHED_ACCOUNT_DAYS = 7;
 const MAX_KNOWLEDGE_SNIPPETS = 3;
 const KNOWLEDGE_POOL_SIZE = 50;
 const AUDIT_EXCERPT_CHARS = 200;
@@ -127,6 +131,8 @@ export class CommunityService {
     private readonly audit: AuditService,
     private readonly transactions: TransactionRunner,
     private readonly journal: JournalService,
+    private readonly media: MediaService,
+    private readonly clock: Clock,
   ) {}
 
   async getFeed(
@@ -140,19 +146,44 @@ export class CommunityService {
       targetDistrict,
       toSkipTake(q),
     );
-    return toPage(rows, total, q);
+    return toPage(
+      rows.map((post) => this.withOwnImages(post)),
+      total,
+      q,
+    );
   }
 
   async createPost(userId: string, dto: CreatePostDto) {
+    if (dto.plant_id) await this.plants.getOwnedOrThrow(userId, dto.plant_id);
+    const imageUrls = (dto.image_keys ?? []).map((key) => {
+      const parsed = parseMediaKey(key);
+      if (parsed?.kind !== 'post' || parsed.ownerId !== userId) {
+        throw new ValidationError(
+          'POST_IMAGE_INVALID',
+          'Images must be your own post uploads',
+        );
+      }
+      return this.media.publicUrlFor(key);
+    });
     const user = await this.users.findById(userId);
     return this.posts.create({
       content: dto.content,
       plant_id: dto.plant_id,
       is_alert: dto.is_alert ?? false,
-      image_urls: dto.image_urls ?? [],
+      image_urls: imageUrls,
       author_id: userId,
       district: user?.district,
     });
+  }
+
+  /** Posts saved before keys were enforced may hold any address: show only ours. */
+  private withOwnImages<T extends { image_urls: string[] }>(post: T): T {
+    return {
+      ...post,
+      image_urls: post.image_urls.filter((url) =>
+        this.media.isOwnPublicUrl(url),
+      ),
+    };
   }
 
   async addComment(userId: string, postId: string, dto: CreateCommentDto) {
@@ -271,7 +302,12 @@ Return strict JSON:
         );
       }
 
-      const count = await this.reports.countPending(target.type, target.id, tx);
+      const count = await this.reports.countPendingFromEstablished(
+        target.type,
+        target.id,
+        addDays(this.clock.now(), -ESTABLISHED_ACCOUNT_DAYS),
+        tx,
+      );
       if (count >= HIDE_REPORT_THRESHOLD && !target.isHidden)
         await target.hide(tx);
       return !filed
