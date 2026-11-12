@@ -81,9 +81,25 @@ Two more general design rules, not tied to one SOLID letter specifically:
 - **MUST** return every response through one consistent envelope shape
   (success/error, consistent metadata) — never a bespoke response shape
   per endpoint. ([`ADR-0008`](../adr/0008-api-response-envelope.md))
+- **Decision (2026-11-12):** Bagicha keeps its own response format —
+  `{ success, data }` envelope, `/api/v1` paths, its error envelope with
+  specific codes, `page/page_size` pagination — rather than the OPD API
+  standard's bare JSON + RFC 9457 problem documents. One first-party
+  client uses this API, and a format change would touch every endpoint
+  for no user-visible gain. If a native app, third-party integrations or a
+  public API arrive, the standard's format ships as `/api/v2` beside v1.
+  Its safety rules are adopted regardless (below and in §4).
 - **MUST** validate every incoming DTO at the boundary — reject invalid
-  input before it reaches business logic, not partway through.
+  input before it reaches business logic, not partway through. Unknown
+  fields are rejected, not silently dropped.
   ([`ADR-0004`](../adr/0004-validation-class-validator.md))
+- **MUST** build every response field by field (a view mapper per
+  module); never return a database row — a new column must not reach
+  clients by accident.
+- **MUST** keep error messages safe to show anyone: fixed wording, never
+  a phone, name, token, coordinates, or the real URL (use the route
+  pattern). Database errors are translated in the repository (unique →
+  conflict or the existing row; foreign key → not found / precondition).
 - **MUST** distinguish operational errors (bad input, not found,
   conflict — expected, loggable at `warn`) from programmer errors (a
   bug — unexpected, loggable at `error`, pages someone). One error

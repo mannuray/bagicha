@@ -59,5 +59,5 @@ export async function seedPlant(
 export function tokenFor(app: INestApplication, user: User): string {
   return app
     .get(JwtService)
-    .sign({ sub: user.id, phoneNumber: user.phone_number });
+    .sign({ sub: user.id });
 }

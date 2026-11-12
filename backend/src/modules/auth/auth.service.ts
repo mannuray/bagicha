@@ -6,6 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from '../user';
 import { RedisService } from '../../common/redis/redis.service';
 import { randomInt } from 'crypto';
+import { otpFailKey, otpKey } from './otp-keys';
 
 const OTP_TTL_SECONDS = 300;
 /** Wrong guesses allowed per issued OTP before it is burned. */
@@ -48,11 +49,12 @@ export class AuthService {
   ): Promise<{ message: string; dev_otp?: string }> {
     const otp = randomInt(100000, 1000000).toString();
 
-    await this.redisService.set(`otp:${phoneNumber}`, otp, OTP_TTL_SECONDS);
-    await this.redisService.del(`otp_fail:${phoneNumber}`);
+    await this.redisService.set(otpKey(phoneNumber), otp, OTP_TTL_SECONDS);
+    await this.redisService.del(otpFailKey(phoneNumber));
 
-    // No SMS provider yet: surface the code locally, never in production.
-    if (!this.isProduction()) {
+    // No SMS provider yet: a developer can opt in to seeing the code in the log
+    // (AUTH_LOG_OTP=true), never in production. Staging shows it on screen instead.
+    if (!this.isProduction() && this.config.get<string>('AUTH_LOG_OTP') === 'true') {
       this.logger.debug({ otp }, 'Development OTP issued');
     }
 
@@ -61,18 +63,18 @@ export class AuthService {
   }
 
   async verifyOtp(phoneNumber: string, otp: string) {
-    const storedOtp = await this.redisService.get(`otp:${phoneNumber}`);
+    const storedOtp = await this.redisService.get(otpKey(phoneNumber));
 
     const isMockUser = this.isDevOtp(phoneNumber, otp);
 
     if (!isMockUser && (!storedOtp || storedOtp !== otp)) {
       // Per-phone guess limit (IP rate limits alone don't stop a distributed brute force).
       const failures = await this.redisService.incrWithTtl(
-        `otp_fail:${phoneNumber}`,
+        otpFailKey(phoneNumber),
         OTP_TTL_SECONDS,
       );
       if (failures >= MAX_OTP_FAILURES) {
-        await this.redisService.del(`otp:${phoneNumber}`);
+        await this.redisService.del(otpKey(phoneNumber));
       }
       throw new UnauthorizedException({
         code: 'AUTH_INVALID_OTP',
@@ -81,8 +83,8 @@ export class AuthService {
     }
 
     if (!isMockUser) {
-      await this.redisService.del(`otp:${phoneNumber}`);
-      await this.redisService.del(`otp_fail:${phoneNumber}`);
+      await this.redisService.del(otpKey(phoneNumber));
+      await this.redisService.del(otpFailKey(phoneNumber));
     }
 
     // Register or find user
@@ -102,7 +104,8 @@ export class AuthService {
       },
     });
 
-    const payload = { sub: user.id, phoneNumber: user.phone_number };
+    // Only the user id: a token is readable by anyone who holds it.
+    const payload = { sub: user.id };
     const accessToken = this.jwtService.sign(payload);
 
     return {

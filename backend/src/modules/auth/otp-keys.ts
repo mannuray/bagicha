@@ -1,0 +1,13 @@
+import { createHash } from 'crypto';
+
+/**
+ * Redis keys for OTP state. The phone number is hashed: Redis keys reach logs and
+ * trace spans (the ioredis instrumentation records the command and its key), and a
+ * phone number must never appear there.
+ */
+const phoneHash = (phoneNumber: string) =>
+  createHash('sha256').update(phoneNumber).digest('hex').slice(0, 32);
+
+export const otpKey = (phoneNumber: string) => `otp:${phoneHash(phoneNumber)}`;
+export const otpFailKey = (phoneNumber: string) =>
+  `otp_fail:${phoneHash(phoneNumber)}`;

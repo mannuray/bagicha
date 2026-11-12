@@ -1,6 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
+import { otpKey } from './otp-keys';
 
 const PHONE = '+916202042225';
 
@@ -30,20 +31,21 @@ function build(env: Record<string, string | undefined>) {
   const jwt = { sign: jest.fn(() => 'token') };
   const audit = { record: jest.fn(() => Promise.resolve()) };
   const config = { get: (k: string) => env[k] } as unknown as ConfigService;
+  const logger = {
+    info: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
   const service = new AuthService(
     prisma as any,
     redis as any,
     jwt as any,
     config,
-    {
-      info: jest.fn(),
-      debug: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    } as any,
+    logger as any,
     audit as any,
   );
-  return { service, store, audit, prisma };
+  return { service, store, audit, prisma, jwt, logger };
 }
 
 describe('AuthService', () => {
@@ -55,7 +57,7 @@ describe('AuthService', () => {
     const res = await service.requestOtp(PHONE);
     expect(res).toEqual({
       message: 'OTP sent successfully',
-      dev_otp: store.get(`otp:${PHONE}`),
+      dev_otp: store.get(otpKey(PHONE)),
     });
   });
 
@@ -105,19 +107,47 @@ describe('AuthService', () => {
     );
   });
 
+  it('never puts the phone number in a Redis key (Redis keys reach traces)', async () => {
+    const { service, store } = build({ NODE_ENV: 'development' });
+    await service.requestOtp(PHONE);
+    await service.verifyOtp(PHONE, '000000').catch(() => undefined);
+    const digits = PHONE.replace(/\D/g, '');
+    expect([...store.keys()].some((k) => k.includes(digits))).toBe(false);
+    expect(store.size).toBeGreaterThan(0);
+  });
+
+  it('signs a token carrying only the user id, never the phone number', async () => {
+    const { service, store, jwt } = build({ NODE_ENV: 'development' });
+    await service.requestOtp(PHONE);
+    await service.verifyOtp(PHONE, store.get(otpKey(PHONE)) as string);
+    expect(jwt.sign).toHaveBeenCalledWith({ sub: 'u1' });
+  });
+
+  it('logs the issued code only when AUTH_LOG_OTP is explicitly on (and never in production)', async () => {
+    const quiet = build({ NODE_ENV: 'staging', AUTH_EXPOSE_OTP: 'true' });
+    await quiet.service.requestOtp(PHONE);
+    expect(quiet.logger.debug).not.toHaveBeenCalled();
+    const loud = build({ NODE_ENV: 'development', AUTH_LOG_OTP: 'true' });
+    await loud.service.requestOtp(PHONE);
+    expect(loud.logger.debug).toHaveBeenCalled();
+    const prod = build({ NODE_ENV: 'production', AUTH_LOG_OTP: 'true' });
+    await prod.service.requestOtp(PHONE);
+    expect(prod.logger.debug).not.toHaveBeenCalled();
+  });
+
   it('stores a 6-digit OTP without using Math.random', async () => {
     const spy = jest.spyOn(Math, 'random');
     const { service, store } = build({ NODE_ENV: 'development' });
     await service.requestOtp(PHONE);
     expect(spy).not.toHaveBeenCalled();
-    expect(store.get(`otp:${PHONE}`)).toMatch(/^\d{6}$/);
+    expect(store.get(otpKey(PHONE))).toMatch(/^\d{6}$/);
     spy.mockRestore();
   });
 
   it('accepts the OTP it stored, once', async () => {
     const { service, store } = build({ NODE_ENV: 'development' });
     await service.requestOtp(PHONE);
-    const otp = store.get(`otp:${PHONE}`) as string;
+    const otp = store.get(otpKey(PHONE)) as string;
     await expect(service.verifyOtp(PHONE, otp)).resolves.toBeDefined();
     await expect(service.verifyOtp(PHONE, otp)).rejects.toBeInstanceOf(
       UnauthorizedException,
@@ -127,7 +157,7 @@ describe('AuthService', () => {
   it('records one AUTH_SIGNED_IN audit event without the OTP', async () => {
     const { service, store, audit } = build({ NODE_ENV: 'development' });
     await service.requestOtp(PHONE);
-    const otp = store.get(`otp:${PHONE}`) as string;
+    const otp = store.get(otpKey(PHONE)) as string;
     await service.verifyOtp(PHONE, otp);
     expect(audit.record).toHaveBeenCalledTimes(1);
     const [event] = audit.record.mock.calls[0] as unknown as [any];
@@ -148,14 +178,14 @@ describe('AuthService', () => {
   it('burns the OTP after 5 wrong guesses, so the right code then fails', async () => {
     const { service, store } = build({ NODE_ENV: 'development' });
     await service.requestOtp(PHONE);
-    const otp = store.get(`otp:${PHONE}`) as string;
+    const otp = store.get(otpKey(PHONE)) as string;
     const wrong = otp === '000000' ? '111111' : '000000';
     for (let i = 0; i < 5; i++) {
       await expect(service.verifyOtp(PHONE, wrong)).rejects.toBeInstanceOf(
         UnauthorizedException,
       );
     }
-    expect(store.has(`otp:${PHONE}`)).toBe(false);
+    expect(store.has(otpKey(PHONE))).toBe(false);
     await expect(service.verifyOtp(PHONE, otp)).rejects.toBeInstanceOf(
       UnauthorizedException,
     );
@@ -168,7 +198,7 @@ describe('AuthService', () => {
       await service.verifyOtp(PHONE, 'nope').catch(() => undefined);
     }
     await service.requestOtp(PHONE);
-    const otp = store.get(`otp:${PHONE}`) as string;
+    const otp = store.get(otpKey(PHONE)) as string;
     await expect(service.verifyOtp(PHONE, otp)).resolves.toMatchObject({
       access_token: 'token',
     });
