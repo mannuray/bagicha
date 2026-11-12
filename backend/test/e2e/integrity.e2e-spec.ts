@@ -3,7 +3,7 @@ import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
-import { resetDb, seedUser, tokenFor } from './fixtures';
+import { resetDb, seedPlant, seedUser, tokenFor } from './fixtures';
 
 describe('data integrity', () => {
   let app: INestApplication;
@@ -40,6 +40,44 @@ describe('data integrity', () => {
       prisma.$executeRawUnsafe('TRUNCATE TABLE "audit_events"'),
     ).rejects.toThrow();
     expect(await prisma.auditEvent.count()).toBe(1);
+  });
+
+  it('materializing twice at once makes one copy of each seasonal task', async () => {
+    const plant = await seedPlant(prisma, alice.id, {
+      planting_date: new Date('2018-01-01'),
+    });
+    const materialize = () =>
+      request(app.getHttpServer())
+        .post(`/api/v1/seasonal/plant/${plant.id}/materialize-tasks`)
+        .set({ Authorization: `Bearer ${tokenFor(app, alice)}` });
+    const [a, b] = await Promise.all([materialize(), materialize()]);
+    expect([a.status, b.status]).toEqual([201, 201]);
+    const tasks = await prisma.task.findMany({
+      where: { plant_id: plant.id, source: 'SEASONAL_PACK', status: 'PENDING' },
+    });
+    const keys = tasks.map((t) => t.source_key);
+    expect(tasks.length).toBeGreaterThan(0);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it('the database allows only one pending task per source key', async () => {
+    const plant = await seedPlant(prisma, alice.id);
+    const task = {
+      plant_id: plant.id,
+      type: 'WATER' as const,
+      priority: 'MEDIUM' as const,
+      source: 'SYSTEM' as const,
+      source_key: 'k1',
+      due_date: new Date(),
+    };
+    await prisma.task.create({ data: task });
+    await expect(prisma.task.create({ data: task })).rejects.toThrow();
+    // Closed copies don't count.
+    await prisma.task.updateMany({
+      where: { plant_id: plant.id },
+      data: { status: 'COMPLETED' },
+    });
+    await expect(prisma.task.create({ data: task })).resolves.toBeDefined();
   });
 
   it('reporting a post twice at once files one report, and both calls succeed', async () => {

@@ -123,7 +123,7 @@ describe('SeasonalService.materializeTasksForTree', () => {
     await service.materializeTasksForTree('u1', 'p1');
     expect(drafts[0]).toMatchObject({
       source: TaskSource.SEASONAL_PACK,
-      sourceKey: 'seasonal_primary_action',
+      sourceKey: 'pack1:seasonal_primary_action',
       seasonalPackId: 'pack1',
     });
     expect(drafts[0].dueDate.toISOString()).toBe('2026-05-04T00:00:00.000Z');

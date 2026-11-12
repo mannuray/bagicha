@@ -94,8 +94,8 @@ export class TaskRepository {
     });
   }
 
-  /** Any status: a crop reminder the gardener completed or skipped must not come back. */
-  findBySourceKey(
+  /** Pending, done or skipped (not cancelled): a one-off the gardener closed must not come back. */
+  findOpenOrClosedBySourceKey(
     userId: string,
     plantId: string,
     source: TaskSource,
@@ -103,7 +103,12 @@ export class TaskRepository {
     tx?: Tx,
   ): Promise<Task | null> {
     return this.db(tx).task.findFirst({
-      where: { ...owned(userId, plantId), source, source_key: sourceKey },
+      where: {
+        ...owned(userId, plantId),
+        source,
+        source_key: sourceKey,
+        status: { not: TaskStatus.CANCELLED },
+      },
     });
   }
 

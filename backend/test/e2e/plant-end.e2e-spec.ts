@@ -184,6 +184,34 @@ describe('when a tree ends', () => {
     expect(made.body.data.created_count).toBeGreaterThan(0);
   });
 
+  it('a seasonal task the gardener finished or skipped does not come back', async () => {
+    const { a, id, base } = await plantWithTask();
+    const materialize = () =>
+      a.post(`/api/v1/seasonal/plant/${id}/materialize-tasks`);
+    await materialize();
+    const seasonal = (
+      (await a.get(`${base}/tasks`)).body.data as Array<{
+        id: string;
+        source: string;
+        status: string;
+      }>
+    ).filter((t) => t.source === 'SEASONAL_PACK' && t.status === 'PENDING');
+    expect(seasonal.length).toBeGreaterThanOrEqual(2);
+    const [done, skipped] = seasonal;
+    await a.put(`${base}/tasks/${done!.id}`, { status: 'COMPLETED' });
+    await a.put(`${base}/tasks/${skipped!.id}`, { status: 'SKIPPED' });
+
+    const again = await materialize();
+    expect(again.body.data.created_count).toBe(0);
+    const pending = (
+      (await a.get(`${base}/tasks`)).body.data as Array<{
+        source: string;
+        status: string;
+      }>
+    ).filter((t) => t.source === 'SEASONAL_PACK' && t.status === 'PENDING');
+    expect(pending.length).toBe(seasonal.length - 2);
+  });
+
   it('restoring an active plant is 409 PLANT_NOT_ENDED', async () => {
     const { a, base } = await plantWithTask();
     const res = await a.post(`${base}/restore`);

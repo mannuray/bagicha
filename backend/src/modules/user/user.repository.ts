@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, SubscriptionTier, User } from '@prisma/client';
 import { Tx } from '../../common/prisma/transaction';
+import { isUniqueViolation } from '../../common/prisma/unique-violation';
 import { PrismaService } from '../../prisma/prisma.service';
 
 /** A user's own row. Every method is keyed by the user's id. */
@@ -38,7 +39,7 @@ export class UserRepository {
     try {
       return { user: await this.createWithPhone(phoneNumber), created: true };
     } catch (err) {
-      if ((err as { code?: string }).code !== 'P2002') throw err;
+      if (!isUniqueViolation(err)) throw err;
       const winner = await this.findByPhone(phoneNumber);
       if (!winner) throw err;
       return { user: winner, created: false };

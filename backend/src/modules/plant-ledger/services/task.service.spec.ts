@@ -13,7 +13,7 @@ const draft = (sourceKey: string): TaskDraft => ({
   category: TaskCategory.WATERING,
   priority: TaskPriority.MEDIUM,
   title: 'Water',
-  source: TaskSource.SEASONAL_PACK,
+  source: TaskSource.SYSTEM,
   sourceKey,
   dueDate: new Date('2026-12-01T00:00:00Z'),
 });
@@ -53,7 +53,7 @@ describe('TaskService.createTasks', () => {
       { sourceKey: 'b', status: 'created', taskId: 'new-b' },
     ]);
     expect(created).toEqual(['b']);
-    expect(metrics.taskCreated).toHaveBeenCalledWith('SEASONAL_PACK', 1);
+    expect(metrics.taskCreated).toHaveBeenCalledWith('SYSTEM', 1);
   });
 
   it('reports a failed draft without aborting the others (outside a transaction)', async () => {

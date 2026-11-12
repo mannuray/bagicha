@@ -132,13 +132,15 @@ export class SeasonalService implements OnModuleInit {
       template: TaskTemplateInput,
       source: TaskSource,
       refs: Pick<TaskDraft, 'seasonalPackId' | 'personalizedOverlayId'>,
+      // A template key repeats every season; the pack (or overlay) id makes it one occurrence.
+      owner: string,
     ): TaskDraft => ({
       type: taskTypeFromCategory(template.category),
       category: taskCategoryFromCategory(template.category),
       priority: taskPriorityFrom(template.priority),
       title: template.title,
       source,
-      sourceKey: template.key,
+      sourceKey: `${owner}:${template.key}`,
       reason: template.reason,
       metadata: template as unknown as Prisma.InputJsonValue,
       dueDate: addDays(now, Math.max(template.due_in_days, 0)),
@@ -147,13 +149,23 @@ export class SeasonalService implements OnModuleInit {
 
     const drafts = [
       ...asTaskTemplates(pack.task_templates).map((t) =>
-        toDraft(t, TaskSource.SEASONAL_PACK, { seasonalPackId: pack.id }),
+        toDraft(
+          t,
+          TaskSource.SEASONAL_PACK,
+          { seasonalPackId: pack.id },
+          pack.id,
+        ),
       ),
       ...(overlay
         ? asTaskTemplates(overlay.personalized_tasks).map((t) =>
-            toDraft(t, TaskSource.PERSONALIZED_OVERLAY, {
-              personalizedOverlayId: overlay.id,
-            }),
+            toDraft(
+              t,
+              TaskSource.PERSONALIZED_OVERLAY,
+              {
+                personalizedOverlayId: overlay.id,
+              },
+              overlay.id,
+            ),
           )
         : []),
     ];
