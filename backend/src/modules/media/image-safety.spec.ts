@@ -51,6 +51,21 @@ describe('decodeSafely: untrusted uploads', () => {
     });
   });
 
+  it('strips EXIF (a phone photo carries GPS; post images are public)', async () => {
+    const withExif = await sharp({
+      create: { width: 20, height: 10, channels: 3, background: '#4a7' },
+    })
+      .jpeg()
+      .withExif({ IFD0: { Copyright: 'home at 25.6,85.1' } })
+      .toBuffer();
+    expect((await sharp(withExif).metadata()).exif).toBeDefined();
+    const { data } = await decodeSafely(withExif);
+    const meta = await sharp(data).metadata();
+    expect(meta.exif).toBeUndefined();
+    expect(meta.xmp).toBeUndefined();
+    expect(meta.iptc).toBeUndefined();
+  });
+
   it('re-encodes an ordinary image as a JPEG', async () => {
     const png = await sharp({
       create: { width: 20, height: 10, channels: 3, background: '#2d5a27' },

@@ -42,7 +42,7 @@ export async function decodeSafely(input: Buffer) {
       failOn: 'error',
       limitInputPixels: MAX_INPUT_PIXELS,
     })
-      .rotate() // honour EXIF orientation, then strip
+      .rotate() // honour EXIF orientation; output carries no metadata (sharp default)
       .resize({
         width: IMAGE_MAX_DIMENSION,
         height: IMAGE_MAX_DIMENSION,
@@ -50,7 +50,6 @@ export async function decodeSafely(input: Buffer) {
         withoutEnlargement: true,
       })
       .jpeg({ quality: IMAGE_QUALITY, mozjpeg: true })
-      .withMetadata({})
       .toBuffer({ resolveWithObject: true });
   } catch {
     throw new ValidationError(
