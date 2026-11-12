@@ -6,12 +6,29 @@ import { materializeTasks } from '../seasonal';
 import { taskSchema, type Task } from './schemas';
 import { staleAfter, useInvalidate } from '../../lib/stale';
 
-/** All of the user's tasks: "this week" groups them client-side, so a page cut would hide some. */
+/** How many done/skipped tasks the history shows (closedTasks' cap). */
+const RECENT_CLOSED = 10;
+
+/**
+ * Every open task ("this week" groups them client-side, so a page cut would hide
+ * some) plus only the latest closed ones: the history never needs the rest.
+ */
 export function useMyTasks() {
   const api = useApi();
   return useQuery({
     queryKey: queryKeys.tasks.mineAll,
-    queryFn: async () => ({ items: await fetchAllPages(api, '/ledger/tasks', taskSchema) }),
+    queryFn: async () => {
+      const [open, closed] = await Promise.all([
+        fetchAllPages(api, '/ledger/tasks', taskSchema, { status: 'open' }),
+        api.getPage('/ledger/tasks', taskSchema, { status: 'closed', page: 1, page_size: RECENT_CLOSED }),
+      ]);
+      return {
+        items: [
+          ...open.filter((task) => task.status === 'PENDING'),
+          ...closed.items.filter((task) => task.status !== 'PENDING'),
+        ],
+      };
+    },
   });
 }
 

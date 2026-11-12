@@ -155,4 +155,25 @@ describe('tasks screen', () => {
     renderWithApp(routes, { route: '/tasks' });
     expect(await screen.findByRole('article', { name: 'Task 119' })).toBeInTheDocument();
   });
+
+  it('asks for every open task but only the latest closed ones', async () => {
+    const asked: string[] = [];
+    server.use(
+      http.get(`${API}/ledger/tasks`, ({ request }) => {
+        const url = new URL(request.url);
+        asked.push(`${url.searchParams.get('status')}:${url.searchParams.get('page_size')}`);
+        return HttpResponse.json(
+          pageOf(
+            url.searchParams.get('status') === 'closed'
+              ? [taskRecord({ id: 'c1', title: 'Old chore', status: 'COMPLETED', completed_at: new Date().toISOString() })]
+              : [taskRecord()],
+          ),
+        );
+      }),
+    );
+    renderWithApp(routes, { route: '/tasks' });
+    expect(await screen.findByRole('article', { name: /plan pest response/i })).toBeInTheDocument();
+    expect(await screen.findByText('Old chore')).toBeInTheDocument();
+    expect(asked.sort()).toEqual(['closed:10', 'open:100']);
+  });
 });

@@ -28,6 +28,7 @@ import { PlantRecordService } from './services/plant-record.service';
 import { TaskService } from './services/task.service';
 import { mapPage } from '../../common/pagination';
 import { toPlantView } from './domain/plant-view';
+import { ListTasksQueryDto } from './dto/list-tasks-query.dto';
 import { toEntryView } from './domain/entry-view';
 
 @Controller('ledger')
@@ -142,8 +143,8 @@ export class PlantLedgerController {
   }
 
   @Get('tasks')
-  getUserTasks(@Request() req: AuthedRequest, @Query() q: PaginationQueryDto) {
-    return this.tasks.listForUser(req.user.id, q);
+  getUserTasks(@Request() req: AuthedRequest, @Query() q: ListTasksQueryDto) {
+    return this.tasks.listForUser(req.user.id, q, q.status);
   }
 
   @Get('plants/:id/mitigation-plan')

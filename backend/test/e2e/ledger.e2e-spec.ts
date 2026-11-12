@@ -168,6 +168,41 @@ describe('plant ledger loop', () => {
     expect((await b.get('/api/v1/ledger/plants')).body.data).toEqual([]);
     expect((await b.get('/api/v1/ledger/tasks')).body.data).toEqual([]);
   });
+  it('lists only open tasks, or recently closed ones newest first', async () => {
+    const plant = await seedPlant(prisma, alice.id);
+    const task = (key: string, status: 'PENDING' | 'COMPLETED' | 'SKIPPED') =>
+      prisma.task.create({
+        data: {
+          plant_id: plant.id,
+          type: 'WATER',
+          priority: 'MEDIUM',
+          source: 'MANUAL',
+          title: key,
+          status,
+          due_date: new Date(),
+        },
+      });
+    await task('open', 'PENDING');
+    const older = await task('older', 'COMPLETED');
+    await task('newer', 'SKIPPED');
+    await prisma.task.update({
+      where: { id: older.id },
+      data: { updated_at: new Date(Date.now() - 864e5) },
+    });
+    const a = as(alice);
+    const keys = async (url: string) =>
+      ((await a.get(url)).body.data as Array<{ title: string }>).map(
+        (t) => t.title,
+      );
+    expect(await keys('/api/v1/ledger/tasks?status=open')).toEqual(['open']);
+    expect(await keys('/api/v1/ledger/tasks?status=closed')).toEqual([
+      'newer',
+      'older',
+    ]);
+    expect(await keys('/api/v1/ledger/tasks')).toHaveLength(3);
+    expect((await a.get('/api/v1/ledger/tasks?status=done')).status).toBe(422);
+  });
+
   describe('timeline type filter', () => {
     const setup = async () => {
       const a = as(alice);

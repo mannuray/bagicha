@@ -6,7 +6,8 @@ export function createQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 30_000,
+        // Writes invalidate what they change, so this only spaces out background refetches.
+        staleTime: 2 * 60_000,
         retry: (count, err) =>
           count < 2 && (!isApiError(err) || err.status === 0 || err.status >= 500),
       },

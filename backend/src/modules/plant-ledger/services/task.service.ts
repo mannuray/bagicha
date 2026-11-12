@@ -19,6 +19,7 @@ import {
 import { Tx } from '../../../common/prisma/transaction';
 import { mapTaskView } from '../domain/task-view';
 import { isUniqueViolation } from '../../../common/prisma/unique-violation';
+import type { TaskListStatus } from '../dto/list-tasks-query.dto';
 import { TaskRepository } from '../repositories/task.repository';
 
 export interface TaskDraft {
@@ -203,8 +204,16 @@ export class TaskService {
     return toPage(rows.map(mapTaskView), total, q);
   }
 
-  async listForUser(userId: string, q: PageQuery): Promise<Page<TaskView>> {
-    const { rows, total } = await this.tasks.listForUser(userId, toSkipTake(q));
+  async listForUser(
+    userId: string,
+    q: PageQuery,
+    status?: TaskListStatus,
+  ): Promise<Page<TaskView>> {
+    const { rows, total } = await this.tasks.listForUser(
+      userId,
+      toSkipTake(q),
+      status,
+    );
     return toPage(rows.map(mapTaskView), total, q);
   }
 

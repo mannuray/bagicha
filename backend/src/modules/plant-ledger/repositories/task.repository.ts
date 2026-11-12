@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma, Task, TaskSource, TaskStatus } from '@prisma/client';
 import { Tx } from '../../../common/prisma/transaction';
 import { PrismaService } from '../../../prisma/prisma.service';
+import type { TaskListStatus } from '../dto/list-tasks-query.dto';
 import { Rows, SkipTake } from './types';
 
 export type NewTaskData = Omit<Prisma.TaskUncheckedCreateInput, 'plant_id'>;
@@ -19,6 +20,11 @@ export type TaskWithView = Prisma.TaskGetPayload<{
   include: typeof taskViewInclude;
 }>;
 
+/** Most recently closed first (skipped tasks have no completed_at, so updated_at). */
+const CLOSED_ORDER: Prisma.TaskOrderByWithRelationInput[] = [
+  { updated_at: 'desc' },
+  { id: 'desc' },
+];
 const ORDER: Prisma.TaskOrderByWithRelationInput[] = [
   { status: 'asc' },
   { due_date: 'asc' },
@@ -59,13 +65,18 @@ export class TaskRepository {
   async listForUser(
     userId: string,
     page: SkipTake,
+    status?: TaskListStatus,
   ): Promise<Rows<TaskWithView>> {
-    const where = { plant: { user_id: userId } };
+    const where: Prisma.TaskWhereInput = {
+      plant: { user_id: userId },
+      ...(status === 'open' && { status: TaskStatus.PENDING }),
+      ...(status === 'closed' && { status: { not: TaskStatus.PENDING } }),
+    };
     const [rows, total] = await Promise.all([
       this.prisma.task.findMany({
         where,
         include: taskViewInclude,
-        orderBy: ORDER,
+        orderBy: status === 'closed' ? CLOSED_ORDER : ORDER,
         ...page,
       }),
       this.prisma.task.count({ where }),
