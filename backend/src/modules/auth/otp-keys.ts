@@ -11,3 +11,7 @@ const phoneHash = (phoneNumber: string) =>
 export const otpKey = (phoneNumber: string) => `otp:${phoneHash(phoneNumber)}`;
 export const otpFailKey = (phoneNumber: string) =>
   `otp_fail:${phoneHash(phoneNumber)}`;
+export const otpCooldownKey = (phoneNumber: string) =>
+  `otp_cooldown:${phoneHash(phoneNumber)}`;
+export const otpDailyKey = (phoneNumber: string) =>
+  `otp_daily:${phoneHash(phoneNumber)}`;

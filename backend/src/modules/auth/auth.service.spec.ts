@@ -17,6 +17,11 @@ function build(env: Record<string, string | undefined>) {
       store.delete(k);
       return Promise.resolve();
     }),
+    setIfAbsent: jest.fn((k: string, v: string) => {
+      if (store.has(k)) return Promise.resolve(false);
+      store.set(k, v);
+      return Promise.resolve(true);
+    }),
     incrWithTtl: jest.fn((k: string) => {
       const next = Number(store.get(k) ?? '0') + 1;
       store.set(k, String(next));
@@ -136,6 +141,36 @@ describe('AuthService', () => {
       expect(logger[level]).not.toHaveBeenCalled();
   });
 
+  it('one phone can ask for a code once a minute, and 10 times a day', async () => {
+    const { service, store } = build({ NODE_ENV: 'development' });
+    await service.requestOtp(PHONE);
+    await expect(service.requestOtp(PHONE)).rejects.toMatchObject({
+      reason: 'OTP_COOLDOWN',
+    });
+    for (let i = 0; i < 9; i += 1) {
+      for (const k of [...store.keys()])
+        if (k.startsWith('otp_cooldown:')) store.delete(k);
+      await service.requestOtp(PHONE);
+    }
+    for (const k of [...store.keys()])
+      if (k.startsWith('otp_cooldown:')) store.delete(k);
+    await expect(service.requestOtp(PHONE)).rejects.toMatchObject({
+      reason: 'OTP_DAILY_LIMIT',
+    });
+  });
+
+  it('asking for a new code does not reset the wrong-guess count', async () => {
+    const { service, store } = build({ NODE_ENV: 'development' });
+    await service.requestOtp(PHONE);
+    for (let i = 0; i < 3; i += 1)
+      await service.verifyOtp(PHONE, '000000').catch(() => undefined);
+    for (const k of [...store.keys()])
+      if (k.startsWith('otp_cooldown:')) store.delete(k);
+    await service.requestOtp(PHONE);
+    const fail = [...store.entries()].find(([k]) => k.startsWith('otp_fail:'));
+    expect(fail?.[1]).toBe('3');
+  });
+
   it('stores a 6-digit OTP without using Math.random', async () => {
     const spy = jest.spyOn(Math, 'random');
     const { service, store } = build({ NODE_ENV: 'development' });
@@ -190,18 +225,5 @@ describe('AuthService', () => {
     await expect(service.verifyOtp(PHONE, otp)).rejects.toBeInstanceOf(
       UnauthorizedError,
     );
-  });
-
-  it('a fresh OTP request resets the failure count', async () => {
-    const { service, store } = build({ NODE_ENV: 'development' });
-    await service.requestOtp(PHONE);
-    for (let i = 0; i < 4; i++) {
-      await service.verifyOtp(PHONE, 'nope').catch(() => undefined);
-    }
-    await service.requestOtp(PHONE);
-    const otp = store.get(otpKey(PHONE)) as string;
-    await expect(service.verifyOtp(PHONE, otp)).resolves.toMatchObject({
-      access_token: 'token',
-    });
   });
 });

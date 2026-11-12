@@ -4,11 +4,8 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client as MinioClient } from 'minio';
 import { mediaClientOptions } from './media-client';
-import sharp from 'sharp';
 import { randomUUID } from 'crypto';
 import {
-  IMAGE_MAX_DIMENSION,
-  IMAGE_QUALITY,
   MAX_UPLOAD_BYTES,
   MEDIA_BUCKET_DEFAULT,
   MEDIA_PREFIXES,
@@ -17,6 +14,7 @@ import {
   parseMediaKey,
 } from './media.config';
 import { NotFoundError, ValidationError } from '../../common/errors';
+import { decodeSafely } from './image-safety';
 
 export interface MediaUploadResult {
   key: string;
@@ -78,24 +76,8 @@ export class MediaService implements OnModuleInit {
     if (file.size > MAX_UPLOAD_BYTES) {
       throw new ValidationError('PAYLOAD_TOO_LARGE', 'That photo is too large');
     }
-    if (!file.mimetype.startsWith('image/')) {
-      throw new ValidationError(
-        'MEDIA_TYPE_UNSUPPORTED',
-        'Only images can be uploaded',
-      );
-    }
-
-    const processed = await sharp(file.buffer, { failOn: 'error' })
-      .rotate() // honor EXIF orientation, then strip
-      .resize({
-        width: IMAGE_MAX_DIMENSION,
-        height: IMAGE_MAX_DIMENSION,
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
-      .jpeg({ quality: IMAGE_QUALITY, mozjpeg: true })
-      .withMetadata({}) // strip
-      .toBuffer({ resolveWithObject: true });
+    // The bytes decide, not the client's content type (image-safety.ts).
+    const processed = await decodeSafely(file.buffer);
 
     const key = this.buildKey(kind, ownerId);
     await withSpan('minio.putObject', { bucket: this.bucket }, () =>

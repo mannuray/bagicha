@@ -1,15 +1,18 @@
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Injectable } from '@nestjs/common';
-import { UnauthorizedError } from '../../common/errors';
+import { RateLimitedError, UnauthorizedError } from '../../common/errors';
 import { ConfigService } from '@nestjs/config';
 import { AuditAction, AuditService } from '../audit';
 import { JwtService } from '@nestjs/jwt';
 import { toUserView, UserRepository } from '../user';
 import { RedisService } from '../../common/redis/redis.service';
 import { randomInt } from 'crypto';
-import { otpFailKey, otpKey } from './otp-keys';
+import { otpCooldownKey, otpDailyKey, otpFailKey, otpKey } from './otp-keys';
 
 const OTP_TTL_SECONDS = 300;
+const OTP_COOLDOWN_SECONDS = 60;
+const OTP_DAILY_LIMIT = 10;
+const DAY_SECONDS = 24 * 60 * 60;
 /** Wrong guesses allowed per issued OTP before it is burned. */
 const MAX_OTP_FAILURES = 5;
 
@@ -48,10 +51,33 @@ export class AuthService {
   async requestOtp(
     phoneNumber: string,
   ): Promise<{ message: string; dev_otp?: string }> {
-    const otp = randomInt(100000, 1000000).toString();
+    // Per phone: one code a minute, ten a day (stops cycling codes to get fresh guesses,
+    // and stops anyone cancelling someone else's code over and over).
+    const fresh = await this.redisService.setIfAbsent(
+      otpCooldownKey(phoneNumber),
+      '1',
+      OTP_COOLDOWN_SECONDS,
+    );
+    if (!fresh) {
+      throw new RateLimitedError(
+        'OTP_COOLDOWN',
+        'Please wait a minute before asking for another code',
+      );
+    }
+    const today = await this.redisService.incrWithTtl(
+      otpDailyKey(phoneNumber),
+      DAY_SECONDS,
+    );
+    if (today > OTP_DAILY_LIMIT) {
+      throw new RateLimitedError(
+        'OTP_DAILY_LIMIT',
+        'Too many codes today; try again tomorrow',
+      );
+    }
 
+    const otp = randomInt(100000, 1000000).toString();
+    // The wrong-guess count is NOT reset here: a new code doesn't buy new guesses.
     await this.redisService.set(otpKey(phoneNumber), otp, OTP_TTL_SECONDS);
-    await this.redisService.del(otpFailKey(phoneNumber));
 
     const message = 'OTP sent successfully';
     return this.exposesOtp() ? { message, dev_otp: otp } : { message };
