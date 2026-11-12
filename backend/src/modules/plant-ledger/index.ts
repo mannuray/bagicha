@@ -43,3 +43,19 @@ export type {
 export { GardenPlaceRepository } from './repositories/garden-place.repository';
 export { CropPlanService } from './services/crop-plan.service';
 export { toPlantView } from './domain/plant-view';
+export {
+  CARE_PENDING,
+  careFor,
+  NEAREST_REGIONS,
+  resolveRegionCare,
+  stageOf,
+  TREE_CARE,
+} from './domain/care';
+export type {
+  Anchor,
+  CareItem,
+  CareStage,
+  FamilyCare,
+  PhaseWindow,
+  RegionCare,
+} from './domain/care';
