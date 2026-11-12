@@ -168,9 +168,12 @@ describe('plant ledger loop', () => {
     expect((await b.get('/api/v1/ledger/plants')).body.data).toEqual([]);
     expect((await b.get('/api/v1/ledger/tasks')).body.data).toEqual([]);
   });
-  it('lists only open tasks, or recently closed ones newest first', async () => {
+  it('lists only open tasks, or closed ones: done, then skipped, then cancelled, newest first', async () => {
     const plant = await seedPlant(prisma, alice.id);
-    const task = (key: string, status: 'PENDING' | 'COMPLETED' | 'SKIPPED') =>
+    const task = (
+      key: string,
+      status: 'PENDING' | 'COMPLETED' | 'SKIPPED' | 'CANCELLED',
+    ) =>
       prisma.task.create({
         data: {
           plant_id: plant.id,
@@ -185,6 +188,9 @@ describe('plant ledger loop', () => {
     await task('open', 'PENDING');
     const older = await task('older', 'COMPLETED');
     await task('newer', 'SKIPPED');
+    // Ending a tree cancels many tasks at once: they must not push the
+    // gardener's own done/skipped tasks out of the short history.
+    await task('cancelled', 'CANCELLED');
     await prisma.task.update({
       where: { id: older.id },
       data: { updated_at: new Date(Date.now() - 864e5) },
@@ -196,10 +202,11 @@ describe('plant ledger loop', () => {
       );
     expect(await keys('/api/v1/ledger/tasks?status=open')).toEqual(['open']);
     expect(await keys('/api/v1/ledger/tasks?status=closed')).toEqual([
-      'newer',
       'older',
+      'newer',
+      'cancelled',
     ]);
-    expect(await keys('/api/v1/ledger/tasks')).toHaveLength(3);
+    expect(await keys('/api/v1/ledger/tasks')).toHaveLength(4);
     expect((await a.get('/api/v1/ledger/tasks?status=done')).status).toBe(422);
   });
 

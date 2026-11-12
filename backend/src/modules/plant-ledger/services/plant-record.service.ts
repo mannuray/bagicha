@@ -383,9 +383,9 @@ export class PlantRecordService implements OnModuleInit {
   }
 
   /**
-   * Best effort: a queue hiccup must not fail (or slow) the request; the next
-   * refresh fills in missing tasks. One job per plant and stage, so repeat visits
-   * don't pile up duplicates.
+   * Best effort: a queue hiccup must not fail (or slow) the request. A job lost
+   * that way is queued again on the plant's next edit or stage change. One job
+   * per plant and stage, so repeat visits don't pile up duplicates.
    */
   private enqueueTaskGeneration(
     userId: string,

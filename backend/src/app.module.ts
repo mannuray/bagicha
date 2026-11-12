@@ -28,6 +28,7 @@ import { ClockModule } from './common/time';
 import { RateLimitModule } from './common/rate-limit';
 import { HealthModule } from './common/health/health.module';
 import { TransactionModule } from './common/prisma/transaction';
+import { QUEUE_JOB_DEFAULTS } from './common/redis/queue-defaults';
 import { AuditModule } from './modules/audit';
 
 @Module({
@@ -41,15 +42,7 @@ import { AuditModule } from './modules/audit';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         connection: redisConnection(configService),
-        // Retry a few times, then keep only recent failures: finished jobs would
-        // otherwise pile up in the shared Redis forever. Removing finished jobs
-        // also means a fixed jobId only dedupes work that is still waiting.
-        defaultJobOptions: {
-          attempts: 3,
-          backoff: { type: 'exponential', delay: 2000 },
-          removeOnComplete: true,
-          removeOnFail: { age: 24 * 60 * 60, count: 100 },
-        },
+        defaultJobOptions: QUEUE_JOB_DEFAULTS,
       }),
     }),
     LoggingModule,

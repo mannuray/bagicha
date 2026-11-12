@@ -20,8 +20,13 @@ export type TaskWithView = Prisma.TaskGetPayload<{
   include: typeof taskViewInclude;
 }>;
 
-/** Most recently closed first (skipped tasks have no completed_at, so updated_at). */
+/**
+ * Done, then skipped, then cancelled (enum order), each newest first: ending a
+ * tree cancels many tasks at once, and they mustn't push the gardener's own
+ * done/skipped tasks out of a short history.
+ */
 const CLOSED_ORDER: Prisma.TaskOrderByWithRelationInput[] = [
+  { status: 'asc' },
   { updated_at: 'desc' },
   { id: 'desc' },
 ];
