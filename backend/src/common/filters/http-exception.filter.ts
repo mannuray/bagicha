@@ -10,6 +10,7 @@ import { Request, Response } from 'express';
 import { Logger } from 'nestjs-pino';
 import { AppError } from '../errors';
 import { routePattern } from '../http/route-pattern';
+import { validationField } from './validation-field';
 
 interface ErrorBody {
   code: string;
@@ -143,13 +144,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
       );
       if (exception.kind === 'operational') this.logger.warn(log);
       else this.logger.error(log);
+      // A programmer error is a bug: its message and details are for the log, not the client.
+      const internal = exception.kind === 'programmer';
       return {
         status: exception.httpStatus,
         body: {
           ...base,
           code: exception.reason,
-          message: exception.message,
-          details: exception.details ?? null,
+          message: internal
+            ? 'Internal server error occurred'
+            : exception.message,
+          details: internal ? null : (exception.details ?? null),
           validation_errors: null,
         },
       };
@@ -241,7 +246,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message,
         details: null,
         validation_errors: messages
-          ? messages.map((m) => ({ field: 'unknown', message: m }))
+          ? messages.map((m) => ({ field: validationField(m), message: m }))
           : null,
       },
     };

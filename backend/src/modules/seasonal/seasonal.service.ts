@@ -47,6 +47,7 @@ import { resolveSeasonWindow } from './domain/season-window';
 import { OverlayRepository } from './repositories/overlay.repository';
 import { SeasonalPackRepository } from './repositories/seasonal-pack.repository';
 import { WeatherService } from './services/weather.service';
+import { toOverlayView, toPackView } from './intelligence-view';
 
 export const WEATHER_QUEUE = 'weather-checks';
 const PACK_VERSION = 1;
@@ -108,8 +109,8 @@ export class SeasonalService implements OnModuleInit {
       plantId,
     );
     return {
-      seasonal_pack: pack,
-      personalized_overlay: overlay,
+      seasonal_pack: toPackView(pack),
+      personalized_overlay: overlay ? toOverlayView(overlay) : null,
       is_paid_user: premium,
     };
   }

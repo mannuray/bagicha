@@ -47,6 +47,11 @@ export default tseslint.config(
         },
         {
           selector:
+            "CallExpression[callee.property.name=/^(trace|debug|info|log|warn|error|fatal)$/][callee.object.name=/^logger$/] > TemplateLiteral",
+          message: 'Keep the log message fixed: put values in the object (logger.info({ id }, "message")).',
+        },
+        {
+          selector:
             "CallExpression[callee.property.name=/^(trace|debug|info|log|warn|error|fatal)$/][callee.object.property.name=/^logger$/] > BinaryExpression[operator='+']",
           message: 'Keep the log message fixed: put values in the object, not string concatenation.',
         },

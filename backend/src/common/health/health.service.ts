@@ -5,7 +5,7 @@ import { RedisService } from '../redis/redis.service';
 export type CheckStatus = 'up' | 'down';
 export interface HealthReport {
   status: 'ok' | 'error';
-  checks: Record<'database' | 'redis', { status: CheckStatus; error?: string }>;
+  checks: Record<'database' | 'redis', { status: CheckStatus }>;
 }
 
 const CHECK_TIMEOUT_MS = 2000;
@@ -40,12 +40,13 @@ export class HealthService {
 
   private async probe(
     run: () => Promise<unknown>,
-  ): Promise<{ status: CheckStatus; error?: string }> {
+  ): Promise<{ status: CheckStatus }> {
     try {
       await withTimeout(run());
       return { status: 'up' };
-    } catch (err) {
-      return { status: 'down', error: (err as Error).message };
+    } catch {
+      // Up or down only: this probe is public, and a driver error can carry the DB address.
+      return { status: 'down' };
     }
   }
 }

@@ -28,6 +28,7 @@ import { PlantRecordService } from './services/plant-record.service';
 import { TaskService } from './services/task.service';
 import { mapPage } from '../../common/pagination';
 import { toPlantView } from './domain/plant-view';
+import { toEntryView } from './domain/entry-view';
 
 @Controller('ledger')
 @UseGuards(AuthGuard('jwt'))
@@ -98,12 +99,13 @@ export class PlantLedgerController {
     @Body() dto: AddLogDto,
   ) {
     await this.plants.assertGrowing(req.user.id, id);
-    return this.journal.addEntry(req.user.id, id, {
+    const entry = await this.journal.addEntry(req.user.id, id, {
       type: dto.type,
       content: dto.content,
       metadata: dto.metadata as object | undefined,
       eventAt: dto.event_at ? new Date(dto.event_at) : undefined,
     });
+    return toEntryView(entry);
   }
 
   @Get('plants/:id/timeline')
@@ -113,7 +115,10 @@ export class PlantLedgerController {
     @Query() q: TimelineQueryDto,
   ) {
     await this.plants.getDetail(req.user.id, id);
-    return this.journal.timeline(req.user.id, id, q);
+    return mapPage(
+      await this.journal.timeline(req.user.id, id, q),
+      toEntryView,
+    );
   }
 
   @Get('plants/:id/cycles')

@@ -97,7 +97,7 @@ export class MonitorInterceptor implements NestInterceptor {
       log_type: 'request',
       flow_step: 'entry',
       method: request.method,
-      msg: `${request.method} ${route ?? request.originalUrl} started`,
+      msg: `${request.method} ${route ?? '(unmatched route)'} started`,
       ...(ctx.span_id ? { span_id: ctx.span_id } : {}),
       ...(route ? { route } : {}),
       ...((ctx as { parent_span_id?: string }).parent_span_id
@@ -131,8 +131,8 @@ export class MonitorInterceptor implements NestInterceptor {
       duration_ms: now - ctx.start_time_ms,
       msg:
         flowStep === 'response'
-          ? `${request.method} ${route ?? request.originalUrl} completed`
-          : `${request.method} ${route ?? request.originalUrl} failed`,
+          ? `${request.method} ${route ?? '(unmatched route)'} completed`
+          : `${request.method} ${route ?? '(unmatched route)'} failed`,
       ...(ctx.span_id ? { span_id: ctx.span_id } : {}),
       ...(route ? { route } : {}),
       ...(errorType ? { error_type: errorType } : {}),

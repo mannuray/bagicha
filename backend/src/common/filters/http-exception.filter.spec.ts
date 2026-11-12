@@ -79,7 +79,7 @@ describe('HttpExceptionFilter', () => {
     expect(status).toBe(422);
     expect(body.error.code).toBe('VALIDATION_ERROR');
     expect(body.error.validation_errors).toEqual([
-      { field: 'unknown', message: 'name must be a string' },
+      { field: 'name', message: 'name must be a string' },
     ]);
   });
 });

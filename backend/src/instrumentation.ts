@@ -10,6 +10,10 @@ import { resourceFromAttributes } from '@opentelemetry/resources';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK, tracing } from '@opentelemetry/sdk-node';
 import { registerOtelSdk } from './common/observability/otel-handle';
+import {
+  redactIncomingHttpSpan,
+  redisStatement,
+} from './common/observability/span-redaction';
 
 const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
 
@@ -34,6 +38,15 @@ const sdk = new NodeSDK({
   instrumentations: [
     getNodeAutoInstrumentations({
       '@opentelemetry/instrumentation-fs': { enabled: false },
+      // Spans follow the logging rules (span-redaction.ts).
+      '@opentelemetry/instrumentation-ioredis': {
+        dbStatementSerializer: redisStatement,
+      },
+      '@opentelemetry/instrumentation-http': {
+        requestHook: (span, request) => {
+          if ('url' in request) redactIncomingHttpSpan(span, request);
+        },
+      },
     }),
   ],
 });

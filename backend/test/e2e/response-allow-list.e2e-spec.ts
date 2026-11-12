@@ -163,4 +163,70 @@ describe('response allow-lists', () => {
       expect([name, internalKeys(body)]).toEqual([name, []]);
     }
   });
+
+  it('journal entries and tree guidance return exactly their allow-listed fields', async () => {
+    const server = app.getHttpServer();
+    const auth = { Authorization: `Bearer ${tokenFor(app, user)}` };
+    const plant = (
+      await request(server)
+        .post('/api/v1/ledger/plants')
+        .set(auth)
+        .send({ name: 'Aam', species: 'Mango', planting_date: '2017' })
+    ).body.data;
+    const entry = (
+      await request(server)
+        .post(`/api/v1/ledger/plants/${plant.id}/journal`)
+        .set(auth)
+        .send({ type: 'NOTE', content: 'hi' })
+    ).body.data;
+    const ENTRY = [
+      'content',
+      'diagnosis_outcome_id',
+      'id',
+      'metadata',
+      'plant_cycle_id',
+      'plant_id',
+      'recorded_at',
+      'timestamp',
+      'type',
+    ];
+    expect(Object.keys(entry).sort()).toEqual(ENTRY);
+    const timeline = (
+      await request(server)
+        .get(`/api/v1/ledger/plants/${plant.id}/timeline`)
+        .set(auth)
+    ).body.data;
+    for (const item of timeline)
+      expect(Object.keys(item).sort()).toEqual(ENTRY);
+    const intel = (
+      await request(server)
+        .get(`/api/v1/seasonal/plant/${plant.id}/intelligence`)
+        .set(auth)
+    ).body.data;
+    expect(Object.keys(intel.seasonal_pack).sort()).toEqual(
+      [
+        'avoid_now',
+        'confidence',
+        'current_phase',
+        'do_now',
+        'id',
+        'lifecycle_stage',
+        'season_window',
+        'species_family',
+        'upcoming_phase',
+        'watch_for',
+      ].sort(),
+    );
+    if (intel.personalized_overlay) {
+      expect(Object.keys(intel.personalized_overlay).sort()).toEqual(
+        [
+          'adjusted_phase',
+          'expires_at',
+          'id',
+          'priority_actions',
+          'reasoning_summary',
+        ].sort(),
+      );
+    }
+  });
 });
