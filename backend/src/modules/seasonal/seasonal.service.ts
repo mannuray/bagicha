@@ -119,15 +119,22 @@ export class SeasonalService implements OnModuleInit {
   }
 
   async getTreeIntelligence(userId: string, plantId: string) {
-    const { pack, overlay, premium, careNote } = await this.loadIntelligence(
-      userId,
-      plantId,
-    );
+    const { pack, overlay, premium, careNote, care, user, plant } =
+      await this.loadIntelligence(userId, plantId);
+    const careThisMonth = care
+      ? treeCareDue(care, {
+          region: regionFor(user),
+          stage: plant.lifecycle_stage,
+          plantedAt: plant.planting_date,
+          now: this.clock.now(),
+        }).thisMonth
+      : [];
     return {
       seasonal_pack: toPackView(pack),
       personalized_overlay: overlay ? toOverlayView(overlay) : null,
       is_paid_user: premium,
       care_note: careNote,
+      care_this_month: careThisMonth,
     };
   }
 
@@ -284,6 +291,7 @@ export class SeasonalService implements OnModuleInit {
       premium,
       care,
       user,
+      plant,
       careNote: phase?.note ?? null,
     };
   }

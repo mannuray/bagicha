@@ -32,6 +32,20 @@ export const intelligenceSchema = z.object({
       reasoning_summary: z.string().nullable(),
     })
     .nullable(),
+  /** This month's care for a tree with reviewed care (empty otherwise or from older servers). */
+  care_this_month: z
+    .array(
+      z.object({
+        title: z.string(),
+        organic: z.string(),
+        chemical: z.string().nullable(),
+        why: z.string(),
+        amount: z.string().nullable(),
+        if_you_see: z.string().nullable(),
+      }),
+    )
+    .nullish()
+    .transform((v) => v ?? []),
   /** Set when the tree isn't usually grown in the gardener's region. */
   care_note: z
     .string()

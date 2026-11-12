@@ -504,7 +504,9 @@
     "around": "Around {{from}}–{{to}}",
     "aroundYear": "Around {{year}}",
     "estimated": "estimated",
-    "editMilestones": "Edit"
+    "editMilestones": "Edit",
+    "thisMonth": "This month",
+    "ifYouSee": "If you see:"
   },
   "scan": {
     "kicker": "Plant doctor",

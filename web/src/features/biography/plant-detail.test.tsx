@@ -73,6 +73,29 @@ describe('tree biography', () => {
     expect(await screen.findByText('Not usually grown in your region; timings may differ.')).toBeInTheDocument();
   });
 
+  it("lists this month's care with how-to, and the sign to look for", async () => {
+    handlers();
+    server.use(
+      http.get(`${API}/seasonal/plant/p1/intelligence`, () =>
+        HttpResponse.json(
+          ok({
+            ...intelligence,
+            care_note: null,
+            care_this_month: [
+              { title: 'Main feed after harvest', organic: 'All the year’s FYM in a ring', chemical: 'Half the urea + SSP + MOP; wear gloves', why: 'Recovery after fruiting', amount: 'For a 6-year-old tree: 30 kg FYM', if_you_see: null },
+              { title: 'Treat stem borer holes', organic: 'Hook out the grub with wire', chemical: null, why: 'Borers hollow the trunk', amount: null, if_you_see: 'Holes with sawdust on the trunk' },
+            ],
+          }),
+        ),
+      ),
+    );
+    renderWithApp(routes, { route: '/plants/p1' });
+    const section = await screen.findByRole('region', { name: /this month/i });
+    expect(within(section).getByText('Main feed after harvest')).toBeInTheDocument();
+    expect(section.textContent).toContain('For a 6-year-old tree: 30 kg FYM');
+    expect(section.textContent).toMatch(/if you see:\s*holes with sawdust on the trunk/i);
+  });
+
   it('renders the loop sections from real data', async () => {
     const h = handlers();
     renderWithApp(routes, { route: '/plants/p1' });

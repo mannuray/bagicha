@@ -40,6 +40,17 @@ export interface CareReminder {
   amount: string | null;
 }
 
+/** One line of "this month" on the plant page: what to do and how. */
+export interface CareLine {
+  title: string;
+  organic: string;
+  chemical: string | null;
+  why: string;
+  amount: string | null;
+  /** Set for "only if you see it" items: the sign to look for. */
+  if_you_see: string | null;
+}
+
 export interface TreeCareInput {
   region: RegionCluster;
   stage: LifecycleStage;
@@ -139,6 +150,8 @@ export function treeCareDue(
   onPage: CareItem[];
   /** Source keys of every occurrence current now (open or within the lookahead). */
   current: string[];
+  /** Everything for the plant page: all current items by priority, then the "if you see it" ones. */
+  thisMonth: CareLine[];
   note: string | null;
 } {
   const { care, grownHere } = resolveRegionCare(family, input.region);
@@ -196,10 +209,25 @@ export function treeCareDue(
       amount: item.dose ? doseFor(item.dose, age) : null,
     }),
   );
+  const line = (item: CareItem): CareLine => ({
+    title: item.title,
+    organic: item.organic,
+    chemical: item.chemical ?? null,
+    why: item.why,
+    amount: item.dose ? doseFor(item.dose, age) : null,
+    if_you_see: item.conditional ?? null,
+  });
+  const thisMonth = [
+    ...[...candidates].sort(byPriority).map((c) => line(c.item)),
+    ...onPage
+      .filter((i) => i.conditional || i.when.kind !== 'CALENDAR')
+      .map(line),
+  ];
   return {
     reminders,
     onPage,
     current: candidates.map((c) => c.sourceKey),
+    thisMonth,
     note: grownHere ? null : NOT_GROWN_NOTE,
   };
 }

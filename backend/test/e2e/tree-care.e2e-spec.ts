@@ -46,6 +46,16 @@ const FIXTURE: FamilyCare = {
           why: `why ${key}`,
         })),
         {
+          key: 'borer',
+          title: 'Treat borer holes',
+          category: 'PROTECTION',
+          stages: ['BEARING'],
+          conditional: 'Holes with sawdust on the trunk',
+          when: { kind: 'CALENDAR', from: [1, 1], to: [12, 31] },
+          organic: 'Hook out the grub; plug with cotton',
+          why: 'Borers hollow the trunk',
+        },
+        {
           key: 'young_only',
           title: 'Pick off flowers',
           category: 'GENERAL',
@@ -303,5 +313,41 @@ describe('tree care families', () => {
     expect(await statusOf(`mango:young_only:${year()}-01-01`)).toBe(
       'CANCELLED',
     );
+  });
+
+  it('the plant page lists this month\'s care with how-to, including capped and "if you see it" items', async () => {
+    const plant = await mango();
+    const res = await as(alice).get(
+      `/api/v1/seasonal/plant/${plant.id}/intelligence`,
+    );
+    const month = res.body.data.care_this_month as Array<{
+      title: string;
+      organic: string;
+      if_you_see: string | null;
+    }>;
+    expect(month.map((m) => m.title)).toEqual(
+      expect.arrayContaining([
+        'Do spray',
+        'Feed the tree',
+        'Do prune',
+        'Do look',
+        'Treat borer holes',
+      ]),
+    );
+    expect(month.find((m) => m.title === 'Treat borer holes')).toMatchObject({
+      organic: 'Hook out the grub; plug with cotton',
+      if_you_see: 'Holes with sawdust on the trunk',
+    });
+  });
+
+  it('a pending family has no care list', async () => {
+    const guava = await seedPlant(prisma, alice.id, {
+      species: 'Guava',
+      species_family: 'guava',
+    });
+    const res = await as(alice).get(
+      `/api/v1/seasonal/plant/${guava.id}/intelligence`,
+    );
+    expect(res.body.data.care_this_month).toEqual([]);
   });
 });
