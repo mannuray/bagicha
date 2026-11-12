@@ -44,6 +44,18 @@ describe('GeminiProvider', () => {
     ).rejects.toBeInstanceOf(UpstreamError);
   });
 
+  it('gives up on a hung AI call after 30 seconds (it would hold the request open)', async () => {
+    const { provider, getGenerativeModel } = build({
+      GEMINI_API_KEY: 'k',
+      GEMINI_MODEL: 'gemini-test',
+    });
+    await provider.generateJson({ feature: 'diagnose', prompt: 'p' });
+    expect(getGenerativeModel).toHaveBeenCalledWith(
+      { model: 'gemini-test' },
+      { timeout: 30_000 },
+    );
+  });
+
   it('does not build the client in the constructor', () => {
     const { factory } = build({ GEMINI_API_KEY: 'k', GEMINI_MODEL: 'm' });
     expect(factory).not.toHaveBeenCalled();
@@ -60,7 +72,10 @@ describe('GeminiProvider', () => {
       image: { data: 'abc', mimeType: 'image/jpeg' },
     });
     expect(result).toEqual({ primary_issue: 'PEST' });
-    expect(getGenerativeModel).toHaveBeenCalledWith({ model: 'gemini-test' });
+    expect(getGenerativeModel).toHaveBeenCalledWith(
+      { model: 'gemini-test' },
+      expect.anything(),
+    );
     expect(generateContent).toHaveBeenCalledWith([
       'p',
       { inlineData: { data: 'abc', mimeType: 'image/jpeg' } },

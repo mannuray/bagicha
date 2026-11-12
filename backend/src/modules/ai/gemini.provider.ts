@@ -10,6 +10,9 @@ import { extractJsonObject } from './json-response';
 export type GeminiClientFactory = (
   apiKey: string,
 ) => Pick<GoogleGenerativeAI, 'getGenerativeModel'>;
+/** A hung AI call must not hold a request (and its memory) open indefinitely. */
+const AI_TIMEOUT_MS = 30_000;
+
 export const GEMINI_CLIENT_FACTORY = Symbol('GEMINI_CLIENT_FACTORY');
 
 @Injectable()
@@ -46,7 +49,7 @@ export class GeminiProvider extends AiProvider {
           > = [request.prompt];
           if (request.image?.data) parts.push({ inlineData: request.image });
           const result = await this.createClient(apiKey)
-            .getGenerativeModel({ model })
+            .getGenerativeModel({ model }, { timeout: AI_TIMEOUT_MS })
             .generateContent(parts);
           text = result.response.text();
         } catch (err: unknown) {

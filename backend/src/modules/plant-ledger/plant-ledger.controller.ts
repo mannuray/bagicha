@@ -115,7 +115,7 @@ export class PlantLedgerController {
     @Param('id') id: string,
     @Query() q: TimelineQueryDto,
   ) {
-    await this.plants.getDetail(req.user.id, id);
+    await this.plants.getOwnedOrThrow(req.user.id, id);
     return mapPage(
       await this.journal.timeline(req.user.id, id, q),
       toEntryView,
@@ -128,7 +128,7 @@ export class PlantLedgerController {
     @Param('id') id: string,
     @Query() q: PaginationQueryDto,
   ) {
-    await this.plants.getDetail(req.user.id, id);
+    await this.plants.getOwnedOrThrow(req.user.id, id);
     return this.cycles.list(req.user.id, id, q);
   }
 
@@ -138,7 +138,7 @@ export class PlantLedgerController {
     @Param('id') id: string,
     @Query() q: PaginationQueryDto,
   ) {
-    await this.plants.getDetail(req.user.id, id);
+    await this.plants.getOwnedOrThrow(req.user.id, id);
     return this.tasks.listForPlant(req.user.id, id, q);
   }
 
@@ -152,7 +152,7 @@ export class PlantLedgerController {
     @Request() req: AuthedRequest,
     @Param('id') id: string,
   ) {
-    await this.plants.getDetail(req.user.id, id);
+    await this.plants.getOwnedOrThrow(req.user.id, id);
     return this.mitigation.plan(req.user.id, id);
   }
 

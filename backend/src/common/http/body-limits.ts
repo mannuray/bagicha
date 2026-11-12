@@ -10,25 +10,26 @@ export const DEFAULT_JSON_LIMIT = '100kb';
 
 type RawBodyRequest = Request & { rawBody?: Buffer };
 
-// Keep the exact bytes: the Razorpay webhook signature is computed over them.
-const keepRawBody = (req: RawBodyRequest, _res: Response, buf: Buffer) => {
-  req.rawBody = buf;
+const WEBHOOK_PATH = '/api/v1/subscription/webhook';
+
+/**
+ * Keeps the exact bytes for the Razorpay webhook (its signature is computed over
+ * them). Only there: holding every body for the whole request doubles the memory
+ * of each 8 MB scan photo.
+ */
+export const keepRawBody = (
+  req: RawBodyRequest,
+  _res: Response,
+  buf: Buffer,
+) => {
+  if (req.originalUrl.split('?')[0] === WEBHOOK_PATH) req.rawBody = buf;
 };
 
 /** Replaces Nest's default body parsers (create the app with bodyParser: false). */
 export function applyBodyLimits(app: INestApplication): void {
-  app.use(
-    '/api/v1/vision',
-    json({ limit: VISION_JSON_LIMIT, verify: keepRawBody }),
-  );
+  app.use('/api/v1/vision', json({ limit: VISION_JSON_LIMIT }));
   app.use(json({ limit: DEFAULT_JSON_LIMIT, verify: keepRawBody }));
-  app.use(
-    urlencoded({
-      extended: true,
-      limit: DEFAULT_JSON_LIMIT,
-      verify: keepRawBody,
-    }),
-  );
+  app.use(urlencoded({ extended: true, limit: DEFAULT_JSON_LIMIT }));
   // Parser errors happen before Nest's router, so map them to the envelope here.
   const logger = app.get(Logger);
   app.use(
