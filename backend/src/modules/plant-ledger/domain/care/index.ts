@@ -1,4 +1,5 @@
 import { GUAVA_CARE } from './guava';
+import { JACKFRUIT_CARE } from './jackfruit';
 import { LITCHI_CARE } from './litchi';
 import { MANGO_CARE } from './mango';
 import { SAPOTA_CARE } from './sapota';
@@ -33,6 +34,7 @@ export const TREE_CARE: Readonly<Record<string, FamilyCare>> = {
   guava: GUAVA_CARE,
   litchi: LITCHI_CARE,
   sapota: SAPOTA_CARE,
+  jackfruit: JACKFRUIT_CARE,
 };
 
 /**
@@ -45,7 +47,6 @@ export const CARE_PENDING: readonly string[] = [
   'banana',
   'papaya',
   'grape',
-  'jackfruit',
   'coconut',
   'amla',
   'custard_apple',
