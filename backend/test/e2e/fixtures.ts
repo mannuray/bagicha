@@ -70,13 +70,20 @@ export function tokenFor(app: INestApplication, user: User): string {
   return app.get(JwtService).sign({ sub: user.id });
 }
 
-/** Clears rate-limit counters: every e2e file shares one IP and one Redis. */
+/**
+ * Clears rate-limit counters and per-phone code limits: every e2e file shares
+ * one IP and one Redis, and runs reuse the same test phone numbers.
+ */
 export async function clearRateLimitKeys(): Promise<void> {
   const redis = new Redis({
     host: process.env.REDIS_HOST,
     port: Number(process.env.REDIS_PORT),
   });
-  const keys = await redis.keys('{rl:*');
+  const keys = [
+    ...(await redis.keys('{rl:*')),
+    ...(await redis.keys('otp_cooldown:*')),
+    ...(await redis.keys('otp_daily:*')),
+  ];
   if (keys.length) await redis.del(...keys);
   redis.disconnect();
 }
