@@ -45,6 +45,7 @@ export { CropPlanService } from './services/crop-plan.service';
 export { toPlantView } from './domain/plant-view';
 export {
   CARE_PENDING,
+  careApplies,
   careFor,
   carePhaseView,
   NOT_GROWN_NOTE,

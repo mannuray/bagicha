@@ -32,6 +32,7 @@ describe('tree care completeness (the add-plant playbook)', () => {
       for (const region of grownByCatalogue(family)) {
         if (!care.grownIn.includes(region))
           gaps.push(`${family}: grownIn lacks ${region}`);
+        if (care.pendingRegions?.includes(region)) continue;
         const entry = care.regions[region];
         const target =
           entry && 'sameAs' in entry ? care.regions[entry.sameAs] : entry;
@@ -40,6 +41,15 @@ describe('tree care completeness (the add-plant playbook)', () => {
       }
     }
     expect(gaps).toEqual([]);
+  });
+
+  it('a pending region has no care written for it', () => {
+    const both = Object.values(TREE_CARE).flatMap((care) =>
+      (care.pendingRegions ?? [])
+        .filter((r) => care.regions[r])
+        .map((r) => `${care.family}: ${r}`),
+    );
+    expect(both).toEqual([]);
   });
 
   it('no family is both pending and done', () => {

@@ -1,5 +1,13 @@
 import { LifecycleStage, RegionCluster } from '@prisma/client';
 import { resolveRegionCare, stageOf } from './region-care';
+
+/** Callers check careApplies() first; a pending region never reaches the engine. */
+function verifiedCare(family: FamilyCare, region: RegionCluster) {
+  const resolved = resolveRegionCare(family, region);
+  if (!resolved)
+    throw new Error(`${family.family}: ${region} is pending verification`);
+  return resolved;
+}
 import type {
   CareCategory,
   CareItem,
@@ -154,7 +162,7 @@ export function treeCareDue(
   thisMonth: CareLine[];
   note: string | null;
 } {
-  const { care, grownHere } = resolveRegionCare(family, input.region);
+  const { care, grownHere } = verifiedCare(family, input.region);
   const stage = stageOf(input.stage);
   const age = ageYears(input.plantedAt, input.now);
   const open = new Set(input.openKeys ?? []);
@@ -253,7 +261,7 @@ export function carePhaseView(
   family: FamilyCare,
   input: Omit<TreeCareInput, 'plantedAt'>,
 ): CarePhase {
-  const { care, grownHere } = resolveRegionCare(family, input.region);
+  const { care, grownHere } = verifiedCare(family, input.region);
   const stage = stageOf(input.stage);
   const windows = care.phases
     .filter((p) => p.stages.includes(stage) && p.when.kind === 'CALENDAR')

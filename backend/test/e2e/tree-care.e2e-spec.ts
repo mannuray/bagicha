@@ -13,7 +13,9 @@ import { resetDb, seedPlant, seedUser, tokenFor } from './fixtures';
 const FIXTURE: FamilyCare = {
   family: 'mango',
   sources: ['test'],
-  grownIn: ['EAST_INDIA', 'NORTH_INDIA'],
+  grownIn: ['EAST_INDIA', 'NORTH_INDIA', 'CENTRAL_INDIA'],
+  // Grown there, but its calendar isn't verified yet: keeps the season pack.
+  pendingRegions: ['CENTRAL_INDIA'],
   regions: {
     EAST_INDIA: {
       items: [
@@ -348,6 +350,27 @@ describe('tree care families', () => {
     const res = await as(alice).get(
       `/api/v1/seasonal/plant/${guava.id}/intelligence`,
     );
+    expect(res.body.data.care_this_month).toEqual([]);
+  });
+
+  it('a gardener in a region still pending verification keeps the season pack', async () => {
+    const cara = await seedUser(prisma, {
+      district: 'Bhopal',
+      region_cluster: 'CENTRAL_INDIA',
+    });
+    const plant = await seedPlant(prisma, cara.id, {
+      species: 'Mango',
+      species_family: 'mango',
+      lifecycle_stage: 'MATURE_BEARING',
+    });
+    await materialize(plant.id, cara);
+    const sources = (await tasks(plant.id, cara)).map((t) => t.source);
+    expect(sources).not.toContain('TREE_CARE');
+    expect(sources).toContain('SEASONAL_PACK');
+    const res = await as(cara).get(
+      `/api/v1/seasonal/plant/${plant.id}/intelligence`,
+    );
+    expect(res.body.data.seasonal_pack.current_phase).not.toBe('fixture_phase');
     expect(res.body.data.care_this_month).toEqual([]);
   });
 });

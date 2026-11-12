@@ -41,7 +41,7 @@ describe('resolveRegionCare', () => {
       { NORTH_INDIA: care('north'), EAST_INDIA: { sameAs: 'NORTH_INDIA' } },
       ['NORTH_INDIA', 'EAST_INDIA'],
     );
-    const r = resolveRegionCare(f, 'EAST_INDIA');
+    const r = resolveRegionCare(f, 'EAST_INDIA')!;
     expect(r.care.phases[0].phase).toBe('north');
     expect(r.from).toBe('NORTH_INDIA');
     expect(r.grownHere).toBe(true);
@@ -49,7 +49,7 @@ describe('resolveRegionCare', () => {
 
   it('uses the nearest grown region with grownHere false', () => {
     const f = family({ NORTH_INDIA: care('north') }, ['NORTH_INDIA']);
-    const r = resolveRegionCare(f, 'HILLS_COOL');
+    const r = resolveRegionCare(f, 'HILLS_COOL')!;
     expect(r).toMatchObject({ from: 'NORTH_INDIA', grownHere: false });
     expect(r.care.phases[0].phase).toBe('north');
   });
@@ -64,5 +64,29 @@ describe('resolveRegionCare', () => {
       ['NORTH_INDIA', 'EAST_INDIA', 'CENTRAL_INDIA'],
     );
     expect(() => resolveRegionCare(f, 'CENTRAL_INDIA')).toThrow(/sameAs/);
+  });
+
+  it('returns null for a region still pending verification, so it keeps the season pack', () => {
+    const f: FamilyCare = {
+      ...family({ NORTH_INDIA: care('north') }, ['NORTH_INDIA']),
+      pendingRegions: ['EAST_INDIA'],
+    };
+    expect(resolveRegionCare(f, 'EAST_INDIA')).toBeNull();
+    expect(resolveRegionCare(f, 'NORTH_INDIA')?.from).toBe('NORTH_INDIA');
+  });
+
+  it('a region the tree is not grown in falls back to the nearest verified region, never a pending one', () => {
+    // Nearest to WEST_INDIA is CENTRAL_INDIA (pending), then SOUTH_DECCAN (verified).
+    const f: FamilyCare = {
+      ...family({ SOUTH_DECCAN: care('south') }, [
+        'SOUTH_DECCAN',
+        'CENTRAL_INDIA',
+      ]),
+      pendingRegions: ['CENTRAL_INDIA'],
+    };
+    expect(resolveRegionCare(f, 'WEST_INDIA')).toMatchObject({
+      from: 'SOUTH_DECCAN',
+      grownHere: false,
+    });
   });
 });

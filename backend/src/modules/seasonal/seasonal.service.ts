@@ -35,6 +35,7 @@ import {
   taskPriorityFrom,
   taskTypeFromCategory,
   carePhaseView,
+  careApplies,
   treeCareDue,
   TREE_CARE_REGISTRY,
 } from '../plant-ledger';
@@ -260,7 +261,12 @@ export class SeasonalService implements OnModuleInit {
     if (!user) throw new NotFoundError('USER_NOT_FOUND', 'User not found');
     const now = this.clock.now();
     const premium = isPremium(user, now);
-    const care = this.careOf(plant);
+    // A region still pending verification keeps the season pack.
+    const familyCare = this.careOf(plant);
+    const care =
+      familyCare && careApplies(familyCare, regionFor(user))
+        ? familyCare
+        : null;
     // The pack row stays the overlay's anchor; for a care family its guidance comes from care data.
     const anchor = await this.getOrCreatePack(plant, user);
     const phase = care

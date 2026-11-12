@@ -79,4 +79,9 @@ export interface FamilyCare {
   regions: Partial<
     Record<RegionCluster, RegionCare | { sameAs: RegionCluster }>
   >;
+  /**
+   * Regions the tree is grown in but whose calendar isn't source-checked yet:
+   * gardeners there keep the season-pack advice until it is.
+   */
+  pendingRegions?: RegionCluster[];
 }

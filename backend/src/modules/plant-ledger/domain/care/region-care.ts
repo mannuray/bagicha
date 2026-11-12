@@ -70,16 +70,19 @@ export const NEAREST_REGIONS: Record<RegionCluster, RegionCluster[]> = {
 /**
  * The care a gardener in `region` gets. `sameAs` is followed one hop (a chain is
  * a data error). Outside `grownIn`, the nearest grown region is used and
- * `grownHere` is false, so the app can say timings may differ.
+ * `grownHere` is false, so the app can say timings may differ. Null for a region
+ * still pending verification: it keeps the season pack.
  */
 export function resolveRegionCare(
   care: FamilyCare,
   region: RegionCluster,
-): { care: RegionCare; from: RegionCluster; grownHere: boolean } {
+): { care: RegionCare; from: RegionCluster; grownHere: boolean } | null {
+  const pending = care.pendingRegions ?? [];
+  if (pending.includes(region)) return null;
+  const verified = (r: RegionCluster) =>
+    care.grownIn.includes(r) && !pending.includes(r);
   const grownHere = care.grownIn.includes(region);
-  const source = grownHere
-    ? region
-    : NEAREST_REGIONS[region].find((r) => care.grownIn.includes(r));
+  const source = grownHere ? region : NEAREST_REGIONS[region].find(verified);
   if (!source)
     throw new Error(`${care.family}: no grown region to fall back to`);
   const entry = care.regions[source];
@@ -92,4 +95,9 @@ export function resolveRegionCare(
     );
   }
   return { care: shared, from: entry.sameAs, grownHere };
+}
+
+/** Whether this family's verified care covers a gardener in `region`. */
+export function careApplies(care: FamilyCare, region: RegionCluster): boolean {
+  return resolveRegionCare(care, region) !== null;
 }

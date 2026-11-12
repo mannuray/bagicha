@@ -10,7 +10,12 @@ export type {
   PhaseWindow,
   RegionCare,
 } from './types';
-export { NEAREST_REGIONS, resolveRegionCare, stageOf } from './region-care';
+export {
+  careApplies,
+  NEAREST_REGIONS,
+  resolveRegionCare,
+  stageOf,
+} from './region-care';
 export { carePhaseView, NOT_GROWN_NOTE, treeCareDue } from './engine';
 export type {
   CareLine,
