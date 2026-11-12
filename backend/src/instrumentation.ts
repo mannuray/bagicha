@@ -3,7 +3,10 @@
  * BEFORE main.js — importing it from main.ts would start instrumentation after
  * the libraries it patches are already loaded, silently breaking tracing.
  */
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis';
+import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { resourceFromAttributes } from '@opentelemetry/resources';
@@ -35,22 +38,19 @@ const sdk = new NodeSDK({
   metricReader: endpoint
     ? new PeriodicExportingMetricReader({ exporter: new OTLPMetricExporter() })
     : undefined,
+  // Only what this app uses (incoming HTTP, Express routes, Redis, outgoing fetch
+  // to the AI provider). The auto bundle loads ~40 packages: ~20 MB and slower boots
+  // on a 512 MB instance. Log trace ids come from the logger's own mixin.
   instrumentations: [
-    getNodeAutoInstrumentations({
-      '@opentelemetry/instrumentation-fs': { enabled: false },
-      // Its spans carry the full URL with the query string; the HTTP span (redacted
-      // below) already covers each request.
-      '@opentelemetry/instrumentation-nestjs-core': { enabled: false },
-      // Spans follow the logging rules (span-redaction.ts).
-      '@opentelemetry/instrumentation-ioredis': {
-        dbStatementSerializer: redisStatement,
-      },
-      '@opentelemetry/instrumentation-http': {
-        requestHook: (span, request) => {
-          if ('url' in request) redactIncomingHttpSpan(span, request);
-        },
+    new HttpInstrumentation({
+      requestHook: (span, request) => {
+        if ('url' in request) redactIncomingHttpSpan(span, request);
       },
     }),
+    new ExpressInstrumentation(),
+    // Spans follow the logging rules (span-redaction.ts).
+    new IORedisInstrumentation({ dbStatementSerializer: redisStatement }),
+    new UndiciInstrumentation(),
   ],
 });
 

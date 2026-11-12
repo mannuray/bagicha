@@ -40,15 +40,19 @@ export class MediaService implements OnModuleInit {
     private readonly logger: PinoLogger,
   ) {}
 
-  async onModuleInit() {
-    await withSpan(
-      'minio.ensureBucket',
-      { bucket: this.config.get<string>('MEDIA_BUCKET', MEDIA_BUCKET_DEFAULT) },
-      () => this.init(),
+  onModuleInit(): Promise<void> {
+    this.init();
+    // The bucket normally exists already; checking it (and its policy) is two
+    // storage round trips that shouldn't delay a cold start.
+    void withSpan('minio.ensureBucket', { bucket: this.bucket }, () =>
+      this.ensureBucket(),
+    ).catch((err: unknown) =>
+      this.logger.warn({ err }, 'Media bucket check failed'),
     );
+    return Promise.resolve();
   }
 
-  private async init() {
+  private init() {
     this.bucket = this.config.get<string>('MEDIA_BUCKET', MEDIA_BUCKET_DEFAULT);
     const options = mediaClientOptions(this.config);
     this.publicBaseUrl = this.config.get<string>(
@@ -57,7 +61,6 @@ export class MediaService implements OnModuleInit {
     );
     this.region = options.region;
     this.client = new MinioClient(options);
-    await this.ensureBucket();
   }
 
   async uploadImage(

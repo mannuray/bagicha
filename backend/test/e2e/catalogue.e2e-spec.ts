@@ -79,6 +79,19 @@ describe('plant catalogue', () => {
     });
   });
 
+  it('a second boot with an unchanged catalogue writes nothing', async () => {
+    const prisma = app.get(PrismaService);
+    await app.get(PlantsService).onModuleInit();
+    const before = await prisma.plantCatalogEntry.aggregate({
+      _max: { updated_at: true },
+    });
+    await app.get(PlantsService).onModuleInit();
+    const after = await prisma.plantCatalogEntry.aggregate({
+      _max: { updated_at: true },
+    });
+    expect(after._max.updated_at).toEqual(before._max.updated_at);
+  });
+
   describe('fruit varieties and Hindi names', () => {
     const top = async (q: string) =>
       (

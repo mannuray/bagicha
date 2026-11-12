@@ -1,18 +1,37 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PlantCatalogEntry, Prisma } from '@prisma/client';
 import { Page, PageQuery, toPage } from '../../common/pagination';
+import { Clock } from '../../common/time';
 import { PERENNIAL_FLOWERS } from '../plant-ledger';
 import { CatalogRepository } from './catalog.repository';
 import { FRUIT_CATALOGUE, type PlantSeed } from './domain/fruit-catalogue';
 
 type ResolveConfidence = 'high' | 'medium' | 'low';
 
+/** The catalogue changes only at boot; a manual edit shows up within this long. */
+const CATALOGUE_CACHE_MS = 10 * 60_000;
+
 @Injectable()
 export class PlantsService implements OnModuleInit {
-  constructor(private readonly catalog: CatalogRepository) {}
+  private cached: { at: number; entries: PlantCatalogEntry[] } | null = null;
+
+  constructor(
+    private readonly catalog: CatalogRepository,
+    private readonly clock: Clock,
+  ) {}
 
   async onModuleInit() {
     await this.bootstrapCatalog();
+    this.cached = null;
+  }
+
+  /** Every search keystroke ranks the whole catalogue: read it once, not per request. */
+  private async activeEntries(): Promise<PlantCatalogEntry[]> {
+    const now = this.clock.now().getTime();
+    if (!this.cached || now - this.cached.at > CATALOGUE_CACHE_MS) {
+      this.cached = { at: now, entries: await this.catalog.listActive() };
+    }
+    return this.cached.entries;
   }
 
   async search(
@@ -22,7 +41,7 @@ export class PlantsService implements OnModuleInit {
     const query = this.normalize(rawQuery);
     if (!query) return toPage([], 0, q);
 
-    const ranked = this.rankEntries(await this.catalog.listActive(), query);
+    const ranked = this.rankEntries(await this.activeEntries(), query);
     const start = (q.page - 1) * q.page_size;
     return toPage(
       ranked
@@ -44,7 +63,7 @@ export class PlantsService implements OnModuleInit {
       };
     }
 
-    const entries = await this.catalog.listActive();
+    const entries = await this.activeEntries();
     const ranked = this.rankEntries(entries, query, regionCluster, language);
     const [best, ...rest] = ranked;
 
