@@ -32,6 +32,28 @@ const FIXTURE: FamilyCare = {
           },
           why: 'Builds next season’s shoots',
         },
+        ...(['spray', 'prune', 'look'] as const).map((key, i) => ({
+          key,
+          title: `Do ${key}`,
+          category: (['PROTECTION', 'PRUNING', 'GENERAL'] as const)[i],
+          stages: ['BEARING' as const],
+          when: {
+            kind: 'CALENDAR' as const,
+            from: [1, 1] as [number, number],
+            to: [12, 31] as [number, number],
+          },
+          organic: `organic ${key}`,
+          why: `why ${key}`,
+        })),
+        {
+          key: 'young_only',
+          title: 'Pick off flowers',
+          category: 'GENERAL',
+          stages: ['YOUNG'],
+          when: { kind: 'CALENDAR', from: [1, 1], to: [12, 31] },
+          organic: 'Remove flower bunches',
+          why: 'Fruiting early stunts the tree',
+        },
       ],
       phases: [
         {
@@ -106,8 +128,10 @@ describe('tree care families', () => {
     const care = (await tasks(plant.id)).filter(
       (t) => t.source === 'TREE_CARE',
     );
-    expect(care).toHaveLength(1);
-    expect(care[0].care_how).toMatchObject({
+    // Four items are open; the cap keeps three, by priority (feeding is one of them).
+    expect(care).toHaveLength(3);
+    const feed = care.find((t) => t.title === 'Feed the tree');
+    expect(feed?.care_how).toMatchObject({
       organic: 'Compost 25 kg + neem cake 1 kg',
       chemical: 'Urea 500 g; wear gloves; not within 15 days of picking',
       why: 'Builds next season’s shoots',
@@ -132,7 +156,7 @@ describe('tree care families', () => {
     expect(
       all.filter((t) => t.source === 'SEASONAL_PACK').map((t) => t.status),
     ).toEqual(['CANCELLED']);
-    expect(all.filter((t) => t.source === 'TREE_CARE')).toHaveLength(1);
+    expect(all.filter((t) => t.source === 'TREE_CARE')).toHaveLength(3);
   });
 
   it('intelligence for a care family reads the phase from care data', async () => {
@@ -145,7 +169,7 @@ describe('tree care families', () => {
       current_phase: 'fixture_phase',
       avoid_now: ['No urea now'],
       watch_for: ['Hoppers'],
-      do_now: ['Feed the tree'],
+      do_now: expect.arrayContaining(['Feed the tree']),
       confidence: 'high',
     });
     expect(res.body.data.care_note).toBeNull();
@@ -216,5 +240,67 @@ describe('tree care families', () => {
     const sources = (await tasks(plant.id, paid)).map((t) => t.source);
     expect(sources).toContain('PERSONALIZED_OVERLAY');
     expect(sources).toContain('TREE_CARE');
+  });
+
+  const year = () => new Date(Date.now() + 5.5 * 3600 * 1000).getUTCFullYear();
+  const pendingCare = async (id: string) =>
+    (await tasks(id)).filter(
+      (t) => t.source === 'TREE_CARE' && t.status === 'PENDING',
+    );
+
+  it('a tree never holds more than 3 care reminders across refreshes', async () => {
+    const plant = await mango();
+    // "look" (lowest priority) was reminded on an earlier day and is still pending.
+    await prisma.task.create({
+      data: {
+        plant_id: plant.id,
+        type: 'OBSERVE',
+        priority: 'MEDIUM',
+        source: 'TREE_CARE',
+        source_key: `mango:look:${year()}-01-01`,
+        due_date: new Date(),
+        metadata: { organic: 'organic look', why: 'why look' },
+      },
+    });
+    await materialize(plant.id);
+    await materialize(plant.id);
+    expect(await pendingCare(plant.id)).toHaveLength(3);
+  });
+
+  it('retires stale care reminders: a passed window, and young-tree care once the tree bears', async () => {
+    const plant = await seedPlant(prisma, alice.id, {
+      species: 'Mango',
+      species_family: 'mango',
+      lifecycle_stage: 'SAPLING',
+    });
+    await prisma.task.create({
+      data: {
+        plant_id: plant.id,
+        type: 'FEED',
+        priority: 'MEDIUM',
+        source: 'TREE_CARE',
+        source_key: 'mango:feed:2020-01-01',
+        due_date: new Date('2020-01-01'),
+        metadata: { organic: 'old', why: 'old' },
+      },
+    });
+    await materialize(plant.id);
+    const statusOf = async (key: string) =>
+      (
+        await prisma.task.findFirst({
+          where: { plant_id: plant.id, source_key: key },
+        })
+      )?.status;
+    expect(await statusOf('mango:feed:2020-01-01')).toBe('CANCELLED');
+    expect(await statusOf(`mango:young_only:${year()}-01-01`)).toBe('PENDING');
+
+    await prisma.plant.update({
+      where: { id: plant.id },
+      data: { lifecycle_stage: 'MATURE_BEARING' },
+    });
+    await materialize(plant.id);
+    expect(await statusOf(`mango:young_only:${year()}-01-01`)).toBe(
+      'CANCELLED',
+    );
   });
 });

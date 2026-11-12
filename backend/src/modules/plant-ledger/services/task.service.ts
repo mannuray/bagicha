@@ -210,6 +210,29 @@ export class TaskService {
     );
   }
 
+  /** The plant's care reminders still pending (they count toward its cap). */
+  pendingCareKeys(userId: string, plantId: string): Promise<string[]> {
+    return this.tasks.pendingSourceKeys(userId, plantId, TaskSource.TREE_CARE);
+  }
+
+  /**
+   * Cancels care reminders no longer current: the window passed, the tree moved
+   * from young to bearing, the region changed, or the care data was revised.
+   * Cancelled one-off tasks may come back, so nothing current is lost.
+   */
+  retireCareTasksExcept(
+    userId: string,
+    plantId: string,
+    currentKeys: string[],
+  ): Promise<number> {
+    return this.tasks.cancelPendingExcept(
+      userId,
+      plantId,
+      [TaskSource.TREE_CARE],
+      currentKeys,
+    );
+  }
+
   async listForPlant(
     userId: string,
     plantId: string,

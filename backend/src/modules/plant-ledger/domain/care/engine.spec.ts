@@ -123,7 +123,9 @@ describe('treeCareDue', () => {
     expect(
       due([x], '2026-02-10', { plantedAt: ist('2005-01-01') }).reminders[0]
         .amount,
-    ).toBe('For a 10-year-old tree: 50 kg FYM; or 1.1 kg urea + 1.6 kg SSP');
+    ).toBe(
+      'For a tree 10 years or older: 50 kg FYM; or 1.1 kg urea + 1.6 kg SSP',
+    );
     expect(
       due([x], '2026-02-10', { plantedAt: ist('2025-12-01') }).reminders[0]
         .amount,
@@ -131,6 +133,42 @@ describe('treeCareDue', () => {
     expect(due([x], '2026-02-10').reminders[0].amount).toBe(
       "Per year of the tree's age (up to 10): 5 kg FYM; or 110 g urea + 155 g SSP",
     );
+  });
+
+  it('counts reminders already pending toward the cap of 3 per tree', () => {
+    const w: [MonthDay, MonthDay] = [
+      [2, 1],
+      [2, 28],
+    ];
+    const items = [
+      item('spray', ...w, { category: 'PROTECTION' }),
+      item('feed', ...w, { category: 'FEEDING' }),
+      item('prune', ...w, { category: 'PRUNING' }),
+      item('general', ...w, { category: 'GENERAL' }),
+    ];
+    // general and prune were reminded on an earlier day and are still pending.
+    const r = due(items, '2026-02-10', {
+      openKeys: ['fixture:general:2026-02-01', 'fixture:prune:2026-02-01'],
+    });
+    expect(r.reminders.map((x) => x.key).sort()).toEqual([
+      'general',
+      'prune',
+      'spray',
+    ]);
+    expect(r.onPage.map((i) => i.key)).toEqual(['feed']);
+  });
+
+  it('lists every current occurrence so stale reminders can be retired', () => {
+    const r = due(
+      [
+        item('feed', [2, 1], [2, 28], { category: 'FEEDING' }),
+        item('young', [2, 1], [2, 28], { stages: ['YOUNG'] }),
+        item('borer', [2, 1], [2, 28], { conditional: 'If holes' }),
+        item('past', [1, 1], [1, 20]),
+      ],
+      '2026-02-10',
+    );
+    expect(r.current).toEqual(['fixture:feed:2026-02-01']);
   });
 
   it('uses the nearest grown region with a note', () => {

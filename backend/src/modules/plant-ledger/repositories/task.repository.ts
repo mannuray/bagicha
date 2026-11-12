@@ -165,6 +165,19 @@ export class TaskRepository {
     return db.task.create({ data: { ...data, plant_id: plantId } });
   }
 
+  /** Source keys of the plant's pending tasks from one source. */
+  async pendingSourceKeys(
+    userId: string,
+    plantId: string,
+    source: TaskSource,
+  ): Promise<string[]> {
+    const rows = await this.prisma.task.findMany({
+      where: { ...owned(userId, plantId), source, status: TaskStatus.PENDING },
+      select: { source_key: true },
+    });
+    return rows.flatMap((r) => (r.source_key ? [r.source_key] : []));
+  }
+
   /** Cancels the plant's pending tasks from these sources whose key isn't in `keep`. */
   async cancelPendingExcept(
     userId: string,

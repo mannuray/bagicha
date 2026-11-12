@@ -168,14 +168,16 @@ export class SeasonalService implements OnModuleInit {
 
     // A family with reviewed care gets dated care reminders instead of pack tasks;
     // the retire step below then cancels any pack tasks it still has.
-    const careDrafts = care
+    const careDue = care
       ? treeCareDue(care, {
           region: regionFor(user),
           stage: growing.lifecycle_stage,
           plantedAt: growing.planting_date,
           now,
-        }).reminders.map(careDraft)
+          openKeys: await this.tasks.pendingCareKeys(userId, plantId),
+        })
       : null;
+    const careDrafts = careDue ? careDue.reminders.map(careDraft) : null;
     const drafts = [
       ...(careDrafts ?? []),
       ...(careDrafts ? [] : asTaskTemplates(pack.task_templates)).map((t) =>
@@ -200,6 +202,8 @@ export class SeasonalService implements OnModuleInit {
         : []),
     ];
     const results = await this.tasks.createTasks(userId, plantId, drafts);
+    if (careDue)
+      await this.tasks.retireCareTasksExcept(userId, plantId, careDue.current);
     await this.tasks.retireSeasonTasksExcept(
       userId,
       plantId,

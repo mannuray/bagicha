@@ -45,6 +45,8 @@ export interface TreeCareInput {
   stage: LifecycleStage;
   plantedAt: Date | null;
   now: Date;
+  /** Source keys of this tree's care reminders still pending: they count toward the cap. */
+  openKeys?: string[];
 }
 
 /** Midnight IST of a calendar date. */
@@ -120,7 +122,9 @@ export function doseFor(dose: Dose, age: number | null): string {
     .join('; or ');
   return age === null
     ? `Per year of the tree's age (up to ${dose.maxAgeYears}): ${lines}`
-    : `For a ${years}-year-old tree: ${lines}`;
+    : age > dose.maxAgeYears
+      ? `For a tree ${dose.maxAgeYears} years or older: ${lines}`
+      : `For a ${years}-year-old tree: ${lines}`;
 }
 
 /**
@@ -130,15 +134,25 @@ export function doseFor(dose: Dose, age: number | null): string {
 export function treeCareDue(
   family: FamilyCare,
   input: TreeCareInput,
-): { reminders: CareReminder[]; onPage: CareItem[]; note: string | null } {
+): {
+  reminders: CareReminder[];
+  onPage: CareItem[];
+  /** Source keys of every occurrence current now (open or within the lookahead). */
+  current: string[];
+  note: string | null;
+} {
   const { care, grownHere } = resolveRegionCare(family, input.region);
   const stage = stageOf(input.stage);
   const age = ageYears(input.plantedAt, input.now);
+  const open = new Set(input.openKeys ?? []);
+  const keyOf = (item: CareItem, start: Date) =>
+    `${family.family}:${item.key}:${ymd(start)}`;
   const candidates: Array<{
     item: CareItem;
     start: Date;
     end: Date;
     openNow: boolean;
+    sourceKey: string;
   }> = [];
   const onPage: CareItem[] = [];
   for (const item of care.items) {
@@ -150,28 +164,44 @@ export function treeCareDue(
     const window = windowOf(item, input.now);
     if (!window) continue;
     if (item.conditional) onPage.push(item);
-    else candidates.push({ item, ...window });
+    else
+      candidates.push({
+        item,
+        ...window,
+        sourceKey: keyOf(item, window.start),
+      });
   }
-  candidates.sort(
-    (a, b) =>
-      PRIORITY.indexOf(a.item.category) - PRIORITY.indexOf(b.item.category),
-  );
-  onPage.push(...candidates.slice(MAX_REMINDERS).map((c) => c.item));
-  const reminders = candidates.slice(0, MAX_REMINDERS).map(
-    ({ item, start, end, openNow }): CareReminder => ({
+  // Already-pending reminders keep their place; new ones fill the rest of the
+  // tree's cap by priority, so a tree never holds more than three.
+  const byPriority = (a: (typeof candidates)[0], b: (typeof candidates)[0]) =>
+    PRIORITY.indexOf(a.item.category) - PRIORITY.indexOf(b.item.category);
+  const pending = candidates.filter((c) => open.has(c.sourceKey));
+  const fresh = candidates
+    .filter((c) => !open.has(c.sourceKey))
+    .sort(byPriority);
+  const room = Math.max(MAX_REMINDERS - pending.length, 0);
+  const chosen = [...pending, ...fresh.slice(0, room)].sort(byPriority);
+  onPage.push(...fresh.slice(room).map((c) => c.item));
+  const reminders = chosen.map(
+    ({ item, start, end, openNow, sourceKey }): CareReminder => ({
       key: item.key,
       title: item.title,
       category: item.category,
       due: openNow ? input.now : start,
       windowEnd: end,
-      sourceKey: `${family.family}:${item.key}:${ymd(start)}`,
+      sourceKey,
       organic: item.organic,
       chemical: item.chemical ?? null,
       why: item.why,
       amount: item.dose ? doseFor(item.dose, age) : null,
     }),
   );
-  return { reminders, onPage, note: grownHere ? null : NOT_GROWN_NOTE };
+  return {
+    reminders,
+    onPage,
+    current: candidates.map((c) => c.sourceKey),
+    note: grownHere ? null : NOT_GROWN_NOTE,
+  };
 }
 
 export interface CarePhase {
