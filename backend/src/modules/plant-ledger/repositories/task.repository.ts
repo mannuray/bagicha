@@ -160,6 +160,25 @@ export class TaskRepository {
     return db.task.create({ data: { ...data, plant_id: plantId } });
   }
 
+  /** Cancels the plant's pending tasks from these sources whose key isn't in `keep`. */
+  async cancelPendingExcept(
+    userId: string,
+    plantId: string,
+    sources: TaskSource[],
+    keep: string[],
+  ): Promise<number> {
+    const { count } = await this.prisma.task.updateMany({
+      where: {
+        ...owned(userId, plantId),
+        status: TaskStatus.PENDING,
+        source: { in: sources },
+        OR: [{ source_key: null }, { source_key: { notIn: keep } }],
+      },
+      data: { status: TaskStatus.CANCELLED },
+    });
+    return count;
+  }
+
   async updateStatus(
     userId: string,
     plantId: string,

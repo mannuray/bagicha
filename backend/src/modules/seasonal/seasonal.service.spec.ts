@@ -74,6 +74,7 @@ function build(opts: {
       ),
     } as unknown as JournalService,
     {
+      retireSeasonTasksExcept: jest.fn(() => Promise.resolve(0)),
       createTasks: jest.fn((_u: string, _p: string, d: TaskDraft[]) => {
         drafts.push(...d);
         return Promise.resolve(

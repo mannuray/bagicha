@@ -191,6 +191,24 @@ export class TaskService {
     return { sourceKey: draft.sourceKey, status: 'created', taskId: task.id };
   }
 
+  /**
+   * The current season guidance replaces the previous one: pending season tasks
+   * it no longer contains (an older pack after a season, stage or region change,
+   * an expired overlay) are cancelled, so a plant never holds two sets.
+   */
+  retireSeasonTasksExcept(
+    userId: string,
+    plantId: string,
+    currentKeys: string[],
+  ): Promise<number> {
+    return this.tasks.cancelPendingExcept(
+      userId,
+      plantId,
+      [TaskSource.SEASONAL_PACK, TaskSource.PERSONALIZED_OVERLAY],
+      currentKeys,
+    );
+  }
+
   async listForPlant(
     userId: string,
     plantId: string,

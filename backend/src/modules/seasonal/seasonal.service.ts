@@ -179,6 +179,11 @@ export class SeasonalService implements OnModuleInit {
         : []),
     ];
     const results = await this.tasks.createTasks(userId, plantId, drafts);
+    await this.tasks.retireSeasonTasksExcept(
+      userId,
+      plantId,
+      drafts.map((d) => d.sourceKey),
+    );
     return {
       results,
       created_count: results.filter((r) => r.status === 'created').length,

@@ -212,6 +212,31 @@ describe('when a tree ends', () => {
     expect(pending.length).toBe(seasonal.length - 2);
   });
 
+  it('a new season pack replaces the old pending set instead of adding a second one', async () => {
+    const { a, id, base } = await plantWithTask();
+    const materialize = () =>
+      a.post(`/api/v1/seasonal/plant/${id}/materialize-tasks`);
+    const seasonal = async (status: string) =>
+      (
+        (await a.get(`${base}/tasks`)).body.data as Array<{
+          source: string;
+          status: string;
+        }>
+      ).filter((t) => t.source === 'SEASONAL_PACK' && t.status === status)
+        .length;
+    await materialize();
+    const before = await seasonal('PENDING');
+    expect(before).toBeGreaterThan(0);
+    // Moving to another region means another cohort, so another pack.
+    await a.put('/api/v1/user/profile/update', {
+      region_cluster: 'SOUTH_DECCAN',
+      district: 'Mysuru',
+    });
+    await materialize();
+    expect(await seasonal('PENDING')).toBe(before);
+    expect(await seasonal('CANCELLED')).toBe(before);
+  });
+
   it('restoring an active plant is 409 PLANT_NOT_ENDED', async () => {
     const { a, base } = await plantWithTask();
     const res = await a.post(`${base}/restore`);
