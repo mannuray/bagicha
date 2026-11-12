@@ -3,7 +3,7 @@ import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
-import { resetDb, seedUser, tokenFor } from './fixtures';
+import { clearRateLimitKeys, resetDb, seedUser, tokenFor } from './fixtures';
 
 /** Responses are built field by field: no database row reaches a client. */
 const USER_FIELDS = [
@@ -51,6 +51,7 @@ describe('response allow-lists', () => {
   });
 
   it('sign-in returns the same user view', async () => {
+    await clearRateLimitKeys();
     const server = app.getHttpServer();
     const otp = await request(server)
       .post('/api/v1/auth/request-otp')

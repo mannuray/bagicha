@@ -11,12 +11,13 @@ function build(cached: string | null) {
     ),
   };
   const redis = { get: jest.fn(() => Promise.resolve(cached)), set: jest.fn() };
+  const logger = { info: jest.fn(), warn: jest.fn() };
   const processor = new WeatherProcessor(
     weather as unknown as WeatherService,
     redis as unknown as RedisService,
-    { info: jest.fn(), warn: jest.fn() } as unknown as PinoLogger,
+    logger as unknown as PinoLogger,
   );
-  return { processor, weather, redis };
+  return { processor, weather, redis, logger };
 }
 
 describe('WeatherProcessor', () => {
@@ -36,5 +37,13 @@ describe('WeatherProcessor', () => {
       expect.any(String),
       3600,
     );
+  });
+
+  it('logs only the postal area (first 3 digits), never the full pincode', async () => {
+    const { processor, logger } = build(null);
+    await processor.process({ data: { pincode: '800001' } } as Job);
+    const logged = JSON.stringify(logger.info.mock.calls);
+    expect(logged).not.toContain('800001');
+    expect(logged).toContain('"area":"800"');
   });
 });

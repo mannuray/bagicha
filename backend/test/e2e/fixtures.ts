@@ -1,3 +1,4 @@
+import Redis from 'ioredis';
 import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Plant, PrismaClient, User } from '@prisma/client';
@@ -58,4 +59,15 @@ export async function seedPlant(
 
 export function tokenFor(app: INestApplication, user: User): string {
   return app.get(JwtService).sign({ sub: user.id });
+}
+
+/** Clears rate-limit counters: every e2e file shares one IP and one Redis. */
+export async function clearRateLimitKeys(): Promise<void> {
+  const redis = new Redis({
+    host: process.env.REDIS_HOST,
+    port: Number(process.env.REDIS_PORT),
+  });
+  const keys = await redis.keys('{rl:*');
+  if (keys.length) await redis.del(...keys);
+  redis.disconnect();
 }

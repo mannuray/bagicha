@@ -124,4 +124,12 @@ describe('safe errors and request ids', () => {
     expect(res.status).toBe(422);
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
+
+  it('sends the standard security headers', async () => {
+    const res = await request(app.getHttpServer()).get('/api/v1/health/live');
+    expect(res.headers['x-content-type-options']).toBe('nosniff');
+    expect(res.headers['x-frame-options']).toBeDefined();
+    expect(res.headers['strict-transport-security']).toBeDefined();
+    expect(res.headers['x-powered-by']).toBeUndefined();
+  });
 });

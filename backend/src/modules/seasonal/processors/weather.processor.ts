@@ -3,6 +3,7 @@ import { Job } from 'bullmq';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { RedisService } from '../../../common/redis/redis.service';
 import { WeatherData, WeatherService } from '../services/weather.service';
+import { postalArea } from '../domain/postal-area';
 
 const CACHE_TTL_SECONDS = 3600;
 
@@ -21,18 +22,20 @@ export class WeatherProcessor extends WorkerHost {
   async process(job: Job<{ pincode: string }>): Promise<WeatherData | null> {
     const { pincode } = job.data;
     const key = `weather:${pincode}`;
+    // Logs carry only the postal area: a full pincode next to a user narrows down where they live.
+    const area = postalArea(pincode);
     if (await this.redis.get(key)) {
-      this.logger.info({ pincode }, 'Weather already cached; skipping');
+      this.logger.info({ area }, 'Weather already cached; skipping');
       return null;
     }
 
-    this.logger.info({ pincode }, 'Checking weather');
+    this.logger.info({ area }, 'Checking weather');
     const weather = await this.weatherService.getWeather(pincode);
     await this.redis.set(key, JSON.stringify(weather), CACHE_TTL_SECONDS);
     if (weather.is_extreme) {
       // Push notifications (FCM) will hook in here.
       this.logger.warn(
-        { pincode, alert: weather.alert_message },
+        { area, alert: weather.alert_message },
         'Extreme weather detected',
       );
     }

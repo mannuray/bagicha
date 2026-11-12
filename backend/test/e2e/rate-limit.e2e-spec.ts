@@ -1,18 +1,8 @@
 import { INestApplication } from '@nestjs/common';
-import Redis from 'ioredis';
 import request from 'supertest';
 import { RATE_LIMIT_BACKEND } from '../../src/common/rate-limit/fail-open.storage';
 import { createTestApp } from './app';
-
-async function clearRateLimitKeys(): Promise<void> {
-  const redis = new Redis({
-    host: process.env.REDIS_HOST,
-    port: Number(process.env.REDIS_PORT),
-  });
-  const keys = await redis.keys('{rl:*');
-  if (keys.length) await redis.del(...keys);
-  redis.disconnect();
-}
+import { clearRateLimitKeys } from './fixtures';
 
 describe('rate limiting', () => {
   describe('with Redis available', () => {
