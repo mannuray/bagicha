@@ -8,11 +8,13 @@ import {
   IsString,
   Min,
   ValidateNested,
+  MaxLength,
 } from 'class-validator';
 
 /** Envelope every Razorpay event shares; the payload shape depends on the event. */
 export class RazorpayWebhookDto {
   @IsString()
+  @MaxLength(100)
   @IsNotEmpty()
   event!: string;
 
@@ -22,16 +24,19 @@ export class RazorpayWebhookDto {
 
 class RazorpayNotesDto {
   @IsString()
+  @MaxLength(100)
   @IsNotEmpty()
   user_id!: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(50)
   plan_id?: string;
 }
 
 class PaymentEntityDto {
   @IsString()
+  @MaxLength(100)
   @IsNotEmpty()
   id!: string;
 

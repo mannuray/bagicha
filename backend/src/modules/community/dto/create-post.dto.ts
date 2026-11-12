@@ -15,6 +15,7 @@ const MEDIA_KEY_MAX = 120;
 export class CreatePostDto {
   @IsNotEmpty()
   @IsString()
+  @MaxLength(5000)
   content: string;
 
   @IsOptional()

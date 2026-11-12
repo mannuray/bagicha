@@ -24,5 +24,6 @@ export class EndPlantDto {
   /** A journal entry of this plant (typically a diagnosis) that explains the loss. */
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   entry_id?: string;
 }

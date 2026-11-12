@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsObject,
   IsISO8601,
+  MaxLength,
 } from 'class-validator';
 import { LogType } from '@prisma/client';
 
@@ -15,6 +16,7 @@ export class AddLogDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(5000)
   content?: string;
 
   @IsOptional()

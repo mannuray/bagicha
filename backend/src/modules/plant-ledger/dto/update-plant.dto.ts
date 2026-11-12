@@ -1,4 +1,11 @@
-import { IsEnum, IsOptional, IsString, IsInt, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsInt,
+  Min,
+  MaxLength,
+} from 'class-validator';
 import {
   BearingStatus,
   GrowthHabit,
@@ -12,14 +19,17 @@ import {
 export class UpdatePlantDto {
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   name?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   species?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   variety?: string | null;
 
   @IsOptional()
@@ -40,6 +50,7 @@ export class UpdatePlantDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(40)
   planting_date?: string | null;
 
   @IsOptional()

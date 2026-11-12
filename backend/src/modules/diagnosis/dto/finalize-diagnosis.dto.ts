@@ -9,6 +9,7 @@ import {
   IsString,
   Max,
   Min,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -23,10 +24,12 @@ export class FinalizeDiagnosisDto implements FinalizeDiagnosisInput {
   subject_type!: DiagnosisSubjectType;
 
   @IsString()
+  @MaxLength(100)
   subject_id!: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   session_id?: string;
 
   @IsOptional()
@@ -39,15 +42,18 @@ export class FinalizeDiagnosisDto implements FinalizeDiagnosisInput {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @MaxLength(200, { each: true })
   secondary_issues?: string[];
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @MaxLength(200, { each: true })
   symptoms?: string[];
 
   @IsOptional()
   @IsString()
+  @MaxLength(200)
   affected_part?: string;
 
   @IsEnum(DiagnosisSeverity)
@@ -55,13 +61,16 @@ export class FinalizeDiagnosisDto implements FinalizeDiagnosisInput {
 
   @IsOptional()
   @IsString()
+  @MaxLength(50)
   confidence?: string;
 
   @IsString()
+  @MaxLength(2000)
   reasoning_summary!: string;
 
   @IsArray()
   @IsString({ each: true })
+  @MaxLength(500, { each: true })
   recommended_actions!: string[];
 
   @IsOptional()
@@ -77,6 +86,7 @@ export class FinalizeDiagnosisDto implements FinalizeDiagnosisInput {
 
   @IsOptional()
   @IsString()
+  @MaxLength(1000)
   user_note?: string;
 
   @IsOptional()

@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsInt,
   Min,
+  MaxLength,
 } from 'class-validator';
 import {
   BearingStatus,
@@ -19,14 +20,17 @@ import {
 export class CreatePlantDto {
   @IsNotEmpty()
   @IsString()
+  @MaxLength(100)
   name: string;
 
   @IsNotEmpty()
   @IsString()
+  @MaxLength(100)
   species: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   variety?: string;
 
   @IsOptional()
@@ -47,6 +51,7 @@ export class CreatePlantDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(40)
   planting_date?: string;
 
   @IsOptional()
@@ -60,6 +65,7 @@ export class CreatePlantDto {
   /** An ended plant this one replaces; links the two records. */
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   replaces_id?: string;
 
   /** Trees: does it already fruit? Null = not sure. */
