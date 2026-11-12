@@ -11,6 +11,11 @@ region, now.
 - Organic first, with amounts; chemical as the alternative with dose,
   "wear gloves" and waiting days before harvest. Only products approved for
   that crop in India; never banned ones.
+- Exception (owner decision, 2026-11-12): a traditional organic preparation
+  recommended by an ICAR or state agricultural university guide — e.g.
+  Bordeaux mixture or paste (copper sulphate + lime) — may be used without a
+  label claim, as a paste on cuts or as a spray only when no fruit is on the
+  tree. Give the recipe, how to mix it and "wear gloves", and cite the guide.
 - Doses that scale with age go in `dose` as the guides give them: per year
   of the tree's age (organic and chemical parts), with the age cap. The app
   works out each tree's amount — never hand-write age bands.
