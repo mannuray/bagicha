@@ -1,5 +1,4 @@
 import { AppError } from '../errors';
-import { routePattern } from '../http/route-pattern';
 
 /**
  * How an error reaches a log line: its type, code/reason and stack frames — but its
@@ -22,19 +21,16 @@ export function safeErr(err: unknown): Record<string, unknown> {
   return out;
 }
 
-/** The access line's request: method and route pattern only (no URL, query, headers or IP). */
-export function safeReq(
-  req: { method?: string; raw?: unknown } & Record<string, unknown>,
-): Record<string, unknown> {
-  const raw = (req.raw ?? req) as {
-    method?: string;
-    route?: unknown;
-    baseUrl?: string;
-  };
-  return {
-    method: raw.method ?? req.method,
-    route: routePattern(raw as never),
-  };
+/**
+ * A request in a log line: its method only (no URL, query, headers or IP). The route
+ * pattern is added when the request finishes (customProps): pino binds `req` at the
+ * start, before routing, when only the catch-all middleware route is known.
+ */
+export function safeReq(req: {
+  method?: string;
+  raw?: { method?: string };
+}): Record<string, unknown> {
+  return { method: req.raw?.method ?? req.method };
 }
 
 /** The access line's response: its status only. */

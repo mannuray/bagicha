@@ -115,21 +115,34 @@ export class HttpExceptionFilter implements ExceptionFilter {
     response.status(status).json({ success: false, error: body });
   }
 
+  /**
+   * One error log line. The fixed text goes under `message` inside the object: passed
+   * as a second argument, nestjs-pino's Logger treats it as `context`, and pino would
+   * then fill the message from the raw error (which can carry a URL or a DB address).
+   */
+  private logFields(
+    err: unknown,
+    reason: string,
+    status: number,
+    route: string,
+    message = 'request failed',
+  ) {
+    return { err, reason, status, route, message };
+  }
+
   private toEnvelope(
     exception: unknown,
     base: Pick<ErrorBody, 'request_id' | 'timestamp' | 'path'>,
   ): { status: number; body: ErrorBody } {
     if (exception instanceof AppError) {
-      const log = {
-        err: exception,
-        reason: exception.reason,
-        status: exception.httpStatus,
-      };
-      if (exception.kind === 'operational') {
-        this.logger.warn(log, 'request failed');
-      } else {
-        this.logger.error(log, 'request failed');
-      }
+      const log = this.logFields(
+        exception,
+        exception.reason,
+        exception.httpStatus,
+        base.path,
+      );
+      if (exception.kind === 'operational') this.logger.warn(log);
+      else this.logger.error(log);
       return {
         status: exception.httpStatus,
         body: {
@@ -149,8 +162,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const db = fromPrismaError(exception);
     if (db) {
       this.logger.warn(
-        { err: exception, reason: db.code, status: db.status },
-        'request failed',
+        this.logFields(exception, db.code, db.status, base.path),
       );
       return {
         status: db.status,
@@ -164,7 +176,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
       };
     }
 
-    this.logger.error({ err: exception }, 'unhandled exception');
+    this.logger.error(
+      this.logFields(
+        exception,
+        'INTERNAL',
+        500,
+        base.path,
+        'unhandled exception',
+      ),
+    );
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
       body: {
@@ -209,9 +229,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? (res.message as string)
         : (FIXED_MESSAGES[status] ?? 'Request failed');
 
-    const log = { err: exception, reason: code, status };
-    if (status >= 500) this.logger.error(log, 'request failed');
-    else this.logger.warn(log, 'request failed');
+    const log = this.logFields(exception, code, status, base.path);
+    if (status >= 500) this.logger.error(log);
+    else this.logger.warn(log);
 
     return {
       status,

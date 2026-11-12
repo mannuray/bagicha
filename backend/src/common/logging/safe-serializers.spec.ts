@@ -23,20 +23,12 @@ describe('safe log serializers', () => {
     });
   });
 
-  it('logs a request as its method and route pattern only', () => {
+  it('logs a request as its method only (the route is added when it finishes)', () => {
     const req = {
       method: 'GET',
       url: '/api/v1/ledger/plants/abc?x=1',
       headers: { cookie: 'c' },
-      raw: {
-        method: 'GET',
-        baseUrl: '',
-        route: { path: '/api/v1/ledger/plants/:id' },
-      },
     };
-    expect(safeReq(req)).toEqual({
-      method: 'GET',
-      route: '/api/v1/ledger/plants/:id',
-    });
+    expect(safeReq(req)).toEqual({ method: 'GET' });
   });
 });

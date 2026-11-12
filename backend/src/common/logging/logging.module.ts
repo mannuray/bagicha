@@ -19,6 +19,7 @@ import { LoggerOptions } from 'pino';
 import { Observable } from 'rxjs';
 import { RequestContext } from './request-context';
 import { safeErr, safeReq, safeRes } from './safe-serializers';
+import { routePattern } from '../http/route-pattern';
 
 export interface LogIdentity {
   service: string;
@@ -107,14 +108,23 @@ const { version } = require('../../../package.json') as { version: string };
               (env === 'test' ? 'warn' : 'info'),
             genReqId: (req) =>
               RequestContext.get()?.requestId ??
-              readHeader(req as Request, 'x-request-id') ??
+              readHeader(req, 'x-request-id') ??
               randomUUID(),
             // One access line per request, with a fixed message.
             customSuccessMessage: () => 'request completed',
             customErrorMessage: () => 'request failed',
-            customProps: () => {
+            // Serializers get the real objects (pino-http otherwise pre-serializes them,
+            // and safeErr would never see an Error).
+            wrapSerializers: false,
+            // Called again when the request finishes, when the matched route is known.
+            customProps: (req: Request) => {
               const userId = RequestContext.get()?.userId;
-              return userId ? { userId } : {};
+              const route = routePattern(req);
+              // At the start of a request no route is matched yet; only stamp a known one.
+              return {
+                ...(route === '(unmatched route)' ? {} : { route }),
+                ...(userId ? { userId } : {}),
+              };
             },
           },
         };

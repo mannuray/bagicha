@@ -61,10 +61,11 @@ export class MonitorService implements OnModuleDestroy {
         // Fixed message, no error text: it can carry the collector URL.
         const type =
           error instanceof Error ? error.constructor.name : typeof error;
-        this.logger.warn(
-          { eventCount, errorType: type },
-          'telemetry push failed',
-        );
+        this.logger.warn({
+          eventCount,
+          errorType: type,
+          message: 'telemetry push failed',
+        });
       },
     });
   }

@@ -6,7 +6,8 @@ import type { Request } from 'express';
  */
 export function routePattern(req: Pick<Request, 'route' | 'baseUrl'>): string {
   const path = (req.route as { path?: unknown } | undefined)?.path;
-  return typeof path === 'string'
-    ? `${req.baseUrl ?? ''}${path}`
-    : '(unmatched route)';
+  // No route, or only the catch-all middleware route (`/api/v1{/*splat}`): nothing matched.
+  if (typeof path !== 'string' || path.includes('*'))
+    return '(unmatched route)';
+  return `${req.baseUrl ?? ''}${path}`;
 }
