@@ -1,3 +1,7 @@
+import {
+  TREE_CARE_REGISTRY,
+  treeCareRegistryProvider,
+} from './domain/care/registry';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { PlantLedgerController } from './plant-ledger.controller';
@@ -26,6 +30,7 @@ import { TaskService } from './services/task.service';
   imports: [BullModule.registerQueue({ name: TASK_GENERATION_QUEUE })],
   controllers: [PlantLedgerController],
   providers: [
+    treeCareRegistryProvider,
     PlantRepository,
     JournalRepository,
     CycleRepository,
@@ -45,6 +50,7 @@ import { TaskService } from './services/task.service';
     TaskProcessor,
   ],
   exports: [
+    TREE_CARE_REGISTRY,
     GardenPlaceRepository,
     CropPlanService,
     PlantRecordService,

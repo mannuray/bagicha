@@ -1,8 +1,12 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Inject } from '@nestjs/common';
+import { TREE_CARE_REGISTRY } from '../domain/care/registry';
+import type { FamilyCare } from '../domain/care';
+import { SpeciesNormalizationService } from '../services/species-normalization.service';
 import { TaskPriority, TaskSource, TaskType } from '@prisma/client';
 import { Job } from 'bullmq';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { addDays, addMonths, Clock } from '../../../common/time';
+import { addDays, Clock } from '../../../common/time';
 import { TaskDraft, TaskService } from '../services/task.service';
 
 export const TASK_GENERATION_QUEUE = 'task-generation';
@@ -22,6 +26,9 @@ export class TaskProcessor extends WorkerHost {
     private readonly clock: Clock,
     @InjectPinoLogger(TaskProcessor.name)
     private readonly logger: PinoLogger,
+    private readonly species: SpeciesNormalizationService,
+    @Inject(TREE_CARE_REGISTRY)
+    private readonly careRegistry: Readonly<Record<string, FamilyCare>>,
   ) {
     super();
   }
@@ -52,12 +59,12 @@ export class TaskProcessor extends WorkerHost {
       dueDate,
     });
 
-    const drafts = species.toLowerCase().includes('mango')
-      ? [
-          draft(TaskType.FEED, addMonths(now, 6)), // next deep feed
-          draft(TaskType.PRUNE, addMonths(now, 3)), // pruning window
-        ]
-      : [draft(TaskType.WATER, addDays(now, 3))];
+    // A family with reviewed care gets its first tasks from its care calendar
+    // (materialised when the plant opens); the rest get a first watering check.
+    if (this.careRegistry[this.species.resolveSpeciesFamily({ species })]) {
+      return { created_count: 0 };
+    }
+    const drafts = [draft(TaskType.WATER, addDays(now, 3))];
 
     const results = await this.tasks.createTasks(user_id, plant_id, drafts);
     return {

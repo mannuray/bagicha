@@ -1,8 +1,10 @@
 import { INestApplication } from '@nestjs/common';
 import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
-import type { FamilyCare } from '../../src/modules/plant-ledger';
-import { TREE_CARE_REGISTRY } from '../../src/modules/seasonal/tree-care-registry';
+import {
+  TREE_CARE_REGISTRY,
+  type FamilyCare,
+} from '../../src/modules/plant-ledger';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
 import { resetDb, seedPlant, seedUser, tokenFor } from './fixtures';

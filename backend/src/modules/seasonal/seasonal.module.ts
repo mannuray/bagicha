@@ -1,4 +1,3 @@
-import { treeCareRegistryProvider } from './tree-care-registry';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { PlantLedgerModule } from '../plant-ledger';
@@ -23,7 +22,6 @@ import { WeatherService } from './services/weather.service';
     WeatherProcessor,
     SeasonalPackRepository,
     OverlayRepository,
-    treeCareRegistryProvider,
   ],
   exports: [SeasonalService],
 })

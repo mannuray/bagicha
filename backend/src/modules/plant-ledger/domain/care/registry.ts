@@ -1,4 +1,4 @@
-import { TREE_CARE } from '../plant-ledger';
+import { TREE_CARE } from './index';
 
 /** The tree-care families in use; a token so tests can supply a fixture family. */
 export const TREE_CARE_REGISTRY = Symbol('TREE_CARE_REGISTRY');

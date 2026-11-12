@@ -3,9 +3,11 @@ import { Job } from 'bullmq';
 import { PinoLogger } from 'nestjs-pino';
 import { FixedClock } from '../../../common/time';
 import { TaskDraft, TaskService } from '../services/task.service';
+import { SpeciesNormalizationService } from '../services/species-normalization.service';
+import type { FamilyCare } from '../domain/care';
 import { TaskProcessor } from './task.processor';
 
-function build() {
+function build(registry: Record<string, FamilyCare> = {}) {
   const pending = new Set<string>();
   const calls: TaskDraft[][] = [];
   const tasks = {
@@ -28,6 +30,8 @@ function build() {
     tasks as unknown as TaskService,
     new FixedClock(new Date('2026-01-15T00:00:00Z')),
     logger as unknown as PinoLogger,
+    new SpeciesNormalizationService(),
+    registry,
   );
   return { processor, calls, logger, tasks };
 }
@@ -35,7 +39,23 @@ function build() {
 const job = (data: Record<string, unknown>) => ({ data }) as Job;
 
 describe('TaskProcessor', () => {
-  it('schedules mango feeding in 6 months and pruning in 3 (not 9)', async () => {
+  it('creates nothing for a family with care data (its care calendar gives the first tasks)', async () => {
+    const { processor, tasks } = build({
+      mango: { family: 'mango', sources: [], grownIn: [], regions: {} },
+    });
+    const result = await processor.process(
+      job({
+        user_id: 'u1',
+        plant_id: 'p1',
+        lifecycle_stage: 'MATURE_BEARING',
+        species: 'Langra Mango',
+      }),
+    );
+    expect(tasks.createTasks).not.toHaveBeenCalled();
+    expect(result.created_count).toBe(0);
+  });
+
+  it('waters a pending family in 3 days, mango included until its care ships', async () => {
     const { processor, calls } = build();
     await processor.process(
       job({
@@ -45,16 +65,10 @@ describe('TaskProcessor', () => {
         species: 'Langra Mango',
       }),
     );
-    const byType = Object.fromEntries(calls[0].map((d) => [d.type, d]));
-    expect(byType[TaskType.FEED].dueDate.toISOString()).toBe(
-      '2026-07-15T00:00:00.000Z',
-    );
-    expect(byType[TaskType.PRUNE].dueDate.toISOString()).toBe(
-      '2026-04-15T00:00:00.000Z',
-    );
-    expect(byType[TaskType.FEED]).toMatchObject({
+    expect(calls[0].map((d) => d.type)).toEqual([TaskType.WATER]);
+    expect(calls[0][0]).toMatchObject({
       source: TaskSource.SYSTEM,
-      sourceKey: 'lifecycle:p1:MATURE_BEARING:FEED',
+      sourceKey: 'lifecycle:p1:MATURE_BEARING:WATER',
     });
   });
 

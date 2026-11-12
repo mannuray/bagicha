@@ -36,9 +36,9 @@ import {
   taskTypeFromCategory,
   carePhaseView,
   treeCareDue,
+  TREE_CARE_REGISTRY,
 } from '../plant-ledger';
 import type { CareReminder, FamilyCare } from '../plant-ledger';
-import { TREE_CARE_REGISTRY } from './tree-care-registry';
 import { isPremium, UserRepository } from '../user';
 import {
   asTaskTemplates,

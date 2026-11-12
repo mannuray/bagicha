@@ -64,3 +64,7 @@ export type {
   PhaseWindow,
   RegionCare,
 } from './domain/care';
+export {
+  TREE_CARE_REGISTRY,
+  treeCareRegistryProvider,
+} from './domain/care/registry';
