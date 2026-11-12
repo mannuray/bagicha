@@ -55,6 +55,8 @@ export interface Dose {
   organic: DosePart[];
   chemical: DosePart[];
   maxAgeYears: number;
+  /** Organic and chemical parts go in together (one feed), not as alternatives. */
+  together?: boolean;
 }
 
 export interface PhaseWindow {

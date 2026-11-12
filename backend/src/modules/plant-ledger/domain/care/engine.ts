@@ -138,12 +138,12 @@ export function doseFor(dose: Dose, age: number | null): string {
   const years = age === null ? 1 : Math.min(age, dose.maxAgeYears);
   const lines = [doseLine(dose.organic, years), doseLine(dose.chemical, years)]
     .filter(Boolean)
-    .join('; or ');
+    .join(dose.together ? ' + ' : '; or ');
   return age === null
     ? `Per year of the tree's age (up to ${dose.maxAgeYears}): ${lines}`
     : age > dose.maxAgeYears
       ? `For a tree ${dose.maxAgeYears} years or older: ${lines}`
-      : `For a ${years}-year-old tree: ${lines}`;
+      : `For ${/^(8|11|18)$/.test(String(years)) ? 'an' : 'a'} ${years}-year-old tree: ${lines}`;
 }
 
 /**

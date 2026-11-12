@@ -95,6 +95,10 @@ export class SeasonalIntelligenceService {
       | 'post_monsoon',
   ): SeasonalRuleOutput {
     switch (speciesFamily) {
+      // Guava regions still pending a verified calendar keep this (care/guava.ts
+      // covers North and South Deccan).
+      case 'guava':
+        return this.guavaGuidance(lifecycleStage, seasonalWindow);
       case 'citrus':
         return this.citrusGuidance(lifecycleStage, seasonalWindow);
       default:
@@ -155,6 +159,47 @@ export class SeasonalIntelligenceService {
         ],
         watch_for: ['Canker flare-ups', 'Root rot'],
         next_checkpoint_days: 7,
+      };
+    }
+    return this.genericGuidance(stage, window);
+  }
+
+  private guavaGuidance(
+    stage: LifecycleStage,
+    window: string,
+  ): SeasonalRuleOutput {
+    if (window === 'monsoon' || window === 'post_monsoon') {
+      return {
+        current_phase: 'flush_or_flowering_window',
+        upcoming_phase: 'fruit_set',
+        do_now: [
+          'Encourage clean new growth',
+          'Inspect for pest pressure after rain',
+          'Keep the root zone aerated',
+        ],
+        avoid_now: [
+          'Avoid dense waterlogged zones',
+          'Avoid neglecting sanitation',
+        ],
+        watch_for: ['Fruit fly', 'Wilt symptoms'],
+        next_checkpoint_days: 7,
+      };
+    }
+    if (window === 'summer') {
+      return {
+        current_phase: 'fruiting_or_stress_management',
+        upcoming_phase: 'flush',
+        do_now: [
+          'Water deeply during heat',
+          'Thin weak stressed growth only if necessary',
+          'Inspect fruit health',
+        ],
+        avoid_now: [
+          'Avoid severe water stress',
+          'Avoid overloading weak branches',
+        ],
+        watch_for: ['Fruit fly', 'Leaf scorch'],
+        next_checkpoint_days: 6,
       };
     }
     return this.genericGuidance(stage, window);

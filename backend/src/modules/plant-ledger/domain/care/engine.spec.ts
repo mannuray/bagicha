@@ -135,6 +135,40 @@ describe('treeCareDue', () => {
     );
   });
 
+  it('says "an 8-year-old" and "an 11-year-old"', () => {
+    const dose = {
+      organic: [{ what: 'FYM', grams: 1000 }],
+      chemical: [],
+      maxAgeYears: 20,
+    };
+    const x = item('feed', [2, 1], [2, 28], { dose });
+    expect(
+      due([x], '2026-02-10', { plantedAt: ist('2018-01-01') }).reminders[0]
+        .amount,
+    ).toMatch(/^For an 8-year-old tree/);
+    expect(
+      due([x], '2026-02-10', { plantedAt: ist('2015-01-01') }).reminders[0]
+        .amount,
+    ).toMatch(/^For an 11-year-old tree/);
+  });
+
+  it('a dose given all together reads as one list, not as alternatives', () => {
+    const dose = {
+      organic: [{ what: 'FYM', grams: 4000 }],
+      chemical: [
+        { what: 'SSP', grams: 100 },
+        { what: 'MOP', grams: 83 },
+      ],
+      maxAgeYears: 10,
+      together: true,
+    };
+    const x = item('winter_feed', [2, 1], [2, 28], { dose });
+    expect(
+      due([x], '2026-02-10', { plantedAt: ist('2020-01-01') }).reminders[0]
+        .amount,
+    ).toBe('For a 6-year-old tree: 24 kg FYM + 600 g SSP + 498 g MOP');
+  });
+
   it('counts reminders already pending toward the cap of 3 per tree', () => {
     const w: [MonthDay, MonthDay] = [
       [2, 1],

@@ -18,7 +18,7 @@ describe('litchi care (approved table)', () => {
     expect(reminders.find((r) => r.key === 'main_feed')).toMatchObject({
       title: 'Feed the main fertiliser after harvest',
       sourceKey: 'litchi:main_feed:2026-06-15',
-      amount: 'For a 8-year-old tree: 480 g urea + 800 g SSP + 440 g MOP',
+      amount: 'For an 8-year-old tree: 480 g urea + 800 g SSP + 440 g MOP',
     });
   });
 
@@ -34,7 +34,7 @@ describe('litchi care (approved table)', () => {
       title: "Spread the year's manure",
       sourceKey: 'litchi:manure:2026-12-01',
       // The table's 665 g is 83 g × 8 = 664 g.
-      amount: 'For a 8-year-old tree: 32 kg FYM; or 800 g SSP + 664 g MOP',
+      amount: 'For an 8-year-old tree: 32 kg FYM + 800 g SSP + 664 g MOP',
     });
     expect(manure?.organic).toBe(
       "All the year's FYM + all the SSP + all the MOP",
@@ -50,7 +50,7 @@ describe('litchi care (approved table)', () => {
     });
     expect(reminders.find((r) => r.key === 'manure')).toMatchObject({
       sourceKey: 'litchi:manure:2026-09-01',
-      amount: 'For a 8-year-old tree: 32 kg FYM',
+      amount: 'For an 8-year-old tree: 32 kg FYM',
     });
   });
 

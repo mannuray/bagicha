@@ -42,6 +42,7 @@ const FYM_DOSE: Dose = {
   chemical: [],
   maxAgeYears: MAX_AGE,
 };
+/** PAU's single winter dose: FYM, SSP and MOP all go in together. */
 const MANURE_SSP_MOP_DOSE: Dose = {
   organic: [{ what: 'FYM', grams: 4000 }],
   chemical: [
@@ -49,6 +50,7 @@ const MANURE_SSP_MOP_DOSE: Dose = {
     { what: 'MOP', grams: 83 },
   ],
   maxAgeYears: MAX_AGE,
+  together: true,
 };
 const HALF_UREA_DOSE: Dose = {
   organic: [],
@@ -113,7 +115,6 @@ const BEARING: ItemSpec<Group>[] = [
     category: 'FEEDING',
     stages: ['BEARING'],
     organic: "All the year's FYM + all the SSP + all the MOP",
-    // The engine joins the organic and chemical parts with "or"; here all of it goes in.
     dose: MANURE_SSP_MOP_DOSE,
     why: "Slow feed for flowering. PAU's single winter dose",
     windows: {
