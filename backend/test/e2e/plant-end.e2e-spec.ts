@@ -198,8 +198,8 @@ describe('when a tree ends', () => {
     ).filter((t) => t.source === 'SEASONAL_PACK' && t.status === 'PENDING');
     expect(seasonal.length).toBeGreaterThanOrEqual(2);
     const [done, skipped] = seasonal;
-    await a.put(`${base}/tasks/${done!.id}`, { status: 'COMPLETED' });
-    await a.put(`${base}/tasks/${skipped!.id}`, { status: 'SKIPPED' });
+    await a.put(`${base}/tasks/${done.id}`, { status: 'COMPLETED' });
+    await a.put(`${base}/tasks/${skipped.id}`, { status: 'SKIPPED' });
 
     const again = await materialize();
     expect(again.body.data.created_count).toBe(0);

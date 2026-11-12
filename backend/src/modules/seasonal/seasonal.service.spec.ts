@@ -49,10 +49,15 @@ function build(opts: {
       },
     ],
   };
+  const packs = {
+    findCohort: jest.fn(() => Promise.resolve(pack as typeof pack | null)),
+    create: jest.fn(),
+  };
+  const weatherQueue = { add: jest.fn(() => Promise.resolve()) };
   const service = new SeasonalService(
-    { add: jest.fn() } as any,
-    {} as any,
-    { get: jest.fn() } as any,
+    weatherQueue as any,
+    { getWeather: jest.fn(() => Promise.resolve({ temp: 30 })) } as any,
+    { get: jest.fn(() => Promise.resolve(null)) } as any,
     {
       getOwnedOrThrow: jest.fn(() => Promise.resolve(plant)),
       assertGrowing: jest.fn(() => Promise.resolve(plant)),
@@ -86,10 +91,7 @@ function build(opts: {
     {
       findById: jest.fn(() => Promise.resolve(user)),
     } as unknown as UserRepository,
-    {
-      findCohort: jest.fn(() => Promise.resolve(pack)),
-      create: jest.fn(),
-    } as unknown as SeasonalPackRepository,
+    packs as unknown as SeasonalPackRepository,
     {
       findActive: jest.fn(() => Promise.resolve(null)),
       create: jest.fn((_u: string, _p: string, _k: string, data: object) =>
@@ -103,8 +105,9 @@ function build(opts: {
     } as unknown as SpeciesNormalizationService,
     new FixedClock(NOW),
     { registerQueueDepth: jest.fn() } as any,
+    { warn: jest.fn() } as any,
   );
-  return { service, drafts };
+  return { service, drafts, packs, pack, weatherQueue };
 }
 
 describe('SeasonalService.materializeTasksForTree', () => {
@@ -149,5 +152,43 @@ describe('SeasonalService.materializeTasksForTree', () => {
     expect(
       drafts.filter((d) => d.source === TaskSource.PERSONALIZED_OVERLAY),
     ).toHaveLength(2);
+  });
+});
+
+describe('SeasonalService season pack', () => {
+  it("two first visits at once: the loser of the create race uses the winner's pack", async () => {
+    const { service, packs, pack } = build({ premium: false });
+    packs.findCohort.mockResolvedValueOnce(null).mockResolvedValueOnce(pack);
+    packs.create.mockRejectedValueOnce(
+      Object.assign(new Error('unique'), { code: 'P2002' }),
+    );
+    (service as any).seasonalIntelligence = {
+      inferTreeSeasonalState: () => ({
+        current_phase: 'x',
+        upcoming_phase: 'y',
+        confidence: 0.5,
+        do_now: [],
+        avoid_now: [],
+        watch_for: [],
+        basis: [],
+      }),
+    };
+    const res = await service.getTreeIntelligence('u1', 'p1');
+    expect(res.seasonal_pack).toMatchObject({ id: 'pack1' });
+  });
+});
+
+describe('SeasonalService weather', () => {
+  it('queues one check per pincode and still answers when the queue is down', async () => {
+    const { service, weatherQueue } = build({ premium: false });
+    weatherQueue.add.mockRejectedValueOnce(new Error('redis down'));
+    await expect(service.getLocalizedWeather('800001')).resolves.toEqual({
+      temp: 30,
+    });
+    expect(weatherQueue.add).toHaveBeenCalledWith(
+      'check',
+      { pincode: '800001' },
+      { jobId: 'weather-800001' },
+    );
   });
 });

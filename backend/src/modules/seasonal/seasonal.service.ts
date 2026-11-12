@@ -1,3 +1,4 @@
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import {
@@ -47,6 +48,7 @@ import { resolveSeasonWindow } from './domain/season-window';
 import { OverlayRepository } from './repositories/overlay.repository';
 import { SeasonalPackRepository } from './repositories/seasonal-pack.repository';
 import { WeatherService } from './services/weather.service';
+import { isUniqueViolation } from '../../common/prisma/unique-violation';
 import { toOverlayView, toPackView } from './intelligence-view';
 
 export const WEATHER_QUEUE = 'weather-checks';
@@ -69,6 +71,8 @@ export class SeasonalService implements OnModuleInit {
     private readonly species: SpeciesNormalizationService,
     private readonly clock: Clock,
     private readonly metrics: Metrics,
+    @InjectPinoLogger(SeasonalService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   onModuleInit(): void {
@@ -87,7 +91,12 @@ export class SeasonalService implements OnModuleInit {
   async getLocalizedWeather(pincode: string) {
     const cached = await this.redis.get(`weather:${pincode}`);
     if (cached) return JSON.parse(cached) as unknown;
-    await this.weatherQueue.add('check', { pincode });
+    // One pending check per pincode; a queue hiccup still shows the weather.
+    void this.weatherQueue
+      .add('check', { pincode }, { jobId: `weather-${pincode}` })
+      .catch((err: unknown) =>
+        this.logger.warn({ err }, 'Weather check not queued'),
+      );
     return this.weatherService.getWeather(pincode);
   }
 
@@ -238,7 +247,7 @@ export class SeasonalService implements OnModuleInit {
       plant,
       user,
     );
-    return this.packs.create({
+    const data = {
       ...cohort,
       model_version: 'bootstrap_rules_v1',
       current_phase: inferred.current_phase,
@@ -251,7 +260,16 @@ export class SeasonalService implements OnModuleInit {
         inferred,
       ) as unknown as Prisma.InputJsonValue,
       basis: inferred.basis,
-    });
+    };
+    try {
+      return await this.packs.create(data);
+    } catch (err) {
+      // Two first visits for a new cohort raced; the other one created it.
+      if (!isUniqueViolation(err)) throw err;
+      const winner = await this.packs.findCohort(cohort);
+      if (!winner) throw err;
+      return winner;
+    }
   }
 
   private async getOrRefreshOverlay(

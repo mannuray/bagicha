@@ -41,6 +41,15 @@ import { AuditModule } from './modules/audit';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         connection: redisConnection(configService),
+        // Retry a few times, then keep only recent failures: finished jobs would
+        // otherwise pile up in the shared Redis forever. Removing finished jobs
+        // also means a fixed jobId only dedupes work that is still waiting.
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 2000 },
+          removeOnComplete: true,
+          removeOnFail: { age: 24 * 60 * 60, count: 100 },
+        },
       }),
     }),
     LoggingModule,

@@ -13,7 +13,10 @@ function build(plant: Record<string, unknown>) {
     findOwnedWithContext: jest.fn(() => Promise.resolve({ ...plant })),
     updateOwned: jest.fn(() => Promise.resolve(plant)),
   };
-  const queue = { add: jest.fn(), getJobCounts: jest.fn() };
+  const queue = {
+    add: jest.fn(() => Promise.resolve()),
+    getJobCounts: jest.fn(),
+  };
   const clock = new FixedClock(NOW);
   const species = new SpeciesNormalizationService();
   const service = new PlantRecordService(
@@ -24,6 +27,7 @@ function build(plant: Record<string, unknown>) {
     clock,
     queue as never,
     { registerQueueDepth: jest.fn() } as never,
+    { warn: jest.fn() } as never,
   );
   return { service, repo, queue };
 }
@@ -64,6 +68,29 @@ describe('PlantRecordService.getDetail stage', () => {
     const plant = await service.getDetail('u1', 'p1');
     expect(plant.lifecycle_stage).toBe(LifecycleStage.FIRST_FLOWERING);
     expect(repo.updateOwned).toHaveBeenCalled();
+  });
+
+  it('queues one job per plant and stage, and the page still opens when the queue is down', async () => {
+    const { service, queue } = build({
+      id: 'p1',
+      species: 'Papaya',
+      species_family: 'papaya',
+      lifecycle_stage: LifecycleStage.SAPLING,
+      lifecycle_stage_manual: false,
+      planting_date: new Date('2026-01-10T00:00:00Z'),
+      first_flowering_at: null,
+      first_fruit_set_at: null,
+      first_harvest_at: null,
+      ended_at: null,
+    });
+    queue.add.mockRejectedValue(new Error('redis down'));
+    const plant = await service.getDetail('u1', 'p1');
+    expect(plant.lifecycle_stage).toBe(LifecycleStage.FIRST_FLOWERING);
+    expect(queue.add).toHaveBeenCalledWith(
+      'generate',
+      expect.objectContaining({ plant_id: 'p1' }),
+      { jobId: 'lifecycle-p1-FIRST_FLOWERING' },
+    );
   });
 });
 

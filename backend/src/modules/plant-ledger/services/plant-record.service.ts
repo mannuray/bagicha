@@ -1,6 +1,7 @@
 import { bloomStatus, perennialFlower } from '../domain/flower-care';
 import { climateGroupFor } from '../domain/crop-calendar';
 import { InjectQueue } from '@nestjs/bullmq';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Plant, RecordKind, RegionCluster, User } from '@prisma/client';
 import { Queue } from 'bullmq';
@@ -48,6 +49,8 @@ export class PlantRecordService implements OnModuleInit {
     private readonly clock: Clock,
     @InjectQueue(TASK_GENERATION_QUEUE) private readonly taskQueue: Queue,
     private readonly metrics: Metrics,
+    @InjectPinoLogger(PlantRecordService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   onModuleInit(): void {
@@ -99,12 +102,7 @@ export class PlantRecordService implements OnModuleInit {
         await this.plants.updateOwned(userId, plant.id, {
           lifecycle_stage: stage,
         });
-        await this.enqueueTaskGeneration(
-          userId,
-          plant.id,
-          stage,
-          plant.species,
-        );
+        this.enqueueTaskGeneration(userId, plant.id, stage, plant.species);
         plant.lifecycle_stage = stage;
       }
     }
@@ -189,7 +187,7 @@ export class PlantRecordService implements OnModuleInit {
       lifecycle_stage_manual: !!dto.lifecycle_stage,
       ...bearing,
     });
-    await this.enqueueTaskGeneration(
+    this.enqueueTaskGeneration(
       userId,
       plant.id,
       plant.lifecycle_stage,
@@ -293,7 +291,7 @@ export class PlantRecordService implements OnModuleInit {
       ...cleared,
     });
     if (!updated) throw plantNotFound();
-    await this.enqueueTaskGeneration(
+    this.enqueueTaskGeneration(
       userId,
       updated.id,
       updated.lifecycle_stage,
@@ -384,19 +382,28 @@ export class PlantRecordService implements OnModuleInit {
     };
   }
 
-  private async enqueueTaskGeneration(
+  /**
+   * Best effort: a queue hiccup must not fail (or slow) the request; the next
+   * refresh fills in missing tasks. One job per plant and stage, so repeat visits
+   * don't pile up duplicates.
+   */
+  private enqueueTaskGeneration(
     userId: string,
     plantId: string,
     lifecycleStage: string,
     species: string,
-  ): Promise<void> {
+  ): void {
     const job: TaskGenerationJob = {
       user_id: userId,
       plant_id: plantId,
       lifecycle_stage: lifecycleStage,
       species,
     };
-    await this.taskQueue.add('generate', job);
+    void this.taskQueue
+      .add('generate', job, { jobId: `lifecycle-${plantId}-${lifecycleStage}` })
+      .catch((err: unknown) =>
+        this.logger.warn({ err, plantId }, 'Task generation not queued'),
+      );
   }
 }
 
