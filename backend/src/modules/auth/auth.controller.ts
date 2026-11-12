@@ -1,4 +1,14 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import type { AuthedRequest } from '../../common/auth/authed-request';
 import { AuthService } from './auth.service';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
@@ -23,5 +33,13 @@ export class AuthController {
       verifyOtpDto.phone_number,
       verifyOtpDto.otp,
     );
+  }
+
+  /** Signs out everywhere (every device's token stops working). */
+  @Post('sign-out')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async signOut(@Request() req: AuthedRequest): Promise<void> {
+    await this.authService.signOut(req.user.id);
   }
 }

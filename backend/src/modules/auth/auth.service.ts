@@ -83,6 +83,18 @@ export class AuthService {
     return this.exposesOtp() ? { message, dev_otp: otp } : { message };
   }
 
+  /** Ends every sign-in of this user (all devices): their tokens' version is now stale. */
+  async signOut(userId: string): Promise<void> {
+    await this.users.bumpTokenVersion(userId);
+    await this.audit.record({
+      actorUserId: userId,
+      action: AuditAction.AUTH_SIGNED_OUT,
+      targetType: 'user',
+      targetId: userId,
+      snapshot: { user_id: userId },
+    });
+  }
+
   async verifyOtp(phoneNumber: string, otp: string) {
     const storedOtp = await this.redisService.get(otpKey(phoneNumber));
 
@@ -121,8 +133,8 @@ export class AuthService {
       },
     });
 
-    // Only the user id: a token is readable by anyone who holds it.
-    const payload = { sub: user.id };
+    // Only the user id and its sign-out version: a token is readable by anyone who holds it.
+    const payload = { sub: user.id, tv: user.token_version };
     const accessToken = this.jwtService.sign(payload);
 
     return {

@@ -46,6 +46,13 @@ export class UserRepository {
     }
   }
 
+  async bumpTokenVersion(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { token_version: { increment: 1 } },
+    });
+  }
+
   updateProfile(userId: string, data: Prisma.UserUpdateInput): Promise<User> {
     return this.prisma.user.update({ where: { id: userId }, data });
   }

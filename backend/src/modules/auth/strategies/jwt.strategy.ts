@@ -18,13 +18,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string }) {
+  async validate(payload: { sub: string; tv?: number }) {
     const user = await this.users.findById(payload.sub);
 
     if (!user) {
       throw new UnauthorizedError(
         'AUTH_USER_NOT_FOUND',
         'The user associated with this token no longer exists',
+      );
+    }
+    // Tokens from before sign-out existed carry no version: they count as 0.
+    if ((payload.tv ?? 0) !== user.token_version) {
+      throw new UnauthorizedError(
+        'AUTH_TOKEN_REVOKED',
+        'This sign-in has ended; please sign in again',
       );
     }
 

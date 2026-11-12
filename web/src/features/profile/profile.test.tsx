@@ -251,6 +251,21 @@ describe('profile', () => {
     expect(session.get().user).toBeNull();
   });
 
+  it('signing out also ends the sign-in on the server, without waiting for it', async () => {
+    let auth: string | null = null;
+    server.use(
+      http.post(`${API}/auth/sign-out`, async ({ request }) => {
+        auth = request.headers.get('Authorization');
+        await new Promise((r) => setTimeout(r, 50));
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const { session } = renderWithApp(<Onboarding />, { route: '/profile' });
+    await userEvent.click(screen.getByRole('button', { name: /sign out/i }));
+    expect(session.get().user).toBeNull();
+    await waitFor(() => expect(auth).toMatch(/^Bearer /));
+  });
+
   it('shows the status card and settings rows from real profile data', async () => {
     renderWithApp(<Onboarding />, { route: '/profile' });
     expect(screen.getByText('Seedling')).toBeInTheDocument();

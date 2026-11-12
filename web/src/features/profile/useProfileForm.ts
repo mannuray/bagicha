@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useNow } from '../../lib/clock';
-import { isPremium, useSession, type User } from '../auth';
+import { isPremium, useSignOut, type User } from '../auth';
 import { useUpdateProfile } from './api';
 import { useDistrictRegion } from './useDistrictRegion';
 
@@ -10,7 +10,7 @@ export function useProfileForm(user: User | null) {
   const update = useUpdateProfile();
   const now = useNow();
   const navigate = useNavigate();
-  const { signOut } = useSession();
+  const signOut = useSignOut();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user?.name ?? '');
   const [lang, setLang] = useState(user?.language_pref ?? 'en');

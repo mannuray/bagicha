@@ -7,4 +7,4 @@ export type { SessionStore, SessionState } from './session';
 export { homeFor, isPremium, isProfileComplete, nextOnboardingStep, REGION_CLUSTERS, userSchema } from './schemas';
 export type { OnboardingStep } from './schemas';
 export type { RegionCluster, User } from './schemas';
-export { toE164India } from './api';
+export { toE164India, useSignOut } from './api';

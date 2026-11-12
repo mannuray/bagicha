@@ -243,6 +243,8 @@ enum SubscriptionTier {
 model User {
   id             String   @id @default(uuid())
   phone_number   String   @unique
+  /// Bumped on sign-out: tokens carrying an older version stop working.
+  token_version  Int      @default(0)
   name           String?
   latitude       Float?
   longitude      Float?

@@ -15,6 +15,20 @@ export function useRequestOtp() {
   });
 }
 
+/**
+ * Signs out here at once and tells the server to end every sign-in of this user.
+ * The call is sent (with the token) before the token is cleared, and not awaited:
+ * a cold server can take half a minute, and the user is already signed out here.
+ */
+export function useSignOut(): () => void {
+  const api = useApi();
+  const { signOut } = useSession();
+  return () => {
+    void api.send('POST', '/auth/sign-out', {}, z.undefined()).catch(() => undefined);
+    signOut();
+  };
+}
+
 export function useVerifyOtp() {
   const api = useApi();
   const { signIn } = useSession();
