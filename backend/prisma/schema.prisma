@@ -607,6 +607,7 @@ model Report {
   created_at   DateTime         @default(now())
   resolved_at  DateTime?
 
+  @@unique([target_type, target_id, reporter_id])
   @@index([target_type, target_id, status])
   @@index([status, created_at])
   @@map("reports")

@@ -239,23 +239,17 @@ Return strict JSON:
     target: ReportTarget,
   ) {
     return this.transactions.run(async (tx) => {
-      const existing = await this.reports.findByReporter(
-        target.type,
-        target.id,
-        reporterId,
+      const trimmedReason = reason?.trim() || null;
+      const filed = await this.reports.createIfNew(
+        {
+          target_type: target.type,
+          target_id: target.id,
+          reporter_id: reporterId,
+          reason: trimmedReason,
+        },
         tx,
       );
-      if (!existing) {
-        const trimmedReason = reason?.trim() || null;
-        await this.reports.create(
-          {
-            target_type: target.type,
-            target_id: target.id,
-            reporter_id: reporterId,
-            reason: trimmedReason,
-          },
-          tx,
-        );
+      if (filed) {
         await this.audit.record(
           {
             actorUserId: reporterId,
@@ -277,7 +271,7 @@ Return strict JSON:
       const count = await this.reports.countPending(target.type, target.id, tx);
       if (count >= HIDE_REPORT_THRESHOLD && !target.isHidden)
         await target.hide(tx);
-      return existing
+      return !filed
         ? { success: true, already_reported: true }
         : { success: true, pending_reports: count };
     });

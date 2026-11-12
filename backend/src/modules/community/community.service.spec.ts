@@ -1,4 +1,3 @@
-import { ReportTargetType } from '@prisma/client';
 import { TransactionRunner } from '../../common/prisma/transaction';
 import { AiProvider } from '../ai';
 import { AuditService } from '../audit';
@@ -21,16 +20,13 @@ function build() {
     hide: jest.fn(() => Promise.resolve()),
   };
   const reportRepo = {
-    findByReporter: jest.fn(
-      (_t: ReportTargetType, target: string, reporter: string) =>
-        Promise.resolve(
-          reports.find((r) => r.target === target && r.reporter === reporter) ??
-            null,
-        ),
-    ),
-    create: jest.fn((data: { target_id: string; reporter_id: string }) => {
-      reports.push({ target: data.target_id, reporter: data.reporter_id });
-      return Promise.resolve({ id: `r${reports.length}` });
+    createIfNew: jest.fn((data: { target_id: string; reporter_id: string }) => {
+      const dup = reports.some(
+        (r) => r.target === data.target_id && r.reporter === data.reporter_id,
+      );
+      if (!dup)
+        reports.push({ target: data.target_id, reporter: data.reporter_id });
+      return Promise.resolve(!dup);
     }),
     countPending: jest.fn(() => Promise.resolve(reports.length)),
   };

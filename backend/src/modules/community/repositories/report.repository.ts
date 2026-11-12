@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Report, ReportTargetType } from '@prisma/client';
+import { Prisma, ReportTargetType } from '@prisma/client';
 import { Tx } from '../../../common/prisma/transaction';
 import { PrismaService } from '../../../prisma/prisma.service';
 
@@ -7,23 +7,19 @@ import { PrismaService } from '../../../prisma/prisma.service';
 export class ReportRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findByReporter(
-    type: ReportTargetType,
-    targetId: string,
-    reporterId: string,
+  /**
+   * Files the report unless this reporter already reported this target (a unique
+   * index guards it, so a double tap can't file two). True when it was filed now.
+   */
+  async createIfNew(
+    data: Prisma.ReportCreateManyInput,
     tx?: Tx,
-  ): Promise<Report | null> {
-    return (tx ?? this.prisma).report.findFirst({
-      where: {
-        target_type: type,
-        target_id: targetId,
-        reporter_id: reporterId,
-      },
+  ): Promise<boolean> {
+    const { count } = await (tx ?? this.prisma).report.createMany({
+      data: [data],
+      skipDuplicates: true,
     });
-  }
-
-  create(data: Prisma.ReportUncheckedCreateInput, tx?: Tx): Promise<Report> {
-    return (tx ?? this.prisma).report.create({ data });
+    return count === 1;
   }
 
   countPending(
