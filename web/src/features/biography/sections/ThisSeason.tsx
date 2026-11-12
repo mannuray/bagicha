@@ -39,9 +39,11 @@ function ThisMonth({ items }: { items: CareLine[] }) {
               {t('biography.ifYouSee')} {item.if_you_see}
             </p>
           )}
-          <p>
-            <span className="font-label text-xs font-bold uppercase tracking-wider text-primary">{t('tasks.care.organic')}</span> {item.organic}
-          </p>
+          {item.organic && (
+            <p>
+              <span className="font-label text-xs font-bold uppercase tracking-wider text-primary">{t('tasks.care.organic')}</span> {item.organic}
+            </p>
+          )}
           {item.amount && <p className="text-on-surface-variant">{item.amount}</p>}
           {item.chemical && (
             <p>

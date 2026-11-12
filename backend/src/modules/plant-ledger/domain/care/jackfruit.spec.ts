@@ -33,7 +33,7 @@ describe('jackfruit care (approved table)', () => {
       sourceKey: 'jackfruit:pre_monsoon_feed:2026-05-01',
       // The table's 250 g MOP is 83 g × 3 = 249 g.
       amount:
-        'For a 3-year-old tree: 15 kg FYM; or 489 g urea + 750 g SSP + 249 g MOP',
+        'For a 3-year-old tree: 15 kg FYM; if you also use fertiliser, add 489 g urea + 750 g SSP + 249 g MOP',
     });
   });
 

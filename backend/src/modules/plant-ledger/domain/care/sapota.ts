@@ -276,6 +276,9 @@ const CONDITIONAL: ItemSpec<Group>[] = [
 
 const YOUNG_TEXT =
   'FYM and urea per year of age, in a band 45 cm from the trunk out to the drip line';
+/** The Sep–Oct feed is urea only: the year's FYM went in with the June feed. */
+const YOUNG_UREA_TEXT =
+  'Urea per year of age, in a band 45 cm from the trunk out to the drip line';
 
 const YOUNG: ItemSpec<Group>[] = [
   {
@@ -302,7 +305,8 @@ const YOUNG: ItemSpec<Group>[] = [
     title: 'Feed the young tree',
     category: 'FEEDING',
     stages: ['YOUNG'],
-    organic: YOUNG_TEXT,
+    organic: '',
+    chemical: `${YOUNG_UREA_TEXT}; wear gloves`,
     dose: HALF_UREA_DOSE,
     why: 'Steady growth for a strong frame',
     windows: { W: SEP_OCT, K: SEP_OCT },

@@ -1,4 +1,10 @@
-import { ALL_YEAR, groupCare, type ItemSpec, type PhaseSpec } from './build';
+import {
+  ALL_YEAR,
+  groupCare,
+  type ItemSpec,
+  type PhaseSpec,
+  type Window,
+} from './build';
 import type { Dose, FamilyCare, RegionCare } from './types';
 
 /**
@@ -83,8 +89,9 @@ const BEARING: ItemSpec<Group>[] = [
     title: 'Feed the main fertiliser after harvest',
     category: 'FEEDING',
     stages: ['BEARING'],
-    organic:
-      "Two-thirds of the year's urea, all the SSP and two-thirds of the MOP, in a trench 20–30 cm deep along the canopy edge. Only when the soil is moist",
+    organic: '',
+    chemical:
+      "Two-thirds of the year's urea, all the SSP and two-thirds of the MOP, in a trench 20–30 cm deep along the canopy edge. Only when the soil is moist; wear gloves",
     dose: E_MAIN_DOSE,
     why: 'Feeds the post-harvest flush that will flower',
     windows: {
@@ -99,7 +106,8 @@ const BEARING: ItemSpec<Group>[] = [
     title: "Spread the year's manure",
     category: 'FEEDING',
     stages: ['BEARING'],
-    organic: "All the year's FYM along the canopy edge",
+    organic: '',
+    chemical: "All the year's FYM along the canopy edge; wear gloves",
     dose: FYM_DOSE,
     why: 'Slow feed for flowering',
     windows: {
@@ -114,7 +122,8 @@ const BEARING: ItemSpec<Group>[] = [
     title: "Spread the year's manure",
     category: 'FEEDING',
     stages: ['BEARING'],
-    organic: "All the year's FYM + all the SSP + all the MOP",
+    organic: '',
+    chemical: "All the year's FYM + all the SSP + all the MOP; wear gloves",
     dose: MANURE_SSP_MOP_DOSE,
     why: "Slow feed for flowering. PAU's single winter dose",
     windows: {
@@ -177,7 +186,9 @@ const BEARING: ItemSpec<Group>[] = [
     title: 'Feed half the urea before flowering',
     category: 'FEEDING',
     stages: ['BEARING'],
-    organic: "Half the year's urea along the canopy edge; water in",
+    organic: '',
+    chemical:
+      "Half the year's urea along the canopy edge; water in; wear gloves",
     dose: HALF_UREA_DOSE,
     why: 'Feeds flowering',
     windows: {
@@ -192,8 +203,9 @@ const BEARING: ItemSpec<Group>[] = [
     title: 'Feed urea after fruit set',
     category: 'FEEDING',
     stages: ['BEARING'],
-    organic:
-      'The last third of the urea + the last third of the MOP, when fruits are clove-size. Water in',
+    organic: '',
+    chemical:
+      'The last third of the urea + the last third of the MOP, when fruits are clove-size. Water in; wear gloves',
     dose: E_CLOVE_DOSE,
     why: 'Feeds the growing fruit',
     windows: {
@@ -208,7 +220,8 @@ const BEARING: ItemSpec<Group>[] = [
     title: 'Feed urea after fruit set',
     category: 'FEEDING',
     stages: ['BEARING'],
-    organic: 'The other half of the urea. Water in',
+    organic: '',
+    chemical: 'The other half of the urea. Water in; wear gloves',
     dose: HALF_UREA_DOSE,
     why: 'Feeds the growing fruit',
     windows: {
@@ -429,8 +442,9 @@ const YOUNG: ItemSpec<Group>[] = [
     title: 'Feed the young tree',
     category: 'FEEDING',
     stages: ['YOUNG'],
-    organic:
-      'Dose per year of age, in a ring 30 cm out from the trunk, growing with the tree. FYM + SSP + MOP in September, half the urea in mid-February, the other half after the local litchi harvest',
+    organic: '',
+    chemical:
+      'Dose per year of age, in a ring 30 cm out from the trunk, growing with the tree. FYM + SSP + MOP in September, half the urea in mid-February, the other half after the local litchi harvest; wear gloves',
     dose: MANURE_SSP_MOP_DOSE,
     why: 'Steady growth for a strong frame',
     windows: {
@@ -446,8 +460,9 @@ const YOUNG: ItemSpec<Group>[] = [
     category: 'FEEDING',
     stages: ['YOUNG'],
     // The table's "as bearing rows 3, 8, 9", written out.
-    organic:
-      'Dose per year of age, in a ring 30 cm out from the trunk, growing with the tree. FYM + SSP + MOP in December, half the urea in mid-February, the other half in mid-April',
+    organic: '',
+    chemical:
+      'Dose per year of age, in a ring 30 cm out from the trunk, growing with the tree. FYM + SSP + MOP in December, half the urea in mid-February, the other half in mid-April; wear gloves',
     dose: MANURE_SSP_MOP_DOSE,
     why: 'Steady growth for a strong frame',
     windows: {
@@ -462,8 +477,9 @@ const YOUNG: ItemSpec<Group>[] = [
     title: 'Feed the young tree',
     category: 'FEEDING',
     stages: ['YOUNG'],
-    organic:
-      'Dose per year of age, in a ring 30 cm out from the trunk, growing with the tree. FYM + SSP + MOP in September, half the urea in mid-February, the other half after the local litchi harvest',
+    organic: '',
+    chemical:
+      'Dose per year of age, in a ring 30 cm out from the trunk, growing with the tree. FYM + SSP + MOP in September, half the urea in mid-February, the other half after the local litchi harvest; wear gloves',
     dose: HALF_UREA_DOSE,
     why: 'Steady growth for a strong frame',
     windows: {
@@ -484,8 +500,9 @@ const YOUNG: ItemSpec<Group>[] = [
     title: 'Feed the young tree',
     category: 'FEEDING',
     stages: ['YOUNG'],
-    organic:
-      'Dose per year of age, in a ring 30 cm out from the trunk, growing with the tree. FYM + SSP + MOP in December, half the urea in mid-February, the other half in mid-April',
+    organic: '',
+    chemical:
+      'Dose per year of age, in a ring 30 cm out from the trunk, growing with the tree. FYM + SSP + MOP in December, half the urea in mid-February, the other half in mid-April; wear gloves',
     dose: HALF_UREA_DOSE,
     why: 'Steady growth for a strong frame',
     windows: {
@@ -557,8 +574,14 @@ const PHASES: PhaseSpec<Group>[] = [
     phase: 'harvest',
     avoid: ['Pulling single fruits', 'Picking before fully red'],
     watch: ['Fruit borer', 'Fruit rot'],
-    // E: the table's mid-May–mid-Jun, as whole months.
-    months: { E: [5, 6], N: [6, 6] },
+    // E: the table's mid-May–mid-Jun, to the day.
+    months: {
+      E: [
+        [5, 15],
+        [6, 15],
+      ] as Window,
+      N: [6, 6],
+    },
   },
   {
     phase: 'post_harvest_flush',

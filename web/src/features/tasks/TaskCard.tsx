@@ -68,9 +68,11 @@ function CareHow({ how }: { how: NonNullable<Task['care_how']> }) {
   const { t } = useTranslation();
   return (
     <div className="mt-2 space-y-1 font-body text-xs text-on-surface-variant">
-      <p>
-        <span className="font-label font-bold uppercase tracking-wider text-primary">{t('tasks.care.organic')}</span> {how.organic}
-      </p>
+      {how.organic && (
+        <p>
+          <span className="font-label font-bold uppercase tracking-wider text-primary">{t('tasks.care.organic')}</span> {how.organic}
+        </p>
+      )}
       {how.amount && (
         <p>
           <span className="font-label font-bold uppercase tracking-wider text-primary">{t('tasks.care.amount')}</span> {how.amount}

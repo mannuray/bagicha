@@ -70,7 +70,11 @@ export interface TreeCareInput {
 
 /** Midnight IST of a calendar date. */
 function istMidnight(year: number, [month, day]: MonthDay): Date {
-  return new Date(Date.UTC(year, month - 1, day) - IST_OFFSET_MS);
+  // Feb 29 in a normal year is Feb 28, not Mar 1.
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return new Date(
+    Date.UTC(year, month - 1, Math.min(day, daysInMonth)) - IST_OFFSET_MS,
+  );
 }
 
 function istYear(date: Date): number {
@@ -138,7 +142,8 @@ export function doseFor(dose: Dose, age: number | null): string {
   const years = age === null ? 1 : Math.min(age, dose.maxAgeYears);
   const lines = [doseLine(dose.organic, years), doseLine(dose.chemical, years)]
     .filter(Boolean)
-    .join(dose.together ? ' + ' : '; or ');
+    // Manure is the organic way; fertiliser is added on top by those who use it.
+    .join(dose.together ? ' + ' : '; if you also use fertiliser, add ');
   return age === null
     ? `Per year of the tree's age (up to ${dose.maxAgeYears}): ${lines}`
     : age > dose.maxAgeYears

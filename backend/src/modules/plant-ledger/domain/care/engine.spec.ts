@@ -119,19 +119,23 @@ describe('treeCareDue', () => {
     expect(
       due([x], '2026-02-10', { plantedAt: ist('2020-01-01') }).reminders[0]
         .amount,
-    ).toBe('For a 6-year-old tree: 30 kg FYM; or 660 g urea + 930 g SSP');
+    ).toBe(
+      'For a 6-year-old tree: 30 kg FYM; if you also use fertiliser, add 660 g urea + 930 g SSP',
+    );
     expect(
       due([x], '2026-02-10', { plantedAt: ist('2005-01-01') }).reminders[0]
         .amount,
     ).toBe(
-      'For a tree 10 years or older: 50 kg FYM; or 1.1 kg urea + 1.6 kg SSP',
+      'For a tree 10 years or older: 50 kg FYM; if you also use fertiliser, add 1.1 kg urea + 1.6 kg SSP',
     );
     expect(
       due([x], '2026-02-10', { plantedAt: ist('2025-12-01') }).reminders[0]
         .amount,
-    ).toBe('For a 1-year-old tree: 5 kg FYM; or 110 g urea + 155 g SSP');
+    ).toBe(
+      'For a 1-year-old tree: 5 kg FYM; if you also use fertiliser, add 110 g urea + 155 g SSP',
+    );
     expect(due([x], '2026-02-10').reminders[0].amount).toBe(
-      "Per year of the tree's age (up to 10): 5 kg FYM; or 110 g urea + 155 g SSP",
+      "Per year of the tree's age (up to 10): 5 kg FYM; if you also use fertiliser, add 110 g urea + 155 g SSP",
     );
   });
 
@@ -150,6 +154,12 @@ describe('treeCareDue', () => {
       due([x], '2026-02-10', { plantedAt: ist('2015-01-01') }).reminders[0]
         .amount,
     ).toMatch(/^For an 11-year-old tree/);
+  });
+
+  it('a window ending Feb 29 ends on Feb 28 in a normal year (no spill into March)', () => {
+    const x = item('feb', [2, 1], [2, 29]);
+    expect(due([x], '2027-02-28').reminders).toHaveLength(1);
+    expect(due([x], '2027-03-01').reminders).toHaveLength(0);
   });
 
   it('a dose given all together reads as one list, not as alternatives', () => {

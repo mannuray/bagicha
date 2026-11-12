@@ -20,7 +20,7 @@ describe('amla care (approved table)', () => {
       sourceKey: 'amla:main_feed:2026-01-01',
       // The table's 1.86 kg SSP, as the engine rounds it.
       amount:
-        'For a 6-year-old tree: 30 kg FYM; or 660 g urea + 1.9 kg SSP + 510 g MOP',
+        'For a 6-year-old tree: 30 kg FYM; if you also use fertiliser, add 660 g urea + 1.9 kg SSP + 510 g MOP',
     });
   });
 

@@ -93,7 +93,7 @@ describe('tree biography', () => {
     const section = await screen.findByRole('region', { name: /this month/i });
     expect(within(section).getByText('Main feed after harvest')).toBeInTheDocument();
     expect(section.textContent).toContain('For a 6-year-old tree: 30 kg FYM');
-    expect(section.textContent).toMatch(/if you see:\s*holes with sawdust on the trunk/i);
+    expect(section.textContent).toMatch(/when:\s*holes with sawdust on the trunk/i);
   });
 
   it('renders the loop sections from real data', async () => {

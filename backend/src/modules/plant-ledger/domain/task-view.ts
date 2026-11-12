@@ -151,8 +151,9 @@ function careHowOf(task: {
   if (task.source !== TaskSource.TREE_CARE) return null;
   const m = (task.metadata ?? {}) as Record<string, unknown>;
   const text = (v: unknown) => (typeof v === 'string' ? v : null);
+  // An empty organic line is valid: a fertiliser-only feed has no organic way.
   const organic = text(m.organic);
-  if (!organic) return null;
+  if (organic === null) return null;
   return {
     organic,
     chemical: text(m.chemical),

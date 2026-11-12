@@ -36,9 +36,10 @@ describe('litchi care (approved table)', () => {
       // The table's 665 g is 83 g × 8 = 664 g.
       amount: 'For an 8-year-old tree: 32 kg FYM + 800 g SSP + 664 g MOP',
     });
-    expect(manure?.organic).toBe(
-      "All the year's FYM + all the SSP + all the MOP",
+    expect(manure?.chemical).toBe(
+      "All the year's FYM + all the SSP + all the MOP; wear gloves",
     );
+    expect(manure?.organic).toBe('');
   });
 
   it('East: manure in September, FYM only', () => {
@@ -114,5 +115,17 @@ describe('litchi care (approved table)', () => {
         now: ist('2026-06-16'),
       }).note,
     ).toBe(NOT_GROWN_NOTE);
+  });
+
+  it('East harvest is mid-May to mid-June, as the table says', () => {
+    const at = (d: string) =>
+      carePhaseView(LITCHI_CARE, {
+        region: 'EAST_INDIA',
+        stage: LifecycleStage.MATURE_BEARING,
+        now: ist(d),
+      }).current_phase;
+    expect(at('2026-05-10')).toBe('fruit_development');
+    expect(at('2026-05-20')).toBe('harvest');
+    expect(at('2026-06-20')).toBe('post_harvest_flush');
   });
 });

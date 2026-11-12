@@ -23,9 +23,13 @@ export interface PhaseSpec<G extends string> extends Omit<
   PhaseWindow,
   'when' | 'stages'
 > {
-  months: Partial<Record<G, [number, number]>>;
+  /** [first month, last month], or an exact window when the table gives days. */
+  months: Partial<Record<G, [number, number] | Window>>;
   stages?: CareStage[];
 }
+
+const isMonthRange = (m: [number, number] | Window): m is [number, number] =>
+  typeof m[0] === 'number';
 
 /** Last day of a month; February counts 29 so a leap day is never uncovered. */
 const lastDay = (month: number) =>
@@ -53,16 +57,17 @@ export function groupCare<G extends string>(
     phases: phases.flatMap(({ months, stages, ...p }) => {
       const m = months[group];
       if (!m) return [];
-      const [from, to] = m;
+      const [from, to]: Window = isMonthRange(m)
+        ? [
+            [m[0], 1],
+            [m[1], lastDay(m[1])],
+          ]
+        : m;
       return [
         {
           ...p,
           stages: stages ?? ['BEARING'],
-          when: {
-            kind: 'CALENDAR' as const,
-            from: [from, 1] as MonthDay,
-            to: [to, lastDay(to)] as MonthDay,
-          },
+          when: { kind: 'CALENDAR' as const, from, to },
         },
       ];
     }),

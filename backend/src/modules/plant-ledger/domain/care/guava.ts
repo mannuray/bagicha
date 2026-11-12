@@ -238,12 +238,8 @@ const CONDITIONAL: ItemSpec<Group>[] = [
       'Cover mature-green fruit with white non-woven bags at the end of June to mid-July; hang a fruit fly trap in the first week of July; pick at colour break',
     why: 'The rainy-season crop gets far more fruit flies',
     // End of June to mid-July, first week of July: whole months Jun–Jul.
-    windows: {
-      A: [
-        [6, 1],
-        [7, 31],
-      ],
-    },
+    // The table gives no window; its steps run from late June to picking.
+    windows: { A: ALL_YEAR },
   },
   {
     key: 'picking',
@@ -364,8 +360,9 @@ const YOUNG: ItemSpec<Group>[] = [
     title: 'Feed manure and a third of the fertiliser',
     category: 'FEEDING',
     stages: ['YOUNG'],
-    organic:
-      'FYM in June by age: 5–8 kg, then 10, 15–25 and 25–30 kg as the tree grows, plus a third of the urea + SSP + MOP in July, in a ring 30 cm from the trunk',
+    organic: '',
+    chemical:
+      'FYM in June by age: 5–8 kg, then 10, 15–25 and 25–30 kg as the tree grows, plus a third of the urea + SSP + MOP in July, in a ring 30 cm from the trunk; wear gloves',
     dose: YOUNG_DOSE,
     why: 'Steady growth for a strong frame',
     windows: {
@@ -384,7 +381,8 @@ const YOUNG: ItemSpec<Group>[] = [
     title: 'Feed a third of the fertiliser',
     category: 'FEEDING',
     stages: ['YOUNG'],
-    organic: 'Second third of urea + SSP + MOP; water in',
+    organic: '',
+    chemical: 'Second third of urea + SSP + MOP; water in; wear gloves',
     dose: YOUNG_DOSE,
     why: 'Steady growth for a strong frame',
     windows: {
@@ -403,7 +401,8 @@ const YOUNG: ItemSpec<Group>[] = [
     title: 'Feed the last third of the fertiliser',
     category: 'FEEDING',
     stages: ['YOUNG'],
-    organic: 'Last third of urea + SSP + MOP; water in',
+    organic: '',
+    chemical: 'Last third of urea + SSP + MOP; water in; wear gloves',
     dose: YOUNG_DOSE,
     why: 'Steady growth for a strong frame',
     windows: {

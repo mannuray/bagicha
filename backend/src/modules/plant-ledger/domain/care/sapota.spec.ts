@@ -19,7 +19,8 @@ describe('sapota care (approved table)', () => {
     expect(feed).toMatchObject({
       title: 'Feed at the start of the monsoon',
       sourceKey: 'sapota:monsoon_feed:2026-06-15',
-      amount: 'For a 3-year-old tree: 30 kg FYM; or 651 g urea',
+      amount:
+        'For a 3-year-old tree: 30 kg FYM; if you also use fertiliser, add 651 g urea',
     });
     expect(feed?.chemical).toMatch(/SSP 1560 g \+ MOP 415 g/);
   });
@@ -36,7 +37,8 @@ describe('sapota care (approved table)', () => {
       title: 'Feed after the monsoon',
       sourceKey: 'sapota:post_monsoon_feed:2026-09-01',
       // The table's 1305 g, as the engine rounds it.
-      amount: 'For a 3-year-old tree: 30 kg FYM; or 1.3 kg urea',
+      amount:
+        'For a 3-year-old tree: 30 kg FYM; if you also use fertiliser, add 1.3 kg urea',
     });
     expect(feed?.chemical).toMatch(/SSP 3125 g \+ MOP 833 g/);
   });

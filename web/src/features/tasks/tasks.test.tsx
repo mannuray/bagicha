@@ -208,4 +208,19 @@ describe('tasks screen', () => {
     const card = screen.getByRole('article', { name: /plan pest response/i });
     expect(card.textContent).not.toMatch(/organic way/i);
   });
+
+  it('a fertiliser-only care task shows no organic line, only the fertiliser and why', async () => {
+    const { TaskCard, taskSchema } = await import('.');
+    const task = taskSchema.parse(
+      taskRecord({
+        source: 'TREE_CARE',
+        title: 'Feed urea after fruit set',
+        care_how: { organic: '', chemical: 'The other half of the urea. Water in; wear gloves', why: 'Feeds the growing fruit', amount: 'For a 6-year-old tree: 270 g urea', window_end: null },
+      }),
+    );
+    renderWithApp(<TaskCard task={task} now={new Date()} />);
+    const card = screen.getByRole('article', { name: /feed urea after fruit set/i });
+    expect(card.textContent).not.toMatch(/organic way/i);
+    expect(card.textContent).toContain('The other half of the urea');
+  });
 });
