@@ -40,6 +40,11 @@ describe('regions', () => {
     ).toBe(401);
   });
 
+  it('lets the browser keep the district list (~770 rows, never changes per user) for a day', async () => {
+    const res = await get('/api/v1/regions/districts', alice);
+    expect(res.headers['cache-control']).toBe('private, max-age=86400');
+  });
+
   it('lists every selectable district with its region and label', async () => {
     const res = await get('/api/v1/regions/districts', alice);
     expect(res.body.data.length).toBeGreaterThanOrEqual(770);

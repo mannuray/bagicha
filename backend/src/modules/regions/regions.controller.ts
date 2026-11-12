@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   HttpCode,
   Post,
   UseGuards,
@@ -30,7 +31,9 @@ const LIST = DISTRICTS.filter((d) => d.selectable !== false).map((d) => ({
 export class RegionsController {
   constructor(private readonly locator: DistrictLocator) {}
 
+  /** Static list: the browser may reuse it for a day (private: behind sign-in). */
   @Get('districts')
+  @Header('Cache-Control', 'private, max-age=86400')
   districts() {
     return LIST;
   }

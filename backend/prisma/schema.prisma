@@ -569,6 +569,8 @@ model Post {
   comments Comment[]
 
   @@index([is_hidden, created_at])
+  @@index([district, is_hidden, created_at])
+  @@index([author_id])
   @@map("posts")
 }
 
@@ -584,6 +586,8 @@ model Comment {
   post   Post @relation(fields: [post_id], references: [id])
   author User @relation(fields: [author_id], references: [id])
   @@index([is_expert_verified, is_hidden, created_at])
+  @@index([post_id, is_hidden])
+  @@index([author_id])
 
   @@map("comments")
 }
