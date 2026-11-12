@@ -3,7 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuditAction, AuditService } from '../audit';
 import { JwtService } from '@nestjs/jwt';
-import { UserRepository } from '../user';
+import { toUserView, UserRepository } from '../user';
 import { RedisService } from '../../common/redis/redis.service';
 import { randomInt } from 'crypto';
 import { otpFailKey, otpKey } from './otp-keys';
@@ -54,7 +54,10 @@ export class AuthService {
 
     // No SMS provider yet: a developer can opt in to seeing the code in the log
     // (AUTH_LOG_OTP=true), never in production. Staging shows it on screen instead.
-    if (!this.isProduction() && this.config.get<string>('AUTH_LOG_OTP') === 'true') {
+    if (
+      !this.isProduction() &&
+      this.config.get<string>('AUTH_LOG_OTP') === 'true'
+    ) {
       this.logger.debug({ otp }, 'Development OTP issued');
     }
 
@@ -110,7 +113,7 @@ export class AuthService {
 
     return {
       access_token: accessToken,
-      user,
+      user: toUserView(user),
     };
   }
 }

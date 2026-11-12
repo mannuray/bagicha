@@ -2,14 +2,18 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { parseMediaKey } from '../media';
 import { UserRepository } from './user.repository';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { toUserView, type UserView } from './user-view';
 
 @Injectable()
 export class UserService {
   constructor(private readonly users: UserRepository) {}
 
-  async updateProfile(userId: string, dto: UpdateProfileDto) {
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+  ): Promise<UserView> {
     if (dto.avatar_key) assertOwnAvatar(userId, dto.avatar_key);
-    return this.users.updateProfile(userId, {
+    const user = await this.users.updateProfile(userId, {
       name: dto.name,
       latitude: dto.latitude,
       longitude: dto.longitude,
@@ -19,6 +23,7 @@ export class UserService {
       language_pref: dto.language_pref ?? undefined,
       avatar_key: dto.avatar_key,
     });
+    return toUserView(user);
   }
 }
 

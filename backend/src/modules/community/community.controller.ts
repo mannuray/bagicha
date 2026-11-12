@@ -17,6 +17,8 @@ import { AskAiDto } from './dto/ask-ai.dto';
 import { ReportTargetDto } from './dto/report-target.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimit } from '../../common/rate-limit';
+import { mapPage } from '../../common/pagination';
+import { toCommentView, toPostView } from './community-view';
 
 @Controller('community')
 @UseGuards(AuthGuard('jwt'))
@@ -24,13 +26,16 @@ export class CommunityController {
   constructor(private readonly communityService: CommunityService) {}
 
   @Get('feed')
-  getFeed(@Request() req: AuthedRequest, @Query() q: FeedQueryDto) {
-    return this.communityService.getFeed(req.user.id, q.district, q);
+  async getFeed(@Request() req: AuthedRequest, @Query() q: FeedQueryDto) {
+    return mapPage(
+      await this.communityService.getFeed(req.user.id, q.district, q),
+      toPostView,
+    );
   }
 
   @Post('posts')
   async createPost(@Request() req: AuthedRequest, @Body() dto: CreatePostDto) {
-    return this.communityService.createPost(req.user.id, dto);
+    return toPostView(await this.communityService.createPost(req.user.id, dto));
   }
 
   @Post('posts/:id/comments')
@@ -39,7 +44,9 @@ export class CommunityController {
     @Param('id') id: string,
     @Body() dto: CreateCommentDto,
   ) {
-    return this.communityService.addComment(req.user.id, id, dto);
+    return toCommentView(
+      await this.communityService.addComment(req.user.id, id, dto),
+    );
   }
 
   @Post('ask-ai')

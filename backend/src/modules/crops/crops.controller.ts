@@ -18,6 +18,8 @@ import type { AuthedRequest } from '../../common/auth/authed-request';
 import { CropsService } from './crops.service';
 import { CreatePlaceDto, UpdatePlaceDto } from './dto/place.dto';
 import { AddToPlanDto } from './dto/plan.dto';
+import { toPlaceView } from './place-view';
+import { toPlantView } from '../plant-ledger';
 
 @Controller()
 @UseGuards(AuthGuard('jwt'))
@@ -35,22 +37,25 @@ export class CropsController {
   }
 
   @Get('garden/places')
-  places(@Request() req: AuthedRequest) {
-    return this.crops.places(req.user.id);
+  async places(@Request() req: AuthedRequest) {
+    return (await this.crops.places(req.user.id)).map(toPlaceView);
   }
 
   @Post('garden/places')
-  createPlace(@Request() req: AuthedRequest, @Body() dto: CreatePlaceDto) {
-    return this.crops.createPlace(req.user.id, dto);
+  async createPlace(
+    @Request() req: AuthedRequest,
+    @Body() dto: CreatePlaceDto,
+  ) {
+    return toPlaceView(await this.crops.createPlace(req.user.id, dto));
   }
 
   @Put('garden/places/:id')
-  updatePlace(
+  async updatePlace(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Body() dto: UpdatePlaceDto,
   ) {
-    return this.crops.updatePlace(req.user.id, id, dto);
+    return toPlaceView(await this.crops.updatePlace(req.user.id, id, dto));
   }
 
   /** 201 when the crop is new on the list, 200 when it was already there. */
@@ -65,7 +70,7 @@ export class CropsController {
       dto.crop_id,
     );
     res.status(created ? 201 : 200);
-    return plant;
+    return toPlantView(plant);
   }
 
   @Delete('crops/plan/:plantId')

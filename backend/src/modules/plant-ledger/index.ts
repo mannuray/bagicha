@@ -42,3 +42,4 @@ export type {
 } from './domain/crop-calendar';
 export { GardenPlaceRepository } from './repositories/garden-place.repository';
 export { CropPlanService } from './services/crop-plan.service';
+export { toPlantView } from './domain/plant-view';

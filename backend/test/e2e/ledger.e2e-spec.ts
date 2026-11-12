@@ -50,9 +50,10 @@ describe('plant ledger loop', () => {
     expect(created.body.data).toMatchObject({
       name: 'Aam',
       species: 'Mango',
-      user_id: alice.id,
       planting_date_precision: 'YEAR',
     });
+    // Responses are allow-lists: the owner id stays server-side.
+    expect(created.body.data).not.toHaveProperty('user_id');
     const plantId = created.body.data.id as string;
 
     const list = await a.get('/api/v1/ledger/plants');

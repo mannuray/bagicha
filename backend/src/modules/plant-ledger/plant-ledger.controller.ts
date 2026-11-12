@@ -26,6 +26,8 @@ import { JournalService } from './services/journal.service';
 import { MitigationService } from './services/mitigation.service';
 import { PlantRecordService } from './services/plant-record.service';
 import { TaskService } from './services/task.service';
+import { mapPage } from '../../common/pagination';
+import { toPlantView } from './domain/plant-view';
 
 @Controller('ledger')
 @UseGuards(AuthGuard('jwt'))
@@ -41,32 +43,38 @@ export class PlantLedgerController {
   ) {}
 
   @Post('plants')
-  createPlant(@Request() req: AuthedRequest, @Body() dto: CreatePlantDto) {
-    return this.plants.create(req.user.id, dto);
+  async createPlant(
+    @Request() req: AuthedRequest,
+    @Body() dto: CreatePlantDto,
+  ) {
+    return toPlantView(await this.plants.create(req.user.id, dto));
   }
 
   @Get('plants')
-  getPlants(@Request() req: AuthedRequest, @Query() q: ListPlantsQueryDto) {
-    return this.plants.list(req.user.id, q);
+  async getPlants(
+    @Request() req: AuthedRequest,
+    @Query() q: ListPlantsQueryDto,
+  ) {
+    return mapPage(await this.plants.list(req.user.id, q), toPlantView);
   }
 
   @Post('plants/:id/end')
-  endPlant(
+  async endPlant(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Body() dto: EndPlantDto,
   ) {
-    return this.ending.end(req.user.id, id, dto);
+    return toPlantView(await this.ending.end(req.user.id, id, dto));
   }
 
   @Post('plants/:id/restore')
-  restorePlant(@Request() req: AuthedRequest, @Param('id') id: string) {
-    return this.ending.restore(req.user.id, id);
+  async restorePlant(@Request() req: AuthedRequest, @Param('id') id: string) {
+    return toPlantView(await this.ending.restore(req.user.id, id));
   }
 
   @Get('plants/:id')
-  getPlantDetail(@Request() req: AuthedRequest, @Param('id') id: string) {
-    return this.plants.detailView(req.user, id);
+  async getPlantDetail(@Request() req: AuthedRequest, @Param('id') id: string) {
+    return toPlantView(await this.plants.detailView(req.user, id));
   }
 
   @Get('plants/:id/seasonal-state')
@@ -75,12 +83,12 @@ export class PlantLedgerController {
   }
 
   @Put('plants/:id')
-  updatePlant(
+  async updatePlant(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Body() dto: UpdatePlantDto,
   ) {
-    return this.plants.update(req.user.id, id, dto);
+    return toPlantView(await this.plants.update(req.user.id, id, dto));
   }
 
   @Post('plants/:id/journal')

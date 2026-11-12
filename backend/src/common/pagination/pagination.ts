@@ -35,3 +35,8 @@ export function toPage<T>(items: T[], total: number, q: PageQuery): Page<T> {
     },
   };
 }
+
+/** The same page with each item mapped (e.g. to its response view). */
+export function mapPage<T, U>(page: Page<T>, map: (item: T) => U): Page<U> {
+  return { items: page.items.map(map), pagination: page.pagination };
+}
