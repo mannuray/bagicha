@@ -97,8 +97,6 @@ export class SeasonalIntelligenceService {
     switch (speciesFamily) {
       case 'citrus':
         return this.citrusGuidance(lifecycleStage, seasonalWindow);
-      case 'litchi':
-        return this.litchiGuidance(lifecycleStage, seasonalWindow);
       default:
         return this.genericGuidance(lifecycleStage, seasonalWindow);
     }
@@ -157,47 +155,6 @@ export class SeasonalIntelligenceService {
         ],
         watch_for: ['Canker flare-ups', 'Root rot'],
         next_checkpoint_days: 7,
-      };
-    }
-    return this.genericGuidance(stage, window);
-  }
-
-  private litchiGuidance(
-    stage: LifecycleStage,
-    window: string,
-  ): SeasonalRuleOutput {
-    if (window === 'late_winter' || window === 'spring') {
-      return {
-        current_phase:
-          stage === LifecycleStage.MATURE_BEARING
-            ? 'flowering'
-            : 'vegetative_growth',
-        upcoming_phase: 'fruit_set',
-        do_now: [
-          'Observe inflorescence growth',
-          'Protect moisture consistency',
-          'Inspect panicles often',
-        ],
-        avoid_now: [
-          'Avoid heavy pruning during bloom',
-          'Avoid stress watering',
-        ],
-        watch_for: ['Mildew', 'Panicle blight'],
-        next_checkpoint_days: 6,
-      };
-    }
-    if (window === 'summer') {
-      return {
-        current_phase: 'fruit_development_or_harvest_window',
-        upcoming_phase: 'post_harvest_recovery',
-        do_now: [
-          'Harvest promptly at maturity',
-          'Maintain moisture through heat',
-          'Reduce branch stress',
-        ],
-        avoid_now: ['Avoid delayed harvest', 'Avoid heat-stress neglect'],
-        watch_for: ['Fruit cracking', 'Sun stress'],
-        next_checkpoint_days: 4,
       };
     }
     return this.genericGuidance(stage, window);
