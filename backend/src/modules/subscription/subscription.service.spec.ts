@@ -1,11 +1,11 @@
 import { SubscriptionTier, User } from '@prisma/client';
 import { PinoLogger } from 'nestjs-pino';
-import { RedisService } from '../../common/redis/redis.service';
 import { TransactionRunner } from '../../common/prisma/transaction';
 import { FixedClock } from '../../common/time';
 import { AuditService } from '../audit';
 import { UserRepository } from '../user';
 import { SubscriptionService } from './subscription.service';
+import { AppliedPaymentRepository } from './applied-payment.repository';
 import { RazorpayWebhookDto } from './dto/razorpay-webhook.dto';
 
 const NOW = new Date('2026-11-10T00:00:00Z');
@@ -33,14 +33,15 @@ function build(user: Partial<User>) {
       },
     ),
   };
-  const redis = {
-    setIfAbsent: jest.fn((key: string) => {
-      if (seen.has(key)) return Promise.resolve(false);
-      seen.add(key);
-      return Promise.resolve(true);
-    }),
-    del: jest.fn((key: string) => {
-      seen.delete(key);
+  // Like the table's primary key: a second record of one payment is a unique violation.
+  const payments = {
+    record: jest.fn((_tx: unknown, p: { paymentId: string }) => {
+      if (seen.has(p.paymentId)) {
+        return Promise.reject(
+          Object.assign(new Error('dup'), { code: 'P2002' }),
+        );
+      }
+      seen.add(p.paymentId);
       return Promise.resolve();
     }),
   };
@@ -49,7 +50,7 @@ function build(user: Partial<User>) {
   const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const service = new SubscriptionService(
     users as unknown as UserRepository,
-    redis as unknown as RedisService,
+    payments as unknown as AppliedPaymentRepository,
     audit as unknown as AuditService,
     transactions as unknown as TransactionRunner,
     new FixedClock(NOW),

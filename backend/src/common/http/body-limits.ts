@@ -22,7 +22,9 @@ export const keepRawBody = (
   _res: Response,
   buf: Buffer,
 ) => {
-  if (req.originalUrl.split('?')[0] === WEBHOOK_PATH) req.rawBody = buf;
+  // Express routes ignore case and a trailing slash; match the same way.
+  const path = req.originalUrl.split('?')[0].replace(/\/+$/, '').toLowerCase();
+  if (path === WEBHOOK_PATH) req.rawBody = buf;
 };
 
 /** Replaces Nest's default body parsers (create the app with bodyParser: false). */

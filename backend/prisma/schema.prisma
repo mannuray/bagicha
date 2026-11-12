@@ -681,3 +681,15 @@ model GardenPlace {
   @@index([user_id])
   @@map("garden_places")
 }
+
+/// One row per Razorpay payment applied: a redelivery, however late, finds it and
+/// changes nothing (Redis de-dup only lasted a week).
+model AppliedPayment {
+  payment_id String   @id
+  user_id    String
+  plan_id    String
+  applied_at DateTime @default(now())
+
+  @@index([user_id])
+  @@map("applied_payments")
+}

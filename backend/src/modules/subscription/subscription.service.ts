@@ -10,8 +10,8 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../common/errors';
-import { TransactionRunner } from '../../common/prisma/transaction';
-import { RedisService } from '../../common/redis/redis.service';
+import { Tx, TransactionRunner } from '../../common/prisma/transaction';
+import { isUniqueViolation } from '../../common/prisma/unique-violation';
 import { addDays, Clock } from '../../common/time';
 import { AuditAction, AuditService } from '../audit';
 import { UserRepository } from '../user';
@@ -19,9 +19,8 @@ import {
   OrderPaidPayloadDto,
   RazorpayWebhookDto,
 } from './dto/razorpay-webhook.dto';
+import { AppliedPaymentRepository } from './applied-payment.repository';
 import { isPlanId, PLANS, PlanId } from './plans';
-
-const WEBHOOK_DEDUPE_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 const snapshotOf = (
   u: Pick<User, 'subscription_tier' | 'premium_expires_at'>,
@@ -34,7 +33,7 @@ const snapshotOf = (
 export class SubscriptionService {
   constructor(
     private readonly users: UserRepository,
-    private readonly redis: RedisService,
+    private readonly payments: AppliedPaymentRepository,
     private readonly audit: AuditService,
     private readonly transactions: TransactionRunner,
     private readonly clock: Clock,
@@ -83,26 +82,17 @@ export class SubscriptionService {
       );
     }
 
-    const dedupeKey = `webhook:razorpay:${payment.id}`;
-    const firstDelivery = await this.redis.setIfAbsent(
-      dedupeKey,
-      '1',
-      WEBHOOK_DEDUPE_TTL_SECONDS,
+    const outcome = await this.applyPurchase(
+      notes.user_id,
+      notes.plan_id,
+      payment,
     );
-    if (!firstDelivery) {
+    if (outcome === 'duplicate') {
       this.logger.info(
         { paymentId: payment.id },
         'Duplicate Razorpay delivery ignored',
       );
       return { received: true, duplicate: true };
-    }
-
-    try {
-      await this.applyPurchase(notes.user_id, notes.plan_id, payment);
-    } catch (err) {
-      // Let Razorpay's retry apply it (and keep alerting until someone looks).
-      await this.redis.del(dedupeKey);
-      throw err;
     }
     return { received: true };
   }
@@ -111,7 +101,7 @@ export class SubscriptionService {
     userId: string,
     planIdRaw: string | undefined,
     payment: { id: string; amount: number; currency: string },
-  ): Promise<void> {
+  ): Promise<'applied' | 'duplicate' | 'refused'> {
     const paymentId = payment.id;
     if (!isPlanId(planIdRaw)) {
       // Money was taken for something we can't fulfil: a bug, not bad input.
@@ -131,47 +121,66 @@ export class SubscriptionService {
         },
         'Paid amount does not match the plan; not applying',
       );
-      return;
+      return 'refused';
     }
 
-    await this.transactions.run(async (tx) => {
-      const user = await this.users.findById(userId, tx);
-      if (!user) throw new NotFoundError('USER_NOT_FOUND', 'User not found');
-
-      const now = this.clock.now();
-      const lifetime =
-        user.subscription_tier === SubscriptionTier.PREMIUM &&
-        user.premium_expires_at === null;
-      const from =
-        user.premium_expires_at && user.premium_expires_at > now
-          ? user.premium_expires_at
-          : now;
-      const after = {
-        subscription_tier: SubscriptionTier.PREMIUM,
-        premium_expires_at: lifetime ? null : addDays(from, plan.days),
-      };
-
-      await this.users.updateSubscription(
-        userId,
-        { tier: after.subscription_tier, expiresAt: after.premium_expires_at },
-        tx,
+    try {
+      await this.transactions.run((tx) =>
+        this.extendPremium(tx, userId, paymentId, planIdRaw, plan.days),
       );
-      await this.audit.record(
-        {
-          actorUserId: userId,
-          action: AuditAction.SUBSCRIPTION_CHANGED,
-          targetType: 'user',
-          targetId: userId,
-          snapshot: {
-            payment_id: paymentId,
-            plan_id: planIdRaw,
-            before: snapshotOf(user),
-            after: snapshotOf(after),
-          },
-        },
-        tx,
-      );
-    });
+    } catch (err) {
+      // The payment row's primary key: this payment was already applied.
+      if (isUniqueViolation(err)) return 'duplicate';
+      throw err;
+    }
     this.logger.info({ userId, paymentId }, 'Premium applied');
+    return 'applied';
+  }
+
+  /** Records the payment (once, by its id) and extends premium in one transaction. */
+  private async extendPremium(
+    tx: Tx,
+    userId: string,
+    paymentId: string,
+    planId: PlanId,
+    days: number,
+  ): Promise<void> {
+    await this.payments.record(tx, { paymentId, userId, planId });
+    const user = await this.users.findById(userId, tx);
+    if (!user) throw new NotFoundError('USER_NOT_FOUND', 'User not found');
+
+    const now = this.clock.now();
+    const lifetime =
+      user.subscription_tier === SubscriptionTier.PREMIUM &&
+      user.premium_expires_at === null;
+    const from =
+      user.premium_expires_at && user.premium_expires_at > now
+        ? user.premium_expires_at
+        : now;
+    const after = {
+      subscription_tier: SubscriptionTier.PREMIUM,
+      premium_expires_at: lifetime ? null : addDays(from, days),
+    };
+
+    await this.users.updateSubscription(
+      userId,
+      { tier: after.subscription_tier, expiresAt: after.premium_expires_at },
+      tx,
+    );
+    await this.audit.record(
+      {
+        actorUserId: userId,
+        action: AuditAction.SUBSCRIPTION_CHANGED,
+        targetType: 'user',
+        targetId: userId,
+        snapshot: {
+          payment_id: paymentId,
+          plan_id: planId,
+          before: snapshotOf(user),
+          after: snapshotOf(after),
+        },
+      },
+      tx,
+    );
   }
 }

@@ -12,6 +12,18 @@ describe('keepRawBody', () => {
     expect(r.rawBody).toBe(buf);
   });
 
+  it('matches the webhook the way Express routes it (any case, trailing slash, query)', () => {
+    for (const url of [
+      '/api/v1/subscription/webhook/',
+      '/API/v1/Subscription/Webhook',
+      '/api/v1/subscription/webhook?x=1',
+    ]) {
+      const r = req(url);
+      keepRawBody(r, {} as Response, buf);
+      expect(r.rawBody).toBe(buf);
+    }
+  });
+
   it('does not hold a second copy of every other body (8 MB scan photos)', () => {
     for (const url of ['/api/v1/vision/diagnose', '/api/v1/ledger/plants']) {
       const r = req(url);

@@ -4,6 +4,7 @@ import { createHmac } from 'crypto';
 import request from 'supertest';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
+import Redis from 'ioredis';
 import { resetDb, seedUser } from './fixtures';
 
 describe('Razorpay webhook', () => {
@@ -91,5 +92,21 @@ describe('Razorpay webhook', () => {
     const res = await post(raw, sign(raw));
     expect(res.status).toBe(201);
     expect((await reload()).subscription_tier).toBe('FREE');
+  });
+
+  it('applies a payment once, even when Razorpay redelivers it long after (Redis forgot)', async () => {
+    const raw = payloadFor(user.id, 'pay_once');
+    expect((await post(raw, sign(raw))).status).toBe(201);
+    const first = (await reload()).premium_expires_at;
+    const redis = new Redis({
+      host: process.env.REDIS_HOST,
+      port: Number(process.env.REDIS_PORT),
+    });
+    await redis.del(...(await redis.keys('webhook:razorpay:*')), 'none');
+    redis.disconnect();
+    const again = await post(raw, sign(raw));
+    expect(again.status).toBe(201);
+    expect(again.body.data).toMatchObject({ duplicate: true });
+    expect((await reload()).premium_expires_at).toEqual(first);
   });
 });
