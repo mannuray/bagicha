@@ -13,5 +13,6 @@ export const otpFailKey = (phoneNumber: string) =>
   `otp_fail:${phoneHash(phoneNumber)}`;
 export const otpCooldownKey = (phoneNumber: string) =>
   `otp_cooldown:${phoneHash(phoneNumber)}`;
-export const otpDailyKey = (phoneNumber: string) =>
-  `otp_daily:${phoneHash(phoneNumber)}`;
+/** Per phone and caller: someone else asking for codes can't use up the owner's day. */
+export const otpDailyKey = (phoneNumber: string, callerIp: string) =>
+  `otp_daily:${phoneHash(`${phoneNumber}|${callerIp}`)}`;

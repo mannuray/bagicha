@@ -3,6 +3,7 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Ip,
   Post,
   Request,
   UseGuards,
@@ -21,8 +22,11 @@ export class AuthController {
   @Post('request-otp')
   @RateLimit('auth')
   @HttpCode(HttpStatus.OK)
-  async requestOtp(@Body() requestOtpDto: RequestOtpDto) {
-    return this.authService.requestOtp(requestOtpDto.phone_number);
+  async requestOtp(
+    @Body() requestOtpDto: RequestOtpDto,
+    @Ip() callerIp: string,
+  ) {
+    return this.authService.requestOtp(requestOtpDto.phone_number, callerIp);
   }
 
   @Post('verify-otp')

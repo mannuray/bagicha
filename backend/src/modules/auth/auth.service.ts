@@ -50,9 +50,11 @@ export class AuthService {
 
   async requestOtp(
     phoneNumber: string,
+    callerIp = 'unknown',
   ): Promise<{ message: string; dev_otp?: string }> {
-    // Per phone: one code a minute, ten a day (stops cycling codes to get fresh guesses,
-    // and stops anyone cancelling someone else's code over and over).
+    // Per phone: one code a minute (stops cycling codes for fresh guesses and
+    // cancelling someone else's code over and over). Ten a day per phone and
+    // caller, so a stranger can't lock the owner out for the day.
     const fresh = await this.redisService.setIfAbsent(
       otpCooldownKey(phoneNumber),
       '1',
@@ -65,7 +67,7 @@ export class AuthService {
       );
     }
     const today = await this.redisService.incrWithTtl(
-      otpDailyKey(phoneNumber),
+      otpDailyKey(phoneNumber, callerIp),
       DAY_SECONDS,
     );
     if (today > OTP_DAILY_LIMIT) {

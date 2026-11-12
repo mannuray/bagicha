@@ -159,6 +159,30 @@ describe('AuthService', () => {
     });
   });
 
+  it("someone else using up a phone's daily codes does not lock its owner out", async () => {
+    const { service, store } = build({ NODE_ENV: 'development' });
+    const clearCooldown = () => {
+      for (const k of [...store.keys()])
+        if (k.startsWith('otp_cooldown:')) store.delete(k);
+    };
+    for (let i = 0; i < 10; i += 1) {
+      clearCooldown();
+      await service.requestOtp(PHONE, '198.51.100.7');
+    }
+    clearCooldown();
+    await expect(
+      service.requestOtp(PHONE, '198.51.100.7'),
+    ).rejects.toMatchObject({
+      reason: 'OTP_DAILY_LIMIT',
+    });
+    clearCooldown();
+    await expect(
+      service.requestOtp(PHONE, '203.0.113.9'),
+    ).resolves.toMatchObject({
+      message: expect.any(String),
+    });
+  });
+
   it('asking for a new code does not reset the wrong-guess count', async () => {
     const { service, store } = build({ NODE_ENV: 'development' });
     await service.requestOtp(PHONE);
