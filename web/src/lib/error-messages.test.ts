@@ -18,6 +18,15 @@ describe('messageFor', () => {
   });
 });
 
+describe('sign-in code limits and photo checks', () => {
+  it('explains each new backend refusal', () => {
+    expect(messageFor(new ApiError(429, 'OTP_COOLDOWN', 'x'), t)).toMatch(/already sent.*minute/i);
+    expect(messageFor(new ApiError(429, 'OTP_DAILY_LIMIT', 'x'), t)).toMatch(/tomorrow/i);
+    expect(messageFor(new ApiError(422, 'MEDIA_UNREADABLE', 'x'), t)).toMatch(/couldn't open/i);
+    expect(messageFor(new ApiError(415, 'MEDIA_TYPE_UNSUPPORTED', 'x'), t)).toMatch(/jpeg, png or webp/i);
+  });
+});
+
 describe('old tree since-year', () => {
   it('has its own message', () => {
     expect(messageFor(new ApiError(422, 'BEARING_SINCE_YEAR_INVALID', 'x'), t)).toMatch(/planted.*this year/i);

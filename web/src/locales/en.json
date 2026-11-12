@@ -33,7 +33,11 @@
     "IMAGE_UNSUPPORTED": "That file isn't a photo we can use.",
     "IMAGE_TOO_LARGE": "That photo is too large, even after shrinking it.",
     "TIMEOUT": "The server is taking too long. Please try again in a moment.",
-    "BEARING_SINCE_YEAR_INVALID": "The fruiting year should be between the planted year and this year."
+    "BEARING_SINCE_YEAR_INVALID": "The fruiting year should be between the planted year and this year.",
+    "OTP_COOLDOWN": "A code was already sent. Please wait a minute before asking for another.",
+    "OTP_DAILY_LIMIT": "Too many codes for this number today. Please try again tomorrow.",
+    "MEDIA_UNREADABLE": "We couldn't open that photo. Please try another one.",
+    "MEDIA_TYPE_UNSUPPORTED": "Please choose a JPEG, PNG or WebP photo."
   },
   "nav": {
     "label": "Main",

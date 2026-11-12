@@ -24,4 +24,6 @@ RUN npm prune --omit=dev
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 EXPOSE 3000
+# Not root: the app only reads its files (owned by root) and writes to stdout.
+USER node
 CMD ["node", "--require", "./dist/instrumentation.js", "dist/main"]
