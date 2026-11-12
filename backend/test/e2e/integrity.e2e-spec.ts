@@ -43,8 +43,11 @@ describe('data integrity', () => {
   });
 
   it('materializing twice at once makes one copy of each seasonal task', async () => {
+    // Guava is still on season packs (mango now has dated care).
     const plant = await seedPlant(prisma, alice.id, {
       planting_date: new Date('2018-01-01'),
+      species: 'Guava',
+      species_family: 'guava',
     });
     const materialize = () =>
       request(app.getHttpServer())

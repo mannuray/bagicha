@@ -46,19 +46,21 @@ describe('tree care completeness (the add-plant playbook)', () => {
     expect(CARE_PENDING.filter((f) => TREE_CARE[f])).toEqual([]);
   });
 
-  it('titles are at most 60 characters and every chemical line mentions gloves and days', () => {
+  it('titles are at most 60 characters; every chemical spray mentions gloves and waiting days', () => {
     const problems: string[] = [];
     for (const care of Object.values(TREE_CARE)) {
       for (const item of allItems(care)) {
         if (item.title.length > 60)
           problems.push(`${care.family}.${item.key}: title too long`);
+        if (item.chemical && !/gloves/i.test(item.chemical))
+          problems.push(`${care.family}.${item.key}: chemical lacks gloves`);
+        // Sprays carry a waiting period before picking; fertiliser doesn't.
         if (
+          item.category === 'PROTECTION' &&
           item.chemical &&
-          !(/gloves/i.test(item.chemical) && /days/i.test(item.chemical))
+          !/days/i.test(item.chemical)
         )
-          problems.push(
-            `${care.family}.${item.key}: chemical line lacks gloves/days`,
-          );
+          problems.push(`${care.family}.${item.key}: spray lacks waiting days`);
       }
     }
     expect(problems).toEqual([]);

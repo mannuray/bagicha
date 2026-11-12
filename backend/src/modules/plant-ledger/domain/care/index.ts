@@ -1,3 +1,4 @@
+import { MANGO_CARE } from './mango';
 import type { FamilyCare } from './types';
 
 export type {
@@ -14,14 +15,15 @@ export { carePhaseView, NOT_GROWN_NOTE, treeCareDue } from './engine';
 export type { CarePhase, CareReminder, TreeCareInput } from './engine';
 
 /** Tree families whose care follows the add-plant playbook. */
-export const TREE_CARE: Readonly<Record<string, FamilyCare>> = {};
+export const TREE_CARE: Readonly<Record<string, FamilyCare>> = {
+  mango: MANGO_CARE,
+};
 
 /**
  * Catalogue families still on generic season packs. This list only shrinks:
  * when a family's care ships, it moves from here into TREE_CARE.
  */
 export const CARE_PENDING: readonly string[] = [
-  'mango',
   'citrus',
   'guava',
   'litchi',

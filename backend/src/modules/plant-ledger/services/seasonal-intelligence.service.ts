@@ -95,8 +95,6 @@ export class SeasonalIntelligenceService {
       | 'post_monsoon',
   ): SeasonalRuleOutput {
     switch (speciesFamily) {
-      case 'mango':
-        return this.mangoGuidance(lifecycleStage, seasonalWindow);
       case 'citrus':
         return this.citrusGuidance(lifecycleStage, seasonalWindow);
       case 'litchi':
@@ -106,98 +104,6 @@ export class SeasonalIntelligenceService {
       default:
         return this.genericGuidance(lifecycleStage, seasonalWindow);
     }
-  }
-
-  private mangoGuidance(
-    stage: LifecycleStage,
-    window: string,
-  ): SeasonalRuleOutput {
-    if (window === 'late_winter') {
-      return {
-        current_phase:
-          stage === LifecycleStage.MATURE_BEARING
-            ? 'pre_flowering'
-            : 'vegetative_growth',
-        upcoming_phase:
-          stage === LifecycleStage.MATURE_BEARING
-            ? 'flowering'
-            : 'juvenile_flush',
-        do_now: [
-          'Inspect new terminals for bud initiation',
-          'Keep watering steady but not excessive',
-          'Clean up diseased leaf litter around the base',
-        ],
-        avoid_now: [
-          'Do not do heavy pruning',
-          'Avoid excess nitrogen close to flowering',
-        ],
-        watch_for: ['Powdery mildew', 'Mango hoppers'],
-        next_checkpoint_days: 7,
-      };
-    }
-    if (window === 'spring') {
-      return {
-        current_phase:
-          stage === LifecycleStage.MATURE_BEARING
-            ? 'flowering_or_fruit_set'
-            : 'active_growth',
-        upcoming_phase: 'fruit_development',
-        do_now: [
-          'Watch panicles and fruit set closely',
-          'Keep moisture stable during dry spells',
-          'Remove visibly diseased inflorescences early',
-        ],
-        avoid_now: ['Avoid canopy shock from pruning', 'Do not waterlog roots'],
-        watch_for: ['Anthracnose', 'Fruit drop'],
-        next_checkpoint_days: 5,
-      };
-    }
-    if (window === 'summer') {
-      return {
-        current_phase: 'fruit_development_or_harvest_window',
-        upcoming_phase: 'post_harvest_recovery',
-        do_now: [
-          'Harvest mature fruit promptly',
-          'Protect fruiting branches from stress',
-          'Deep-water during heat stress if soil is dry',
-        ],
-        avoid_now: [
-          'Avoid severe pruning during harvest window',
-          'Avoid missed harvests on ripened fruit',
-        ],
-        watch_for: ['Fruit cracking', 'Heat stress'],
-        next_checkpoint_days: 4,
-      };
-    }
-    if (window === 'monsoon') {
-      return {
-        current_phase: 'post_harvest_recovery',
-        upcoming_phase: 'vegetative_flush',
-        do_now: [
-          'Support recovery nutrition after harvest',
-          'Monitor drainage around root zone',
-          'Remove damaged twigs selectively',
-        ],
-        avoid_now: [
-          'Avoid standing water',
-          'Avoid dense canopies that trap moisture',
-        ],
-        watch_for: ['Fungal leaf disease', 'Root stress'],
-        next_checkpoint_days: 10,
-      };
-    }
-    return {
-      current_phase: 'vegetative_flush',
-      upcoming_phase: 'pre_flowering',
-      do_now: [
-        'Shape lightly if needed',
-        'Build plant vigor gradually',
-        'Inspect for pest carryover',
-      ],
-      avoid_now: ['Avoid overfeeding', 'Avoid weak sanitation around canopy'],
-      watch_for: ['Scale insects', 'Leaf spot'],
-      next_checkpoint_days: 14,
-    };
   }
 
   private citrusGuidance(
