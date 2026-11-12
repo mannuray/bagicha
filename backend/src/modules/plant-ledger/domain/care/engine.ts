@@ -1,6 +1,13 @@
 import { LifecycleStage, RegionCluster } from '@prisma/client';
 import { resolveRegionCare, stageOf } from './region-care';
-import type { CareCategory, CareItem, FamilyCare, MonthDay } from './types';
+import type {
+  CareCategory,
+  CareItem,
+  Dose,
+  DosePart,
+  FamilyCare,
+  MonthDay,
+} from './types';
 
 export const NOT_GROWN_NOTE =
   'Not usually grown in your region; timings may differ.';
@@ -85,15 +92,35 @@ export function windowOf(
   return { start, end, openNow };
 }
 
-function ageBand(
-  stage: LifecycleStage,
-  plantedAt: Date | null,
-  now: Date,
-): keyof NonNullable<CareItem['amounts']> {
-  if (!plantedAt) return stageOf(stage) === 'YOUNG' ? 'upTo3y' : 'y4to7';
-  const years = (now.getTime() - plantedAt.getTime()) / (365.25 * DAY_MS);
-  if (years < 4) return 'upTo3y';
-  return years < 8 ? 'y4to7' : 'y8plus';
+/** Whole years since planting, at least 1; null when the planting date is unknown. */
+function ageYears(plantedAt: Date | null, now: Date): number | null {
+  if (!plantedAt) return null;
+  const years = Math.floor(
+    (now.getTime() - plantedAt.getTime()) / (365.25 * DAY_MS),
+  );
+  return Math.max(years, 1);
+}
+
+const weight = (grams: number) =>
+  grams >= 1000
+    ? `${Number((grams / 1000).toFixed(1))} kg`
+    : `${Math.round(grams)} g`;
+
+const doseLine = (parts: DosePart[], years: number) =>
+  parts.map((p) => `${weight(p.grams * years)} ${p.what}`).join(' + ');
+
+/**
+ * This tree's dose ("For a 6-year-old tree: 30 kg FYM; or 660 g urea …"), or the
+ * per-year rule when its age is unknown.
+ */
+export function doseFor(dose: Dose, age: number | null): string {
+  const years = age === null ? 1 : Math.min(age, dose.maxAgeYears);
+  const lines = [doseLine(dose.organic, years), doseLine(dose.chemical, years)]
+    .filter(Boolean)
+    .join('; or ');
+  return age === null
+    ? `Per year of the tree's age (up to ${dose.maxAgeYears}): ${lines}`
+    : `For a ${years}-year-old tree: ${lines}`;
 }
 
 /**
@@ -106,7 +133,7 @@ export function treeCareDue(
 ): { reminders: CareReminder[]; onPage: CareItem[]; note: string | null } {
   const { care, grownHere } = resolveRegionCare(family, input.region);
   const stage = stageOf(input.stage);
-  const band = ageBand(input.stage, input.plantedAt, input.now);
+  const age = ageYears(input.plantedAt, input.now);
   const candidates: Array<{
     item: CareItem;
     start: Date;
@@ -141,7 +168,7 @@ export function treeCareDue(
       organic: item.organic,
       chemical: item.chemical ?? null,
       why: item.why,
-      amount: item.amounts?.[band] ?? null,
+      amount: item.dose ? doseFor(item.dose, age) : null,
     }),
   );
   return { reminders, onPage, note: grownHere ? null : NOT_GROWN_NOTE };

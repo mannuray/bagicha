@@ -103,25 +103,34 @@ describe('treeCareDue', () => {
     expect(onPage.map((i) => i.key).sort()).toEqual(['borer', 'general']);
   });
 
-  it('picks the dose band by age, and by stage without a planting date', () => {
-    const amounts = { upTo3y: 'small', y4to7: 'medium', y8plus: 'large' };
+  it("scales the dose with the tree's age, capped, and gives the rule when the age is unknown", () => {
+    const dose = {
+      organic: [{ what: 'FYM', grams: 5000 }],
+      chemical: [
+        { what: 'urea', grams: 110 },
+        { what: 'SSP', grams: 155 },
+      ],
+      maxAgeYears: 10,
+    };
     const x = item('feed', [2, 1], [2, 28], {
-      amounts,
+      dose,
       stages: ['YOUNG', 'BEARING'],
     });
     expect(
       due([x], '2026-02-10', { plantedAt: ist('2020-01-01') }).reminders[0]
         .amount,
-    ).toBe('medium');
+    ).toBe('For a 6-year-old tree: 30 kg FYM; or 660 g urea + 930 g SSP');
     expect(
-      due([x], '2026-02-10', { plantedAt: ist('2015-01-01') }).reminders[0]
+      due([x], '2026-02-10', { plantedAt: ist('2005-01-01') }).reminders[0]
         .amount,
-    ).toBe('large');
-    expect(due([x], '2026-02-10').reminders[0].amount).toBe('medium');
+    ).toBe('For a 10-year-old tree: 50 kg FYM; or 1.1 kg urea + 1.6 kg SSP');
     expect(
-      due([x], '2026-02-10', { stage: LifecycleStage.SAPLING }).reminders[0]
+      due([x], '2026-02-10', { plantedAt: ist('2025-12-01') }).reminders[0]
         .amount,
-    ).toBe('small');
+    ).toBe('For a 1-year-old tree: 5 kg FYM; or 110 g urea + 155 g SSP');
+    expect(due([x], '2026-02-10').reminders[0].amount).toBe(
+      "Per year of the tree's age (up to 10): 5 kg FYM; or 110 g urea + 155 g SSP",
+    );
   });
 
   it('uses the nearest grown region with a note', () => {

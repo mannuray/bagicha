@@ -11,7 +11,9 @@ region, now.
 - Organic first, with amounts; chemical as the alternative with dose,
   "wear gloves" and waiting days before harvest. Only products approved for
   that crop in India; never banned ones.
-- Doses scale by tree age (`upTo3y`, `y4to7`, `y8plus`) where it matters.
+- Doses that scale with age go in `dose` as the guides give them: per year
+  of the tree's age (organic and chemical parts), with the age cap. The app
+  works out each tree's amount — never hand-write age bands.
 - Reminder title ≤ 60 characters, starts with a verb.
 - "Only if you see …" sprays are `conditional`: plant page, never reminders.
 - At most 3 reminders per tree per month reach the gardener; order the

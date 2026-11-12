@@ -35,14 +35,28 @@ export interface CareItem {
   organic: string;
   /** Alternative with dose, gloves and waiting days before harvest. */
   chemical?: string;
-  /** When the dose scales with the tree's age. */
-  amounts?: { upTo3y: string; y4to7: string; y8plus: string };
+  /**
+   * Dose per year of the tree's age, as the guides give it (e.g. 5 kg FYM and
+   * 110 g urea × age), up to `maxAgeYears`. The engine works out this tree's amount.
+   */
+  dose?: Dose;
   /** "Only if you see …": shown on the plant page, never a reminder. */
   conditional?: string;
   why: string;
 }
 
 /** What the tree is doing in a window: Now / Next, and what to avoid and watch. */
+export interface DosePart {
+  what: string;
+  grams: number;
+}
+
+export interface Dose {
+  organic: DosePart[];
+  chemical: DosePart[];
+  maxAgeYears: number;
+}
+
 export interface PhaseWindow {
   when: Anchor;
   stages: CareStage[];

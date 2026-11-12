@@ -25,7 +25,11 @@ const FIXTURE: FamilyCare = {
           when: { kind: 'CALENDAR', from: [1, 1], to: [12, 31] },
           organic: 'Compost 25 kg + neem cake 1 kg',
           chemical: 'Urea 500 g; wear gloves; not within 15 days of picking',
-          amounts: { upTo3y: '10 kg', y4to7: '25 kg', y8plus: '50 kg' },
+          dose: {
+            organic: [{ what: 'FYM', grams: 5000 }],
+            chemical: [{ what: 'urea', grams: 110 }],
+            maxAgeYears: 10,
+          },
           why: 'Builds next season’s shoots',
         },
       ],
