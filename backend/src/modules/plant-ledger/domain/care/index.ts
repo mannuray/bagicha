@@ -10,6 +10,8 @@ export type {
   RegionCare,
 } from './types';
 export { NEAREST_REGIONS, resolveRegionCare, stageOf } from './region-care';
+export { carePhaseView, NOT_GROWN_NOTE, treeCareDue } from './engine';
+export type { CarePhase, CareReminder, TreeCareInput } from './engine';
 
 /** Tree families whose care follows the add-plant playbook. */
 export const TREE_CARE: Readonly<Record<string, FamilyCare>> = {};

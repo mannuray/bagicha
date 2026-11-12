@@ -146,3 +146,56 @@ export function treeCareDue(
   );
   return { reminders, onPage, note: grownHere ? null : NOT_GROWN_NOTE };
 }
+
+export interface CarePhase {
+  current_phase: string;
+  upcoming_phase: string;
+  do_now: string[];
+  avoid_now: string[];
+  watch_for: string[];
+  note: string | null;
+}
+
+/** Shown when no phase window covers today. */
+const BETWEEN_PHASES = 'growing';
+const CONDITIONAL_PREFIX = 'If you see it: ';
+
+/**
+ * What the tree is doing now and next, with this phase's avoid and watch lists
+ * and the care open now. Same shape the season pack gave the plant page.
+ */
+export function carePhaseView(
+  family: FamilyCare,
+  input: Omit<TreeCareInput, 'plantedAt'>,
+): CarePhase {
+  const { care, grownHere } = resolveRegionCare(family, input.region);
+  const stage = stageOf(input.stage);
+  const windows = care.phases
+    .filter((p) => p.stages.includes(stage) && p.when.kind === 'CALENDAR')
+    .map((p) => {
+      const when = p.when as Extract<CareItem['when'], { kind: 'CALENDAR' }>;
+      return { phase: p, ...occurrenceOf(when.from, when.to, input.now) };
+    });
+  const now = input.now.getTime();
+  const current = windows.find((w) => w.start.getTime() <= now);
+  const upcoming = windows
+    .filter((w) => w !== current)
+    .map((w) =>
+      w.start.getTime() > now
+        ? w
+        : { ...w, start: new Date(w.start.getTime() + 365 * DAY_MS) },
+    )
+    .sort((a, b) => a.start.getTime() - b.start.getTime())[0];
+  const doNow = care.items
+    .filter((i) => i.stages.includes(stage) && windowOf(i, input.now)?.openNow)
+    .map((i) => (i.conditional ? `${CONDITIONAL_PREFIX}${i.title}` : i.title));
+  return {
+    current_phase: current?.phase.phase ?? BETWEEN_PHASES,
+    upcoming_phase:
+      upcoming?.phase.phase ?? current?.phase.phase ?? BETWEEN_PHASES,
+    do_now: doNow,
+    avoid_now: current?.phase.avoid ?? [],
+    watch_for: current?.phase.watch ?? [],
+    note: grownHere ? null : NOT_GROWN_NOTE,
+  };
+}

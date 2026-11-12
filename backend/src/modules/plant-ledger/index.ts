@@ -46,6 +46,9 @@ export { toPlantView } from './domain/plant-view';
 export {
   CARE_PENDING,
   careFor,
+  carePhaseView,
+  NOT_GROWN_NOTE,
+  treeCareDue,
   NEAREST_REGIONS,
   resolveRegionCare,
   stageOf,
@@ -53,6 +56,8 @@ export {
 } from './domain/care';
 export type {
   Anchor,
+  CarePhase,
+  CareReminder,
   CareItem,
   CareStage,
   FamilyCare,

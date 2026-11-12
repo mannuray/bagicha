@@ -1,6 +1,6 @@
 import { LifecycleStage } from '@prisma/client';
-import { NOT_GROWN_NOTE, treeCareDue } from './engine';
-import type { CareItem, FamilyCare, MonthDay } from './types';
+import { carePhaseView, NOT_GROWN_NOTE, treeCareDue } from './engine';
+import type { CareItem, FamilyCare, MonthDay, PhaseWindow } from './types';
 
 const ist = (s: string) => new Date(`${s}T06:00:00+05:30`);
 const item = (
@@ -134,5 +134,81 @@ describe('treeCareDue', () => {
       'Not usually grown in your region; timings may differ.',
     );
     expect(due([item('feed', [2, 1], [2, 28])], '2026-02-10').note).toBeNull();
+  });
+});
+
+const phase = (
+  name: string,
+  from: MonthDay,
+  to: MonthDay,
+  stages: PhaseWindow['stages'] = ['BEARING'],
+): PhaseWindow => ({
+  when: { kind: 'CALENDAR', from, to },
+  stages,
+  phase: name,
+  avoid: [`avoid in ${name}`],
+  watch: [`watch in ${name}`],
+});
+const view = (
+  phases: PhaseWindow[],
+  items: CareItem[],
+  now: string,
+  stage: LifecycleStage = LifecycleStage.MATURE_BEARING,
+) =>
+  carePhaseView(
+    {
+      family: 'fixture',
+      sources: ['t'],
+      grownIn: ['NORTH_INDIA'],
+      regions: { NORTH_INDIA: { items, phases } },
+    },
+    { region: 'NORTH_INDIA', stage, now: ist(now) },
+  );
+
+describe('carePhaseView', () => {
+  const phases = [
+    phase('pre_flowering', [10, 15], [1, 31]),
+    phase('flowering', [2, 1], [3, 31]),
+    phase('summer_growth', [4, 1], [6, 30], ['YOUNG']),
+  ];
+
+  it('current and upcoming phase for the stage', () => {
+    expect(view(phases, [], '2026-01-10')).toMatchObject({
+      current_phase: 'pre_flowering',
+      upcoming_phase: 'flowering',
+    });
+    expect(
+      view(phases, [], '2026-04-10', LifecycleStage.SAPLING),
+    ).toMatchObject({ current_phase: 'summer_growth' });
+  });
+
+  it('avoid and watch come from the current phase', () => {
+    expect(view(phases, [], '2026-02-10')).toMatchObject({
+      avoid_now: ['avoid in flowering'],
+      watch_for: ['watch in flowering'],
+    });
+  });
+
+  it('conditional items appear in do_now with the prefix', () => {
+    const items = [
+      item('spray', [2, 1], [2, 28]),
+      item('borer', [2, 1], [2, 28], {
+        conditional: 'If holes',
+        title: 'Plug borer holes',
+      }),
+    ];
+    expect(view(phases, items, '2026-02-10').do_now).toEqual([
+      'Do spray',
+      'If you see it: Plug borer holes',
+    ]);
+  });
+
+  it("a gap between windows reads as the next window's phase in upcoming and 'growing' in current", () => {
+    expect(view(phases, [], '2026-05-10')).toMatchObject({
+      current_phase: 'growing',
+      upcoming_phase: 'pre_flowering',
+      avoid_now: [],
+      watch_for: [],
+    });
   });
 });
