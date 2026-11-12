@@ -12,6 +12,13 @@ import { LIST_GROUPS, type ListStatus } from './list-view';
 import { usePlantList } from './usePlantList';
 
 type Status = ListStatus;
+
+/** The empty card invites what the chosen group holds (same places as the add sheet). */
+const EMPTY_INVITE = {
+  tree: { to: '/plants/new', body: 'plants.list.emptyBody', action: 'plants.list.addFirst' },
+  crop: { to: '/crops', body: 'plants.list.empty.crop.body', action: 'plants.list.empty.crop.action' },
+  flower: { to: '/crops?kind=flower', body: 'plants.list.empty.flower.body', action: 'plants.list.empty.flower.action' },
+} as const;
 const GROUPS = LIST_GROUPS;
 
 /** "Harvesting · day 40" for a growing crop; "Mature · planted 2015" for a tree. */
@@ -109,13 +116,14 @@ function PlantPage({ status, kind, page, isLast, onMore, now }: { status: Status
     return <p className="py-6 text-center font-body text-sm text-on-surface-variant">{t('plants.list.emptyPast')}</p>;
   }
   if (page === 1 && items.length === 0) {
+    const invite = EMPTY_INVITE[kind ?? 'tree'];
     return (
       <EmptyState
         title={t('plants.list.emptyTitle')}
-        body={t('plants.list.emptyBody')}
+        body={t(invite.body)}
         action={
-          <Link to="/plants/new" className="bg-primary-gradient inline-flex min-h-11 items-center rounded-full px-4 font-label text-sm font-bold text-on-primary">
-            {t('plants.list.addFirst')}
+          <Link to={invite.to} className="bg-primary-gradient inline-flex min-h-11 items-center rounded-full px-4 font-label text-sm font-bold text-on-primary">
+            {t(invite.action)}
           </Link>
         }
       />

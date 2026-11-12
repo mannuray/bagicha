@@ -172,6 +172,16 @@
       "emptyTitle": "Your garden is waiting",
       "emptyBody": "Add the trees you tend to start their story.",
       "addFirst": "Add your first tree",
+      "empty": {
+        "crop": {
+          "body": "Pick a vegetable from the crop calendar to start its season.",
+          "action": "Find a crop to grow"
+        },
+        "flower": {
+          "body": "Add the flowers you grow to follow their blooms.",
+          "action": "Add your first flower"
+        }
+      },
       "growing": "Growing",
       "past": "Past",
       "pastLine": "{{reason}} · {{date}}",

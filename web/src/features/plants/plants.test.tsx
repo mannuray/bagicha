@@ -48,6 +48,16 @@ describe('my plants', () => {
     expect(await screen.findByRole('link', { name: /add your first tree/i })).toHaveAttribute('href', '/plants/new');
   });
 
+  it('on the Crops and Flowers tabs, the empty card invites that kind, not a tree', async () => {
+    server.use(http.get(`${API}/ledger/plants`, () => HttpResponse.json(pageOf([]))));
+    renderWithApp(routes, { route: '/plants' });
+    await userEvent.click(await screen.findByRole('button', { name: /^crops$/i }));
+    expect(await screen.findByRole('link', { name: /find a crop to grow/i })).toHaveAttribute('href', '/crops');
+    expect(screen.queryByText(/add your first tree/i)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^flowers$/i }));
+    expect(await screen.findByRole('link', { name: /add your first flower/i })).toHaveAttribute('href', '/crops?kind=flower');
+  });
+
   it('shows an error with retry instead of an empty garden', async () => {
     server.use(http.get(`${API}/ledger/plants`, () => HttpResponse.json(fail('X'), { status: 500 })));
     renderWithApp(routes, { route: '/plants' });
