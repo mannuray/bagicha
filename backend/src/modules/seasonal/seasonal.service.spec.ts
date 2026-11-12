@@ -107,6 +107,7 @@ function build(opts: {
     new FixedClock(NOW),
     { registerQueueDepth: jest.fn() } as any,
     { warn: jest.fn() } as any,
+    {},
   );
   return { service, drafts, packs, pack, weatherQueue };
 }

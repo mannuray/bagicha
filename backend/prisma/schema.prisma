@@ -203,6 +203,7 @@ enum TaskSource {
   PERSONALIZED_OVERLAY
   MANUAL
   AI_DIAGNOSIS
+  TREE_CARE
 }
 
 enum DiagnosisSubjectType {

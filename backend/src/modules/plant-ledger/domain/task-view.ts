@@ -112,6 +112,7 @@ export function mapTaskView(task: {
     reasoning_summary: string | null;
     adjusted_phase: string | null;
   } | null;
+  metadata?: Prisma.JsonValue | null;
 }) {
   return {
     id: task.id,
@@ -130,5 +131,33 @@ export function mapTaskView(task: {
     plant_cycle_id: task.plant_cycle_id,
     cycle_year: task.plant_cycle?.cycle_year ?? null,
     source_summary: buildTaskSourceSummary(task),
+    care_how: careHowOf(task),
+  };
+}
+
+/** How to do a tree-care reminder: organic first, the alternative, why, the dose for this tree. */
+export interface CareHow {
+  organic: string;
+  chemical: string | null;
+  why: string;
+  amount: string | null;
+  window_end: string | null;
+}
+
+function careHowOf(task: {
+  source: TaskSource;
+  metadata?: Prisma.JsonValue | null;
+}): CareHow | null {
+  if (task.source !== TaskSource.TREE_CARE) return null;
+  const m = (task.metadata ?? {}) as Record<string, unknown>;
+  const text = (v: unknown) => (typeof v === 'string' ? v : null);
+  const organic = text(m.organic);
+  if (!organic) return null;
+  return {
+    organic,
+    chemical: text(m.chemical),
+    why: text(m.why) ?? '',
+    amount: text(m.amount),
+    window_end: text(m.window_end),
   };
 }

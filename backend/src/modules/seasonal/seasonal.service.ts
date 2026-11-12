@@ -1,6 +1,6 @@
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import {
   PersonalizedOverlay,
   Plant,
@@ -34,7 +34,11 @@ import {
   taskCategoryFromCategory,
   taskPriorityFrom,
   taskTypeFromCategory,
+  carePhaseView,
+  treeCareDue,
 } from '../plant-ledger';
+import type { CareReminder, FamilyCare } from '../plant-ledger';
+import { TREE_CARE_REGISTRY } from './tree-care-registry';
 import { isPremium, UserRepository } from '../user';
 import {
   asTaskTemplates,
@@ -73,6 +77,8 @@ export class SeasonalService implements OnModuleInit {
     private readonly metrics: Metrics,
     @InjectPinoLogger(SeasonalService.name)
     private readonly logger: PinoLogger,
+    @Inject(TREE_CARE_REGISTRY)
+    private readonly careRegistry: Readonly<Record<string, FamilyCare>>,
   ) {}
 
   onModuleInit(): void {
@@ -113,7 +119,7 @@ export class SeasonalService implements OnModuleInit {
   }
 
   async getTreeIntelligence(userId: string, plantId: string) {
-    const { pack, overlay, premium } = await this.loadIntelligence(
+    const { pack, overlay, premium, careNote } = await this.loadIntelligence(
       userId,
       plantId,
     );
@@ -121,6 +127,7 @@ export class SeasonalService implements OnModuleInit {
       seasonal_pack: toPackView(pack),
       personalized_overlay: overlay ? toOverlayView(overlay) : null,
       is_paid_user: premium,
+      care_note: careNote,
     };
   }
 
@@ -135,7 +142,10 @@ export class SeasonalService implements OnModuleInit {
     // Perennial flowers follow their own care calendar, never the fruit pack.
     if (growing.record_kind === RecordKind.FLOWER)
       return this.materializeFlowerCare(userId, growing);
-    const { pack, overlay } = await this.loadIntelligence(userId, plantId);
+    const { pack, overlay, care, user } = await this.loadIntelligence(
+      userId,
+      plantId,
+    );
     const now = this.clock.now();
     const toDraft = (
       template: TaskTemplateInput,
@@ -156,8 +166,19 @@ export class SeasonalService implements OnModuleInit {
       ...refs,
     });
 
+    // A family with reviewed care gets dated care reminders instead of pack tasks;
+    // the retire step below then cancels any pack tasks it still has.
+    const careDrafts = care
+      ? treeCareDue(care, {
+          region: regionFor(user),
+          stage: growing.lifecycle_stage,
+          plantedAt: growing.planting_date,
+          now,
+        }).reminders.map(careDraft)
+      : null;
     const drafts = [
-      ...asTaskTemplates(pack.task_templates).map((t) =>
+      ...(careDrafts ?? []),
+      ...(careDrafts ? [] : asTaskTemplates(pack.task_templates)).map((t) =>
         toDraft(
           t,
           TaskSource.SEASONAL_PACK,
@@ -226,12 +247,47 @@ export class SeasonalService implements OnModuleInit {
     const plant = await this.plants.getOwnedOrThrow(userId, plantId);
     const user = await this.users.findById(userId);
     if (!user) throw new NotFoundError('USER_NOT_FOUND', 'User not found');
-    const premium = isPremium(user, this.clock.now());
-    const pack = await this.getOrCreatePack(plant, user);
+    const now = this.clock.now();
+    const premium = isPremium(user, now);
+    const care = this.careOf(plant);
+    // The pack row stays the overlay's anchor; for a care family its guidance comes from care data.
+    const anchor = await this.getOrCreatePack(plant, user);
+    const phase = care
+      ? carePhaseView(care, {
+          region: regionFor(user),
+          stage: plant.lifecycle_stage,
+          now,
+        })
+      : null;
+    const pack: SeasonalPack = phase
+      ? {
+          ...anchor,
+          current_phase: phase.current_phase,
+          upcoming_phase: phase.upcoming_phase,
+          do_now: phase.do_now,
+          avoid_now: phase.avoid_now,
+          watch_for: phase.watch_for,
+          confidence: 'high',
+          task_templates: [],
+        }
+      : anchor;
     const overlay = premium
       ? await this.getOrRefreshOverlay(userId, plant, pack)
       : null;
-    return { pack, overlay, premium };
+    return {
+      pack,
+      overlay,
+      premium,
+      care,
+      user,
+      careNote: phase?.note ?? null,
+    };
+  }
+
+  /** Reviewed care for this tree's family, if its batch has shipped (flowers have their own care). */
+  private careOf(plant: Plant): FamilyCare | null {
+    if (plant.record_kind === RecordKind.FLOWER) return null;
+    return this.careRegistry[this.species.resolveSpeciesFamily(plant)] ?? null;
   }
 
   private async getOrCreatePack(
@@ -300,4 +356,34 @@ export class SeasonalService implements OnModuleInit {
       ? this.overlays.update(userId, existing.id, payload)
       : this.overlays.create(userId, plant.id, pack.id, payload);
   }
+}
+
+const CARE_TASK = {
+  FEEDING: [TaskType.FEED, TaskCategory.FEEDING],
+  PRUNING: [TaskType.PRUNE, TaskCategory.PRUNING],
+  PROTECTION: [TaskType.TREAT, TaskCategory.TREATMENT],
+  WATERING: [TaskType.WATER, TaskCategory.WATERING],
+  GENERAL: [TaskType.OBSERVE, TaskCategory.OBSERVATION],
+} as const;
+
+/** A care reminder as a task: how-to in metadata for the task card (and later notifications). */
+function careDraft(r: CareReminder): TaskDraft {
+  return {
+    type: CARE_TASK[r.category][0],
+    category: CARE_TASK[r.category][1],
+    priority:
+      r.category === 'PROTECTION' ? TaskPriority.HIGH : TaskPriority.MEDIUM,
+    title: r.title,
+    source: TaskSource.TREE_CARE,
+    sourceKey: r.sourceKey,
+    reason: r.why,
+    metadata: {
+      organic: r.organic,
+      chemical: r.chemical,
+      why: r.why,
+      amount: r.amount,
+      window_end: r.windowEnd.toISOString(),
+    },
+    dueDate: r.due,
+  };
 }

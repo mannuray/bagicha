@@ -57,6 +57,7 @@ const ONE_OFF_SOURCES: ReadonlySet<TaskSource> = new Set([
   TaskSource.FLOWER_CARE,
   TaskSource.SEASONAL_PACK,
   TaskSource.PERSONALIZED_OVERLAY,
+  TaskSource.TREE_CARE,
 ]);
 
 /** The single entry point for creating tasks, plus task reads and status changes. */
