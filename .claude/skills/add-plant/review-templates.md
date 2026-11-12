@@ -11,7 +11,7 @@ Then: dose table by age (if any), conditional items, and phases:
 | Phase | Group A | Group B | … | Avoid | Watch |
 |---|---|---|---|---|---|
 
-State `grownIn`, which regions share (`sameAs`) and why, and the sources.
+State `grownIn`, which regions share (`sameAs`) and why, the source link per row (from the source check), and what the check corrected or removed.
 Mark uncertain lines "(check)".
 
 **Claude Doc (batch).** One section per family with the same tables; the
