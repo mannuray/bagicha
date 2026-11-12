@@ -26,10 +26,12 @@ New family or improving an existing one — do each that applies, in order.
    - Timing other than calendar dates (bahar, planting, pruning) needs the
      per-tree timing work first — until then those items show on the plant
      page only.
-6. **Spot-check spec** — `care/<family>.spec.ts`: 3 checks copied from the
+6. **Keep the verified table** in `docs/plant-care/<family>.md` (sources per
+   row, what the check changed); the care file cites it.
+7. **Spot-check spec** — `care/<family>.spec.ts`: 3 checks copied from the
    approved table (one reminder per timing group: exact title and window).
-7. **Prove**:
+8. **Prove**:
    - `cd backend && npx jest src/modules/plant-ledger src/modules/plants src/modules/seasonal`
    - `cd backend && npx jest -c test/jest-e2e.json tree-care catalogue`
    - `npm run lint` and `node scripts/check-module-imports.js`
-8. **Commit** `feat(care): <family> care (reviewed)`.
+9. **Commit** `feat(care): <family> care (reviewed)`.

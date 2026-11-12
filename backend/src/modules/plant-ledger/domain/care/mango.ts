@@ -9,7 +9,7 @@ import type {
 
 /**
  * Mango care, transcribed from the source-checked table approved on 2026-11-12
- * (.superpowers/sdd/2026-11-12-plant-playbook/mango-verified.md). Change it only
+ * (docs/plant-care/mango.md, with a source for every row). Change it only
  * through the add-plant playbook: source check, then the owner's yes.
  *
  * Timing groups: A = North + East (same flowering Feb–Mar, harvest Jun–Aug);
