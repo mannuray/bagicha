@@ -1,11 +1,5 @@
-import type {
-  CareItem,
-  Dose,
-  FamilyCare,
-  MonthDay,
-  PhaseWindow,
-  RegionCare,
-} from './types';
+import { ALL_YEAR, groupCare, type ItemSpec, type PhaseSpec } from './build';
+import type { Dose, FamilyCare, RegionCare } from './types';
 
 /**
  * Mango care, transcribed from the source-checked table approved on 2026-11-12
@@ -18,8 +12,6 @@ import type {
  * Kerala's earlier season unverified).
  */
 type Group = 'A' | 'CENTRAL' | 'WEST' | 'SOUTH' | 'COAST';
-type Window = [MonthDay, MonthDay];
-type Windows = Partial<Record<Group, Window | Window[]>>;
 
 /** NHB-7: per year of age, up to 10 years; FYM once a year, NPK in two halves. */
 const MAIN_FEED_DOSE: Dose = {
@@ -33,11 +25,7 @@ const MAIN_FEED_DOSE: Dose = {
 };
 const SECOND_FEED_DOSE: Dose = { ...MAIN_FEED_DOSE, organic: [] };
 
-interface ItemSpec extends Omit<CareItem, 'when'> {
-  windows: Windows;
-}
-
-const BEARING: ItemSpec[] = [
+const BEARING: ItemSpec<Group>[] = [
   {
     key: 'prune_after_harvest',
     title: 'Prune dead and crossing branches',
@@ -363,13 +351,8 @@ const BEARING: ItemSpec[] = [
   },
 ];
 
-const ALL_YEAR: Window = [
-  [1, 1],
-  [12, 31],
-];
-
 /** Only if you see it: on the plant page, never reminders. */
-const CONDITIONAL: ItemSpec[] = [
+const CONDITIONAL: ItemSpec<Group>[] = [
   {
     key: 'hopper_repeat',
     title: 'Repeat the hopper spray',
@@ -473,7 +456,7 @@ const CONDITIONAL: ItemSpec[] = [
   },
 ];
 
-const YOUNG: ItemSpec[] = [
+const YOUNG: ItemSpec<Group>[] = [
   {
     key: 'feed_young',
     title: 'Feed the young tree',
@@ -646,14 +629,7 @@ const YOUNG: ItemSpec[] = [
   },
 ];
 
-type PhaseSpec = Omit<PhaseWindow, 'when' | 'stages'> & {
-  months: Partial<Record<Group, [number, number]>>;
-};
-
-const lastDay = (month: number) =>
-  new Date(Date.UTC(2026, month, 0)).getUTCDate();
-
-const PHASES: PhaseSpec[] = [
+const PHASES: PhaseSpec<Group>[] = [
   {
     phase: 'post_harvest_recovery',
     avoid: ['Heavy pruning after September'],
@@ -721,41 +697,9 @@ const PHASES: PhaseSpec[] = [
   },
 ];
 
-function regionCare(group: Group): RegionCare {
-  const items: CareItem[] = [...BEARING, ...CONDITIONAL, ...YOUNG].flatMap(
-    ({ windows, ...item }) => {
-      const w = windows[group];
-      if (!w) return [];
-      const list = Array.isArray(w[0][0]) ? (w as Window[]) : [w as Window];
-      return list.map(([from, to]) => ({
-        ...item,
-        when: { kind: 'CALENDAR' as const, from, to },
-      }));
-    },
-  );
-  const phase = (specs: PhaseSpec[], stages: PhaseWindow['stages']) =>
-    specs.flatMap(({ months, ...p }) => {
-      const m = months[group];
-      if (!m) return [];
-      const [from, to] = m;
-      return [
-        {
-          ...p,
-          stages,
-          when: {
-            kind: 'CALENDAR' as const,
-            from: [from, 1] as MonthDay,
-            to: [to, lastDay(to)] as MonthDay,
-          },
-        },
-      ];
-    });
-  return {
-    items,
-    // Young trees have no phase table in the approved content: they read as 'growing'.
-    phases: phase(PHASES, ['BEARING']),
-  };
-}
+const regionCare = (group: Group): RegionCare =>
+  // Young trees have no phase table in the approved content: they read as 'growing'.
+  groupCare(group, [...BEARING, ...CONDITIONAL, ...YOUNG], PHASES);
 
 export const MANGO_CARE: FamilyCare = {
   family: 'mango',
