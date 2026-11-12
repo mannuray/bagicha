@@ -403,6 +403,8 @@ model Task {
   @@index([seasonal_pack_id])
   @@index([personalized_overlay_id])
   @@index([diagnosis_outcome_id])
+  // Also a partial unique index, one PENDING task per (tree_id, source, source_key):
+  // Prisma can't express it, so it lives in migration 20261112110000_task_keys.
 
   @@map("tasks")
 }
