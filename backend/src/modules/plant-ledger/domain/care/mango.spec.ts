@@ -92,4 +92,30 @@ describe('mango care (verified table)', () => {
       }).current_phase,
     ).toBe('flowering');
   });
+
+  it('matches the approved table: shoot gall watched before flowering in the North', () => {
+    const v = carePhaseView(MANGO_CARE, { region: 'NORTH_INDIA', stage: bearing, now: ist('2026-11-15') });
+    expect(v.current_phase).toBe('pre_flowering');
+    expect(v.watch_for).toEqual(['Mealybug', 'Shoot gall']);
+  });
+
+  it('adds nothing the table lacks: young trees have no invented phases', () => {
+    const v = carePhaseView(MANGO_CARE, { region: 'NORTH_INDIA', stage: LifecycleStage.SAPLING, now: ist('2026-05-15') });
+    expect(v).toMatchObject({ current_phase: 'growing', avoid_now: [], watch_for: [] });
+  });
+
+  it('"only if you see it" items appear only in their season', () => {
+    const july = treeCareDue(MANGO_CARE, { region: 'NORTH_INDIA', stage: bearing, plantedAt: null, now: ist('2026-07-15') });
+    expect(july.onPage.map((i) => i.key)).not.toContain('malformation');
+    expect(july.onPage.map((i) => i.key)).not.toContain('hopper_repeat');
+    const feb = treeCareDue(MANGO_CARE, { region: 'NORTH_INDIA', stage: bearing, plantedAt: null, now: ist('2026-02-20') });
+    expect(feb.onPage.map((i) => i.key)).toContain('malformation');
+  });
+
+  it('blossom blight: coastal flowering only, azoxystrobin as the approved option', () => {
+    const item = (MANGO_CARE.regions.COASTAL_HUMID as { items: { key: string; when: unknown; organic: string; chemical?: string }[] }).items.find((i) => i.key === 'blossom_blight');
+    expect(item?.when).toEqual({ kind: 'CALENDAR', from: [11, 1], to: [12, 31] });
+    expect(item?.organic).not.toMatch(/copper/i);
+    expect(item?.chemical).toMatch(/Azoxystrobin 23 SC 1 ml per litre/);
+  });
 });

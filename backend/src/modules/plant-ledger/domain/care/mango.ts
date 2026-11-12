@@ -108,8 +108,7 @@ const BEARING: ItemSpec[] = [
     title: 'Second feed',
     category: 'FEEDING',
     stages: ['BEARING'],
-    organic:
-      "Growing fully organic? Skip it: the main feed's FYM covers the year",
+    organic: "None now: all the year's FYM went in with the main feed",
     chemical:
       'Other half of urea + SSP + MOP in the ring; water in if there is no rain; wear gloves',
     dose: SECOND_FEED_DOSE,
@@ -381,12 +380,28 @@ const CONDITIONAL: ItemSpec[] = [
     chemical:
       'Imidacloprid 17.8 SL 0.3 ml per litre; wear gloves; not within 45 days of picking',
     why: 'A second wave of hoppers can still drop young fruit',
+    // Pea-size fruit: the fruit-development months of the approved phase table.
     windows: {
-      A: ALL_YEAR,
-      CENTRAL: ALL_YEAR,
-      WEST: ALL_YEAR,
-      SOUTH: ALL_YEAR,
-      COAST: ALL_YEAR,
+      A: [
+        [4, 1],
+        [5, 31],
+      ],
+      CENTRAL: [
+        [3, 1],
+        [4, 30],
+      ],
+      WEST: [
+        [3, 1],
+        [4, 30],
+      ],
+      SOUTH: [
+        [2, 1],
+        [3, 31],
+      ],
+      COAST: [
+        [1, 1],
+        [2, 28],
+      ],
     },
   },
   {
@@ -414,12 +429,28 @@ const CONDITIONAL: ItemSpec[] = [
     conditional: 'Flower bunches that are bunched up and malformed',
     organic: 'Cut them off with 15–20 cm of healthy wood and burn them',
     why: 'Malformed bunches never fruit and spread the problem',
+    // Flowering months of the approved phase table.
     windows: {
-      A: ALL_YEAR,
-      CENTRAL: ALL_YEAR,
-      WEST: ALL_YEAR,
-      SOUTH: ALL_YEAR,
-      COAST: ALL_YEAR,
+      A: [
+        [2, 1],
+        [3, 31],
+      ],
+      CENTRAL: [
+        [1, 1],
+        [2, 28],
+      ],
+      WEST: [
+        [1, 1],
+        [2, 28],
+      ],
+      SOUTH: [
+        [12, 1],
+        [1, 31],
+      ],
+      COAST: [
+        [11, 1],
+        [12, 31],
+      ],
     },
   },
   {
@@ -428,14 +459,15 @@ const CONDITIONAL: ItemSpec[] = [
     category: 'PROTECTION',
     stages: ['BEARING'],
     conditional: 'Humid, cloudy weather while the tree is flowering',
-    organic: 'Copper oxychloride 50 WG 2.4 g per litre',
+    organic: 'No verified organic spray for this; use the alternative below',
     chemical:
       'Azoxystrobin 23 SC 1 ml per litre; wear gloves; not within 5 days of picking',
     why: 'Blight blackens flowers in damp weather',
     windows: {
+      // Coastal flowering (Nov–Dec), per the approved phase table.
       COAST: [
         [11, 1],
-        [1, 31],
+        [12, 31],
       ],
     },
   },
@@ -479,8 +511,7 @@ const YOUNG: ItemSpec[] = [
     title: 'Second feed for the young tree',
     category: 'FEEDING',
     stages: ['YOUNG'],
-    organic:
-      "Growing fully organic? Skip it: the first feed's FYM covers the year",
+    organic: "None now: all the year's FYM went in with the first feed",
     chemical: 'Urea + SSP + MOP in the ring, then water in; wear gloves',
     dose: SECOND_FEED_DOSE,
     why: 'Keeps growth steady into the cool months',
@@ -638,7 +669,7 @@ const PHASES: PhaseSpec[] = [
   {
     phase: 'pre_flowering',
     avoid: ['Heavy watering', 'Extra nitrogen beyond the schedule'],
-    watch: ['Mealybug'],
+    watch: ['Mealybug', 'Shoot gall'],
     months: { A: [10, 1] },
   },
   {
@@ -690,46 +721,6 @@ const PHASES: PhaseSpec[] = [
   },
 ];
 
-/** Young trees: what the season means for growth, the same across groups by month. */
-const YOUNG_PHASES: PhaseSpec[] = [
-  {
-    phase: 'summer_growth',
-    avoid: ['Letting the basin dry out'],
-    watch: ['Leaf scorch'],
-    months: {
-      A: [4, 6],
-      CENTRAL: [3, 6],
-      WEST: [3, 6],
-      SOUTH: [3, 5],
-      COAST: [2, 5],
-    },
-  },
-  {
-    phase: 'monsoon_flush',
-    avoid: ['Water standing at the trunk'],
-    watch: ['Leaf spots'],
-    months: {
-      A: [7, 9],
-      CENTRAL: [7, 9],
-      WEST: [7, 9],
-      SOUTH: [6, 9],
-      COAST: [6, 9],
-    },
-  },
-  {
-    phase: 'slow_growth',
-    avoid: [],
-    watch: ['Frost on cold nights'],
-    months: { A: [10, 3], CENTRAL: [10, 2] },
-  },
-  {
-    phase: 'slow_growth',
-    avoid: [],
-    watch: [],
-    months: { WEST: [10, 2], SOUTH: [10, 2], COAST: [10, 1] },
-  },
-];
-
 function regionCare(group: Group): RegionCare {
   const items: CareItem[] = [...BEARING, ...CONDITIONAL, ...YOUNG].flatMap(
     ({ windows, ...item }) => {
@@ -761,7 +752,8 @@ function regionCare(group: Group): RegionCare {
     });
   return {
     items,
-    phases: [...phase(PHASES, ['BEARING']), ...phase(YOUNG_PHASES, ['YOUNG'])],
+    // Young trees have no phase table in the approved content: they read as 'growing'.
+    phases: phase(PHASES, ['BEARING']),
   };
 }
 

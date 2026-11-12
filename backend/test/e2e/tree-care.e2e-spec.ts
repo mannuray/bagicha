@@ -109,6 +109,7 @@ describe('tree care families', () => {
   const materialize = (id: string, user = alice) =>
     as(user).post(`/api/v1/seasonal/plant/${id}/materialize-tasks`);
   type TaskRow = {
+    title: string;
     source: string;
     status: string;
     care_how: {
