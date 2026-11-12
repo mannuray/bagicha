@@ -1,3 +1,4 @@
+import { GUAVA_CARE } from './guava';
 import { MANGO_CARE } from './mango';
 import type { FamilyCare } from './types';
 
@@ -27,6 +28,7 @@ export type {
 /** Tree families whose care follows the add-plant playbook. */
 export const TREE_CARE: Readonly<Record<string, FamilyCare>> = {
   mango: MANGO_CARE,
+  guava: GUAVA_CARE,
 };
 
 /**
@@ -35,7 +37,6 @@ export const TREE_CARE: Readonly<Record<string, FamilyCare>> = {
  */
 export const CARE_PENDING: readonly string[] = [
   'citrus',
-  'guava',
   'litchi',
   'pomegranate',
   'banana',

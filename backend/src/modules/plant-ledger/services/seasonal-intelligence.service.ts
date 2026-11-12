@@ -99,8 +99,6 @@ export class SeasonalIntelligenceService {
         return this.citrusGuidance(lifecycleStage, seasonalWindow);
       case 'litchi':
         return this.litchiGuidance(lifecycleStage, seasonalWindow);
-      case 'guava':
-        return this.guavaGuidance(lifecycleStage, seasonalWindow);
       default:
         return this.genericGuidance(lifecycleStage, seasonalWindow);
     }
@@ -200,47 +198,6 @@ export class SeasonalIntelligenceService {
         avoid_now: ['Avoid delayed harvest', 'Avoid heat-stress neglect'],
         watch_for: ['Fruit cracking', 'Sun stress'],
         next_checkpoint_days: 4,
-      };
-    }
-    return this.genericGuidance(stage, window);
-  }
-
-  private guavaGuidance(
-    stage: LifecycleStage,
-    window: string,
-  ): SeasonalRuleOutput {
-    if (window === 'monsoon' || window === 'post_monsoon') {
-      return {
-        current_phase: 'flush_or_flowering_window',
-        upcoming_phase: 'fruit_set',
-        do_now: [
-          'Encourage clean new growth',
-          'Inspect for pest pressure after rain',
-          'Keep the root zone aerated',
-        ],
-        avoid_now: [
-          'Avoid dense waterlogged zones',
-          'Avoid neglecting sanitation',
-        ],
-        watch_for: ['Fruit fly', 'Wilt symptoms'],
-        next_checkpoint_days: 7,
-      };
-    }
-    if (window === 'summer') {
-      return {
-        current_phase: 'fruiting_or_stress_management',
-        upcoming_phase: 'flush',
-        do_now: [
-          'Water deeply during heat',
-          'Thin weak stressed growth only if necessary',
-          'Inspect fruit health',
-        ],
-        avoid_now: [
-          'Avoid severe water stress',
-          'Avoid overloading weak branches',
-        ],
-        watch_for: ['Fruit fly', 'Leaf scorch'],
-        next_checkpoint_days: 6,
       };
     }
     return this.genericGuidance(stage, window);
