@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import type { NextFunction, Request, Response } from 'express';
 import { json, urlencoded } from 'express';
+import { Logger } from 'nestjs-pino';
 import { errorEnvelope } from '../filters/http-exception.filter';
 
 /** Scan photos arrive as base64 JSON; everything else stays small. */
@@ -29,34 +30,62 @@ export function applyBodyLimits(app: INestApplication): void {
     }),
   );
   // Parser errors happen before Nest's router, so map them to the envelope here.
+  const logger = app.get(Logger);
   app.use(
     (
-      err: { type?: string },
+      err: { type?: string; status?: number },
       req: Request,
       res: Response,
       next: NextFunction,
     ) => {
-      if (err?.type === 'entity.too.large') {
-        res
-          .status(413)
-          .json(
-            errorEnvelope(
-              req,
-              'PAYLOAD_TOO_LARGE',
-              'Request body is too large',
-            ),
-          );
-        return;
-      }
-      if (err?.type === 'entity.parse.failed') {
-        res
-          .status(400)
-          .json(
-            errorEnvelope(req, 'BAD_REQUEST', 'Request body is not valid JSON'),
-          );
-        return;
-      }
-      next(err);
+      const refusal = parserRefusal(err);
+      if (!refusal) return next(err);
+      // These fail before routing and pino-http, so the error line is the request's line.
+      logger.warn({
+        reason: refusal.code,
+        status: refusal.status,
+        route: '(request body)',
+        message: 'request failed',
+      });
+      res
+        .status(refusal.status)
+        .json(errorEnvelope(req, refusal.code, refusal.message));
     },
   );
+}
+
+/** A body the parser refused, as a client error (never a 500). */
+export function parserRefusal(
+  err: { type?: string; status?: number } | undefined,
+): {
+  status: number;
+  code: string;
+  message: string;
+} | null {
+  switch (err?.type) {
+    case 'entity.too.large':
+      return {
+        status: 413,
+        code: 'PAYLOAD_TOO_LARGE',
+        message: 'Request body is too large',
+      };
+    case 'entity.parse.failed':
+      return {
+        status: 400,
+        code: 'BAD_REQUEST',
+        message: 'Request body is not valid JSON',
+      };
+    case 'encoding.unsupported':
+    case 'charset.unsupported':
+      return {
+        status: 415,
+        code: 'UNSUPPORTED_MEDIA_TYPE',
+        message: 'Unsupported request encoding',
+      };
+    default:
+      // Any other parser error with a 4xx status (aborted, bad length…) is the client's.
+      return err?.status && err.status >= 400 && err.status < 500
+        ? { status: err.status, code: 'BAD_REQUEST', message: 'Bad request' }
+        : null;
+  }
 }

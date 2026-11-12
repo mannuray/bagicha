@@ -13,6 +13,9 @@ export class PrismaService
 {
   constructor(private readonly monitor: MonitorService) {
     super({
+      // Short error messages: the default "pretty" format dumps the whole query,
+      // values included, into the message.
+      errorFormat: 'minimal',
       log: [
         { emit: 'event', level: 'query' },
         { emit: 'event', level: 'error' },

@@ -15,6 +15,7 @@ import { CommentRepository } from './repositories/comment.repository';
 import { ExpertRepository } from './repositories/expert.repository';
 import { FeedPost, PostRepository } from './repositories/post.repository';
 import { ReportRepository } from './repositories/report.repository';
+import { toAskAiAnswer } from '../ai';
 
 const HIDE_REPORT_THRESHOLD = 3;
 const MAX_KNOWLEDGE_SNIPPETS = 3;
@@ -229,7 +230,9 @@ Return strict JSON:
 { "answer": string, "citations": string[] }
     `.trim();
 
-    return this.ai.generateJson({ feature: 'ask_ai', prompt });
+    return toAskAiAnswer(
+      await this.ai.generateJson({ feature: 'ask_ai', prompt }),
+    );
   }
 
   /** One report per user per target; the report and its audit row commit together. */

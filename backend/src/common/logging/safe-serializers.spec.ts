@@ -31,4 +31,18 @@ describe('safe log serializers', () => {
     };
     expect(safeReq(req)).toEqual({ method: 'GET' });
   });
+
+  it('keeps only stack frames: a multi-line message (Prisma dumps the query) never survives in the stack', () => {
+    const err = new Error(
+      'Invalid `prisma.user.create()` invocation:\n{\n  data: {\n    phone_number: "+919876543210",\n    name: "Ramesh Kumar"\n  }\n}\nUnknown argument',
+    );
+    const out = safeErr(err);
+    expect(JSON.stringify(out)).not.toContain('9876543210');
+    expect(JSON.stringify(out)).not.toContain('Ramesh');
+    expect(
+      String(out.stack)
+        .split('\n')
+        .every((line) => /^\s+at /.test(line)),
+    ).toBe(true);
+  });
 });

@@ -55,7 +55,12 @@ function fromPrismaError(
 ): { status: number; code: string; message: string } | null {
   const code = (err as { code?: unknown } | null)?.code;
   if (typeof code !== 'string' || !/^P\d{4}$/.test(code)) return null;
-  if (code === 'P1008' || code === 'P2024')
+  if (
+    code === 'P1001' ||
+    code === 'P1002' ||
+    code === 'P1008' ||
+    code === 'P2024'
+  )
     return { status: 503, code: 'DB_TIMEOUT', message: FIXED_MESSAGES[503] };
   if (code === 'P2002')
     return {

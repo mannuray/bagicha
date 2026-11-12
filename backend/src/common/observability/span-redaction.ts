@@ -19,4 +19,5 @@ export function redactIncomingHttpSpan(
   span.setAttribute('http.client_ip', '');
   span.setAttribute('client.address', '');
   span.setAttribute('net.peer.ip', '');
+  span.setAttribute('network.peer.address', '');
 }

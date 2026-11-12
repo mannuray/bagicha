@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedError } from '../../common/errors';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { otpKey } from './otp-keys';
@@ -84,7 +84,7 @@ describe('AuthService', () => {
   it('rejects the old hard-coded backdoor when no dev OTP is configured', async () => {
     const { service } = build({ NODE_ENV: 'development' });
     await expect(service.verifyOtp(PHONE, '123456')).rejects.toBeInstanceOf(
-      UnauthorizedException,
+      UnauthorizedError,
     );
   });
 
@@ -106,7 +106,7 @@ describe('AuthService', () => {
       AUTH_DEV_OTP_CODE: '123456',
     });
     await expect(service.verifyOtp(PHONE, '123456')).rejects.toBeInstanceOf(
-      UnauthorizedException,
+      UnauthorizedError,
     );
   });
 
@@ -126,16 +126,14 @@ describe('AuthService', () => {
     expect(jwt.sign).toHaveBeenCalledWith({ sub: 'u1' });
   });
 
-  it('logs the issued code only when AUTH_LOG_OTP is explicitly on (and never in production)', async () => {
-    const quiet = build({ NODE_ENV: 'staging', AUTH_EXPOSE_OTP: 'true' });
-    await quiet.service.requestOtp(PHONE);
-    expect(quiet.logger.debug).not.toHaveBeenCalled();
-    const loud = build({ NODE_ENV: 'development', AUTH_LOG_OTP: 'true' });
-    await loud.service.requestOtp(PHONE);
-    expect(loud.logger.debug).toHaveBeenCalled();
-    const prod = build({ NODE_ENV: 'production', AUTH_LOG_OTP: 'true' });
-    await prod.service.requestOtp(PHONE);
-    expect(prod.logger.debug).not.toHaveBeenCalled();
+  it('never logs the issued code (it is shown on screen only where AUTH_EXPOSE_OTP allows)', async () => {
+    const { service, logger } = build({
+      NODE_ENV: 'development',
+      AUTH_EXPOSE_OTP: 'true',
+    });
+    await service.requestOtp(PHONE);
+    for (const level of ['debug', 'info', 'warn', 'error'] as const)
+      expect(logger[level]).not.toHaveBeenCalled();
   });
 
   it('stores a 6-digit OTP without using Math.random', async () => {
@@ -153,7 +151,7 @@ describe('AuthService', () => {
     const otp = store.get(otpKey(PHONE)) as string;
     await expect(service.verifyOtp(PHONE, otp)).resolves.toBeDefined();
     await expect(service.verifyOtp(PHONE, otp)).rejects.toBeInstanceOf(
-      UnauthorizedException,
+      UnauthorizedError,
     );
   });
 
@@ -185,12 +183,12 @@ describe('AuthService', () => {
     const wrong = otp === '000000' ? '111111' : '000000';
     for (let i = 0; i < 5; i++) {
       await expect(service.verifyOtp(PHONE, wrong)).rejects.toBeInstanceOf(
-        UnauthorizedException,
+        UnauthorizedError,
       );
     }
     expect(store.has(otpKey(PHONE))).toBe(false);
     await expect(service.verifyOtp(PHONE, otp)).rejects.toBeInstanceOf(
-      UnauthorizedException,
+      UnauthorizedError,
     );
   });
 

@@ -52,11 +52,11 @@ export default tseslint.config(
         },
         {
           selector:
-            "CallExpression[callee.property.name=/^(trace|debug|info|log|warn|error|fatal)$/][callee.object.property.name=/^logger$/] > BinaryExpression[operator='+']",
+            "CallExpression[callee.property.name=/^(trace|debug|info|log|warn|error|fatal)$/][callee.object.property.name=/^logger$/] > BinaryExpression[operator='+'], CallExpression[callee.property.name=/^(trace|debug|info|log|warn|error|fatal)$/][callee.object.name=/^logger$/] > BinaryExpression[operator='+']",
           message: 'Keep the log message fixed: put values in the object, not string concatenation.',
         },
         {
-          selector: "CallExpression[callee.property.name='child'][callee.object.property.name=/^logger$/]",
+          selector: "CallExpression[callee.property.name='child'][callee.object.property.name=/^logger$/], CallExpression[callee.property.name='child'][callee.object.name=/^logger$/]",
           message: 'No logger.child bindings: they bypass the log allow-list. Put the fields on each line.',
         },
       ],

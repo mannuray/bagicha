@@ -15,7 +15,16 @@ export async function resetDb(prisma: PrismaClient): Promise<void> {
   // writing; TRUNCATE then deadlocks (40P01). Retry briefly instead of failing.
   for (let attempt = 1; ; attempt += 1) {
     try {
-      await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} CASCADE`);
+      // The audit log refuses TRUNCATE (append-only); only a test reset may wipe it.
+      await prisma.$transaction([
+        prisma.$executeRawUnsafe(
+          'ALTER TABLE "audit_events" DISABLE TRIGGER audit_events_no_truncate',
+        ),
+        prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} CASCADE`),
+        prisma.$executeRawUnsafe(
+          'ALTER TABLE "audit_events" ENABLE TRIGGER audit_events_no_truncate',
+        ),
+      ]);
       return;
     } catch (err) {
       const deadlock = String((err as { message?: string }).message).includes(

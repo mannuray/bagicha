@@ -102,4 +102,29 @@ describe('structured logging', () => {
     expect(raw).not.toContain('deadbeef');
     expect(raw).not.toContain('curl');
   });
+
+  it('only allow-listed fields reach a line: personal fields are dropped, ids and counts kept', () => {
+    const { logger, lines } = capture();
+    logger.info(
+      {
+        plantId: 'p1',
+        eventCount: 3,
+        phone: '+919876543210',
+        otp: '123456',
+        latitude: 25.6,
+        whatever: 'x',
+      },
+      'something happened',
+    );
+    expect(lines[0]).toMatchObject({
+      plantId: 'p1',
+      eventCount: 3,
+      message: 'something happened',
+    });
+    const raw = JSON.stringify(lines[0]);
+    expect(raw).not.toContain('9876543210');
+    expect(raw).not.toContain('123456');
+    expect(raw).not.toContain('25.6');
+    expect(raw).not.toContain('whatever');
+  });
 });

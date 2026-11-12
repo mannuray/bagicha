@@ -16,8 +16,14 @@ export function safeErr(err: unknown): Record<string, unknown> {
     out.reason = err.reason;
     if (err.kind === 'operational') out.message = err.message;
   }
-  // The stack's first line repeats the message; keep only the frames.
-  if (err.stack) out.stack = err.stack.split('\n').slice(1).join('\n');
+  // Only the frames: the message (which a stack repeats, over many lines for a Prisma
+  // query dump) can carry personal data.
+  if (err.stack) {
+    out.stack = err.stack
+      .split('\n')
+      .filter((line) => /^\s+at /.test(line))
+      .join('\n');
+  }
   return out;
 }
 

@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { ValidationError } from '../../common/errors';
 import { parseMediaKey } from '../media';
 import { UserRepository } from './user.repository';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -31,6 +32,9 @@ export class UserService {
 function assertOwnAvatar(userId: string, key: string): void {
   const parsed = parseMediaKey(key);
   if (parsed?.kind !== 'avatar' || parsed.ownerId !== userId) {
-    throw new BadRequestException('avatar_key must be your own avatar upload');
+    throw new ValidationError(
+      'AVATAR_KEY_INVALID',
+      'avatar_key must be your own avatar upload',
+    );
   }
 }

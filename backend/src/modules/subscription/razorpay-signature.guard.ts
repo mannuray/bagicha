@@ -1,12 +1,8 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { verifyRazorpaySignature } from './razorpay-signature';
+import { UnauthorizedError } from '../../common/errors';
 
 type RawBodyRequest = Request & { rawBody?: Buffer };
 
@@ -25,10 +21,10 @@ export class RazorpaySignatureGuard implements CanActivate {
       this.config.get<string>('RAZORPAY_WEBHOOK_SECRET'),
     );
     if (!valid) {
-      throw new UnauthorizedException({
-        code: 'WEBHOOK_SIGNATURE_INVALID',
-        message: 'Webhook signature is missing or invalid',
-      });
+      throw new UnauthorizedError(
+        'WEBHOOK_SIGNATURE_INVALID',
+        'Webhook signature is missing or invalid',
+      );
     }
     return true;
   }

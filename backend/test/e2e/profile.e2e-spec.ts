@@ -67,12 +67,12 @@ describe('profile region', () => {
       expect(
         (await update({ avatar_key: `avatars/someone-else/${uuid}.jpg` }))
           .status,
-      ).toBe(400);
+      ).toBe(422);
       expect(
         (await update({ avatar_key: `journal/${user.id}/${uuid}.jpg` })).status,
-      ).toBe(400);
+      ).toBe(422);
       expect((await update({ avatar_key: 'https://evil/x.jpg' })).status).toBe(
-        400,
+        422,
       );
     });
   });

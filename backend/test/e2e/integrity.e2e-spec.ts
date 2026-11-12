@@ -36,6 +36,10 @@ describe('data integrity', () => {
       prisma.auditEvent.delete({ where: { id: row.id } }),
     ).rejects.toThrow();
     expect(await prisma.auditEvent.count()).toBe(1);
+    await expect(
+      prisma.$executeRawUnsafe('TRUNCATE TABLE "audit_events"'),
+    ).rejects.toThrow();
+    expect(await prisma.auditEvent.count()).toBe(1);
   });
 
   it('reporting a post twice at once files one report, and both calls succeed', async () => {

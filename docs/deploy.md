@@ -69,7 +69,6 @@ Secrets live only in the Render dashboard and the Neon console, never in git. Se
 | `AI_PROVIDER` | `render.yaml` | `gemini`. |
 | `NODE_ENV` | `render.yaml` | `staging`. `production` refuses the on-screen OTP. |
 | `AUTH_EXPOSE_OTP` | `render.yaml` | `true`: the sign-in code is shown on the page until an SMS provider is chosen. |
-| `AUTH_LOG_OTP` | local `.env` only | `true`: also log the sign-in code at debug level, for local development. Never set on a server; ignored in production. |
 
 After changing a setting on Render, redeploy the service.
 

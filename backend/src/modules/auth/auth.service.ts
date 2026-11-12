@@ -1,5 +1,6 @@
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { UnauthorizedError } from '../../common/errors';
 import { ConfigService } from '@nestjs/config';
 import { AuditAction, AuditService } from '../audit';
 import { JwtService } from '@nestjs/jwt';
@@ -52,15 +53,6 @@ export class AuthService {
     await this.redisService.set(otpKey(phoneNumber), otp, OTP_TTL_SECONDS);
     await this.redisService.del(otpFailKey(phoneNumber));
 
-    // No SMS provider yet: a developer can opt in to seeing the code in the log
-    // (AUTH_LOG_OTP=true), never in production. Staging shows it on screen instead.
-    if (
-      !this.isProduction() &&
-      this.config.get<string>('AUTH_LOG_OTP') === 'true'
-    ) {
-      this.logger.debug({ otp }, 'Development OTP issued');
-    }
-
     const message = 'OTP sent successfully';
     return this.exposesOtp() ? { message, dev_otp: otp } : { message };
   }
@@ -79,10 +71,7 @@ export class AuthService {
       if (failures >= MAX_OTP_FAILURES) {
         await this.redisService.del(otpKey(phoneNumber));
       }
-      throw new UnauthorizedException({
-        code: 'AUTH_INVALID_OTP',
-        message: 'Invalid or expired OTP',
-      });
+      throw new UnauthorizedError('AUTH_INVALID_OTP', 'Invalid or expired OTP');
     }
 
     if (!isMockUser) {

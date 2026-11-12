@@ -105,4 +105,26 @@ describe('log lines from the running app', () => {
     expect(all).not.toContain(theirs.id);
     expect(all).not.toContain('9876543210');
   });
+
+  it('a body the parser refuses still gets a client error and a log line', async () => {
+    const bad = await request(app.getHttpServer())
+      .post('/api/v1/auth/request-otp')
+      .set('Content-Type', 'application/json')
+      .send('{"phone_number": ');
+    expect(bad.status).toBe(400);
+    const encoded = await request(app.getHttpServer())
+      .post('/api/v1/auth/request-otp')
+      .set('Content-Type', 'application/json')
+      .set('Content-Encoding', 'rot13')
+      .send('{}');
+    expect(encoded.status).toBe(415);
+    expect(encoded.body.error.code).toBe('UNSUPPORTED_MEDIA_TYPE');
+    await new Promise((r) => setTimeout(r, 50));
+    const reasons = lines
+      .filter((l) => l.message === 'request failed')
+      .map((l) => l.reason);
+    expect(reasons).toEqual(
+      expect.arrayContaining(['BAD_REQUEST', 'UNSUPPORTED_MEDIA_TYPE']),
+    );
+  });
 });

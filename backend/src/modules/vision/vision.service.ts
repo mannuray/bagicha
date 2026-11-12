@@ -6,6 +6,7 @@ import { PlantRecordService } from '../plant-ledger';
 import { mapAiDiagnosis } from './ai-diagnosis.mapper';
 import { buildDiagnosisPrompt, buildIdentifyPrompt } from './diagnosis-prompt';
 import { VisionRequestDto } from './dto/vision-request.dto';
+import { toIdentification } from '../ai';
 
 function toImage(imageBase64: string): AiImage {
   return {
@@ -23,12 +24,13 @@ export class VisionService {
     private readonly diagnoses: DiagnosisPipelineService,
   ) {}
 
-  identifyPlant(_userId: string, dto: VisionRequestDto) {
-    return this.ai.generateJson({
+  async identifyPlant(_userId: string, dto: VisionRequestDto) {
+    const raw = await this.ai.generateJson({
       feature: 'identify',
       prompt: buildIdentifyPrompt(),
       image: toImage(dto.image_base64),
     });
+    return toIdentification(raw);
   }
 
   async diagnosePlant(userId: string, dto: VisionRequestDto) {

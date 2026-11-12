@@ -8,6 +8,7 @@ import {
   NestInterceptor,
   NestMiddleware,
   NestModule,
+  RequestMethod,
 } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -20,6 +21,7 @@ import { Observable } from 'rxjs';
 import { RequestContext } from './request-context';
 import { safeErr, safeReq, safeRes } from './safe-serializers';
 import { routePattern } from '../http/route-pattern';
+import { allowLogFields } from './log-fields';
 
 export interface LogIdentity {
   service: string;
@@ -45,6 +47,8 @@ export function buildPinoOptions(identity: LogIdentity): LoggerOptions {
     },
     formatters: {
       level: (label) => ({ level: label }),
+      // Each call's fields pass through the allow-list (log-fields.ts).
+      log: (fields) => allowLogFields(fields),
     },
     // Allow-lists for what reaches a line: an error's type and frames (its message only
     // when it is our own operational error), a request's method and route pattern.
@@ -101,6 +105,8 @@ const { version } = require('../../../package.json') as { version: string };
       useFactory: (config: ConfigService) => {
         const env = config.get<string>('NODE_ENV', 'development');
         return {
+          // Express 5 path syntax (the default '*' logs a legacy-route warning).
+          forRoutes: [{ path: '{*splat}', method: RequestMethod.ALL }],
           pinoHttp: {
             ...buildPinoOptions({ service: 'bagicha-backend', version, env }),
             level:
@@ -118,13 +124,10 @@ const { version } = require('../../../package.json') as { version: string };
             wrapSerializers: false,
             // Called again when the request finishes, when the matched route is known.
             customProps: (req: Request) => {
-              const userId = RequestContext.get()?.userId;
+              // userId and requestId come from the mixin; only the route is added here.
               const route = routePattern(req);
               // At the start of a request no route is matched yet; only stamp a known one.
-              return {
-                ...(route === '(unmatched route)' ? {} : { route }),
-                ...(userId ? { userId } : {}),
-              };
+              return route === '(unmatched route)' ? {} : { route };
             },
           },
         };
@@ -135,6 +138,6 @@ const { version } = require('../../../package.json') as { version: string };
 })
 export class LoggingModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(RequestContextMiddleware).forRoutes('*');
+    consumer.apply(RequestContextMiddleware).forRoutes('{*splat}');
   }
 }

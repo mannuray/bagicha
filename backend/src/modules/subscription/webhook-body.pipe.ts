@@ -1,11 +1,8 @@
-import {
-  Injectable,
-  PipeTransform,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Injectable, PipeTransform } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { RazorpayWebhookDto } from './dto/razorpay-webhook.dto';
+import { ValidationError } from '../../common/errors';
 
 /**
  * Validates a Razorpay webhook body against the fields we use, ignoring the rest:
@@ -24,7 +21,11 @@ export class RazorpayWebhookBodyPipe implements PipeTransform<
       whitelist: true,
       forbidNonWhitelisted: false,
     });
-    if (errors.length > 0) throw new UnprocessableEntityException();
+    if (errors.length > 0)
+      throw new ValidationError(
+        'WEBHOOK_PAYLOAD_INVALID',
+        'Webhook payload is malformed',
+      );
     return dto;
   }
 }

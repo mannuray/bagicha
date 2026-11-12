@@ -1,11 +1,6 @@
 import { withSpan } from '../../common/observability';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client as MinioClient } from 'minio';
 import { mediaClientOptions } from './media-client';
@@ -21,6 +16,7 @@ import {
   PUBLIC_PREFIXES,
   parseMediaKey,
 } from './media.config';
+import { NotFoundError, ValidationError } from '../../common/errors';
 
 export interface MediaUploadResult {
   key: string;
@@ -77,16 +73,15 @@ export class MediaService implements OnModuleInit {
     ownerId: string,
   ): Promise<MediaUploadResult> {
     if (!file?.buffer || file.size === 0) {
-      throw new BadRequestException('No file uploaded');
+      throw new ValidationError('MEDIA_FILE_MISSING', 'No file uploaded');
     }
     if (file.size > MAX_UPLOAD_BYTES) {
-      throw new BadRequestException(
-        `File too large (${file.size} bytes); max ${MAX_UPLOAD_BYTES}`,
-      );
+      throw new ValidationError('PAYLOAD_TOO_LARGE', 'That photo is too large');
     }
     if (!file.mimetype.startsWith('image/')) {
-      throw new BadRequestException(
-        `Unsupported content-type: ${file.mimetype}`,
+      throw new ValidationError(
+        'MEDIA_TYPE_UNSUPPORTED',
+        'Only images can be uploaded',
       );
     }
 
@@ -141,9 +136,9 @@ export class MediaService implements OnModuleInit {
     expirySeconds: number,
   ): Promise<string> {
     const parsed = parseMediaKey(key);
-    if (!parsed) throw new NotFoundException('Media not found');
+    if (!parsed) throw new NotFoundError('MEDIA_NOT_FOUND', 'Media not found');
     if (!PUBLIC_PREFIXES.has(parsed.kind) && parsed.ownerId !== callerId) {
-      throw new NotFoundException('Media not found');
+      throw new NotFoundError('MEDIA_NOT_FOUND', 'Media not found');
     }
     return this.getDownloadUrl(key, expirySeconds);
   }

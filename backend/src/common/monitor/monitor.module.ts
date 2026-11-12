@@ -22,6 +22,6 @@ import { MonitorJwtAuthGuard } from './monitor.helpers';
 })
 export class MonitorModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(MonitorMiddleware).forRoutes('*');
+    consumer.apply(MonitorMiddleware).forRoutes('{*splat}');
   }
 }

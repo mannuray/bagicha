@@ -38,6 +38,9 @@ const sdk = new NodeSDK({
   instrumentations: [
     getNodeAutoInstrumentations({
       '@opentelemetry/instrumentation-fs': { enabled: false },
+      // Its spans carry the full URL with the query string; the HTTP span (redacted
+      // below) already covers each request.
+      '@opentelemetry/instrumentation-nestjs-core': { enabled: false },
       // Spans follow the logging rules (span-redaction.ts).
       '@opentelemetry/instrumentation-ioredis': {
         dbStatementSerializer: redisStatement,

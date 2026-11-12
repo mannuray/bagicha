@@ -22,6 +22,7 @@ describe('span redaction', () => {
     expect(attrs['url.query']).toBe('');
     expect(attrs['http.client_ip']).toBe('');
     expect(attrs['client.address']).toBe('');
+    expect(attrs['network.peer.address']).toBe('');
     expect(JSON.stringify(attrs)).not.toContain('9876543210');
   });
 });
