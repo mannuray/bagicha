@@ -254,7 +254,7 @@ const CONDITIONAL: ItemSpec<Group>[] = [
     stages: ['BEARING'],
     conditional: 'Branches split under a heavy crop (Lakshmi-52, NA-6, NA-7)',
     organic: 'Prop them in September',
-    why: 'Heavy crops split the branches',
+    why: 'Branches split under a heavy crop',
     windows: {
       A: [
         [9, 1],
@@ -280,7 +280,7 @@ const CONDITIONAL: ItemSpec<Group>[] = [
     conditional: 'The soil is alkaline (usar/sodic)',
     organic:
       'Mix borax, zinc sulphate and copper sulphate, 100 g each, into the January fertiliser ring, scaled to tree age and vigour; wear gloves. This is a soil nutrient dressing, not a spray',
-    why: 'Alkaline soil locks up these nutrients',
+    why: 'A soil nutrient dressing for usar/sodic soil',
     // The January fertiliser ring: the main feed's window.
     windows: {
       A: [
@@ -347,7 +347,7 @@ const YOUNG: ItemSpec<Group>[] = [
     stages: ['YOUNG'],
     organic:
       'Wrap with straw on all sides through Dec–Jan and take it off in the second week of Feb; water in cold spells and mulch the basin; a cow-dung paste on the trunk also helps',
-    why: 'Frost kills young amla shoots',
+    why: 'Frost on young trees',
     windows: {
       A: [
         [12, 1],
@@ -362,7 +362,7 @@ const YOUNG: ItemSpec<Group>[] = [
     stages: ['YOUNG'],
     organic:
       'Let the first branches start 0.75–1 m up; keep 2–4 wide-angled branches facing opposite ways and pinch off the rest (later years: 4–6 branches)',
-    why: 'A strong, open frame',
+    why: 'Wide-angled main branches',
     windows: {
       A: [
         [3, 1],

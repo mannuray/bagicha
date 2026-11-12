@@ -257,7 +257,7 @@ const CONDITIONAL: ItemSpec<Group>[] = [
     conditional: 'Early side branches or sprouts below the graft',
     organic:
       'Remove all side branches that come early, to build a clean trunk 1.5–2 m tall, where the fruit will form. Remove sprouts from below the graft joint as they appear. Keep the graft staked',
-    why: 'Jackfruit forms on the trunk',
+    why: 'The fruit forms on the clean trunk',
     windows: ALL,
   },
 ];

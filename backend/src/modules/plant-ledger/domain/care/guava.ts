@@ -253,7 +253,7 @@ const CONDITIONAL: ItemSpec<Group>[] = [
     conditional: 'Skin turning from dark green to greenish-yellow',
     organic:
       "Pick when the skin turns from dark green to greenish-yellow; don't leave ripe fruit on the tree. Pick up fallen fruit every day and bury it at least 60 cm deep",
-    why: 'Ripe fruit left on the tree or ground breeds fruit flies',
+    why: "Don't leave ripe fruit on the tree",
     windows: BOTH,
   },
   {
@@ -264,7 +264,7 @@ const CONDITIONAL: ItemSpec<Group>[] = [
     conditional: 'Fallen or fruit-fly-stung fruit under the tree',
     organic:
       'Collect fallen and stung fruit daily and bury it 60 cm deep. Lightly dig the basin after harvest to expose the pupae',
-    why: 'Fruit fly maggots grow in fallen fruit and pupate in the soil',
+    why: 'Fruit fly',
     windows: BOTH,
   },
   {

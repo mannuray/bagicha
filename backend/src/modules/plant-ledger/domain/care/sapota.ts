@@ -269,7 +269,7 @@ const CONDITIONAL: ItemSpec<Group>[] = [
     conditional: 'A newly planted graft',
     organic:
       'Shade it from the sun with grass or a plastic sheet, and keep it staked',
-    why: 'A new graft dries out in the sun',
+    why: 'Shades the new graft from heat',
     windows: ALL,
   },
 ];
@@ -324,7 +324,7 @@ const YOUNG: ItemSpec<Group>[] = [
     stages: ['YOUNG'],
     organic:
       'Remove sprouts from below the graft joint, water shoots, crossing and low branches; thin overcrowding',
-    why: 'A clean, open frame',
+    why: 'Thins overcrowding',
     windows: { W: DEC_JAN, K: DEC_JAN, S: DEC_JAN },
   },
 ];

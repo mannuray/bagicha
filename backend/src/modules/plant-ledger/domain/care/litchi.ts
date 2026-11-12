@@ -522,7 +522,7 @@ const YOUNG: ItemSpec<Group>[] = [
     stages: ['YOUNG'],
     organic:
       'Cover with thatch or sarkanda by the end of November, for the first 4–5 years',
-    why: 'Frost kills young litchi plants',
+    why: 'Frost on unprotected plants',
     windows: {
       E: [
         [11, 25],
