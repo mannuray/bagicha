@@ -91,4 +91,37 @@ describe('safe errors and request ids', () => {
     expect(a.user.id).toBe(b.user.id);
     expect([a.created, b.created].filter(Boolean)).toHaveLength(1);
   });
+
+  it('rejects a field the endpoint does not take, instead of silently dropping it', async () => {
+    const res = await request(app.getHttpServer())
+      .put('/api/v1/user/profile/update')
+      .set(as(alice))
+      .send({ name: 'Asha', nmae: 'typo' });
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('rotation needs a crop id (validated, not silently empty)', async () => {
+    const place = await request(app.getHttpServer())
+      .post('/api/v1/garden/places')
+      .set(as(alice))
+      .send({ name: 'Bed', kind: 'BED' });
+    const res = await request(app.getHttpServer())
+      .get(`/api/v1/garden/places/${place.body.data.id}/rotation`)
+      .set(as(alice));
+    expect(res.status).toBe(422);
+  });
+
+  it('an upload of an unknown kind is a validation error', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/media/images')
+      .set(as(alice))
+      .field('kind', 'secret')
+      .attach('file', Buffer.from('x'), {
+        filename: 'a.jpg',
+        contentType: 'image/jpeg',
+      });
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
 });

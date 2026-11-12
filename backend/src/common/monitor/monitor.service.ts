@@ -23,8 +23,8 @@ export class MonitorService implements OnModuleDestroy {
       this.configService.get<string>('NODE_ENV', '').toLowerCase() === 'test';
     const enabledFromEnv =
       this.configService
-        .get<string>('KATHAWACHAK_ENABLED', 'true')
-        .toLowerCase() !== 'false';
+        .get<string>('KATHAWACHAK_ENABLED', 'false')
+        .toLowerCase() === 'true';
 
     this.config = {
       url: this.configService.get<string>(
@@ -58,9 +58,12 @@ export class MonitorService implements OnModuleDestroy {
         ? this.config.max_batch_size
         : 50,
       onError: (error, eventCount) => {
-        const message = error instanceof Error ? error.message : String(error);
+        // Fixed message, no error text: it can carry the collector URL.
+        const type =
+          error instanceof Error ? error.constructor.name : typeof error;
         this.logger.warn(
-          `Failed to push ${eventCount} telemetry event(s): ${message}`,
+          { eventCount, errorType: type },
+          'telemetry push failed',
         );
       },
     });

@@ -73,7 +73,8 @@ export function monitorPrismaErrorListener(monitor: MonitorService) {
       request_id: ctx.request_id,
       log_type: 'request',
       flow_step: 'db',
-      msg: `prisma error: ${event.message}`,
+      // Fixed text: a driver message can carry the connection string or values.
+      msg: 'prisma error',
       ...(ctx.span_id ? { parent_span_id: ctx.span_id } : {}),
       ...(ctx.method ? { method: ctx.method } : {}),
       ...(ctx.route ? { route: ctx.route } : {}),

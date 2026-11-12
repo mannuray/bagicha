@@ -34,7 +34,6 @@ export class MonitorMiddleware implements NestMiddleware {
       request_id: requestId,
       service: this.monitorService.serviceName,
       environment: this.monitorService.environment,
-      raw_path: req.originalUrl ?? req.url,
       method: req.method,
       span_id: randomUUID(),
       start_time_ms: Date.now(),

@@ -6,6 +6,7 @@ import { AuthGuard } from '@nestjs/passport';
 
 import { RazorpaySignatureGuard } from './razorpay-signature.guard';
 import { RazorpayWebhookDto } from './dto/razorpay-webhook.dto';
+import { RazorpayWebhookBodyPipe } from './webhook-body.pipe';
 
 @Controller('subscription')
 export class SubscriptionController {
@@ -19,7 +20,9 @@ export class SubscriptionController {
 
   @Post('webhook')
   @UseGuards(RazorpaySignatureGuard)
-  async handleWebhook(@Body() payload: RazorpayWebhookDto) {
-    return this.subscriptionService.handleWebhook(payload);
+  async handleWebhook(@Body(RazorpayWebhookBodyPipe) payload: unknown) {
+    return this.subscriptionService.handleWebhook(
+      payload as RazorpayWebhookDto,
+    );
   }
 }

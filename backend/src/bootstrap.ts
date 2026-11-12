@@ -25,6 +25,8 @@ export function configureApp(app: INestApplication): INestApplication {
   app.useGlobalPipes(
     new MonitorValidationPipe(app.get(MonitorService), {
       whitelist: true,
+      // Unknown fields are a client mistake: reject them rather than drop them silently.
+      forbidNonWhitelisted: true,
       transform: true,
       errorHttpStatusCode: 422,
     }),

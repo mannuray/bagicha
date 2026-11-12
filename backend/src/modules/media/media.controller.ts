@@ -1,6 +1,5 @@
 import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -15,7 +14,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { MediaService } from './media.service';
-import { MAX_UPLOAD_BYTES, MEDIA_KINDS, MediaKind } from './media.config';
+import { MAX_UPLOAD_BYTES } from './media.config';
+import { UploadImageDto } from './dto/upload-image.dto';
 import { RateLimit } from '../../common/rate-limit';
 
 @Controller('media')
@@ -30,12 +30,10 @@ export class MediaController {
   )
   async uploadImage(
     @Request() req: AuthedRequest,
-    @Body('kind') kindRaw: string,
+    @Body() dto: UploadImageDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    const kind = this.parseKind(kindRaw);
-    const result = await this.mediaService.uploadImage(file, kind, req.user.id);
-    return result;
+    return this.mediaService.uploadImage(file, dto.kind, req.user.id);
   }
 
   @Get('download-url/*key')
@@ -56,14 +54,5 @@ export class MediaController {
       seconds,
     );
     return { url, expires_in_seconds: seconds };
-  }
-
-  private parseKind(raw: string | undefined): MediaKind {
-    if (!raw || !MEDIA_KINDS.includes(raw as MediaKind)) {
-      throw new BadRequestException(
-        `kind must be one of: ${MEDIA_KINDS.join(', ')}`,
-      );
-    }
-    return raw as MediaKind;
   }
 }

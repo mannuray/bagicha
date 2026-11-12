@@ -30,7 +30,6 @@ export interface MonitorEvent {
   flow_step: MonitorFlowStep;
   method?: string;
   route?: string;
-  raw_path?: string;
   msg: string;
   status_code?: number;
   duration_ms?: number;
@@ -47,7 +46,6 @@ export interface MonitorRequestContext {
   environment: string;
   method?: string;
   route?: string;
-  raw_path?: string;
   span_id?: string;
   start_time_ms: number;
 }

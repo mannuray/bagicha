@@ -97,7 +97,6 @@ export class MonitorInterceptor implements NestInterceptor {
       log_type: 'request',
       flow_step: 'entry',
       method: request.method,
-      raw_path: ctx.raw_path ?? request.originalUrl,
       msg: `${request.method} ${route ?? request.originalUrl} started`,
       ...(ctx.span_id ? { span_id: ctx.span_id } : {}),
       ...(route ? { route } : {}),
@@ -128,7 +127,6 @@ export class MonitorInterceptor implements NestInterceptor {
       log_type: 'request',
       flow_step: flowStep,
       method: request.method,
-      raw_path: ctx.raw_path ?? request.originalUrl,
       status_code: statusCode,
       duration_ms: now - ctx.start_time_ms,
       msg:

@@ -13,11 +13,19 @@ describe('Razorpay webhook', () => {
 
   const payloadFor = (userId: string, paymentId = `pay_${Date.now()}`) =>
     JSON.stringify({
+      // Razorpay sends many fields we don't use; they must not be rejected.
+      entity: 'event',
+      account_id: 'acc_test',
+      contains: ['payment', 'order'],
+      created_at: 1700000000,
       event: 'order.paid',
       payload: {
         payment: {
           entity: {
             id: paymentId,
+            entity: 'payment',
+            status: 'captured',
+            method: 'upi',
             amount: 29900,
             currency: 'INR',
             notes: { user_id: userId, plan_id: 'PREMIUM_MONTHLY' },
