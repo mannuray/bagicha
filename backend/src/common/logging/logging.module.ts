@@ -18,6 +18,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { LoggerOptions } from 'pino';
 import { Observable } from 'rxjs';
 import { RequestContext } from './request-context';
+import { safeErr, safeReq, safeRes } from './safe-serializers';
 
 export interface LogIdentity {
   service: string;
@@ -44,6 +45,9 @@ export function buildPinoOptions(identity: LogIdentity): LoggerOptions {
     formatters: {
       level: (label) => ({ level: label }),
     },
+    // Allow-lists for what reaches a line: an error's type and frames (its message only
+    // when it is our own operational error), a request's method and route pattern.
+    serializers: { err: safeErr, req: safeReq, res: safeRes },
     mixin() {
       const fields: Record<string, string> = {};
       const spanContext = trace.getActiveSpan()?.spanContext();
@@ -105,6 +109,9 @@ const { version } = require('../../../package.json') as { version: string };
               RequestContext.get()?.requestId ??
               readHeader(req as Request, 'x-request-id') ??
               randomUUID(),
+            // One access line per request, with a fixed message.
+            customSuccessMessage: () => 'request completed',
+            customErrorMessage: () => 'request failed',
             customProps: () => {
               const userId = RequestContext.get()?.userId;
               return userId ? { userId } : {};

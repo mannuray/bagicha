@@ -15,5 +15,6 @@ export function corsOptionsFor(origins: string[]): CorsOptions | null {
     origin: origins,
     credentials: false,
     allowedHeaders: ['Authorization', 'Content-Type', 'X-Request-Id'],
+    exposedHeaders: ['X-Request-ID'],
   };
 }

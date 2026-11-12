@@ -15,13 +15,11 @@ export async function withSpan<T>(
     try {
       return await fn(span);
     } catch (error) {
-      span.recordException(
-        error instanceof Error ? error : new Error(String(error)),
-      );
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: error instanceof Error ? error.message : String(error),
-      });
+      // Only the error's type: a message can carry a connection string, a URL or user text.
+      const name =
+        error instanceof Error ? error.constructor.name : typeof error;
+      span.recordException({ name, message: name });
+      span.setStatus({ code: SpanStatusCode.ERROR, message: name });
       throw error;
     } finally {
       span.end();

@@ -27,6 +27,9 @@ function build(env: Record<string, string | undefined>) {
   const prisma = {
     findByPhone: jest.fn(() => Promise.resolve(user)),
     createWithPhone: jest.fn(() => Promise.resolve(user)),
+    findOrCreateByPhone: jest.fn(() =>
+      Promise.resolve({ user, created: false }),
+    ),
   };
   const jwt = { sign: jest.fn(() => 'token') };
   const audit = { record: jest.fn(() => Promise.resolve()) };

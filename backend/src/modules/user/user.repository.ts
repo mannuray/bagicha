@@ -26,6 +26,25 @@ export class UserRepository {
     return this.prisma.user.create({ data: { phone_number: phoneNumber } });
   }
 
+  /**
+   * The user with this phone, created on first sign-in. Safe when two first
+   * sign-ins race: the loser of the unique-phone race reads the winner's row.
+   */
+  async findOrCreateByPhone(
+    phoneNumber: string,
+  ): Promise<{ user: User; created: boolean }> {
+    const existing = await this.findByPhone(phoneNumber);
+    if (existing) return { user: existing, created: false };
+    try {
+      return { user: await this.createWithPhone(phoneNumber), created: true };
+    } catch (err) {
+      if ((err as { code?: string }).code !== 'P2002') throw err;
+      const winner = await this.findByPhone(phoneNumber);
+      if (!winner) throw err;
+      return { user: winner, created: false };
+    }
+  }
+
   updateProfile(userId: string, data: Prisma.UserUpdateInput): Promise<User> {
     return this.prisma.user.update({ where: { id: userId }, data });
   }

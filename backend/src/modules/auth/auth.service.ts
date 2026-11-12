@@ -91,9 +91,8 @@ export class AuthService {
     }
 
     // Register or find user
-    const existing = await this.users.findByPhone(phoneNumber);
-    const isNewUser = !existing;
-    const user = existing ?? (await this.users.createWithPhone(phoneNumber));
+    const { user, created: isNewUser } =
+      await this.users.findOrCreateByPhone(phoneNumber);
 
     await this.audit.record({
       actorUserId: user.id,

@@ -155,6 +155,10 @@ export class CommunityService {
   }
 
   async addComment(userId: string, postId: string, dto: CreateCommentDto) {
+    // Checked first: otherwise a missing post is a foreign-key failure (a 500).
+    const post = await this.posts.findById(postId);
+    if (!post || post.is_hidden)
+      throw new NotFoundError('POST_NOT_FOUND', 'Post not found');
     return this.comments.create({
       ...dto,
       post_id: postId,

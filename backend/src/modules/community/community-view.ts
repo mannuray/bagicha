@@ -1,9 +1,11 @@
 import { pickFields } from '../../common/http/pick-fields';
 
 /** A post as other gardeners see it: its words and where, never moderation flags. */
+/** `author` is the repository's safe selection (id, name, badge), never the user row. */
 export const POST_FIELDS = [
   'id',
   'author_id',
+  'author',
   'plant_id',
   'content',
   'image_urls',

@@ -81,7 +81,7 @@ describe('structured logging', () => {
     expect(lines[0].userId).toBeUndefined();
   });
 
-  it('never writes bearer tokens, cookies or webhook signatures', () => {
+  it('never writes request headers at all (so no tokens, cookies or signatures), only method and route', () => {
     const { logger, lines } = capture();
     logger.info(
       {
@@ -100,6 +100,6 @@ describe('structured logging', () => {
     expect(raw).not.toContain('eyJhbGciOi');
     expect(raw).not.toContain('session=abc');
     expect(raw).not.toContain('deadbeef');
-    expect(raw).toContain('curl');
+    expect(raw).not.toContain('curl');
   });
 });
