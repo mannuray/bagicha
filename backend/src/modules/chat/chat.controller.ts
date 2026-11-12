@@ -1,13 +1,16 @@
 import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
   Param,
-  UseGuards,
-  Request,
+  Post,
   Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../common/pagination';
 
@@ -28,6 +31,25 @@ export class ChatController {
     @Body() dto: SendMessageDto,
   ) {
     return toMessageView(await this.chatService.sendMessage(req.user.id, dto));
+  }
+
+  /** Blocks a user: they can't message you, and their messages are hidden from you. */
+  @Post('blocks/:userId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async block(
+    @Request() req: AuthedRequest,
+    @Param('userId') otherUserId: string,
+  ): Promise<void> {
+    await this.chatService.block(req.user.id, otherUserId);
+  }
+
+  @Delete('blocks/:userId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async unblock(
+    @Request() req: AuthedRequest,
+    @Param('userId') otherUserId: string,
+  ): Promise<void> {
+    await this.chatService.unblock(req.user.id, otherUserId);
   }
 
   @Get('inbox')

@@ -693,3 +693,15 @@ model AppliedPayment {
   @@index([user_id])
   @@map("applied_payments")
 }
+
+/// A user who blocked another: the blocked one can't message them, and their
+/// messages are hidden from the blocker.
+model UserBlock {
+  blocker_id String
+  blocked_id String
+  created_at DateTime @default(now())
+
+  @@id([blocker_id, blocked_id])
+  @@index([blocked_id])
+  @@map("user_blocks")
+}

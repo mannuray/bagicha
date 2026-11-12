@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { NotFoundError } from '../../common/errors';
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../../common/errors';
 import { PageQuery, toPage, toSkipTake } from '../../common/pagination';
 import { SendMessageDto } from './dto/send-message.dto';
 import { MessageRepository } from './message.repository';
@@ -12,7 +16,27 @@ export class ChatService {
     if (!(await this.messages.userExists(dto.receiver_id))) {
       throw new NotFoundError('RECEIVER_NOT_FOUND', 'Receiver not found');
     }
+    if (await this.messages.hasBlocked(dto.receiver_id, userId)) {
+      throw new ForbiddenError(
+        'CHAT_BLOCKED',
+        'This gardener is not accepting your messages',
+      );
+    }
     return this.messages.create({ ...dto, sender_id: userId });
+  }
+
+  async block(userId: string, otherUserId: string): Promise<void> {
+    if (otherUserId === userId) {
+      throw new ValidationError('CHAT_BLOCK_SELF', 'You cannot block yourself');
+    }
+    if (!(await this.messages.userExists(otherUserId))) {
+      throw new NotFoundError('USER_NOT_FOUND', 'User not found');
+    }
+    await this.messages.block(userId, otherUserId);
+  }
+
+  unblock(userId: string, otherUserId: string): Promise<void> {
+    return this.messages.unblock(userId, otherUserId);
   }
 
   async getInbox(userId: string, q: PageQuery) {

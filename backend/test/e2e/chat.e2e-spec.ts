@@ -73,4 +73,72 @@ describe('chat pagination', () => {
   it('rejects an oversized page', async () => {
     expect((await get('/api/v1/chat/inbox?page_size=10000')).status).toBe(422);
   });
+
+  describe('blocking', () => {
+    const as = (user: User) => {
+      const auth = { Authorization: `Bearer ${tokenFor(app, user)}` };
+      const server = app.getHttpServer();
+      return {
+        get: (url: string) => request(server).get(url).set(auth),
+        post: (url: string, body: object = {}) =>
+          request(server).post(url).set(auth).send(body),
+        del: (url: string) => request(server).delete(url).set(auth),
+      };
+    };
+
+    it('someone you blocked cannot message you, and their messages leave your inbox', async () => {
+      expect(
+        (await as(alice).post(`/api/v1/chat/blocks/${bob.id}`)).status,
+      ).toBe(204);
+      const sent = await as(bob).post('/api/v1/chat/messages', {
+        receiver_id: alice.id,
+        content: 'hello?',
+      });
+      expect(sent.status).toBe(403);
+      expect(sent.body.error.code).toBe('CHAT_BLOCKED');
+      const inbox = await as(alice).get('/api/v1/chat/inbox');
+      expect(
+        (inbox.body.data as Array<{ sender_id: string }>).filter(
+          (m) => m.sender_id === bob.id,
+        ),
+      ).toEqual([]);
+      const convo = await as(alice).get(`/api/v1/chat/messages/${bob.id}`);
+      expect(
+        (convo.body.data as Array<{ sender_id: string }>).filter(
+          (m) => m.sender_id === bob.id,
+        ),
+      ).toEqual([]);
+    });
+
+    it('unblocking lets them write again; blocking twice is fine', async () => {
+      await as(alice).post(`/api/v1/chat/blocks/${bob.id}`);
+      expect(
+        (await as(alice).post(`/api/v1/chat/blocks/${bob.id}`)).status,
+      ).toBe(204);
+      expect(
+        (await as(alice).del(`/api/v1/chat/blocks/${bob.id}`)).status,
+      ).toBe(204);
+      const sent = await as(bob).post('/api/v1/chat/messages', {
+        receiver_id: alice.id,
+        content: 'hi again',
+      });
+      expect(sent.status).toBe(201);
+    });
+
+    it('refuses blocking yourself or an unknown user', async () => {
+      expect(
+        (await as(alice).post(`/api/v1/chat/blocks/${alice.id}`)).status,
+      ).toBe(422);
+      expect(
+        (
+          await as(alice).post(
+            '/api/v1/chat/blocks/0f8fad5b-d9cb-469f-a165-70867728950e',
+          )
+        ).status,
+      ).toBe(404);
+      expect((await as(alice).post('/api/v1/chat/blocks/abc')).status).toBe(
+        404,
+      );
+    });
+  });
 });
