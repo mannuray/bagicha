@@ -41,7 +41,11 @@ export function TaskCard({
       <p className="font-label text-xs font-bold uppercase tracking-wider text-secondary">
         {[showPlant ? task.tree_name : null, t(`tasks.due.${due.key}`, { count: due.count })].filter(Boolean).join(' · ')}
       </p>
-      {task.source_summary && <p className="mt-1 line-clamp-2 font-body text-xs text-on-surface-variant">{task.source_summary}</p>}
+      {task.care_how ? (
+        <CareHow how={task.care_how} />
+      ) : (
+        task.source_summary && <p className="mt-1 line-clamp-2 font-body text-xs text-on-surface-variant">{task.source_summary}</p>
+      )}
       {!onError && actions.error && (
         <p role="alert" className="mt-2 font-body text-sm text-error">
           {messageFor(actions.error, t)}
@@ -56,6 +60,29 @@ export function TaskCard({
         </Button>
       </div>
     </article>
+  );
+}
+
+/** How to do a care reminder: the organic way first, then the alternative, then why. */
+function CareHow({ how }: { how: NonNullable<Task['care_how']> }) {
+  const { t } = useTranslation();
+  return (
+    <div className="mt-2 space-y-1 font-body text-xs text-on-surface-variant">
+      <p>
+        <span className="font-label font-bold uppercase tracking-wider text-primary">{t('tasks.care.organic')}</span> {how.organic}
+      </p>
+      {how.amount && (
+        <p>
+          <span className="font-label font-bold uppercase tracking-wider text-primary">{t('tasks.care.amount')}</span> {how.amount}
+        </p>
+      )}
+      {how.chemical && (
+        <p>
+          <span className="font-label font-bold uppercase tracking-wider text-secondary">{t('tasks.care.alternative')}</span> {how.chemical}
+        </p>
+      )}
+      <p className="italic">{how.why}</p>
+    </div>
   );
 }
 

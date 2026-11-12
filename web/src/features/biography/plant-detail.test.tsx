@@ -62,6 +62,17 @@ describe('tree biography', () => {
   });
   afterEach(() => vi.useRealTimers());
 
+  it('This season shows the region note when present', async () => {
+    handlers();
+    server.use(
+      http.get(`${API}/seasonal/plant/p1/intelligence`, () =>
+        HttpResponse.json(ok({ ...intelligence, care_note: 'Not usually grown in your region; timings may differ.' })),
+      ),
+    );
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByText('Not usually grown in your region; timings may differ.')).toBeInTheDocument();
+  });
+
   it('renders the loop sections from real data', async () => {
     const h = handlers();
     renderWithApp(routes, { route: '/plants/p1' });

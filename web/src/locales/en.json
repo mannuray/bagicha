@@ -279,6 +279,11 @@
       "inDays_other": "Due in {{count}} days",
       "overdue_one": "Due {{count}} day ago",
       "overdue_other": "Due {{count}} days ago"
+    },
+    "care": {
+      "organic": "Organic way",
+      "amount": "For this tree",
+      "alternative": "Or"
     }
   },
   "dashboard": {

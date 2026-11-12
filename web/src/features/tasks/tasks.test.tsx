@@ -176,4 +176,36 @@ describe('tasks screen', () => {
     expect(await screen.findByText('Old chore')).toBeInTheDocument();
     expect(asked.sort()).toEqual(['closed:10', 'open:100']);
   });
+
+  it('a care task shows the organic way first, then the alternative, and why', async () => {
+    const { TaskCard, taskSchema } = await import('.');
+    const task = taskSchema.parse(
+      taskRecord({
+        source: 'TREE_CARE',
+        title: 'Main feed after harvest',
+        care_how: {
+          organic: 'Compost and neem cake in a ring under the canopy',
+          chemical: 'Urea + SSP + MOP; wear gloves; not within 15 days of picking',
+          why: 'Builds next season’s shoots',
+          amount: '25 kg compost + 1 kg neem cake',
+          window_end: '2026-08-31T18:30:00.000Z',
+        },
+      }),
+    );
+    renderWithApp(<TaskCard task={task} now={new Date()} />);
+    const card = screen.getByRole('article', { name: /main feed after harvest/i });
+    const text = card.textContent ?? '';
+    expect(text).toMatch(/organic way/i);
+    expect(text.indexOf('Compost and neem cake')).toBeLessThan(text.indexOf('Urea + SSP'));
+    expect(within(card).getByText(/^or$/i)).toBeInTheDocument();
+    expect(text).toContain('25 kg compost + 1 kg neem cake');
+    expect(text).toContain('Builds next season’s shoots');
+  });
+
+  it('a task without care_how renders as before', async () => {
+    const { TaskCard, taskSchema } = await import('.');
+    renderWithApp(<TaskCard task={taskSchema.parse(taskRecord())} now={new Date()} />);
+    const card = screen.getByRole('article', { name: /plan pest response/i });
+    expect(card.textContent).not.toMatch(/organic way/i);
+  });
 });

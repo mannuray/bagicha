@@ -9,10 +9,12 @@ export function ThisSeason({ plantId }: { plantId: string }) {
   const pack = intel.data?.seasonal_pack;
   if (intel.isError) return <ErrorState error={intel.error} onRetry={() => void intel.refetch()} />;
   if (!pack) return <LoadingState />;
-  if (pack.avoid_now.length === 0 && pack.watch_for.length === 0) return null;
+  const note = intel.data?.care_note ?? null;
+  if (pack.avoid_now.length === 0 && pack.watch_for.length === 0 && !note) return null;
   return (
     <section className="space-y-3">
       <h2 className="font-headline text-xl text-primary">{t('biography.thisSeason')}</h2>
+      {note && <p className="font-body text-sm text-on-surface-variant">{note}</p>}
       <AdviceList title={t('biography.avoid')} icon="block" items={pack.avoid_now} />
       <AdviceList title={t('biography.watchFor')} icon="visibility" items={pack.watch_for} />
     </section>

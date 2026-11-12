@@ -32,6 +32,11 @@ export const intelligenceSchema = z.object({
       reasoning_summary: z.string().nullable(),
     })
     .nullable(),
+  /** Set when the tree isn't usually grown in the gardener's region. */
+  care_note: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? null),
   is_paid_user: z.boolean(),
 });
 export type PlantIntelligence = z.infer<typeof intelligenceSchema>;
