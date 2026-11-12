@@ -11,13 +11,16 @@ import { requestIdMiddleware } from './common/http/request-id';
 
 /** Global app wiring shared by main.ts and the e2e harness. */
 export function configureApp(app: INestApplication): INestApplication {
-  // Behind exactly one proxy (Render's): req.ip is the visitor, not the proxy, so
-  // per-IP rate limits count each visitor. Only the nearest hop is trusted.
+  // Render's chain, measured on the live service: visitor -> Cloudflare -> Render's
+  // load balancer -> a local proxy -> app. Trusting exactly those 3 hops makes
+  // req.ip the visitor, so per-IP rate limits count each visitor; anything a client
+  // puts in X-Forwarded-For sits further left and is ignored. If Render changes
+  // this chain, re-measure (rate-limit e2e mirrors it).
   (
     app.getHttpAdapter().getInstance() as {
       set: (k: string, v: unknown) => void;
     }
-  ).set('trust proxy', 1);
+  ).set('trust proxy', 3);
   // First: one request id for everything after, returned in X-Request-ID.
   app.use(requestIdMiddleware);
   // Standard security headers (nosniff, frame denial, HSTS; no X-Powered-By).

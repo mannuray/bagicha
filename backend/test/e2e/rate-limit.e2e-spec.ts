@@ -20,16 +20,26 @@ describe('rate limiting', () => {
       await app.close();
     });
 
-    it('counts each visitor separately behind the proxy (trust proxy), not all as one', async () => {
+    it('counts each visitor separately behind Render, and a faked X-Forwarded-For changes nothing', async () => {
       await clearRateLimitKeys();
-      const ask = (ip: string) =>
-        request(app.getHttpServer())
+      // Render's real chain (measured): visitor -> Cloudflare -> Render's load
+      // balancer -> a local proxy -> app, so X-Forwarded-For arrives as
+      // "<anything the client sent>, <visitor>, <cloudflare>, <load balancer>"
+      // and the edge/balancer addresses vary per request.
+      let n = 0;
+      const ask = (visitor: string, faked?: string) => {
+        n += 1;
+        const chain = [visitor, `172.71.198.${n}`, `10.29.117.${n}`];
+        if (faked) chain.unshift(faked);
+        return request(app.getHttpServer())
           .post('/api/v1/auth/request-otp')
-          .set('X-Forwarded-For', ip)
+          .set('X-Forwarded-For', chain.join(', '))
           .send({ phone_number: `+9190000${String(++seq).padStart(5, '0')}` });
-      for (let i = 0; i < 5; i += 1) await ask('203.0.113.1');
-      expect((await ask('203.0.113.1')).status).toBe(429);
-      expect((await ask('203.0.113.2')).status).not.toBe(429);
+      };
+      for (let i = 0; i < 5; i += 1)
+        await ask('152.59.155.164', `198.51.100.${i}`);
+      expect((await ask('152.59.155.164', '198.51.100.99')).status).toBe(429);
+      expect((await ask('152.59.155.200')).status).not.toBe(429);
     });
 
     it('rejects the 6th OTP request in a minute with RATE_LIMITED', async () => {
