@@ -323,7 +323,7 @@ describe('crops', () => {
           .filter((t) => /seeds|^sow/i.test(t.title))
           .every((t) => t.status === 'COMPLETED'),
       ).toBe(true);
-      const germ = tasks.find((t) => /come up/i.test(t.title))!;
+      const germ = tasks.find((t) => /come up|sprouts|shoots/i.test(t.title))!;
       expect(istDate(germ.due_date)).toBe('2026-10-20');
       expect(tasks.find((t) => /transplant/i.test(t.title))).toBeTruthy();
       expect(tasks.find((t) => /ready to pick/i.test(t.title))).toBeTruthy();
@@ -473,15 +473,15 @@ describe('crops', () => {
       await log(a, palak.id, 'SOWING', { method: 'DIRECT' });
       await log(a, palak.id, 'HARVEST');
       const before = (await tasksOf(a, palak.id)).filter((t) =>
-        /come up/i.test(t.title),
+        /come up|sprouts|shoots/i.test(t.title),
       ).length;
       clock.set('2026-10-26T06:00:00Z');
       await log(a, palak.id, 'SOWING', { method: 'DIRECT' });
       expect((await plantOf(a, palak.id)).crop_stage).toBe('HARVESTING');
       const tasks = await tasksOf(a, palak.id);
-      expect(tasks.filter((t) => /come up/i.test(t.title))).toHaveLength(
-        before,
-      );
+      expect(
+        tasks.filter((t) => /come up|sprouts|shoots/i.test(t.title)),
+      ).toHaveLength(before);
       expect(
         tasks.filter(
           (t) => /another row/i.test(t.title) && t.status === 'COMPLETED',

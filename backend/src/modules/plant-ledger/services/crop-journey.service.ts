@@ -19,6 +19,7 @@ import { addDays, Clock, istYear } from '../../../common/time';
 import {
   climateGroupFor,
   cropById,
+  sproutCheckTitle,
   windowContaining,
   type CropInfo,
 } from '../domain/crop-calendar';
@@ -162,7 +163,7 @@ export class CropJourneyService {
             plant,
             cycle,
             'germination',
-            `Check the ${this.lower(crop)} seedlings have come up`,
+            sproutCheckTitle(crop, nursery),
             addDays(at, crop.germination_days[1]),
             TaskType.INSPECT,
             TaskCategory.INSPECTION,

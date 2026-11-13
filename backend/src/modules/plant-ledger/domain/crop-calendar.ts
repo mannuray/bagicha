@@ -684,11 +684,11 @@ const RAW: Raw[] = [
     family: 'APIACEAE',
     method: 'DIRECT_SOW',
     windows: { PLAINS: [[9, 11]], PENINSULAR: [[8, 11]], HILLS: [[3, 6]] },
-    germination_days: [10, 20],
+    germination_days: [8, 10],
     transplant_after_days: null,
     days_to_first_harvest: [80, 100],
     harvest_span_days: 20,
-    thin_after_days: 20,
+    thin_after_days: 30,
     succession_every_days: 21,
     care: [],
     tags: ['container'],
@@ -1000,4 +1000,16 @@ export function windowContaining(
   return (
     instances(crop, group, at).find((w) => w.start <= at && at < w.end) ?? null
   );
+}
+
+/**
+ * The "has it come up?" reminder: seedlings only for seeds raised in a tray;
+ * seeds sown in the bed sprout, and tubers, cloves and rhizomes send up shoots.
+ */
+export function sproutCheckTitle(crop: CropInfo, nursery: boolean): string {
+  const name = crop.name.toLowerCase();
+  if (nursery) return `Check the ${name} seedlings have come up`;
+  return crop.method === 'DIRECT_SOW' || crop.method === 'NURSERY_TRANSPLANT'
+    ? `Check the sown ${name} for sprouts`
+    : `Check the planted ${name} for shoots`;
 }

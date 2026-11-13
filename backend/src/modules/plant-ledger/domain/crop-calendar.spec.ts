@@ -5,6 +5,7 @@ import {
   climateGroupFor,
   cropById,
   nextWindow,
+  sproutCheckTitle,
   windowStatus,
 } from './crop-calendar';
 
@@ -53,6 +54,20 @@ describe('the calendar data', () => {
   it('marks quick crops from days to first harvest', () => {
     expect(cropById('methi')?.tags).toContain('quick');
     expect(cropById('tomato')?.tags).not.toContain('quick');
+  });
+
+  it('never asks to thin before the seedlings-came-up check', () => {
+    const early = [...CROPS, ...FLOWERS].filter(
+      (c) => c.thin_after_days && c.thin_after_days <= c.germination_days[1],
+    );
+    expect(early.map((c) => c.id)).toEqual([]);
+  });
+
+  it('carrot: up in 8–10 days, thinned on day 30 (TNAU)', () => {
+    expect(cropById('carrot')).toMatchObject({
+      germination_days: [8, 10],
+      thin_after_days: 30,
+    });
   });
 });
 
@@ -138,5 +153,41 @@ describe('flowers on the calendar', () => {
     expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(26);
     expect(cropById('marigold')?.kind).toBe('FLOWER');
     expect(cropById('tomato')?.kind).toBe('CROP');
+  });
+});
+
+describe('sproutCheckTitle', () => {
+  const crop = (id: string) => cropById(id)!;
+
+  it('says seedlings only for seeds raised in a tray', () => {
+    expect(sproutCheckTitle(crop('tomato'), true)).toBe(
+      'Check the tomato seedlings have come up',
+    );
+  });
+
+  it('seeds sown in the bed sprout; no seedlings', () => {
+    expect(sproutCheckTitle(crop('peas'), false)).toBe(
+      'Check the sown peas for sprouts',
+    );
+    expect(sproutCheckTitle(crop('tomato'), false)).toBe(
+      'Check the sown tomato for sprouts',
+    );
+  });
+
+  it('tubers, cloves and rhizomes send up shoots', () => {
+    expect(sproutCheckTitle(crop('garlic'), false)).toBe(
+      'Check the planted garlic for shoots',
+    );
+    expect(sproutCheckTitle(crop('potato'), false)).toBe(
+      'Check the planted potato for shoots',
+    );
+  });
+
+  it('every title fits a reminder (60 characters)', () => {
+    const titles = [...CROPS, ...FLOWERS].flatMap((c) => [
+      sproutCheckTitle(c, true),
+      sproutCheckTitle(c, false),
+    ]);
+    expect(titles.filter((t) => t.length > 60)).toEqual([]);
   });
 });
