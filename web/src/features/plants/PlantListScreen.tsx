@@ -59,7 +59,7 @@ export function PlantListScreen({ addSlot, cropParts }: { addSlot?: ReactNode; c
           </Link>
         )}
       </header>
-      <main className="space-y-3 px-4">
+      <main className="space-y-2.5 px-4">
         <div className="flex gap-2">
           {GROUPS.map((g) => (
             <button
@@ -85,7 +85,7 @@ export function PlantListScreen({ addSlot, cropParts }: { addSlot?: ReactNode; c
               aria-selected={status === s}
               onClick={() => choose(s)}
               className={cx(
-                'min-h-11 rounded-full px-5 font-label text-xs font-bold uppercase tracking-wider transition-colors duration-150',
+                'min-h-9 rounded-full px-4 font-label text-[11px] font-bold uppercase tracking-wider transition-colors duration-150',
                 status === s ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-primary/70',
               )}
             >
