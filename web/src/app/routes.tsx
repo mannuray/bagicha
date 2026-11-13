@@ -1,4 +1,4 @@
-import { AddToGardenButton, CropDetailScreen, CropsScreen } from '../features/crops';
+import { AddToGardenButton, CropDetailScreen, CropHindiName, CropPebble, CropsScreen } from '../features/crops';
 import type { ReactNode } from 'react';
 import { Route, Routes } from 'react-router';
 import { LoginScreen, OtpScreen, RequireAuth, RequireOnboarded, SplashScreen } from '../features/auth';
@@ -10,6 +10,9 @@ import { GardenScreen, LanguageScreen, ProfileScreen, RegionScreen } from '../fe
 import { DiagnoseResultScreen, IdentifyResultScreen, ScanScreen, ScanStateProvider } from '../features/scan';
 import { TasksScreen } from '../features/tasks';
 import { NotFoundScreen } from './NotFoundScreen';
+
+/** Crop photos and Hindi names for the plant list rows. */
+const CROP_PARTS = { Pebble: CropPebble, Aside: CropHindiName };
 
 const ADD_BUTTON = 'bg-primary-gradient flex h-12 w-12 items-center justify-center rounded-full text-on-primary shadow-lg';
 
@@ -33,7 +36,7 @@ export function AppRoutes() {
         <Route path="/onboarding/garden" element={authed(<GardenScreen />)} />
 
         <Route path="/" element={app(<DashboardScreen />)} />
-        <Route path="/plants" element={app(<PlantListScreen addSlot={<AddToGardenButton className={ADD_BUTTON} />} />)} />
+        <Route path="/plants" element={app(<PlantListScreen addSlot={<AddToGardenButton className={ADD_BUTTON} />} cropParts={CROP_PARTS} />)} />
         <Route path="/plants/new" element={app(<PlantFormScreen />)} />
         <Route path="/plants/:id" element={app(<PlantDetailScreen />)} />
         <Route path="/plants/:id/edit" element={app(<PlantFormScreen />)} />

@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { useNow } from '../../lib/clock';
@@ -30,8 +30,14 @@ function statusLine(plant: Plant, t: TFunction, now: Date): string {
 }
 
 /** Stitch "Orchard Gallery": growing plants by group (trees, crops), with Want to grow and Past tabs. */
-/** `addSlot` lets the app put the garden chooser here without plants importing crops. */
-export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
+/** How a crop or flower looks in a row: its photo and its Hindi name (given by the app, so plants never imports crops). */
+export interface CropRowParts {
+  Pebble: ComponentType<{ cropId: string; name: string; className?: string }>;
+  Aside: ComponentType<{ cropId: string }>;
+}
+
+/** `addSlot` and `cropParts` let the app put crop pieces here without plants importing crops. */
+export function PlantListScreen({ addSlot, cropParts }: { addSlot?: ReactNode; cropParts?: CropRowParts } = {}) {
   const now = useNow();
   const { t } = useTranslation();
   const { group, status, kind, pages, chooseGroup, chooseStatus: choose, more } = usePlantList();
@@ -94,14 +100,14 @@ export function PlantListScreen({ addSlot }: { addSlot?: ReactNode } = {}) {
           </Link>
         )}
         {Array.from({ length: pages }, (_, i) => (
-          <PlantPage key={`${group}-${status}-${i}`} status={status} kind={kind} page={i + 1} isLast={i + 1 === pages} onMore={more} now={now} />
+          <PlantPage key={`${group}-${status}-${i}`} status={status} kind={kind} page={i + 1} isLast={i + 1 === pages} onMore={more} now={now} cropParts={cropParts} />
         ))}
       </main>
     </Screen>
   );
 }
 
-function PlantPage({ status, kind, page, isLast, onMore, now }: { status: Status; kind?: 'tree' | 'crop' | 'flower'; page: number; isLast: boolean; onMore: () => void; now: Date }) {
+function PlantPage({ status, kind, page, isLast, onMore, now, cropParts }: { status: Status; kind?: 'tree' | 'crop' | 'flower'; page: number; isLast: boolean; onMore: () => void; now: Date; cropParts?: CropRowParts }) {
   const { t } = useTranslation();
   const query = usePlants(page, status, kind);
 
@@ -133,7 +139,7 @@ function PlantPage({ status, kind, page, isLast, onMore, now }: { status: Status
   return (
     <>
       {items.map((plant) => (
-        <PlantCard key={plant.id} plant={plant} now={now} />
+        <PlantCard key={plant.id} plant={plant} now={now} cropParts={cropParts} />
       ))}
       {isLast && pagination.has_next && (
         <Button variant="tertiary" block onClick={onMore}>
@@ -144,22 +150,31 @@ function PlantPage({ status, kind, page, isLast, onMore, now }: { status: Status
   );
 }
 
-function PlantCard({ plant, now }: { plant: Plant; now: Date }) {
+/** Two lines: pebble, name with the Hindi name (crops) or species (trees), then the status. */
+function PlantCard({ plant, now, cropParts }: { plant: Plant; now: Date; cropParts?: CropRowParts }) {
   const { t, i18n } = useTranslation();
+  const crop = plant.record_kind !== 'TREE' && plant.crop_id && cropParts ? { id: plant.crop_id, ...cropParts } : null;
+  const species = [plant.species, plant.variety].filter(Boolean).join(' · ');
   return (
     <Link
       to={`/plants/${plant.id}`}
-      className="flex items-center gap-3 rounded-xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container"
+      className="flex items-center gap-3 rounded-xl bg-surface-container-low px-3 py-2.5 transition-colors hover:bg-surface-container"
     >
-      <span className="pebble-large flex h-12 w-12 shrink-0 items-center justify-center bg-primary-gradient text-on-primary">
-        <Icon name={plant.record_kind === 'TREE' ? 'park' : plant.record_kind === 'FLOWER' ? 'local_florist' : 'grass'} filled />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate font-headline text-lg text-primary">{plant.name}</span>
-        <span className="block truncate font-body text-sm text-on-surface-variant">
-          {[plant.species, plant.variety].filter(Boolean).join(' · ')}
+      {crop ? (
+        <crop.Pebble cropId={crop.id} name={plant.name} className="pebble-large h-11 w-11 shrink-0 overflow-hidden" />
+      ) : (
+        <span className="pebble-large flex h-11 w-11 shrink-0 items-center justify-center bg-primary-gradient text-on-primary">
+          <Icon name={plant.record_kind === 'TREE' ? 'park' : plant.record_kind === 'FLOWER' ? 'local_florist' : 'grass'} filled />
         </span>
-        <span className="mt-1 block font-label text-[11px] font-bold uppercase tracking-widest text-secondary">
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="flex min-w-0 items-baseline gap-2">
+          <span className="shrink-0 font-headline text-base text-primary">{plant.name}</span>
+          <span className="truncate font-body text-sm text-on-surface-variant">
+            {crop ? <crop.Aside cropId={crop.id} /> : plant.species !== plant.name ? species : null}
+          </span>
+        </span>
+        <span className="block truncate font-label text-[11px] font-bold uppercase tracking-widest text-secondary">
           {plant.ended_at
             ? t('plants.list.pastLine', {
                 reason: t(`biography.end.reason.${plant.end_reason ?? 'UNKNOWN_CAUSE'}`),

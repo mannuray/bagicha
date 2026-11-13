@@ -7,6 +7,8 @@ import { fail, ok, pageOf, plantRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { PlantFormScreen, PlantListScreen } from '.';
+import { cropItem } from '../crops/test-fixtures';
+import { CropHindiName, CropPebble } from '../crops';
 
 function Where() {
   return <p data-testid="where">{useLocation().pathname}</p>;
@@ -18,7 +20,7 @@ function Search() {
 
 const routes = (
   <Routes>
-    <Route path="/plants" element={<PlantListScreen />} />
+    <Route path="/plants" element={<PlantListScreen cropParts={{ Pebble: CropPebble, Aside: CropHindiName }} />} />
     <Route path="/plants/new" element={<PlantFormScreen />} />
     <Route path="/plants/:id/edit" element={<PlantFormScreen />} />
     <Route path="/plants/:id" element={<Where />} />
@@ -40,6 +42,31 @@ describe('my plants', () => {
     await userEvent.click(screen.getByRole('button', { name: /load more/i }));
     expect(await screen.findByText('Nimbu')).toBeInTheDocument();
     expect(screen.getByText('Aam')).toBeInTheDocument();
+  });
+
+  it('a crop row is two lines: its photo, name with the Hindi name, and status', async () => {
+    server.use(
+      http.get(`${API}/ledger/plants`, () =>
+        HttpResponse.json(pageOf([plantRecord({ id: 'c1', name: 'Tomato', species: 'Tomato', record_kind: 'CROP', crop_id: 'tomato', crop_stage: 'IN_GROUND', season_started_at: new Date().toISOString() })])),
+      ),
+      http.get(`${API}/crops/calendar`, () =>
+        HttpResponse.json(ok([cropItem({ id: 'tomato', name: 'Tomato', family: 'SOLANACEAE', aliases: ['tamatar', 'टमाटर'] })])),
+      ),
+    );
+    renderWithApp(routes, { route: '/plants' });
+    const row = await screen.findByRole('link', { name: /tomato/i });
+    expect(within(row).getByRole('img', { name: 'Tomato' })).toHaveAttribute('src', expect.stringContaining('tomato'));
+    expect(await within(row).findByText('टमाटर')).toBeInTheDocument();
+    expect(within(row).getAllByText('Tomato')).toHaveLength(1);
+    expect(within(row).getByText(/planted · day 0/i)).toBeInTheDocument();
+  });
+
+  it('a tree row shows its species beside the name when they differ', async () => {
+    server.use(http.get(`${API}/ledger/plants`, () => HttpResponse.json(pageOf([plantRecord({ name: 'Aam', species: 'Mango', variety: 'Langra' })]))));
+    renderWithApp(routes, { route: '/plants' });
+    const row = await screen.findByRole('link', { name: /aam/i });
+    expect(within(row).getByText('Mango · Langra')).toBeInTheDocument();
+    expect(within(row).queryByRole('img')).toBeNull();
   });
 
   it('invites the first tree when the garden is empty', async () => {

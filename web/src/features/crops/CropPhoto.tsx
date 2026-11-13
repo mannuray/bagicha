@@ -16,12 +16,12 @@ const FAMILY_ICON: Record<string, string> = {
   ZINGIBERACEAE: 'compost',
 };
 
-export function CropPhoto({ cropId, family, name, className }: { cropId: string; family: string; name: string; className?: string }) {
+export function CropPhoto({ cropId, family, name, className, iconClassName = 'text-4xl' }: { cropId: string; family: string; name: string; className?: string; iconClassName?: string }) {
   const src = PHOTOS[`../../assets/crops/${cropId}.jpg`];
   if (src) return <img src={src} alt={name} className={cx('object-cover', className)} />;
   return (
     <div role="img" aria-label={name} className={cx('flex items-center justify-center bg-secondary-container/60 text-on-secondary-container', className)}>
-      <Icon name={FAMILY_ICON[family] ?? 'eco'} filled className="text-4xl" />
+      <Icon name={FAMILY_ICON[family] ?? 'eco'} filled className={iconClassName} />
     </div>
   );
 }
