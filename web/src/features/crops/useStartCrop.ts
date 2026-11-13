@@ -16,14 +16,14 @@ export function useStartCrop(plantId: string, crop: CropItem, initialPath: Start
   const [method, setMethod] = useState<StartMethod | null>(nurseryCrop ? null : 'DIRECT');
   const [place, setPlace] = useState<string | null>(null);
   const chosen = places.data?.find((p) => p.id === place);
-  const placeForm = usePlaceForm(setPlace, places.data?.length === 0);
+  const placeForm = usePlaceForm(setPlace, places.data ?? []);
   const progress = startProgress({ path, method, nurseryCrop });
   /**
-   * On the place step, an open, unsaved new-place form is saved first, so what was
-   * typed is never lost. A nursery tray has no place step and never makes one.
+   * On the place step with no existing place picked, the new place is saved first.
+   * A nursery tray has no place step and never makes one.
    */
   const save = async () => {
-    const pending = progress.step === 'place' && !place && placeForm.adding;
+    const pending = progress.step === 'place' && !place;
     const placeId = pending ? await placeForm.add() : place;
     if (pending && !placeId) return;
     log.mutate(startEntry(path, method, placeId), { onSuccess: onDone });

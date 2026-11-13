@@ -316,8 +316,8 @@ describe('the crop page', () => {
       expect(within(sheet).getByText(/outside the usual sowing time in your region; it may struggle/i)).toBeInTheDocument();
     });
 
-    it('adds a place with its kind and sun', async () => {
-      handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'PLANNED' });
+    it('adds a place with its kind and sun, saved by Start', async () => {
+      const posts = handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'PLANNED' });
       let created: unknown;
       server.use(
         http.post(`${API}/garden/places`, async ({ request }) => {
@@ -328,12 +328,12 @@ describe('the crop page', () => {
       renderWithApp(routes, { route: '/plants/c1' });
       const sheet = await openSheet();
       await userEvent.click(within(sheet).getByRole('button', { name: /i have seeds/i }));
-      await userEvent.click(await within(sheet).findByRole('button', { name: /add a place/i }));
-      await userEvent.type(within(sheet).getByLabelText(/place name/i), 'Back bed');
+      await userEvent.type(await within(sheet).findByLabelText(/name \(optional\)/i), 'Back bed');
       await userEvent.click(within(sheet).getByRole('button', { name: /^bed$/i }));
       await userEvent.click(within(sheet).getByRole('button', { name: /^full sun$/i }));
-      await userEvent.click(within(sheet).getByRole('button', { name: /add place/i }));
+      await userEvent.click(within(sheet).getByRole('button', { name: /start season/i }));
       await waitFor(() => expect(created).toEqual({ name: 'Back bed', kind: 'BED', sun_hours: 'FULL' }));
+      await waitFor(() => expect(posts).toEqual([{ type: 'SOWING', metadata: { method: 'DIRECT', place_id: 'pl2' } }]));
     });
   });
 
@@ -352,20 +352,20 @@ describe('the crop page', () => {
       await userEvent.click(within(journey).getByRole('button', { name: /^start$/i }));
       const sheet = screen.getByRole('dialog', { name: /start growing/i });
       await userEvent.click(within(sheet).getByRole('button', { name: /i have seeds/i }));
-      expect(await within(sheet).findByLabelText(/place name/i)).toBeInTheDocument();
+      expect(await within(sheet).findByLabelText(/name \(optional\)/i)).toBeInTheDocument();
       expect(within(sheet).getByRole('button', { name: /^ground$/i })).toHaveAttribute('aria-pressed', 'true');
       await userEvent.click(within(sheet).getByRole('button', { name: /start season/i }));
       await waitFor(() => expect(created).toEqual({ name: 'Ground', kind: 'GROUND' }));
       await waitFor(() => expect(posts).toEqual([{ type: 'SOWING', metadata: { method: 'DIRECT', place_id: 'pl9' } }]));
     });
 
-    it('a typed place name is kept when Start is pressed without Add place', async () => {
+    it('with places, the new-place section is open without a tap; picking a place uses it', async () => {
       const posts = handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'PLANNED' });
-      let created: unknown;
+      let placeMade = false;
       server.use(
-        http.post(`${API}/garden/places`, async ({ request }) => {
-          created = await request.json();
-          return HttpResponse.json(ok({ id: 'pl3', name: 'Front yard', kind: 'GROUND', sun_hours: null, archived_at: null }), { status: 201 });
+        http.post(`${API}/garden/places`, () => {
+          placeMade = true;
+          return HttpResponse.json(ok({ id: 'pl3', name: 'Ground', kind: 'GROUND', sun_hours: null, archived_at: null }), { status: 201 });
         }),
       );
       renderWithApp(routes, { route: '/plants/c1' });
@@ -373,11 +373,51 @@ describe('the crop page', () => {
       await userEvent.click(within(journey).getByRole('button', { name: /^start$/i }));
       const sheet = screen.getByRole('dialog', { name: /start growing/i });
       await userEvent.click(within(sheet).getByRole('button', { name: /i have seeds/i }));
-      await userEvent.click(await within(sheet).findByRole('button', { name: /add a place/i }));
-      await userEvent.type(within(sheet).getByLabelText(/place name/i), 'Front yard');
+      expect(await within(sheet).findByLabelText(/name \(optional\)/i)).toBeInTheDocument();
+      expect(within(sheet).queryByRole('button', { name: /add a place/i })).toBeNull();
+      const ground = within(sheet).getByRole('button', { name: /^ground$/i });
+      expect(ground).toHaveAttribute('aria-pressed', 'true');
+      await userEvent.click(within(sheet).getByRole('button', { name: /terrace bag/i }));
+      expect(ground).toHaveAttribute('aria-pressed', 'false');
       await userEvent.click(within(sheet).getByRole('button', { name: /start season/i }));
-      await waitFor(() => expect(created).toEqual({ name: 'Front yard', kind: 'GROUND' }));
-      await waitFor(() => expect(posts).toEqual([{ type: 'SOWING', metadata: { method: 'DIRECT', place_id: 'pl3' } }]));
+      await waitFor(() => expect(posts).toEqual([{ type: 'SOWING', metadata: { method: 'DIRECT', place_id: 'pl1' } }]));
+      expect(placeMade).toBe(false);
+    });
+
+    it('never makes a second "Ground": a place with the same name and kind is reused', async () => {
+      const posts = handlers(
+        { name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'PLANNED' },
+        { places: [{ id: 'pl5', name: 'Ground', kind: 'GROUND', sun_hours: null, archived_at: null }] },
+      );
+      let placeMade = false;
+      server.use(
+        http.post(`${API}/garden/places`, () => {
+          placeMade = true;
+          return HttpResponse.json(ok({ id: 'pl6', name: 'Ground', kind: 'GROUND', sun_hours: null, archived_at: null }), { status: 201 });
+        }),
+      );
+      renderWithApp(routes, { route: '/plants/c1' });
+      const journey = await screen.findByRole('region', { name: /journey/i });
+      await userEvent.click(within(journey).getByRole('button', { name: /^start$/i }));
+      const sheet = screen.getByRole('dialog', { name: /start growing/i });
+      await userEvent.click(within(sheet).getByRole('button', { name: /i have seeds/i }));
+      await userEvent.click(await within(sheet).findByRole('button', { name: /start season/i }));
+      await waitFor(() => expect(posts).toEqual([{ type: 'SOWING', metadata: { method: 'DIRECT', place_id: 'pl5' } }]));
+      expect(placeMade).toBe(false);
+    });
+
+    it('tapping a kind after picking a place switches back to a new place', async () => {
+      handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'PLANNED' });
+      renderWithApp(routes, { route: '/plants/c1' });
+      const journey = await screen.findByRole('region', { name: /journey/i });
+      await userEvent.click(within(journey).getByRole('button', { name: /^start$/i }));
+      const sheet = screen.getByRole('dialog', { name: /start growing/i });
+      await userEvent.click(within(sheet).getByRole('button', { name: /i have seeds/i }));
+      const terrace = await within(sheet).findByRole('button', { name: /terrace bag/i });
+      await userEvent.click(terrace);
+      await userEvent.click(within(sheet).getByRole('button', { name: /^bed$/i }));
+      expect(terrace).toHaveAttribute('aria-pressed', 'false');
+      expect(within(sheet).getByRole('button', { name: /^bed$/i })).toHaveAttribute('aria-pressed', 'true');
     });
   });
 

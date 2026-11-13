@@ -8,10 +8,61 @@ export function hindiName(crop: { aliases: string[] }): string | null {
   return crop.aliases.find((a) => /[ऀ-ॿ]/.test(a)) ?? null;
 }
 
-/** Case-insensitive match on the name or any alias (Hindi included). */
+/** Hinglish spellings of one sound, folded together: gobhi = govi = gobi, phool = phul, dhaniya = dhania. */
+const SOUNDS: Array<[RegExp, string]> = [
+  [/ph/g, 'f'],
+  [/ch/g, 'x'],
+  [/[cq]/g, 'k'],
+  [/[vw]/g, 'b'],
+  [/z/g, 'j'],
+  [/y/g, 'i'],
+  [/ee/g, 'i'],
+  [/oo/g, 'u'],
+  [/h/g, ''],
+  [/(.)\1+/g, '$1'],
+];
+
+/** A name as it sounds, for matching: lowercase, spelling swaps folded, punctuation gone. */
+function sound(text: string): string {
+  const plain = text.toLowerCase().replace(/[^a-z\p{Script=Devanagari}]+/gu, ' ').trim();
+  return SOUNDS.reduce((s, [from, to]) => s.replace(from, to), plain);
+}
+
+/** Edits (insert, delete, change one letter) to turn a into b. */
+function editDistance(a: string, b: string): number {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j++) row[j] = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = row;
+  }
+  return prev[b.length];
+}
+
+/** One typo allowed from 5 letters, two from 8; shorter words must match as typed. */
+const typosAllowed = (length: number) => (length >= 8 ? 2 : length >= 5 ? 1 : 0);
+
+/** Close enough to a word of the name, or to how that word begins. */
+function nearWord(q: string, name: string): boolean {
+  const allowed = typosAllowed(q.length);
+  if (allowed === 0) return false;
+  const words = [...name.split(' '), name.replace(/ /g, '')];
+  return words.some((w) => Math.min(editDistance(q, w), editDistance(q, w.slice(0, q.length))) <= allowed);
+}
+
+/** Matches the name or any alias, in English or Hindi, forgiving Hinglish spellings and a small typo. */
 export function matchesSearch(crop: { name: string; aliases: string[] }, query: string): boolean {
-  const q = query.trim().toLowerCase();
-  return !q || [crop.name, ...crop.aliases].some((n) => n.toLowerCase().includes(q));
+  const raw = query.trim().toLowerCase();
+  if (!raw) return true;
+  const q = sound(raw);
+  // Hindi script matches anywhere (गोभी in फूलगोभी); Latin from the start of a word,
+  // so "matar" is peas, not the middle of "tamatar".
+  const hindi = /\p{Script=Devanagari}/u.test(raw);
+  return [crop.name, ...crop.aliases].some((n) => {
+    const name = sound(n);
+    if (hindi) return n.toLowerCase().includes(raw);
+    return name.startsWith(q) || name.includes(` ${q}`) || nearWord(q, name);
+  });
 }
 
 type Sun = 'FULL' | 'PARTIAL' | 'SHADE';

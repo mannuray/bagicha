@@ -6,30 +6,33 @@ import type { Place } from './schemas';
 export type PlaceForm = ReturnType<typeof usePlaceForm>;
 
 /**
- * ViewModel for "add a place": name, kind (Ground first) and sun. Open from the
- * start when the gardener has no places yet; a blank name takes the kind's name.
+ * ViewModel for the always-open "new place": kind (Ground first), an optional
+ * name and sun. A blank name takes the kind's name; a place with the same name
+ * and kind is reused, not made again.
  */
-export function usePlaceForm(onAdded: (placeId: string) => void, noPlacesYet: boolean) {
+export function usePlaceForm(onAdded: (placeId: string) => void, places: Place[]) {
   const { t } = useTranslation();
   const create = useCreatePlace();
-  const [opened, setOpened] = useState(false);
   const [name, setName] = useState('');
   const [kind, setKind] = useState<Place['kind']>('GROUND');
   const [sun, setSun] = useState<Place['sun_hours']>(null);
-  const adding = opened || noPlacesYet;
 
   /** Saves the place and picks it; resolves to its id (null if saving failed). */
   const add = async (): Promise<string | null> => {
+    const placeName = name.trim() || t(`crops.place.kind.${kind}`);
+    // Pressing Start with the defaults again must not pile up places called "Ground".
+    const same = places.find((p) => p.kind === kind && p.name.trim().toLowerCase() === placeName.toLowerCase());
+    if (same) {
+      onAdded(same.id);
+      return same.id;
+    }
     try {
       const place = await create.mutateAsync({
-        name: name.trim() || t(`crops.place.kind.${kind}`),
+        name: placeName,
         kind,
         ...(sun ? { sun_hours: sun } : {}),
       });
       onAdded(place.id);
-      setOpened(false);
-      setName('');
-      setSun(null);
       return place.id;
     } catch {
       return null;
@@ -37,8 +40,6 @@ export function usePlaceForm(onAdded: (placeId: string) => void, noPlacesYet: bo
   };
 
   return {
-    adding,
-    open: () => setOpened(true),
     name,
     setName,
     kind,

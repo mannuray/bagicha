@@ -605,9 +605,8 @@
     },
     "place": {
       "where": "Where will it grow?",
-      "add": "+ Add a place",
-      "name": "Place name",
-      "save": "Add place",
+      "orNew": "Or a new place",
+      "name": "Name (optional)",
       "rotation": "{{crop}} (same family) grew here in {{season}} — try a different family here, and this crop somewhere else.",
       "kind": {
         "BED": "Bed",
