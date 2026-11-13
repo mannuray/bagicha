@@ -93,7 +93,30 @@ describe('tree biography', () => {
     const section = await screen.findByRole('region', { name: /this month/i });
     expect(within(section).getByText('Main feed after harvest')).toBeInTheDocument();
     expect(section.textContent).toContain('For a 6-year-old tree: 30 kg FYM');
-    expect(section.textContent).toMatch(/when:\s*holes with sawdust on the trunk/i);
+    expect(within(section).queryByText('Treat stem borer holes')).toBeNull();
+    const signs = screen.getByRole('group', { name: /only if you see it/i });
+    expect(signs).not.toHaveAttribute('open');
+    expect(signs.textContent).toMatch(/when:\s*holes with sawdust on the trunk/i);
+  });
+
+  it('shows only the collapsed signs when nothing is due this month', async () => {
+    handlers();
+    server.use(
+      http.get(`${API}/seasonal/plant/p1/intelligence`, () =>
+        HttpResponse.json(
+          ok({
+            ...intelligence,
+            care_note: null,
+            care_this_month: [
+              { title: 'Treat stem borer holes', organic: 'Hook out the grub with wire', chemical: null, why: 'Borers hollow the trunk', amount: null, if_you_see: 'Holes with sawdust on the trunk' },
+            ],
+          }),
+        ),
+      ),
+    );
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByRole('group', { name: /only if you see it \(1\)/i })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: /this month/i })).toBeNull();
   });
 
   it('renders the loop sections from real data', async () => {

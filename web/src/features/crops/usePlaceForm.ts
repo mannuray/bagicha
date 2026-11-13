@@ -1,29 +1,52 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCreatePlace } from './api';
 import type { Place } from './schemas';
 
-/** ViewModel for "add a place": name, kind and sun; on save, picks the new place and closes. */
-export function usePlaceForm(onAdded: (placeId: string) => void) {
-  const create = useCreatePlace();
-  const [adding, setAdding] = useState(false);
-  const [name, setName] = useState('');
-  const [kind, setKind] = useState<Place['kind']>('GROW_BAG');
-  const [sun, setSun] = useState<Place['sun_hours']>(null);
+export type PlaceForm = ReturnType<typeof usePlaceForm>;
 
-  const add = () => {
-    if (!name.trim()) return;
-    create.mutate(
-      { name: name.trim(), kind, ...(sun ? { sun_hours: sun } : {}) },
-      {
-        onSuccess: (place) => {
-          onAdded(place.id);
-          setAdding(false);
-          setName('');
-          setSun(null);
-        },
-      },
-    );
+/**
+ * ViewModel for "add a place": name, kind (Ground first) and sun. Open from the
+ * start when the gardener has no places yet; a blank name takes the kind's name.
+ */
+export function usePlaceForm(onAdded: (placeId: string) => void, noPlacesYet: boolean) {
+  const { t } = useTranslation();
+  const create = useCreatePlace();
+  const [opened, setOpened] = useState(false);
+  const [name, setName] = useState('');
+  const [kind, setKind] = useState<Place['kind']>('GROUND');
+  const [sun, setSun] = useState<Place['sun_hours']>(null);
+  const adding = opened || noPlacesYet;
+
+  /** Saves the place and picks it; resolves to its id (null if saving failed). */
+  const add = async (): Promise<string | null> => {
+    try {
+      const place = await create.mutateAsync({
+        name: name.trim() || t(`crops.place.kind.${kind}`),
+        kind,
+        ...(sun ? { sun_hours: sun } : {}),
+      });
+      onAdded(place.id);
+      setOpened(false);
+      setName('');
+      setSun(null);
+      return place.id;
+    } catch {
+      return null;
+    }
   };
 
-  return { adding, open: () => setAdding(true), name, setName, kind, setKind, sun, toggleSun: (s: NonNullable<Place['sun_hours']>) => setSun((cur) => (cur === s ? null : s)), add, busy: create.isPending };
+  return {
+    adding,
+    open: () => setOpened(true),
+    name,
+    setName,
+    kind,
+    setKind,
+    sun,
+    toggleSun: (s: NonNullable<Place['sun_hours']>) => setSun((cur) => (cur === s ? null : s)),
+    add,
+    busy: create.isPending,
+    error: create.isError ? create.error : null,
+  };
 }

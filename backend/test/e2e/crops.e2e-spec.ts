@@ -466,6 +466,41 @@ describe('crops', () => {
       expect(cycles[0].yield_quantity).toBe(3.5);
     });
 
+    it('chana: the harvest reminder follows the region (153 days north, 85 south)', async () => {
+      const south = await seedUser(prisma, {
+        region_cluster: RegionCluster.SOUTH_DECCAN,
+      });
+      const due = async (user: User) => {
+        const a = as(user);
+        const chana = (await a.post('/api/v1/crops/plan', { crop_id: 'chana' }))
+          .body.data;
+        await log(a, chana.id, 'SOWING', { method: 'DIRECT' });
+        const ready = (await tasksOf(a, chana.id)).find((t) =>
+          /ready to pick/i.test(t.title),
+        )!;
+        return istDate(ready.due_date);
+      };
+      expect(await due(alice)).toBe('2027-03-12');
+      expect(await due(south)).toBe('2027-01-03');
+      const detail = await as(south).get('/api/v1/crops/calendar/chana');
+      expect(detail.body.data.days_to_first_harvest).toEqual([85, 85]);
+    });
+
+    it("an older profile with only a district gets that region's harvest days", async () => {
+      const chennai = await seedUser(prisma, {
+        region_cluster: null,
+        district: 'Chennai',
+      });
+      const a = as(chennai);
+      const chana = (await a.post('/api/v1/crops/plan', { crop_id: 'chana' }))
+        .body.data;
+      await log(a, chana.id, 'SOWING', { method: 'DIRECT' });
+      const ready = (await tasksOf(a, chana.id)).find((t) =>
+        /ready to pick/i.test(t.title),
+      )!;
+      expect(istDate(ready.due_date)).toBe('2027-01-03');
+    });
+
     it('a second sowing in an open season is a succession row, not a step back', async () => {
       const a = as(alice);
       const palak = (await a.post('/api/v1/crops/plan', { crop_id: 'palak' }))

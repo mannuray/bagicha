@@ -5,7 +5,7 @@ import { monthName } from '../../lib/format';
 import { ErrorState, Icon, LoadingState, Pill, Screen, TopBar, cx } from '../../ui';
 import { useSession } from '../auth';
 import { CropPhoto } from './CropPhoto';
-import { hindiName } from './names';
+import { daySpan, hindiName } from './names';
 import { useCropCalendarView } from './useCropCalendarView';
 import type { CropItem } from './schemas';
 import { useAddCropToPlan } from './useAddCropToPlan';
@@ -95,7 +95,8 @@ export function CropsScreen() {
             )}
             {later.length > 0 && (
               <Section label={t('crops.section.later')}>
-                {showLater ? (
+                {/* A search opens the list: a gardener may already be growing a crop whose sowing time passed. */}
+                {showLater || query.trim() !== '' ? (
                   <div className="grid grid-cols-2 gap-3">
                     {later.map((crop) => (
                       <CropCard key={crop.id} crop={crop} onList={onList.has(crop.id)} />
@@ -136,7 +137,9 @@ function CropCard({ crop, onList, className }: { crop: CropItem; onList: boolean
   const when =
     crop.status === 'soon'
       ? t('crops.opensIn', { count: crop.opens_in_days ?? 0, window: crop.window_label })
-      : t('crops.sowWindow', { window: crop.window_label });
+      : crop.status === 'none'
+        ? t('crops.notGrownHere')
+        : t('crops.sowWindow', { window: crop.window_label });
   return (
     <article aria-label={crop.name} className={cx('relative overflow-hidden rounded-[1.5rem] bg-surface-container-low', className)}>
       <Link to={`/crops/${crop.id}`} className="block">
@@ -148,7 +151,7 @@ function CropCard({ crop, onList, className }: { crop: CropItem; onList: boolean
             {when} · {t(`crops.methodShort.${crop.method}`)}
           </p>
           <p className="font-body text-[11px] text-on-surface-variant">
-            {t('crops.firstHarvestShort', { min: crop.days_to_first_harvest[0], max: crop.days_to_first_harvest[1] })}
+            {t('crops.firstHarvestShort', { span: daySpan(crop.days_to_first_harvest) })}
           </p>
         </div>
       </Link>

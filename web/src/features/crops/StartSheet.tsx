@@ -14,7 +14,7 @@ import { useStartCrop } from './useStartCrop';
  */
 export function StartSheet({ plantId, crop, path: initial, onClose }: { plantId: string; crop: CropItem; path?: StartPath; onClose: () => void }) {
   const { t } = useTranslation();
-  const { nurseryCrop, setPath, method, setMethod, place, setPlace, chosen, transplanting, step, steps, at, sunNote, transplantDays, save, busy, error } =
+  const { nurseryCrop, setPath, method, setMethod, place, setPlace, placeForm, chosen, transplanting, step, steps, at, sunNote, transplantDays, save, busy, error } =
     useStartCrop(plantId, crop, initial, onClose);
   const title = transplanting ? t('crops.start.transplantTitle', { crop: crop.name }) : t('crops.start.title', { crop: crop.name });
 
@@ -73,7 +73,7 @@ export function StartSheet({ plantId, crop, path: initial, onClose }: { plantId:
 
         {step === 'place' && (
           <>
-            <PlacePicker cropId={crop.id} value={place} onChange={setPlace} />
+            <PlacePicker cropId={crop.id} value={place} onChange={setPlace} form={placeForm} />
             {sunNote && chosen && (
               <p className="rounded-[1rem] bg-secondary-container/25 px-3 py-2 font-body text-sm text-on-secondary-fixed-variant">
                 {t('crops.start.sunNote', { place: chosen.name, sun: t(`crops.place.sunLevel.${chosen.sun_hours}`), crop: crop.name })}

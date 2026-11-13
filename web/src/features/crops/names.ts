@@ -67,7 +67,8 @@ export function filterCalendar<C extends CalendarCrop>(
   return {
     open: visible.filter((c) => c.status === 'open'),
     soon: visible.filter((c) => c.status === 'soon'),
-    later: visible.filter((c) => c.status === 'later'),
+    // Not grown in this region: still findable, folded with the later ones.
+    later: visible.filter((c) => c.status === 'later' || c.status === 'none'),
   };
 }
 
@@ -106,4 +107,9 @@ export function cropFacts(crop: {
 /** The chooser's "good to sow now": the first three vegetables open now, by short name. */
 export function sowNowNames(calendar: Array<{ name: string; kind: string; status: string }>): string[] {
   return calendar.filter((c) => c.kind === 'CROP' && c.status === 'open').slice(0, 3).map(shortName);
+}
+
+/** A days range for display: "90–100", or one number when both ends match ("85"). */
+export function daySpan([min, max]: readonly [number, number]): string {
+  return min === max ? String(min) : `${min}–${max}`;
 }

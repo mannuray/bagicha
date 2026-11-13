@@ -1,4 +1,4 @@
-import { regionForDistrict } from '../../regions';
+import { regionForDistrict } from './district-match';
 import { RegionCluster, User } from '@prisma/client';
 
 /**

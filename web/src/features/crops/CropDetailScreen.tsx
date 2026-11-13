@@ -5,7 +5,7 @@ import { messageFor } from '../../lib/error-messages';
 import { Button, cx, ErrorState, Icon, LoadingState, Screen, TopBar } from '../../ui';
 import { useCropPage } from './useCropPage';
 import { CropPhoto } from './CropPhoto';
-import { cropFacts, growingSteps, hindiName } from './names';
+import { cropFacts, daySpan, growingSteps, hindiName } from './names';
 import type { CropDetail } from './schemas';
 
 type Step = { key: string; title: string; body: string };
@@ -29,7 +29,7 @@ export function CropDetailScreen() {
   const facts = cropFacts(crop).map((f) => ({
     icon: f.icon,
     label: t(f.labelKey),
-    value: f.range ? t('crops.detail.days', { min: f.range[0], max: f.range[1] }) : t('crops.detail.aboutDays', { days: f.days }),
+    value: f.range ? t('crops.detail.days', { span: daySpan(f.range) }) : t('crops.detail.aboutDays', { days: f.days }),
   }));
 
   return (

@@ -177,11 +177,11 @@ describe('the crop page', () => {
       expect(await screen.findByText('In the nursery · day 5')).toBeInTheDocument();
     });
 
-    it('heads a crop in the bed with its place', async () => {
+    it('heads a planted crop with its place', async () => {
       handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'IN_GROUND' });
       openSeason(daysAgo(12));
       renderWithApp(routes, { route: '/plants/c1' });
-      expect(await screen.findByText('In the bed · day 12 · Terrace bag')).toBeInTheDocument();
+      expect(await screen.findByText('Planted · day 12 · Terrace bag')).toBeInTheDocument();
       expect(await screen.findByText(/day 12 of about 30–40/i)).toBeInTheDocument();
     });
 
@@ -270,6 +270,35 @@ describe('the crop page', () => {
       await waitFor(() => expect(posts).toEqual([{ type: 'SOWING', metadata: { method: 'NURSERY' } }]));
     });
 
+    it('a nursery tray makes no place, even for a gardener with none yet', async () => {
+      const posts = handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'PLANNED' }, { places: [] });
+      let placeMade = false;
+      server.use(
+        http.post(`${API}/garden/places`, () => {
+          placeMade = true;
+          return HttpResponse.json(ok({ id: 'pl9', name: 'Ground', kind: 'GROUND', sun_hours: null, archived_at: null }), { status: 201 });
+        }),
+      );
+      renderWithApp(routes, { route: '/plants/c1' });
+      const sheet = await openSheet();
+      await userEvent.click(within(sheet).getByRole('button', { name: /i have seeds/i }));
+      await userEvent.click(within(sheet).getByRole('button', { name: /nursery tray/i }));
+      await userEvent.click(within(sheet).getByRole('button', { name: /start season/i }));
+      await waitFor(() => expect(posts).toEqual([{ type: 'SOWING', metadata: { method: 'NURSERY' } }]));
+      expect(placeMade).toBe(false);
+    });
+
+    it('says so when the new place cannot be saved', async () => {
+      const posts = handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'PLANNED' }, { places: [] });
+      server.use(http.post(`${API}/garden/places`, () => HttpResponse.json({ success: false, error: { code: 'INTERNAL', message: 'boom' } }, { status: 500 })));
+      renderWithApp(routes, { route: '/plants/c1' });
+      const sheet = await openSheet();
+      await userEvent.click(within(sheet).getByRole('button', { name: /i have seeds/i }));
+      await userEvent.click(await within(sheet).findByRole('button', { name: /start season/i }));
+      expect(await within(sheet).findByRole('alert')).toBeInTheDocument();
+      expect(posts).toEqual([]);
+    });
+
     it('notes when a full-sun crop goes into a partly sunny place', async () => {
       handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'PLANNED' }, { places: [{ id: 'pl1', name: 'Balcony', kind: 'POT', sun_hours: 'PARTIAL', archived_at: null }] });
       renderWithApp(routes, { route: '/plants/c1' });
@@ -305,6 +334,50 @@ describe('the crop page', () => {
       await userEvent.click(within(sheet).getByRole('button', { name: /^full sun$/i }));
       await userEvent.click(within(sheet).getByRole('button', { name: /add place/i }));
       await waitFor(() => expect(created).toEqual({ name: 'Back bed', kind: 'BED', sun_hours: 'FULL' }));
+    });
+  });
+
+  describe('choosing a place', () => {
+    it('with no places yet, the new-place form is already open on Ground, and Start saves it', async () => {
+      const posts = handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'PLANNED' }, { places: [] });
+      let created: unknown;
+      server.use(
+        http.post(`${API}/garden/places`, async ({ request }) => {
+          created = await request.json();
+          return HttpResponse.json(ok({ id: 'pl9', name: 'Ground', kind: 'GROUND', sun_hours: null, archived_at: null }), { status: 201 });
+        }),
+      );
+      renderWithApp(routes, { route: '/plants/c1' });
+      const journey = await screen.findByRole('region', { name: /journey/i });
+      await userEvent.click(within(journey).getByRole('button', { name: /^start$/i }));
+      const sheet = screen.getByRole('dialog', { name: /start growing/i });
+      await userEvent.click(within(sheet).getByRole('button', { name: /i have seeds/i }));
+      expect(await within(sheet).findByLabelText(/place name/i)).toBeInTheDocument();
+      expect(within(sheet).getByRole('button', { name: /^ground$/i })).toHaveAttribute('aria-pressed', 'true');
+      await userEvent.click(within(sheet).getByRole('button', { name: /start season/i }));
+      await waitFor(() => expect(created).toEqual({ name: 'Ground', kind: 'GROUND' }));
+      await waitFor(() => expect(posts).toEqual([{ type: 'SOWING', metadata: { method: 'DIRECT', place_id: 'pl9' } }]));
+    });
+
+    it('a typed place name is kept when Start is pressed without Add place', async () => {
+      const posts = handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'PLANNED' });
+      let created: unknown;
+      server.use(
+        http.post(`${API}/garden/places`, async ({ request }) => {
+          created = await request.json();
+          return HttpResponse.json(ok({ id: 'pl3', name: 'Front yard', kind: 'GROUND', sun_hours: null, archived_at: null }), { status: 201 });
+        }),
+      );
+      renderWithApp(routes, { route: '/plants/c1' });
+      const journey = await screen.findByRole('region', { name: /journey/i });
+      await userEvent.click(within(journey).getByRole('button', { name: /^start$/i }));
+      const sheet = screen.getByRole('dialog', { name: /start growing/i });
+      await userEvent.click(within(sheet).getByRole('button', { name: /i have seeds/i }));
+      await userEvent.click(await within(sheet).findByRole('button', { name: /add a place/i }));
+      await userEvent.type(within(sheet).getByLabelText(/place name/i), 'Front yard');
+      await userEvent.click(within(sheet).getByRole('button', { name: /start season/i }));
+      await waitFor(() => expect(created).toEqual({ name: 'Front yard', kind: 'GROUND' }));
+      await waitFor(() => expect(posts).toEqual([{ type: 'SOWING', metadata: { method: 'DIRECT', place_id: 'pl3' } }]));
     });
   });
 

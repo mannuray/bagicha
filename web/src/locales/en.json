@@ -506,7 +506,8 @@
     "estimated": "estimated",
     "editMilestones": "Edit",
     "thisMonth": "This month",
-    "ifYouSee": "When:"
+    "ifYouSee": "When:",
+    "ifYouSeeIt": "Only if you see it ({{count}})"
   },
   "scan": {
     "kicker": "Plant doctor",
@@ -579,6 +580,7 @@
       "later": "Later"
     },
     "sowWindow": "Sow {{window}}",
+    "notGrownHere": "Not usually grown in your region",
     "opensIn_one": "Opens in {{count}} day · {{window}}",
     "opensIn_other": "Opens in {{count}} days · {{window}}",
     "method": {
@@ -596,7 +598,7 @@
     "stage": {
       "PLANNED": "Want to grow",
       "NURSERY": "In the nursery",
-      "IN_GROUND": "In the bed",
+      "IN_GROUND": "Planted",
       "HARVESTING": "Harvesting",
       "RESTING": "Resting until next season",
       "BLOOMING": "Blooming"
@@ -662,12 +664,12 @@
       "remove": "Remove from Want to grow",
       "day": "day {{day}}",
       "next": "Next: {{title}} · {{due}}",
-      "progress": "Day {{day}} of about {{min}}–{{max}} to the first harvest",
+      "progress": "Day {{day}} of about {{span}} to the first harvest",
       "harvests_one": "{{count}} harvest this season",
       "harvests_other": "{{count}} harvests this season",
       "goodRotation": "Good choice: {{crop}} grew here last, a different family.",
       "bloom": "Log a bloom",
-      "progressBloom": "Day {{day}} of about {{min}}–{{max}} to the first bloom"
+      "progressBloom": "Day {{day}} of about {{span}} to the first bloom"
     },
     "chooser": {
       "open": "Add to garden",
@@ -685,7 +687,7 @@
     "toSowNow_one": "{{count}} crop to sow now",
     "toSowNow_other": "{{count}} crops to sow now",
     "search": "Search crops",
-    "laterList": "Later: {{names}}",
+    "laterList": "Not sowing time: {{names}}",
     "methodShort": {
       "NURSERY_TRANSPLANT": "nursery",
       "DIRECT_SOW": "direct",
@@ -693,7 +695,7 @@
       "CLOVE": "cloves",
       "RHIZOME": "rhizomes"
     },
-    "firstHarvestShort": "First harvest {{min}}–{{max}} days",
+    "firstHarvestShort": "First harvest {{span}} days",
     "family": {
       "SOLANACEAE": "Nightshade family",
       "MALVACEAE": "Mallow family",
@@ -736,7 +738,7 @@
       "germinates": "Germinates",
       "transplantAt": "Transplant at",
       "firstHarvest": "First harvest",
-      "days": "{{min}}–{{max}} days",
+      "days": "{{span}} days",
       "howItGrows": "How it grows",
       "howMuch": "How much to plant",
       "goodToKnow": "Good to know",

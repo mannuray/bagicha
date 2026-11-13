@@ -56,6 +56,8 @@ export interface CropInfo {
   transplant_after_days: [number, number] | null;
   /** From sowing (or planting the tuber, clove or rhizome). */
   days_to_first_harvest: [number, number];
+  /** Where a climate group ripens much earlier or later (e.g. chana: Punjab vs Tamil Nadu). */
+  harvest_by_group?: Partial<Record<ClimateGroup, [number, number]>>;
   harvest_span_days: number;
   thin_after_days: number | null;
   succession_every_days: number | null;
@@ -157,6 +159,18 @@ const DETAILS: Record<string, Details> = {
   carrot: d(
     'Daucus carota',
     'Needs deep, loose soil; thin early for straight roots.',
+  ),
+  black_carrot: d(
+    'Daucus carota subsp. sativus',
+    'Desi purple-black carrot for kanji and halwa; sown in Aug–Sep, before European orange carrots.',
+  ),
+  chana: d(
+    'Cicer arietinum',
+    'Pinch the tips a month after sowing for more branches; water only once, at pod set; pick green pods as hara chana, or let them dry.',
+  ),
+  khesari: d(
+    'Lathyrus sativus',
+    'Grow a low-toxin (ODAP) variety such as Ratan or Mahateora. Eat it as an occasional dal or saag, not daily for months; boiling in plenty of water and throwing the water away lowers the toxin.',
   ),
   palak: d(
     'Spinacia oleracea',
@@ -820,7 +834,7 @@ const RAW: Raw[] = [
   {
     id: 'garlic',
     name: 'Garlic',
-    aliases: ['lehsun', 'लहसुन'],
+    aliases: ['lehsun', 'lahsun', 'lasun', 'lashun', 'लहसुन'],
     family: 'AMARYLLIDACEAE',
     method: 'CLOVE',
     windows: { PLAINS: [[10, 11]], PENINSULAR: [[10, 11]], HILLS: [[9, 10]] },
@@ -878,6 +892,77 @@ const RAW: Raw[] = [
       plants_for_family_of_4: 'a 20-litre grow-bag (6–8 pieces)',
       container: '20-litre grow-bag',
       spacing_cm: [25, 30],
+    },
+  },
+  {
+    id: 'black_carrot',
+    name: 'Black carrot',
+    aliases: ['kali gajar', 'kaali gajar', 'purple carrot', 'काली गाजर'],
+    family: 'APIACEAE',
+    method: 'DIRECT_SOW',
+    // PAU: desi carrots Aug–Sep. Bolts in the hot south (KAU 2024); hills grow European types.
+    windows: { PLAINS: [[8, 9]], PENINSULAR: [], HILLS: [] },
+    germination_days: [7, 10],
+    transplant_after_days: null,
+    days_to_first_harvest: [90, 100],
+    // PAU: Punjab Black Beauty roots stay good in the field over a fortnight.
+    harvest_span_days: 15,
+    thin_after_days: 30,
+    succession_every_days: null,
+    care: [],
+    tags: ['container'],
+    guide: {
+      plants_for_family_of_4: 'a 1-metre row',
+      container: '12-inch deep pot',
+      spacing_cm: [6, 8],
+    },
+  },
+  {
+    id: 'chana',
+    name: 'Chana',
+    aliases: ['chickpea', 'gram', 'bengal gram', 'hara chana', 'चना'],
+    family: 'FABACEAE',
+    method: 'DIRECT_SOW',
+    // PAU 10 Oct–10 Nov; TNAU Oct–early Nov. No hill guide found.
+    windows: { PLAINS: [[10, 11]], PENINSULAR: [[10, 11]], HILLS: [] },
+    germination_days: [7, 15],
+    transplant_after_days: null,
+    // Dry seed: PAU varieties 153–170 days; TNAU CO 3 / CO 4 85 days.
+    days_to_first_harvest: [153, 170],
+    harvest_by_group: { PENINSULAR: [85, 85] },
+    harvest_span_days: 15,
+    thin_after_days: null,
+    succession_every_days: null,
+    // Nipping 30–45 days after sowing raised yield in trials (Indian J. Agronomy).
+    care: [{ key: 'pinch', after: 'SOWING', days: 35 }],
+    tags: [],
+    guide: {
+      plants_for_family_of_4: 'a 2-metre row',
+      container: '20-litre grow bag for 3–4 plants',
+      spacing_cm: [10, 10],
+    },
+  },
+  {
+    id: 'khesari',
+    name: 'Khesari',
+    aliases: ['grass pea', 'teora', 'lakh', 'lathyrus', 'खेसारी'],
+    family: 'FABACEAE',
+    method: 'DIRECT_SOW',
+    // AAU: mid-Oct to mid-Nov. Grown in the eastern and central plains only.
+    windows: { PLAINS: [[10, 11]], PENINSULAR: [], HILLS: [] },
+    germination_days: [5, 7],
+    transplant_after_days: null,
+    // AAU: Ratan 110–120 days, Mahateora 115–120.
+    days_to_first_harvest: [110, 120],
+    harvest_span_days: 10,
+    thin_after_days: null,
+    succession_every_days: null,
+    care: [],
+    tags: [],
+    guide: {
+      plants_for_family_of_4: 'a 2-metre row',
+      container: 'best in the ground',
+      spacing_cm: [10, 10],
     },
   },
 ];
@@ -1012,4 +1097,10 @@ export function sproutCheckTitle(crop: CropInfo, nursery: boolean): string {
   return crop.method === 'DIRECT_SOW' || crop.method === 'NURSERY_TRANSPLANT'
     ? `Check the sown ${name} for sprouts`
     : `Check the planted ${name} for shoots`;
+}
+
+/** The crop as grown in a climate group: its harvest days where that group differs. */
+export function inGroup(crop: CropInfo, group: ClimateGroup): CropInfo {
+  const harvest = crop.harvest_by_group?.[group];
+  return harvest ? { ...crop, days_to_first_harvest: harvest } : crop;
 }

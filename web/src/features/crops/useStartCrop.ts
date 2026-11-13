@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAddJournalEntry } from '../journal';
 import { useCropDetail, usePlaces } from './api';
 import type { CropItem } from './schemas';
+import { usePlaceForm } from './usePlaceForm';
 import { startEntry, startProgress, sunMismatch, type StartMethod, type StartPath } from './start-flow';
 
 /** ViewModel for the "Start growing" sheet: the choices so far, the step, and save. */
@@ -15,20 +16,32 @@ export function useStartCrop(plantId: string, crop: CropItem, initialPath: Start
   const [method, setMethod] = useState<StartMethod | null>(nurseryCrop ? null : 'DIRECT');
   const [place, setPlace] = useState<string | null>(null);
   const chosen = places.data?.find((p) => p.id === place);
+  const placeForm = usePlaceForm(setPlace, places.data?.length === 0);
+  const progress = startProgress({ path, method, nurseryCrop });
+  /**
+   * On the place step, an open, unsaved new-place form is saved first, so what was
+   * typed is never lost. A nursery tray has no place step and never makes one.
+   */
+  const save = async () => {
+    const pending = progress.step === 'place' && !place && placeForm.adding;
+    const placeId = pending ? await placeForm.add() : place;
+    if (pending && !placeId) return;
+    log.mutate(startEntry(path, method, placeId), { onSuccess: onDone });
+  };
 
   return {
     nurseryCrop,
     path, setPath,
     method, setMethod,
-    place, setPlace,
+    place, setPlace, placeForm,
     places,
     chosen,
     transplanting: path === 'transplant',
-    ...startProgress({ path, method, nurseryCrop }),
+    ...progress,
     sunNote: sunMismatch(crop.sun, chosen?.sun_hours),
     transplantDays: detail.data?.transplant_after_days,
-    save: () => log.mutate(startEntry(path, method, place), { onSuccess: onDone }),
-    busy: log.isPending,
-    error: log.isError ? log.error : null,
+    save: () => void save(),
+    busy: log.isPending || placeForm.busy,
+    error: log.isError ? log.error : placeForm.error,
   };
 }

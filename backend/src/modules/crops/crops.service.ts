@@ -8,6 +8,7 @@ import {
   CropPlanService,
   cropById,
   GardenPlaceRepository,
+  inGroup,
   windowStatus,
   type CropInfo,
 } from '../plant-ledger';
@@ -152,6 +153,7 @@ export class CropsService {
     now: Date,
   ) {
     const status = windowStatus(crop, group, now);
+    const here = inGroup(crop, group);
     return {
       id: crop.id,
       kind: crop.kind,
@@ -161,7 +163,7 @@ export class CropsService {
       method: crop.method,
       tags: crop.tags,
       guide: crop.guide,
-      days_to_first_harvest: crop.days_to_first_harvest,
+      days_to_first_harvest: here.days_to_first_harvest,
       scientific_name: crop.scientific_name,
       description: crop.description,
       sun: crop.sun,

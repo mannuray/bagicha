@@ -1,5 +1,5 @@
 import { RegionCluster, SeasonWindow } from '@prisma/client';
-import { regionFor, resolveRegionCluster } from './region-cluster';
+import { regionFor, resolveRegionCluster } from '../../regions';
 import { resolveSeasonWindow } from './season-window';
 
 describe('resolveSeasonWindow (IST)', () => {

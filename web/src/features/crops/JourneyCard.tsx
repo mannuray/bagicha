@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button, cx, Icon, LoadingState } from '../../ui';
 import type { PlantDetail } from '../plants';
+import { daySpan } from './names';
 import { useCropJourney } from './useCropJourney';
 import { StartSheet } from './StartSheet';
 
@@ -33,7 +34,7 @@ export function JourneyCard({ plant, now }: { plant: PlantDetail; now: Date }) {
       )}
       {status.day !== null && actions.showProgress && (
         <p className="font-body text-sm text-on-surface-variant">
-          {t(flower ? 'crops.journey.progressBloom' : 'crops.journey.progress', { day: status.day, min: crop.days_to_first_harvest[0], max: crop.days_to_first_harvest[1] })}
+          {t(flower ? 'crops.journey.progressBloom' : 'crops.journey.progress', { day: status.day, span: daySpan(crop.days_to_first_harvest) })}
         </p>
       )}
       {harvestCount > 0 && <p className="font-body text-sm text-on-surface-variant">{t('crops.journey.harvests', { count: harvestCount })}</p>}

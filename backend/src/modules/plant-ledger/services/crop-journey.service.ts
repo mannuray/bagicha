@@ -19,10 +19,13 @@ import { addDays, Clock, istYear } from '../../../common/time';
 import {
   climateGroupFor,
   cropById,
+  inGroup,
   sproutCheckTitle,
   windowContaining,
+  type ClimateGroup,
   type CropInfo,
 } from '../domain/crop-calendar';
+import { regionFor } from '../../regions';
 import { GardenPlaceRepository } from '../repositories/garden-place.repository';
 import { TaskDraft, TaskService } from './task.service';
 
@@ -118,8 +121,16 @@ export class CropJourneyService {
     cycle: PlantCycle | null,
     opened: boolean,
   ): Promise<void> {
-    const crop = cropById(plant.crop_id);
-    if (!crop) return;
+    const listed = cropById(plant.crop_id);
+    if (!listed) return;
+    // The region is looked up at most once, and only when an entry needs it.
+    let region: Promise<ClimateGroup> | undefined;
+    const group = () => (region ??= this.groupOf(tx, userId));
+    // Harvest days can differ by region; only sowing and transplanting set them.
+    const crop =
+      log.type === LogType.SOWING || log.type === LogType.TRANSPLANTING
+        ? inGroup(listed, await group())
+        : listed;
     const at = log.timestamp;
     const steps = (from: 'SOWING' | 'TRANSPLANTING') =>
       crop.care
@@ -144,7 +155,7 @@ export class CropJourneyService {
         if (!opened) {
           // A succession row in an open season: no stage change, no repeated steps.
           await this.completeSteps(tx, plant.id, ['row']);
-          await this.createRow(tx, userId, plant, crop, cycle, at);
+          await this.createRow(tx, userId, plant, crop, cycle, at, group);
           return;
         }
         const nursery =
@@ -205,7 +216,7 @@ export class CropJourneyService {
           );
         }
         await this.tasks.createTasks(userId, plant.id, drafts, tx);
-        await this.createRow(tx, userId, plant, crop, cycle, at);
+        await this.createRow(tx, userId, plant, crop, cycle, at, group);
         return;
       }
       case LogType.TRANSPLANTING: {
@@ -260,7 +271,7 @@ export class CropJourneyService {
           'thin',
           'harvest_soon',
         ]);
-        await this.createRow(tx, userId, plant, crop, cycle, at);
+        await this.createRow(tx, userId, plant, crop, cycle, at, group);
         return;
       case LogType.GERMINATION:
         await this.completeSteps(tx, plant.id, ['germination']);
@@ -297,6 +308,15 @@ export class CropJourneyService {
     return crop.kind === 'FLOWER'
       ? `${crop.name} should start blooming soon`
       : `${crop.name} should be ready to pick soon`;
+  }
+
+  /** The gardener's climate group (their region decides sowing windows and some harvest days). */
+  private async groupOf(tx: Tx, userId: string) {
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { region_cluster: true, district: true },
+    });
+    return climateGroupFor(user ? regionFor(user) : RegionCluster.NORTH_INDIA);
   }
 
   private lower(crop: CropInfo) {
@@ -344,6 +364,7 @@ export class CropJourneyService {
     crop: CropInfo,
     cycle: PlantCycle | null,
     at: Date,
+    group: () => Promise<ClimateGroup>,
   ) {
     if (!crop.succession_every_days || !cycle) return;
     // One pending row at a time: frequent harvests must not pile them up.
@@ -355,15 +376,8 @@ export class CropJourneyService {
       },
     });
     if (pending.some((t) => metaOf(t.metadata)?.step === 'row')) return;
-    const user = await tx.user.findUnique({
-      where: { id: userId },
-      select: { region_cluster: true },
-    });
-    const group = climateGroupFor(
-      user?.region_cluster ?? RegionCluster.NORTH_INDIA,
-    );
     const due = addDays(at, crop.succession_every_days);
-    if (!windowContaining(crop, group, due)) return;
+    if (!windowContaining(crop, await group(), due)) return;
     const draft = this.draft(
       crop,
       plant,

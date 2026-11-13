@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterCalendar } from './names';
+import { daySpan, filterCalendar } from './names';
 
 const crop = (id: string, over: Record<string, unknown> = {}) => ({
   id, name: id, aliases: [] as string[], kind: 'CROP', status: 'open', tags: [] as string[], sun: 'FULL' as 'FULL' | 'PARTIAL', ...over,
@@ -30,5 +30,17 @@ describe('filterCalendar: what the sowing calendar shows', () => {
 
   it('flowers are their own view', () => {
     expect(filterCalendar(items, { kind: 'FLOWER', query: '', filters: ['long'], sun: null }).open.map((c) => c.id)).toEqual(['marigold']);
+  });
+
+  it('a crop not grown in the region still shows, folded with the later ones', () => {
+    const r = filterCalendar([...items, crop('khesari', { status: 'none' })], { kind: 'CROP', query: '', filters: [], sun: null });
+    expect(r.later.map((c) => c.id)).toEqual(['cabbage', 'khesari']);
+  });
+});
+
+describe('daySpan', () => {
+  it('shows one number when both ends match', () => {
+    expect(daySpan([85, 85])).toBe('85');
+    expect(daySpan([90, 100])).toBe('90–100');
   });
 });

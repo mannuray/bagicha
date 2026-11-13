@@ -4,6 +4,7 @@ import {
   CROPS,
   climateGroupFor,
   cropById,
+  inGroup,
   nextWindow,
   sproutCheckTitle,
   windowStatus,
@@ -24,8 +25,8 @@ describe('climateGroupFor', () => {
 });
 
 describe('the calendar data', () => {
-  it('has 26 crops, each with a botanical family and a method, nursery crops with transplant timing', () => {
-    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(26);
+  it('has 29 crops, each with a botanical family and a method, nursery crops with transplant timing', () => {
+    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(29);
     const families = [
       'SOLANACEAE',
       'BRASSICACEAE',
@@ -61,6 +62,12 @@ describe('the calendar data', () => {
       (c) => c.thin_after_days && c.thin_after_days <= c.germination_days[1],
     );
     expect(early.map((c) => c.id)).toEqual([]);
+  });
+
+  it('garlic answers to the common spellings of lahsun', () => {
+    expect(cropById('garlic')?.aliases).toEqual(
+      expect.arrayContaining(['lehsun', 'lahsun', 'lasun', 'lashun']),
+    );
   });
 
   it('carrot: up in 8–10 days, thinned on day 30 (TNAU)', () => {
@@ -150,7 +157,7 @@ describe('flowers on the calendar', () => {
   });
 
   it('keeps vegetables as CROP, and finds flowers by id', () => {
-    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(26);
+    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(29);
     expect(cropById('marigold')?.kind).toBe('FLOWER');
     expect(cropById('tomato')?.kind).toBe('CROP');
   });
@@ -189,5 +196,52 @@ describe('sproutCheckTitle', () => {
       sproutCheckTitle(c, false),
     ]);
     expect(titles.filter((t) => t.length > 60)).toEqual([]);
+  });
+});
+
+/** Spot checks from the approved tables (owner yes, 2026-11-13). */
+describe('black carrot, chana and khesari', () => {
+  it('black carrot: desi type, sown Aug–Sep in the plains only (PAU)', () => {
+    expect(cropById('black_carrot')).toMatchObject({
+      name: 'Black carrot',
+      family: 'APIACEAE',
+      method: 'DIRECT_SOW',
+      windows: { PLAINS: [[8, 9]], PENINSULAR: [], HILLS: [] },
+      germination_days: [7, 10],
+      thin_after_days: 30,
+      days_to_first_harvest: [90, 100],
+      harvest_span_days: 15,
+    });
+    expect(cropById('black_carrot')?.aliases).toContain('kali gajar');
+  });
+
+  it('chana: Oct–Nov sowing, tips pinched on day 35', () => {
+    expect(cropById('chana')).toMatchObject({
+      family: 'FABACEAE',
+      windows: { PLAINS: [[10, 11]], PENINSULAR: [[10, 11]], HILLS: [] },
+      germination_days: [7, 15],
+      care: [{ key: 'pinch', after: 'SOWING', days: 35 }],
+    });
+  });
+
+  it('chana ripens at 153–170 days in the plains (PAU) and 85 in the south (TNAU)', () => {
+    const chana = cropById('chana')!;
+    expect(inGroup(chana, 'PLAINS').days_to_first_harvest).toEqual([153, 170]);
+    expect(inGroup(chana, 'PENINSULAR').days_to_first_harvest).toEqual([
+      85, 85,
+    ]);
+    expect(inGroup(cropById('carrot')!, 'PENINSULAR')).toEqual(
+      cropById('carrot'),
+    );
+  });
+
+  it('khesari: plains only, ready at 110–120 days, low-ODAP varieties named', () => {
+    const khesari = cropById('khesari')!;
+    expect(khesari).toMatchObject({
+      windows: { PLAINS: [[10, 11]], PENINSULAR: [], HILLS: [] },
+      germination_days: [5, 7],
+      days_to_first_harvest: [110, 120],
+    });
+    expect(khesari.description).toMatch(/Ratan|Mahateora/);
   });
 });

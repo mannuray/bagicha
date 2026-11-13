@@ -39,16 +39,16 @@ describe('what can I sow now?', () => {
     expect(within(now).getByText(/sow sep–nov/i)).toBeInTheDocument();
     const soon = screen.getByRole('region', { name: /coming up/i });
     expect(within(soon).getByText(/opens in 12 days/i)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /later: pumpkin/i }));
+    await userEvent.click(screen.getByRole('button', { name: /not sowing time: pumpkin/i }));
     expect(within(screen.getByRole('region', { name: /later/i })).getByText('Pumpkin')).toBeInTheDocument();
   });
 
   it('filters by container-friendly, beginner and quick harvest', async () => {
     handlers();
     renderWithApp(<CropsScreen />, { route: '/crops' });
-    await screen.findByRole('button', { name: /later: pumpkin/i });
+    await screen.findByRole('button', { name: /not sowing time: pumpkin/i });
     await userEvent.click(screen.getByRole('button', { name: /container-friendly/i }));
-    expect(screen.queryByRole('button', { name: /later: pumpkin/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /not sowing time: pumpkin/i })).not.toBeInTheDocument();
     expect(screen.getByText('Tomato')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /quick harvest/i }));
     expect(screen.queryByText('Tomato')).not.toBeInTheDocument();
@@ -101,7 +101,7 @@ describe('what can I sow now?', () => {
     renderWithApp(<CropsScreen />, { route: '/crops' });
     await screen.findByText('Spinach (Palak)');
     expect(screen.queryByText('Pumpkin', { selector: 'h3' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /later: pumpkin/i }));
+    await userEvent.click(screen.getByRole('button', { name: /not sowing time: pumpkin/i }));
     expect(screen.getByText('Pumpkin', { selector: 'h3' })).toBeInTheDocument();
   });
 
@@ -112,6 +112,14 @@ describe('what can I sow now?', () => {
     await userEvent.type(screen.getByRole('searchbox', { name: /search crops/i }), 'पालक');
     expect(screen.getByText('Spinach (Palak)')).toBeInTheDocument();
     expect(screen.queryByText('Tomato')).not.toBeInTheDocument();
+  });
+
+  it('search finds a crop whose sowing time has passed, already opened', async () => {
+    handlers();
+    renderWithApp(<CropsScreen />, { route: '/crops' });
+    await screen.findByText('Tomato');
+    await userEvent.type(screen.getByRole('searchbox', { name: /search crops/i }), 'pump');
+    expect(screen.getByText('Pumpkin', { selector: 'h3' })).toBeInTheDocument();
   });
 
   it('hides the sunlight filter until a place has sun set', async () => {
@@ -132,7 +140,7 @@ describe('what can I sow now?', () => {
   it('shows a family pebble when a crop has no photo', async () => {
     handlers();
     renderWithApp(<CropsScreen />, { route: '/crops' });
-    await userEvent.click(await screen.findByRole('button', { name: /later: pumpkin/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /not sowing time: pumpkin/i }));
     const card = screen.getByText('Pumpkin', { selector: 'h3' }).closest('article') as HTMLElement;
     expect(within(card).getByRole('img', { name: 'Pumpkin' }).tagName).not.toBe('IMG');
   });

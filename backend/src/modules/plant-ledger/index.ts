@@ -28,6 +28,7 @@ export {
   cropById,
   nextWindow,
   windowContaining,
+  inGroup,
   windowStatus,
 } from './domain/crop-calendar';
 export {

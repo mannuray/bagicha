@@ -1,18 +1,17 @@
 import { useTranslation } from 'react-i18next';
 import { Button, Pill, TextField } from '../../ui';
 import { usePlaces, useRotation } from './api';
-import { usePlaceForm } from './usePlaceForm';
+import type { PlaceForm } from './usePlaceForm';
 import type { Place } from './schemas';
 
-const KINDS: Place['kind'][] = ['BED', 'GROW_BAG', 'POT', 'CONTAINER', 'GROUND'];
+const KINDS: Place['kind'][] = ['GROUND', 'BED', 'GROW_BAG', 'POT', 'CONTAINER'];
 const SUN: Array<NonNullable<Place['sun_hours']>> = ['FULL', 'PARTIAL', 'SHADE'];
 
 /** Where this crop will grow: pick a bed or bag (or add one with its kind and sun), with a gentle rotation note. */
-export function PlacePicker({ cropId, value, onChange }: { cropId: string; value: string | null; onChange: (id: string | null) => void }) {
+export function PlacePicker({ cropId, value, onChange, form }: { cropId: string; value: string | null; onChange: (id: string | null) => void; form: PlaceForm }) {
   const { t } = useTranslation();
   const places = usePlaces();
   const rotation = useRotation(value, cropId);
-  const form = usePlaceForm(onChange);
 
   return (
     <div className="space-y-2">
@@ -46,7 +45,7 @@ export function PlacePicker({ cropId, value, onChange }: { cropId: string; value
               </Pill>
             ))}
           </div>
-          <Button variant="quiet" busy={form.busy} onClick={form.add}>
+          <Button variant="quiet" busy={form.busy} onClick={() => void form.add()}>
             {t('crops.place.save')}
           </Button>
         </div>

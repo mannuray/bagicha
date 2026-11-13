@@ -47,7 +47,7 @@ import {
   buildTaskTemplates,
   TaskTemplateInput,
 } from './domain/overlay-rules';
-import { regionFor } from './domain/region-cluster';
+import { regionFor } from '../regions';
 import { seasonGuide } from './domain/season-guide';
 import { resolveSeasonWindow } from './domain/season-window';
 import { OverlayRepository } from './repositories/overlay.repository';

@@ -14,7 +14,8 @@ export function ThisSeason({ plantId }: { plantId: string }) {
   if (pack.avoid_now.length === 0 && pack.watch_for.length === 0 && !note && month.length === 0) return null;
   return (
     <section className="space-y-3">
-      {month.length > 0 && <ThisMonth items={month} />}
+      <ThisMonth items={month.filter((i) => !i.if_you_see)} />
+      <IfYouSee items={month.filter((i) => i.if_you_see)} />
       <h2 className="font-headline text-xl text-primary">{t('biography.thisSeason')}</h2>
       {note && <p className="font-body text-sm text-on-surface-variant">{note}</p>}
       <AdviceList title={t('biography.avoid')} icon="block" items={pack.avoid_now} />
@@ -25,35 +26,63 @@ export function ThisSeason({ plantId }: { plantId: string }) {
 
 type CareLine = NonNullable<PlantIntelligence['care_this_month']>[number];
 
-/** This month's care: what to do, the organic way first, the dose for this tree, the alternative and why. */
+/** This month's dated care: what to do, the organic way first, the dose for this tree, the alternative and why. */
 function ThisMonth({ items }: { items: CareLine[] }) {
   const { t } = useTranslation();
+  if (items.length === 0) return null;
   return (
     <section aria-label={t('biography.thisMonth')} className="space-y-2">
       <h3 className="font-label text-xs font-bold uppercase tracking-widest text-secondary">{t('biography.thisMonth')}</h3>
       {items.map((item) => (
-        <Surface key={item.title} className="space-y-1 p-4 font-body text-sm text-on-surface">
-          <p className="font-bold text-primary">{item.title}</p>
-          {item.if_you_see && (
-            <p className="text-on-surface-variant">
-              {t('biography.ifYouSee')} {item.if_you_see}
-            </p>
-          )}
-          {item.organic && (
-            <p>
-              <span className="font-label text-xs font-bold uppercase tracking-wider text-primary">{t('tasks.care.organic')}</span> {item.organic}
-            </p>
-          )}
-          {item.amount && <p className="text-on-surface-variant">{item.amount}</p>}
-          {item.chemical && (
-            <p>
-              <span className="font-label text-xs font-bold uppercase tracking-wider text-secondary">{t('tasks.care.alternative')}</span> {item.chemical}
-            </p>
-          )}
-          <p className="text-xs italic text-on-surface-variant">{item.why}</p>
-        </Surface>
+        <CareCard key={item.title} item={item} />
       ))}
     </section>
+  );
+}
+
+/** "Only if you see it" care: kept folded so it never buries what is due now. */
+function IfYouSee({ items }: { items: CareLine[] }) {
+  const { t } = useTranslation();
+  if (items.length === 0) return null;
+  const label = t('biography.ifYouSeeIt', { count: items.length });
+  return (
+    <details aria-label={label} className="group space-y-2">
+      <summary className="flex cursor-pointer list-none items-center gap-1 font-label text-xs font-bold uppercase tracking-widest text-secondary">
+        <Icon name="expand_more" className="transition-transform group-open:rotate-180" />
+        {label}
+      </summary>
+      <div className="mt-2 space-y-2">
+        {items.map((item) => (
+          <CareCard key={item.title} item={item} />
+        ))}
+      </div>
+    </details>
+  );
+}
+
+function CareCard({ item }: { item: CareLine }) {
+  const { t } = useTranslation();
+  return (
+    <Surface className="space-y-1 p-4 font-body text-sm text-on-surface">
+      <p className="font-bold text-primary">{item.title}</p>
+      {item.if_you_see && (
+        <p className="text-on-surface-variant">
+          {t('biography.ifYouSee')} {item.if_you_see}
+        </p>
+      )}
+      {item.organic && (
+        <p>
+          <span className="font-label text-xs font-bold uppercase tracking-wider text-primary">{t('tasks.care.organic')}</span> {item.organic}
+        </p>
+      )}
+      {item.amount && <p className="text-on-surface-variant">{item.amount}</p>}
+      {item.chemical && (
+        <p>
+          <span className="font-label text-xs font-bold uppercase tracking-wider text-secondary">{t('tasks.care.alternative')}</span> {item.chemical}
+        </p>
+      )}
+      <p className="text-xs italic text-on-surface-variant">{item.why}</p>
+    </Surface>
   );
 }
 

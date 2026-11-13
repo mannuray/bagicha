@@ -8,3 +8,4 @@ export {
   matchDistrict,
   regionForDistrict,
 } from './domain/district-match';
+export { regionFor, resolveRegionCluster } from './domain/region-cluster';
