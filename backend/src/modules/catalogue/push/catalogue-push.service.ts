@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ValidationError } from '../../../common/errors';
-import { CatalogueRepository } from '../catalogue.repository';
+import {
+  CatalogueRepository,
+  type CatalogueWrite,
+} from '../catalogue.repository';
 import { validateSeed } from '../domain/schemas';
 
 export type PushOutcome = 'added' | 'changed' | 'unchanged';
@@ -15,13 +18,35 @@ export interface PushReport {
   crops: ItemOutcome[];
   methods: ItemOutcome[];
   careSteps: ItemOutcome[];
+  fruitTypes: ItemOutcome[];
+  fruitPlants: ItemOutcome[];
+  perennialFlowers: ItemOutcome[];
 }
+
+type Kind = Exclude<keyof PushReport, 'version'>;
+
+/** How each kind of record is keyed; the ordered kinds keep their place in the seed. */
+const KINDS: Record<
+  Kind,
+  { keyOf: (record: never) => string; ordered: boolean }
+> = {
+  crops: { keyOf: (c: { id: string }) => c.id, ordered: true },
+  methods: { keyOf: (m: { key: string }) => m.key, ordered: false },
+  careSteps: { keyOf: (s: { key: string }) => s.key, ordered: false },
+  fruitTypes: { keyOf: (t: { key: string }) => t.key, ordered: true },
+  fruitPlants: { keyOf: (p: { key: string }) => p.key, ordered: true },
+  perennialFlowers: {
+    keyOf: (f: { family: string }) => f.family,
+    ordered: true,
+  },
+};
+const KIND_NAMES = Object.keys(KINDS) as Kind[];
 
 /**
  * Writes the repo's seed files to the catalogue tables: adds new records,
  * updates changed ones, never deletes. A record the database has but the seed
  * lacks stops the push with nothing written, so a broken file can't hide
- * crops; retiring is done by setting RETIRED in the seed. Idempotent.
+ * records; retiring is done by setting RETIRED in the seed. Idempotent.
  */
 @Injectable()
 export class CataloguePushService {
@@ -30,60 +55,43 @@ export class CataloguePushService {
   async push(input: unknown): Promise<PushReport> {
     const seed = validateSeed(input);
     const stored = await this.repo.loadSeed(['DRAFT', 'APPROVED', 'RETIRED']);
+    const keys = (kind: Kind, records: object[]) =>
+      records.map((r) => KINDS[kind].keyOf(r as never));
 
-    const missing = {
-      crops: lacking(
-        stored.crops.map((c) => c.id),
-        seed.crops.map((c) => c.id),
-      ),
-      methods: lacking(
-        stored.methods.map((m) => m.key),
-        seed.methods.map((m) => m.key),
-      ),
-      careSteps: lacking(
-        stored.careSteps.map((s) => s.key),
-        seed.careSteps.map((s) => s.key),
-      ),
-    };
-    if (
-      missing.crops.length + missing.methods.length + missing.careSteps.length >
-      0
-    )
+    const missing = Object.fromEntries(
+      KIND_NAMES.map((kind) => [
+        kind,
+        lacking(keys(kind, stored[kind]), keys(kind, seed[kind])),
+      ]),
+    ) as Record<Kind, string[]>;
+    if (KIND_NAMES.some((kind) => missing[kind].length > 0))
       throw new ValidationError(
         'CATALOGUE_MISSING_FROM_SEED',
         'The seed is missing records the database has',
         missing,
       );
 
-    // A crop's place in the list is part of it: moving it counts as a change.
-    const orderedSeed = seed.crops.map((c, sort_order) => ({
-      ...c,
-      sort_order,
-    }));
-    const orderedStored = stored.crops.map((c, sort_order) => ({
-      ...c,
-      sort_order,
-    }));
-    const crops = compare(orderedSeed, orderedStored, (c) => c.id);
-    const methods = compare(seed.methods, stored.methods, (m) => m.key);
-    const careSteps = compare(seed.careSteps, stored.careSteps, (s) => s.key);
-
-    const write = {
-      crops: orderedSeed.filter((_, i) => crops[i].outcome !== 'unchanged'),
-      methods: seed.methods.filter(
-        (_, i) => methods[i].outcome !== 'unchanged',
-      ),
-      careSteps: seed.careSteps.filter(
-        (_, i) => careSteps[i].outcome !== 'unchanged',
-      ),
-    };
-    const changes =
-      write.crops.length + write.methods.length + write.careSteps.length;
+    // A record's place in the list is part of it: moving it counts as a change.
+    const place = (kind: Kind, records: object[]) =>
+      KINDS[kind].ordered
+        ? records.map((r, sort_order) => ({ ...r, sort_order }))
+        : records;
+    const report = {} as Omit<PushReport, 'version'>;
+    const write = {} as Record<Kind, object[]>;
+    for (const kind of KIND_NAMES) {
+      const next = place(kind, seed[kind]);
+      const outcomes = compare(next, place(kind, stored[kind]), (r) =>
+        KINDS[kind].keyOf(r as never),
+      );
+      report[kind] = outcomes;
+      write[kind] = next.filter((_, i) => outcomes[i].outcome !== 'unchanged');
+    }
+    const changes = KIND_NAMES.reduce((n, kind) => n + write[kind].length, 0);
     const version =
       changes > 0
-        ? await this.repo.applyPush(write)
+        ? await this.repo.applyPush(write as unknown as CatalogueWrite)
         : await this.repo.version();
-    return { version, crops, methods, careSteps };
+    return { version, ...report };
   }
 }
 

@@ -25,18 +25,15 @@ async function main(): Promise<void> {
     // The repository only uses the Prisma client API; PrismaService adds query monitoring.
     const repo = new CatalogueRepository(client as unknown as PrismaService);
     const report = await new CataloguePushService(repo).push(CATALOGUE_SEED);
+    const { version, ...kinds } = report;
+    const all = Object.values(kinds).flat();
     logger.info(
       {
-        version: report.version,
-        crops: changed(report.crops),
-        methods: changed(report.methods),
-        careSteps: changed(report.careSteps),
-        unchanged:
-          report.crops.length +
-          report.methods.length +
-          report.careSteps.length -
-          changed([...report.crops, ...report.methods, ...report.careSteps])
-            .length,
+        version,
+        ...Object.fromEntries(
+          Object.entries(kinds).map(([kind, items]) => [kind, changed(items)]),
+        ),
+        unchanged: all.length - changed(all).length,
       },
       'Catalogue pushed',
     );

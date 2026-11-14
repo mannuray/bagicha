@@ -768,6 +768,54 @@ model CatalogueCareStep {
   @@map("catalogue_care_steps")
 }
 
+/// A fruit type (species family): the words that identify it and its life profile.
+model CatalogueFruitType {
+  key        String          @id
+  status     CatalogueStatus @default(DRAFT)
+  /// Seed order: the first type whose words match wins.
+  sort_order Int
+  /// match_aliases and life, validated on push and load.
+  data       Json
+  /// Source notes kept beside the values.
+  notes      String?
+  created_at DateTime        @default(now())
+  updated_at DateTime        @updatedAt
+
+  @@index([status, sort_order])
+  @@map("catalogue_fruit_types")
+}
+
+/// One add-tree search entry: a fruit type's plain entry or a named variety.
+model CatalogueFruitPlant {
+  /// species_family, or species_family:variety.
+  key            String          @id
+  species_family String
+  status         CatalogueStatus @default(DRAFT)
+  sort_order     Int
+  /// Names, Hindi names, regions and ranking weight, validated on push and load.
+  data           Json
+  notes          String?
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @updatedAt
+
+  @@index([status, sort_order])
+  @@map("catalogue_fruit_plants")
+}
+
+/// A flower that stays for years: bloom months, care calendar and life ranges.
+model CataloguePerennialFlower {
+  family     String          @id
+  status     CatalogueStatus @default(DRAFT)
+  sort_order Int
+  data       Json
+  notes      String?
+  created_at DateTime        @default(now())
+  updated_at DateTime        @updatedAt
+
+  @@index([status, sort_order])
+  @@map("catalogue_perennial_flowers")
+}
+
 /// One row: bumped by every push that changes something, so the API knows to reload.
 model CatalogueMeta {
   id      Int @id @default(1)

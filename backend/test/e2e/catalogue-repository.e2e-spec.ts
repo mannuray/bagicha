@@ -16,8 +16,19 @@ const small: CatalogueSeed = {
   fruitPlants: [],
   perennialFlowers: [],
 };
-const ordered = (seed: CatalogueSeed) =>
-  seed.crops.map((c, sort_order) => ({ ...c, sort_order }));
+const inOrder = <T>(items: T[]) =>
+  items.map((item, sort_order) => ({ ...item, sort_order }));
+const ordered = (seed: CatalogueSeed) => inOrder(seed.crops);
+/** Everything a push of this seed writes. */
+const writeOf = (seed: CatalogueSeed) => ({
+  crops: ordered(seed),
+  methods: seed.methods,
+  careSteps: seed.careSteps,
+  fruitTypes: inOrder(seed.fruitTypes),
+  fruitPlants: inOrder(seed.fruitPlants),
+  perennialFlowers: inOrder(seed.perennialFlowers),
+});
+const none = { fruitTypes: [], fruitPlants: [], perennialFlowers: [] };
 
 describe('catalogue repository', () => {
   let app: INestApplication;
@@ -32,7 +43,7 @@ describe('catalogue repository', () => {
 
   beforeEach(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers',
     );
     await prisma.catalogueMeta.update({
       where: { id: 1 },
@@ -42,39 +53,28 @@ describe('catalogue repository', () => {
 
   afterAll(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers',
     );
-    await repo.applyPush({
-      crops: ordered(CATALOGUE_SEED),
-      methods: CATALOGUE_SEED.methods,
-      careSteps: CATALOGUE_SEED.careSteps,
-    });
+    await repo.applyPush(writeOf(CATALOGUE_SEED));
     await app.close();
   });
 
   it('starts at version 0 and stores a push in one version', async () => {
     expect(await repo.version()).toBe(0);
-    const version = await repo.applyPush({
-      crops: ordered(small),
-      methods: small.methods,
-      careSteps: small.careSteps,
-    });
+    const version = await repo.applyPush(writeOf(small));
     expect(version).toBe(1);
     expect(await repo.loadSeed(['APPROVED', 'RETIRED'])).toEqual(small);
   });
 
   it('a later push changes only what it carries and bumps the version', async () => {
-    await repo.applyPush({
-      crops: ordered(small),
-      methods: small.methods,
-      careSteps: small.careSteps,
-    });
+    await repo.applyPush(writeOf(small));
     const changed = { ...tomato, harvest_span_days: 99 };
     expect(
       await repo.applyPush({
         crops: [{ ...changed, sort_order: 0 }],
         methods: [],
         careSteps: [],
+        ...none,
       }),
     ).toBe(2);
     const loaded = await repo.loadSeed(['APPROVED']);
@@ -98,6 +98,7 @@ describe('catalogue repository', () => {
       ],
       methods: small.methods,
       careSteps: small.careSteps,
+      ...none,
     });
     expect((await repo.loadSeed(['APPROVED'])).crops.map((c) => c.id)).toEqual([
       'tomato',
@@ -105,5 +106,31 @@ describe('catalogue repository', () => {
     expect(
       (await repo.loadSeed(['APPROVED', 'RETIRED'])).crops.map((c) => c.id),
     ).toEqual(['carrot', 'tomato']);
+  });
+
+  it('round-trips fruit types, fruit entries and flowers in seed order, without drafts', async () => {
+    const rose = CATALOGUE_SEED.perennialFlowers.find(
+      (f) => f.family === 'rose',
+    )!;
+    const jasmine = CATALOGUE_SEED.perennialFlowers.find(
+      (f) => f.family === 'jasmine',
+    )!;
+    const mango = CATALOGUE_SEED.fruitTypes.find((t) => t.key === 'mango')!;
+    const plants = CATALOGUE_SEED.fruitPlants.filter(
+      (p) => p.species_family === 'mango',
+    );
+    await repo.applyPush({
+      ...writeOf(small),
+      fruitTypes: inOrder([mango]),
+      fruitPlants: inOrder(plants),
+      perennialFlowers: inOrder([
+        { ...jasmine, status: 'DRAFT' as const },
+        rose,
+      ]),
+    });
+    const loaded = await repo.loadSeed(['APPROVED', 'RETIRED']);
+    expect(loaded.fruitTypes).toEqual([mango]);
+    expect(loaded.fruitPlants).toEqual(plants);
+    expect(loaded.perennialFlowers).toEqual([rose]);
   });
 });

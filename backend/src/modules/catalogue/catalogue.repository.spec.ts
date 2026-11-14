@@ -14,7 +14,14 @@ describe('CatalogueRepository.applyPush', () => {
       }),
     };
     const repo = new CatalogueRepository(prisma as unknown as PrismaService);
-    await repo.applyPush({ crops: [], methods: [], careSteps: [] });
+    await repo.applyPush({
+      crops: [],
+      methods: [],
+      careSteps: [],
+      fruitTypes: [],
+      fruitPlants: [],
+      perennialFlowers: [],
+    });
     // Prisma's default is 5 s: ~65 upserts from a laptop to Neon can take longer.
     expect(options[0]).toEqual({ timeout: 60_000, maxWait: 10_000 });
   });

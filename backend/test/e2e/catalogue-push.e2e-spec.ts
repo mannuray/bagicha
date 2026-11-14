@@ -38,7 +38,7 @@ describe('catalogue push', () => {
 
   beforeEach(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers',
     );
     await prisma.catalogueMeta.update({
       where: { id: 1 },
@@ -48,7 +48,7 @@ describe('catalogue push', () => {
 
   afterAll(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers',
     );
     await push.push(CATALOGUE_SEED);
     await app.close();
@@ -57,15 +57,24 @@ describe('catalogue push', () => {
   it('adds everything on the first push, then finds nothing to do', async () => {
     const first = await push.push(CATALOGUE_SEED);
     expect(first.version).toBe(1);
-    expect(
-      outcomes([...first.crops, ...first.methods, ...first.careSteps]),
-    ).toEqual(['added']);
+    const all = (r: typeof first) => [
+      ...r.crops,
+      ...r.methods,
+      ...r.careSteps,
+      ...r.fruitTypes,
+      ...r.fruitPlants,
+      ...r.perennialFlowers,
+    ];
+    expect(outcomes(all(first))).toEqual(['added']);
     expect(first.crops).toHaveLength(CATALOGUE_SEED.crops.length);
+    expect(first.fruitTypes).toHaveLength(CATALOGUE_SEED.fruitTypes.length);
+    expect(first.fruitPlants).toHaveLength(CATALOGUE_SEED.fruitPlants.length);
+    expect(first.perennialFlowers).toHaveLength(
+      CATALOGUE_SEED.perennialFlowers.length,
+    );
     const again = await push.push(CATALOGUE_SEED);
     expect(again.version).toBe(1);
-    expect(
-      outcomes([...again.crops, ...again.methods, ...again.careSteps]),
-    ).toEqual(['unchanged']);
+    expect(outcomes(all(again))).toEqual(['unchanged']);
     expect(await repo.version()).toBe(1);
   });
 
@@ -118,5 +127,48 @@ describe('catalogue push', () => {
     await push.push(editCrop('carrot', () => ({ status: 'RETIRED' })));
     const stored = await repo.loadSeed(['RETIRED']);
     expect(stored.crops.map((c) => c.id)).toEqual(['carrot']);
+  });
+
+  it('stops with every table unchanged when the seed lacks a stored fruit entry', async () => {
+    await push.push(CATALOGUE_SEED);
+    const lacking = {
+      ...CATALOGUE_SEED,
+      crops: CATALOGUE_SEED.crops.map((c) =>
+        c.id === 'tomato' ? { ...c, harvest_span_days: 1 } : c,
+      ),
+      fruitPlants: CATALOGUE_SEED.fruitPlants.filter(
+        (p) => p.key !== 'mango:malda',
+      ),
+    };
+    expect(await reasonOf(push.push(lacking))).toBe(
+      'CATALOGUE_MISSING_FROM_SEED',
+    );
+    expect(await repo.version()).toBe(1);
+    const stored = await repo.loadSeed(['APPROVED']);
+    expect(
+      stored.crops.find((c) => c.id === 'tomato')?.harvest_span_days,
+    ).not.toBe(1);
+    expect(stored.fruitPlants.map((p) => p.key)).toContain('mango:malda');
+  });
+
+  it("reports one flower's changed care alone", async () => {
+    await push.push(CATALOGUE_SEED);
+    const report = await push.push({
+      ...CATALOGUE_SEED,
+      perennialFlowers: CATALOGUE_SEED.perennialFlowers.map((f) =>
+        f.family === 'rose'
+          ? { ...f, care: { ...f.care, PLAINS: f.care.PLAINS.slice(1) } }
+          : f,
+      ),
+    });
+    expect(report.version).toBe(2);
+    expect(
+      report.perennialFlowers.filter((f) => f.outcome !== 'unchanged'),
+    ).toEqual([{ key: 'rose', outcome: 'changed' }]);
+    expect(
+      [...report.fruitTypes, ...report.fruitPlants].every(
+        (i) => i.outcome === 'unchanged',
+      ),
+    ).toBe(true);
   });
 });

@@ -6,16 +6,23 @@ import type {
   CatalogueSeed,
   CatalogueStatus,
   CropSeed,
+  FruitPlantSeed,
+  FruitTypeSeed,
   MethodSeed,
+  PerennialFlowerSeed,
 } from './domain/types';
 
-/** A crop as the push writes it: its seed record and its place in the catalogue. */
-export type OrderedCrop = CropSeed & { sort_order: number };
+/** A record as the push writes it: its seed record and its place in the catalogue. */
+export type Ordered<T> = T & { sort_order: number };
+export type OrderedCrop = Ordered<CropSeed>;
 
 export interface CatalogueWrite {
   crops: OrderedCrop[];
   methods: MethodSeed[];
   careSteps: CareStepSeed[];
+  fruitTypes: Ordered<FruitTypeSeed>[];
+  fruitPlants: Ordered<FruitPlantSeed>[];
+  perennialFlowers: Ordered<PerennialFlowerSeed>[];
 }
 
 /**
@@ -35,17 +42,22 @@ export class CatalogueRepository {
 
   async loadSeed(statuses: CatalogueStatus[]): Promise<CatalogueSeed> {
     const where = { status: { in: statuses } };
-    const [crops, methods, careSteps] = await Promise.all([
-      this.prisma.catalogueCrop.findMany({
-        where,
-        orderBy: { sort_order: 'asc' },
-      }),
-      this.prisma.catalogueMethod.findMany({ where, orderBy: { key: 'asc' } }),
-      this.prisma.catalogueCareStep.findMany({
-        where,
-        orderBy: { key: 'asc' },
-      }),
-    ]);
+    const inOrder = { where, orderBy: { sort_order: 'asc' as const } };
+    const [crops, methods, careSteps, fruitTypes, fruitPlants, flowers] =
+      await Promise.all([
+        this.prisma.catalogueCrop.findMany(inOrder),
+        this.prisma.catalogueMethod.findMany({
+          where,
+          orderBy: { key: 'asc' },
+        }),
+        this.prisma.catalogueCareStep.findMany({
+          where,
+          orderBy: { key: 'asc' },
+        }),
+        this.prisma.catalogueFruitType.findMany(inOrder),
+        this.prisma.catalogueFruitPlant.findMany(inOrder),
+        this.prisma.cataloguePerennialFlower.findMany(inOrder),
+      ]);
     return {
       crops: crops.map(
         (row) =>
@@ -77,10 +89,34 @@ export class CatalogueRepository {
             status: row.status,
           }) as CareStepSeed,
       ),
-      // Stage 2 tables arrive in the next commit (plan Task 2).
-      fruitTypes: [],
-      fruitPlants: [],
-      perennialFlowers: [],
+      fruitTypes: fruitTypes.map(
+        (row) =>
+          ({
+            ...(row.data as object),
+            key: row.key,
+            status: row.status,
+            notes: row.notes,
+          }) as FruitTypeSeed,
+      ),
+      fruitPlants: fruitPlants.map(
+        (row) =>
+          ({
+            ...(row.data as object),
+            key: row.key,
+            species_family: row.species_family,
+            status: row.status,
+            notes: row.notes,
+          }) as FruitPlantSeed,
+      ),
+      perennialFlowers: flowers.map(
+        (row) =>
+          ({
+            ...(row.data as object),
+            family: row.family,
+            status: row.status,
+            notes: row.notes,
+          }) as PerennialFlowerSeed,
+      ),
     };
   }
 
@@ -118,6 +154,45 @@ export class CatalogueRepository {
           where: { key },
           create: { key, status, data: json(data) },
           update: { status, data: json(data) },
+        });
+      }
+      for (const {
+        key,
+        status,
+        notes,
+        sort_order,
+        ...data
+      } of write.fruitTypes) {
+        const row = { status, notes, sort_order, data: json(data) };
+        await tx.catalogueFruitType.upsert({
+          where: { key },
+          create: { key, ...row },
+          update: row,
+        });
+      }
+      for (const plant of write.fruitPlants) {
+        const { key, species_family, status, notes, sort_order, ...data } =
+          plant;
+        const row = {
+          species_family,
+          status,
+          notes,
+          sort_order,
+          data: json(data),
+        };
+        await tx.catalogueFruitPlant.upsert({
+          where: { key },
+          create: { key, ...row },
+          update: row,
+        });
+      }
+      for (const flower of write.perennialFlowers) {
+        const { family, status, notes, sort_order, ...data } = flower;
+        const row = { status, notes, sort_order, data: json(data) };
+        await tx.cataloguePerennialFlower.upsert({
+          where: { family },
+          create: { family, ...row },
+          update: row,
         });
       }
       const meta = await tx.catalogueMeta.upsert({
