@@ -85,11 +85,18 @@ const ordered = range.refine(([min, max]) => min <= max, 'min above max');
 const byGroup = <T extends z.ZodType>(item: T) =>
   z.object({ PLAINS: item, PENINSULAR: item, HILLS: item }).strict();
 const familyKey = z.string().regex(/^[a-z][a-z0-9_]*$/);
+/** A fruit word as the matcher compares it: lower-case Latin letters and digits, single spaces. */
+const fruitWord = z.string().regex(/^[a-z0-9]+( [a-z0-9]+)*$/);
+/** A flower alias as the matcher compares it: lower-case letters (any script) and digits, single spaces. */
+const flowerWord = z
+  .string()
+  .regex(/^[\p{L}\p{M}0-9]+( [\p{L}\p{M}0-9]+)*$/u)
+  .refine((w) => w === w.toLowerCase(), 'must be lower-case');
 
 export const fruitTypeSeedSchema = z
   .object({
     key: familyKey,
-    match_aliases: z.array(text).min(1),
+    match_aliases: z.array(fruitWord).min(1),
     life: z
       .object({
         first_fruit_months: ordered,
@@ -124,7 +131,7 @@ export const perennialFlowerSeedSchema = z
   .object({
     family: familyKey,
     name: text,
-    aliases: z.array(text).min(1),
+    aliases: z.array(flowerWord).min(1),
     bloom: byGroup(windows),
     care: byGroup(
       z.array(
@@ -224,6 +231,19 @@ function fruitAndFlowerIssues(seed: CatalogueSeed): string[] {
     ...duplicates(
       seed.perennialFlowers.flatMap((f) => f.aliases),
       'perennial flower alias',
+    ),
+    // A later type's word would never match: the first type with it wins.
+    ...duplicates(
+      seed.fruitTypes.flatMap((t) => t.match_aliases),
+      'fruit word',
+    ),
+    // Life profiles and search ids are looked up by family across both kinds.
+    ...duplicates(
+      [
+        ...seed.fruitTypes.map((t) => t.key),
+        ...seed.perennialFlowers.map((f) => f.family),
+      ],
+      'family shared by a fruit type and a flower:',
     ),
   ];
   const served = new Set(

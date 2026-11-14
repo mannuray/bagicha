@@ -278,4 +278,71 @@ describe('validateSeed', () => {
       ),
     ).toBe('CATALOGUE_INVALID');
   });
+
+  const withTypes = (
+    change: (items: CatalogueSeed['fruitTypes']) => CatalogueSeed['fruitTypes'],
+  ): unknown => ({
+    ...CATALOGUE_SEED,
+    fruitTypes: change(CATALOGUE_SEED.fruitTypes),
+  });
+
+  it.each(['Sindhuri', 'jack-fruit', 'star  fruit', ' mango'])(
+    'rejects a fruit word the matcher could never find: %j',
+    (alias) => {
+      expect(
+        reason(
+          withTypes((items) =>
+            items.map((t) =>
+              t.key === 'mango'
+                ? { ...t, match_aliases: [...t.match_aliases, alias] }
+                : t,
+            ),
+          ),
+        ),
+      ).toBe('CATALOGUE_INVALID');
+    },
+  );
+
+  it.each(['Rose', 'desert-rose', 'red  rose'])(
+    'rejects a flower alias the matcher could never find: %j',
+    (alias) => {
+      expect(
+        reason(
+          withList('perennialFlowers', (items) =>
+            items.map((f) =>
+              f.family === 'rose'
+                ? { ...f, aliases: [...f.aliases, alias] }
+                : f,
+            ),
+          ),
+        ),
+      ).toBe('CATALOGUE_INVALID');
+    },
+  );
+
+  it('rejects one fruit word on two fruit types', () => {
+    expect(
+      reason(
+        withTypes((items) =>
+          items.map((t) =>
+            t.key === 'guava'
+              ? { ...t, match_aliases: [...t.match_aliases, 'langra'] }
+              : t,
+          ),
+        ),
+      ),
+    ).toBe('CATALOGUE_INVALID');
+  });
+
+  it('rejects a perennial flower that reuses a fruit type key', () => {
+    expect(
+      reason(
+        withList('perennialFlowers', (items) =>
+          items.map((f) =>
+            f.family === 'rose' ? { ...f, family: 'mango' } : f,
+          ),
+        ),
+      ),
+    ).toBe('CATALOGUE_INVALID');
+  });
 });
