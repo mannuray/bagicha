@@ -81,11 +81,79 @@ export const careStepSeedSchema = z
   })
   .strict();
 
+const ordered = range.refine(([min, max]) => min <= max, 'min above max');
+const byGroup = <T extends z.ZodType>(item: T) =>
+  z.object({ PLAINS: item, PENINSULAR: item, HILLS: item }).strict();
+const familyKey = z.string().regex(/^[a-z][a-z0-9_]*$/);
+
+export const fruitTypeSeedSchema = z
+  .object({
+    key: familyKey,
+    match_aliases: z.array(text).min(1),
+    life: z
+      .object({
+        first_fruit_months: ordered,
+        productive_until_months: ordered,
+        lifespan_months: ordered,
+        note_key: text.nullable(),
+      })
+      .strict(),
+    status,
+    notes: z.string().nullable(),
+  })
+  .strict();
+
+export const fruitPlantSeedSchema = z
+  .object({
+    key: z.string().regex(/^[a-z][a-z0-9_]*(:.+)?$/),
+    species_family: familyKey,
+    species: text,
+    variety: text.nullable(),
+    display_name: text,
+    plant_type: text,
+    aliases: z.array(text),
+    languages: z.record(z.string(), z.array(text)).nullable(),
+    regions: z.array(text),
+    confidence_weight: z.number().min(0).max(1),
+    status,
+    notes: z.string().nullable(),
+  })
+  .strict();
+
+export const perennialFlowerSeedSchema = z
+  .object({
+    family: familyKey,
+    name: text,
+    aliases: z.array(text).min(1),
+    bloom: byGroup(windows),
+    care: byGroup(
+      z.array(
+        z
+          .object({
+            key: text,
+            month,
+            title: text,
+            category: z.enum(['PRUNING', 'FEEDING', 'GENERAL']),
+          })
+          .strict(),
+      ),
+    ),
+    first_bloom_months: ordered,
+    lifespan_months: ordered,
+    note_key: text.nullable(),
+    status,
+    notes: z.string().nullable(),
+  })
+  .strict();
+
 const seedSchema = z
   .object({
     crops: z.array(cropSeedSchema),
     methods: z.array(methodSeedSchema),
     careSteps: z.array(careStepSeedSchema),
+    fruitTypes: z.array(fruitTypeSeedSchema),
+    fruitPlants: z.array(fruitPlantSeedSchema),
+    perennialFlowers: z.array(perennialFlowerSeedSchema),
   })
   .strict();
 
@@ -133,8 +201,47 @@ export function validateSeed(input: unknown): CatalogueSeed {
       if (!steps.has(c.key))
         issues.push(`${crop.id}: unknown or draft care step ${c.key}`);
   }
+  issues.push(...fruitAndFlowerIssues(seed));
   if (issues.length > 0) throw invalid(issues);
   return seed;
+}
+
+/** Keys unique, entries keyed by their variety, served entries on served types, no alias on two flowers. */
+function fruitAndFlowerIssues(seed: CatalogueSeed): string[] {
+  const issues = [
+    ...duplicates(
+      seed.fruitTypes.map((t) => t.key),
+      'fruit type',
+    ),
+    ...duplicates(
+      seed.fruitPlants.map((p) => p.key),
+      'fruit plant',
+    ),
+    ...duplicates(
+      seed.perennialFlowers.map((f) => f.family),
+      'perennial flower',
+    ),
+    ...duplicates(
+      seed.perennialFlowers.flatMap((f) => f.aliases),
+      'perennial flower alias',
+    ),
+  ];
+  const served = new Set(
+    seed.fruitTypes.filter((t) => t.status !== 'DRAFT').map((t) => t.key),
+  );
+  const all = new Set(seed.fruitTypes.map((t) => t.key));
+  for (const plant of seed.fruitPlants) {
+    const want = plant.variety
+      ? `${plant.species_family}:${plant.variety}`
+      : plant.species_family;
+    if (plant.key !== want) issues.push(`${plant.key}: key should be ${want}`);
+    const types = plant.status === 'DRAFT' ? all : served;
+    if (!types.has(plant.species_family))
+      issues.push(
+        `${plant.key}: unknown or draft fruit type ${plant.species_family}`,
+      );
+  }
+  return issues;
 }
 
 function duplicates(keys: string[], what: string): string[] {

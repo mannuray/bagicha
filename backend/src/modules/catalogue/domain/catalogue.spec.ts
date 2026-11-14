@@ -116,4 +116,71 @@ describe('validateSeed', () => {
   it('accepts the real seed', () => {
     expect(reason(CATALOGUE_SEED)).toBe('valid');
   });
+
+  const withList = <K extends 'fruitPlants' | 'perennialFlowers'>(
+    list: K,
+    change: (items: CatalogueSeed[K]) => CatalogueSeed[K],
+  ): unknown => ({ ...CATALOGUE_SEED, [list]: change(CATALOGUE_SEED[list]) });
+
+  it('rejects a fruit plant naming a missing fruit type', () => {
+    expect(
+      reason(
+        withList('fruitPlants', (items) => [
+          ...items,
+          {
+            ...items[0],
+            key: 'durian',
+            species_family: 'durian',
+            species: 'durian',
+          },
+        ]),
+      ),
+    ).toBe('CATALOGUE_INVALID');
+  });
+
+  it("rejects a fruit plant whose key doesn't match its variety", () => {
+    expect(
+      reason(
+        withList('fruitPlants', (items) =>
+          items.map((p) =>
+            p.key === 'mango:malda' ? { ...p, variety: 'langra' } : p,
+          ),
+        ),
+      ),
+    ).toBe('CATALOGUE_INVALID');
+  });
+
+  it('rejects two perennial flowers sharing an alias', () => {
+    expect(
+      reason(
+        withList('perennialFlowers', (items) =>
+          items.map((f) =>
+            f.family === 'hibiscus'
+              ? { ...f, aliases: [...f.aliases, 'rose'] }
+              : f,
+          ),
+        ),
+      ),
+    ).toBe('CATALOGUE_INVALID');
+  });
+
+  it('rejects a care month of 13', () => {
+    expect(
+      reason(
+        withList('perennialFlowers', (items) =>
+          items.map((f) =>
+            f.family === 'rose'
+              ? {
+                  ...f,
+                  care: {
+                    ...f.care,
+                    PLAINS: [{ ...f.care.PLAINS[0], month: 13 }],
+                  },
+                }
+              : f,
+          ),
+        ),
+      ),
+    ).toBe('CATALOGUE_INVALID');
+  });
 });

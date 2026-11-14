@@ -91,8 +91,83 @@ export type CropSeed = Omit<CropInfo, 'tags'> & {
 export type MethodSeed = PlantingMethod & { status: CatalogueStatus };
 export type CareStepSeed = CareStepInfo & { status: CatalogueStatus };
 
+/**
+ * How long a species family usually takes to fruit (or, for a perennial
+ * flower, to bloom), stays productive and lives: [min, max] in months.
+ */
+export interface LifeProfile {
+  first_fruit_months: Months;
+  productive_until_months: Months;
+  lifespan_months: Months;
+  /** Web translation key for the species pattern note, if any. */
+  note_key: string | null;
+}
+
+/** A fruit type (species family): the words that identify it and its life profile. */
+export interface FruitTypeInfo {
+  /** The species family, e.g. `mango`. */
+  key: string;
+  /** Whole words in what people type that mean this fruit ("aam", "dasheri"); the first type that matches wins. */
+  match_aliases: string[];
+  life: LifeProfile;
+}
+
+/** One add-tree search entry: a fruit type's plain entry or a named variety. */
+export interface FruitPlantInfo {
+  /** `species_family`, or `species_family:variety`. */
+  key: string;
+  species_family: string;
+  species: string;
+  variety: string | null;
+  display_name: string;
+  plant_type: string;
+  aliases: string[];
+  languages: Record<string, string[]> | null;
+  /** Lower-case region clusters where it is grown. */
+  regions: string[];
+  confidence_weight: number;
+}
+
+/** What add-tree search ranks: fruit entries, and perennial flowers in the same shape. */
+export type SearchEntry = FruitPlantInfo;
+
+export type CareCategory = 'PRUNING' | 'FEEDING' | 'GENERAL';
+
+export interface CareItem {
+  key: string;
+  month: number;
+  title: string;
+  category: CareCategory;
+}
+
+/** A flower that stays for years (rose, hibiscus, mogra…). */
+export interface PerennialFlower {
+  family: string;
+  name: string;
+  aliases: string[];
+  bloom: Record<ClimateGroup, Months[]>;
+  care: Record<ClimateGroup, CareItem[]>;
+  first_bloom_months: Months;
+  lifespan_months: Months;
+  /** Web translation key for the species pattern note, if any. */
+  note_key: string | null;
+}
+
+type Seeded<T> = T & {
+  status: CatalogueStatus;
+  /** Source notes kept beside the values. */
+  notes: string | null;
+};
+
+export type FruitTypeSeed = Seeded<FruitTypeInfo>;
+export type FruitPlantSeed = Seeded<FruitPlantInfo>;
+export type PerennialFlowerSeed = Seeded<PerennialFlower>;
+
 export interface CatalogueSeed {
   crops: CropSeed[];
   methods: MethodSeed[];
   careSteps: CareStepSeed[];
+  fruitTypes: FruitTypeSeed[];
+  fruitPlants: FruitPlantSeed[];
+  perennialFlowers: PerennialFlowerSeed[];
 }

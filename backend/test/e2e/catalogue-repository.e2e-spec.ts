@@ -12,6 +12,9 @@ const small: CatalogueSeed = {
   crops: [tomato, { ...carrot, method: 'NURSERY_TRANSPLANT', care: [] }],
   methods: CATALOGUE_SEED.methods.filter((m) => m.key === 'NURSERY_TRANSPLANT'),
   careSteps: CATALOGUE_SEED.careSteps.filter((s) => s.key === 'stake'),
+  fruitTypes: [],
+  fruitPlants: [],
+  perennialFlowers: [],
 };
 const ordered = (seed: CatalogueSeed) =>
   seed.crops.map((c, sort_order) => ({ ...c, sort_order }));

@@ -77,6 +77,10 @@ export class CatalogueRepository {
             status: row.status,
           }) as CareStepSeed,
       ),
+      // Stage 2 tables arrive in the next commit (plan Task 2).
+      fruitTypes: [],
+      fruitPlants: [],
+      perennialFlowers: [],
     };
   }
 
