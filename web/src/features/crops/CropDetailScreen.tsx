@@ -21,6 +21,8 @@ export function CropDetailScreen() {
   const crop = detail.data;
   const hindi = hindiName(crop);
   const flower = crop.kind === 'FLOWER';
+  // Bulb flowers are cut or lifted, not deadheaded.
+  const deadheaded = crop.care.some((c) => c.key === 'deadhead');
   const steps: Step[] = growingSteps(crop).map(({ key, text }) => ({
     key,
     title: text?.title ?? t(`crops.steps.${key}.title`),
@@ -85,21 +87,23 @@ export function CropDetailScreen() {
           <p className="font-body text-xs text-on-surface-variant">{t('crops.detail.spacing', { min: crop.guide.spacing_cm[0], max: crop.guide.spacing_cm[1] })}</p>
         </section>
 
-        <section className="space-y-2 rounded-[1.5rem] bg-surface-container-low p-4">
-          <h2 className="font-headline text-lg font-bold text-primary">{t('crops.detail.goodToKnow')}</h2>
-          {/* Rotation is a vegetable concern (family pests in the soil); flowers skip it. */}
-          {flower ? (
-            <p className="font-body text-sm text-on-surface">{t('crops.detail.deadheadTip')}</p>
-          ) : (
-            <p className="font-body text-sm text-on-surface">
-              {t('crops.detail.rotation', {
-                family: t(`crops.family.${crop.family}`, { defaultValue: crop.family }),
-                mates: t(`crops.familyMates.${crop.family}`, { defaultValue: crop.name.toLowerCase() }),
-              })}
-            </p>
-          )}
-          {crop.succession_every_days && <p className="font-body text-sm text-on-surface">{t('crops.detail.succession', { days: crop.succession_every_days })}</p>}
-        </section>
+        {(!flower || deadheaded || crop.succession_every_days) && (
+          <section className="space-y-2 rounded-[1.5rem] bg-surface-container-low p-4">
+            <h2 className="font-headline text-lg font-bold text-primary">{t('crops.detail.goodToKnow')}</h2>
+            {/* Rotation is a vegetable concern (family pests in the soil); flowers skip it. */}
+            {flower ? (
+              deadheaded && <p className="font-body text-sm text-on-surface">{t('crops.detail.deadheadTip')}</p>
+            ) : (
+              <p className="font-body text-sm text-on-surface">
+                {t('crops.detail.rotation', {
+                  family: t(`crops.family.${crop.family}`, { defaultValue: crop.family }),
+                  mates: t(`crops.familyMates.${crop.family}`, { defaultValue: crop.name.toLowerCase() }),
+                })}
+              </p>
+            )}
+            {crop.succession_every_days && <p className="font-body text-sm text-on-surface">{t('crops.detail.succession', { days: crop.succession_every_days })}</p>}
+          </section>
+        )}
       </main>
 
       <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-[480px] flex-wrap gap-3 bg-surface/90 px-4 pb-6 pt-3 backdrop-blur-xl">

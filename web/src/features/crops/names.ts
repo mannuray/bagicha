@@ -92,14 +92,24 @@ export interface GrowingStep {
 export function growingSteps(crop: {
   kind?: string;
   journey: 'NURSERY' | 'DIRECT' | 'PLANT';
-  care: Array<{ key: string } & StepText>;
+  care: Array<{ key: string; after: string; days: number } & StepText>;
   material: StepText | null;
   thin_after_days: number | null;
+  transplant_after_days: [number, number] | null;
+  days_to_first_harvest: [number, number];
+  harvest_span_days: number | null;
 }): GrowingStep[] {
-  const care = crop.care.map((c) => ({ key: c.key, text: { title: c.title, body: c.body } }));
+  // A step due after the harvest or bloom is over (lifting corms) follows it.
+  const over =
+    crop.harvest_span_days === null ? Infinity : crop.days_to_first_harvest[0] + crop.harvest_span_days;
+  const fromSowing = (c: { after: string; days: number }) =>
+    c.days + (c.after === 'TRANSPLANTING' ? (crop.transplant_after_days?.[0] ?? 0) : 0);
+  const step = (c: { key: string } & StepText) => ({ key: c.key, text: { title: c.title, body: c.body } });
+  const care = crop.care.filter((c) => fromSowing(c) <= over).map(step);
+  const later = crop.care.filter((c) => fromSowing(c) > over).map(step);
   const own = (...keys: string[]) => keys.map((key) => ({ key }));
   // A flower's journey ends in bloom, not harvest.
-  const end = own(crop.kind === 'FLOWER' ? 'bloom' : 'harvest');
+  const end = [...own(crop.kind === 'FLOWER' ? 'bloom' : 'harvest'), ...later];
   if (crop.journey === 'NURSERY') return [...own('seeds', 'nursery', 'transplant'), ...care, ...end];
   if (crop.journey === 'DIRECT') return [...own('seeds', 'sow', ...(crop.thin_after_days ? ['thin'] : [])), ...care, ...end];
   const material = crop.material ? [{ key: 'material', text: crop.material }] : [];

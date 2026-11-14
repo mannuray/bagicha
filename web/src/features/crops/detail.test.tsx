@@ -121,6 +121,7 @@ describe('crop detail', () => {
     const steps = within(screen.getByRole('list', { name: /how it grows/i })).getAllByRole('listitem').map((li) => li.querySelector('h3')?.textContent);
     expect(steps).toEqual(['Seeds', 'Nursery tray', 'Transplant', 'Pinch', 'Deadhead', 'Bloom']);
     expect(screen.queryByText(/don't follow it with/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/pick off faded flowers every few days/i)).toBeInTheDocument();
   });
 
   it('takes method, material and care-step texts from the catalogue, even for a method it has never seen', async () => {
@@ -134,7 +135,10 @@ describe('crop detail', () => {
     expect(screen.getByText(/· corms/)).toBeInTheDocument();
     const list = within(screen.getByRole('list', { name: /how it grows/i }));
     const steps = list.getAllByRole('listitem').map((li) => li.querySelector('h3')?.textContent);
-    expect(steps).toEqual(['Corms', 'Plant', 'Lift and store', 'Bloom']);
+    // Lifting comes after the flowers are over, so it follows Bloom.
+    expect(steps).toEqual(['Corms', 'Plant', 'Bloom', 'Lift and store']);
     expect(list.getByText('Dig the corms when the leaves yellow.')).toBeInTheDocument();
+    // One spike per corm: the deadhead tip is only for flowers that are deadheaded.
+    expect(screen.queryByText(/pick off faded flowers every few days/i)).not.toBeInTheDocument();
   });
 });
