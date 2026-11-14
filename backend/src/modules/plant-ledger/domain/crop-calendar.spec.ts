@@ -146,13 +146,15 @@ describe('crop descriptions and sun needs', () => {
 });
 
 describe('flowers on the calendar', () => {
-  it('lists 16 flowers, each complete', () => {
-    expect(FLOWERS).toHaveLength(16);
+  it('lists 20 flowers, each complete', () => {
+    expect(FLOWERS).toHaveLength(20);
     for (const f of FLOWERS) {
       expect(f.kind).toBe('FLOWER');
       expect(f.aliases.some((a) => /[\u0900-\u097F]/.test(a))).toBe(true);
       for (const group of ['PLAINS', 'PENINSULAR', 'HILLS'] as const) {
-        expect(f.windows[group].length).toBeGreaterThan(0);
+        // Asiatic lily is a greenhouse crop in the south and the hills dates conflict: no window there.
+        if (f.id !== 'lily_asiatic' || group === 'PLAINS')
+          expect(f.windows[group].length).toBeGreaterThan(0);
         for (const [a, b] of f.windows[group]) {
           expect(a).toBeGreaterThanOrEqual(1);
           expect(b).toBeLessThanOrEqual(12);
@@ -161,7 +163,9 @@ describe('flowers on the calendar', () => {
       expect(f.days_to_first_harvest[0]).toBeLessThan(
         f.days_to_first_harvest[1],
       );
-      expect(f.care.some((c) => c.key === 'deadhead')).toBe(true);
+      // Flowers raised from seed are deadheaded; bulb flowers are cut, lifted or left to rest.
+      if (journeyOf(f) !== 'PLANT')
+        expect(f.care.some((c) => c.key === 'deadhead')).toBe(true);
       expect(f.scientific_name).not.toBe('');
       expect(f.description).not.toBe('');
     }
@@ -171,6 +175,75 @@ describe('flowers on the calendar', () => {
     expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(37);
     expect(cropById('marigold')?.kind).toBe('FLOWER');
     expect(cropById('tomato')?.kind).toBe('CROP');
+  });
+});
+
+describe('bulb flowers (owner-approved 2026-11-14, sources in the bulbs review doc)', () => {
+  const flower = (id: string) => cropById(id)!;
+
+  it('plant corms, bulbs and root tubers on the plant-it journey', () => {
+    expect(flower('gladiolus').method).toBe('CORM');
+    expect(flower('dahlia').method).toBe('TUBEROUS_ROOT');
+    expect(flower('rajnigandha').method).toBe('BULB');
+    expect(flower('lily_asiatic').method).toBe('BULB');
+    for (const key of ['CORM', 'BULB', 'TUBEROUS_ROOT'])
+      expect(seeded.method(key).journey).toBe('PLANT');
+    expect(seeded.careStep('lift')?.title).toBe('Lift and store the {name}');
+  });
+
+  it('pins the approved windows', () => {
+    expect(flower('gladiolus').windows).toEqual({
+      PLAINS: [[9, 10]],
+      PENINSULAR: [[10, 10]],
+      HILLS: [[3, 5]],
+    });
+    expect(flower('dahlia').windows).toEqual({
+      PLAINS: [[10, 11]],
+      PENINSULAR: [[10, 11]],
+      HILLS: [[3, 4]],
+    });
+    expect(flower('rajnigandha').windows).toEqual({
+      PLAINS: [[3, 4]],
+      PENINSULAR: [[3, 7]],
+      HILLS: [[4, 5]],
+    });
+    expect(flower('lily_asiatic').windows).toEqual({
+      PLAINS: [[11, 12]],
+      PENINSULAR: [],
+      HILLS: [],
+    });
+  });
+
+  it('pins bloom timing, sun and the approved care', () => {
+    const glad = flower('gladiolus');
+    expect(glad.days_to_first_harvest).toEqual([85, 120]);
+    expect(glad.succession_every_days).toBe(15);
+    expect(glad.care).toEqual([
+      { key: 'earth_up', after: 'SOWING', days: 35 },
+      { key: 'stake', after: 'SOWING', days: 45 },
+      { key: 'lift', after: 'SOWING', days: 160 },
+    ]);
+    expect(flower('dahlia').care).toEqual([
+      { key: 'stake', after: 'SOWING', days: 0 },
+      { key: 'lift', after: 'SOWING', days: 160 },
+    ]);
+    expect(flower('rajnigandha').care).toEqual([
+      { key: 'earth_up', after: 'SOWING', days: 30 },
+      { key: 'stake', after: 'SOWING', days: 75 },
+    ]);
+    expect(flower('rajnigandha').harvest_span_days).toBe(150);
+    expect(flower('lily_asiatic').care).toEqual([
+      { key: 'support', after: 'SOWING', days: 20 },
+    ]);
+    expect(flower('lily_asiatic').sun).toBe('PARTIAL');
+    expect(flower('gladiolus').sun).toBe('FULL');
+  });
+
+  it('checks a planted bulb for shoots', () => {
+    const glad = flower('gladiolus');
+    expect(sproutCheckTitle(glad, journeyOf(glad), false)).toBe(
+      'Check the planted gladiolus for shoots',
+    );
   });
 });
 

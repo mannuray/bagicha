@@ -50,4 +50,12 @@ export const CARE_STEP_SEED: CareStepSeed[] = [
     label_body: 'Pick off faded flowers so the plant keeps blooming.',
     status: 'APPROVED',
   },
+  {
+    key: 'lift',
+    title: 'Lift and store the {name}',
+    label_title: 'Lift and store',
+    label_body:
+      'When the leaves turn yellow and dry, stop watering, dig up, dry in shade and store cool until next season.',
+    status: 'APPROVED',
+  },
 ];

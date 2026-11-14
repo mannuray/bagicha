@@ -56,7 +56,7 @@ describe('validateSeed', () => {
   };
 
   it('rejects a crop whose method is missing', () => {
-    expect(reason(withCrop(() => ({ method: 'CORM' })))).toBe(
+    expect(reason(withCrop(() => ({ method: 'NO_SUCH_METHOD' })))).toBe(
       'CATALOGUE_INVALID',
     );
   });
@@ -64,7 +64,9 @@ describe('validateSeed', () => {
   it('rejects a crop whose care step is missing', () => {
     expect(
       reason(
-        withCrop(() => ({ care: [{ key: 'lift', after: 'SOWING', days: 9 }] })),
+        withCrop(() => ({
+          care: [{ key: 'no_such_step', after: 'SOWING', days: 9 }],
+        })),
       ),
     ).toBe('CATALOGUE_INVALID');
   });

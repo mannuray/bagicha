@@ -96,7 +96,9 @@ describe('catalogue push', () => {
 
   it('rejects a crop whose method is not in the seed, before writing', async () => {
     expect(
-      await reasonOf(push.push(editCrop('carrot', () => ({ method: 'CORM' })))),
+      await reasonOf(
+        push.push(editCrop('carrot', () => ({ method: 'NO_SUCH_METHOD' }))),
+      ),
     ).toBe('CATALOGUE_INVALID');
     expect(await repo.version()).toBe(0);
   });

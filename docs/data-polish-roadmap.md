@@ -11,7 +11,7 @@ The live app (bagicha-web.vercel.app) works end to end; this is the list of data
 7. Crop and flower photos — **done, live**
 8. Task-title wording — **done**
 9. More vegetables — **done** (8 of 10; parwal and spring onion held back)
-10. Bulbs
+10. Bulbs — **done** (seed committed; live after the catalogue push)
 11. Hindi translation
 12. Copy gaps
 13. Matching gaps
@@ -72,7 +72,7 @@ Done tree type by tree type over everything the catalogue holds:
 7. **Crop and flower photos:** done: every crop and flower has its own photo (made with Stitch, 480×480).
 8. **Task-title wording:** done: titles use the short name ("Thin the spinach seedlings", not "Thin the spinach (palak) seedlings"); tasks created before keep their old title.
 9. **More vegetables:** done: beetroot, turnip, amaranth (chaulai), bathua, sem, lobia, tinda, ash gourd, source-checked and owner-approved (review doc 2026-11-14). Held back: parwal (perennial from cuttings; add with perennials) and spring onion (no guide covers the home method).
-10. **Bulbs:** dahlia, gladiolus, rajnigandha, lilies — plant, bloom, lift and store.
+10. **Bulbs:** done: gladiolus (corms), dahlia (root tubers), rajnigandha and Asiatic lily (bulbs), with a "Lift and store" step for gladiolus and dahlia; owner-approved (review doc 2026-11-14). Added as catalogue data only. Later: photos; rajnigandha's second and third years (ratoon care); Asiatic lily windows for the south and hills once sources agree; rain lily.
 11. **Hindi translation:** users can pick Hindi; the app is English only.
 12. **Copy gaps:** a seasonal flower's "should start blooming soon" task is typed as a harvest; flower care reasons are generic; end-of-life reasons are tree-flavoured for crops.
 13. **Matching gaps:** Hindi typed in a different Unicode form misses (गुड़हल); a nickname can outrank the species ("Champa's rose"); state-only text ("Goa") and Sikkim's direction names on the server fallback.
