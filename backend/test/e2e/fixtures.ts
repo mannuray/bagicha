@@ -7,7 +7,7 @@ import { randomUUID } from 'crypto';
 /** Empties every application table (keeps migration history). */
 export async function resetDb(prisma: PrismaClient): Promise<void> {
   const tables = await prisma.$queryRawUnsafe<Array<{ tablename: string }>>(
-    `SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> '_prisma_migrations'`,
+    `SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> '_prisma_migrations' AND tablename NOT LIKE 'catalogue\\_%'`,
   );
   if (tables.length === 0) return;
   const list = tables.map((t) => `"public"."${t.tablename}"`).join(', ');

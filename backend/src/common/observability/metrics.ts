@@ -34,6 +34,10 @@ export class Metrics {
     'bagicha.rate_limit.rejected',
     { description: 'Requests rejected by a rate limit bucket' },
   );
+  private readonly catalogueLoads: Counter = this.meter.createCounter(
+    'bagicha.catalogue.loads',
+    { description: 'Plant catalogue loads into memory, by version' },
+  );
   private readonly queueDepthSources = new Map<string, () => Promise<number>>();
   private queueDepthGauge?: ObservableGauge;
 
@@ -55,6 +59,10 @@ export class Metrics {
 
   rateLimitRejected(bucket: string): void {
     this.rateLimited.add(1, { bucket });
+  }
+
+  catalogueLoaded(version: number, crops: number): void {
+    this.catalogueLoads.add(1, { version: String(version), crops });
   }
 
   registerQueueDepth(name: string, getDepth: () => Promise<number>): void {

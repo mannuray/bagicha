@@ -116,9 +116,10 @@ export class CatalogueRepository {
           update: { status, data: json(data) },
         });
       }
-      const meta = await tx.catalogueMeta.update({
+      const meta = await tx.catalogueMeta.upsert({
         where: { id: 1 },
-        data: { version: { increment: 1 } },
+        create: { id: 1, version: 1 },
+        update: { version: { increment: 1 } },
       });
       return meta.version;
     });
