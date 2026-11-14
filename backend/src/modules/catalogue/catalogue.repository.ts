@@ -123,25 +123,33 @@ export class CatalogueRepository {
   /** Writes the given records and bumps the version, all or nothing. Returns the new version. */
   async applyPush(write: CatalogueWrite): Promise<number> {
     return this.prisma.$transaction(async (tx) => {
-      for (const crop of write.crops) {
-        const {
-          id,
-          kind,
-          name,
-          family,
-          method,
-          status,
-          notes,
-          sort_order,
-          ...data
-        } = crop;
-        const row = { kind, name, family, method, status, notes, sort_order };
-        await tx.catalogueCrop.upsert({
-          where: { id },
-          create: { id, ...row, data: json(data) },
-          update: { ...row, data: json(data) },
-        });
-      }
+      await writeRows(
+        tx.catalogueCrop as unknown as Table,
+        'id',
+        write.crops.map(
+          ({
+            id,
+            kind,
+            name,
+            family,
+            method,
+            status,
+            notes,
+            sort_order,
+            ...data
+          }) => ({
+            id,
+            kind,
+            name,
+            family,
+            method,
+            status,
+            notes,
+            sort_order,
+            data: json(data),
+          }),
+        ),
+      );
       for (const { key, journey, status, ...data } of write.methods) {
         await tx.catalogueMethod.upsert({
           where: { key },
@@ -156,45 +164,44 @@ export class CatalogueRepository {
           update: { status, data: json(data) },
         });
       }
-      for (const {
-        key,
-        status,
-        notes,
-        sort_order,
-        ...data
-      } of write.fruitTypes) {
-        const row = { status, notes, sort_order, data: json(data) };
-        await tx.catalogueFruitType.upsert({
-          where: { key },
-          create: { key, ...row },
-          update: row,
-        });
-      }
-      for (const plant of write.fruitPlants) {
-        const { key, species_family, status, notes, sort_order, ...data } =
-          plant;
-        const row = {
-          species_family,
+      await writeRows(
+        tx.catalogueFruitType as unknown as Table,
+        'key',
+        write.fruitTypes.map(({ key, status, notes, sort_order, ...data }) => ({
+          key,
           status,
           notes,
           sort_order,
           data: json(data),
-        };
-        await tx.catalogueFruitPlant.upsert({
-          where: { key },
-          create: { key, ...row },
-          update: row,
-        });
-      }
-      for (const flower of write.perennialFlowers) {
-        const { family, status, notes, sort_order, ...data } = flower;
-        const row = { status, notes, sort_order, data: json(data) };
-        await tx.cataloguePerennialFlower.upsert({
-          where: { family },
-          create: { family, ...row },
-          update: row,
-        });
-      }
+        })),
+      );
+      await writeRows(
+        tx.catalogueFruitPlant as unknown as Table,
+        'key',
+        write.fruitPlants.map(
+          ({ key, species_family, status, notes, sort_order, ...data }) => ({
+            key,
+            species_family,
+            status,
+            notes,
+            sort_order,
+            data: json(data),
+          }),
+        ),
+      );
+      await writeRows(
+        tx.cataloguePerennialFlower as unknown as Table,
+        'family',
+        write.perennialFlowers.map(
+          ({ family, status, notes, sort_order, ...data }) => ({
+            family,
+            status,
+            notes,
+            sort_order,
+            data: json(data),
+          }),
+        ),
+      );
       const meta = await tx.catalogueMeta.upsert({
         where: { id: 1 },
         create: { id: 1, version: 1 },
@@ -202,6 +209,47 @@ export class CatalogueRepository {
       });
       return meta.version;
     }, PUSH_TRANSACTION);
+  }
+}
+
+/** The part of a Prisma table delegate the push uses (the generated types don't share an interface). */
+interface Table {
+  findMany(args: {
+    where: Record<string, { in: string[] }>;
+    select: Record<string, true>;
+  }): Promise<Array<Record<string, string>>>;
+  createMany(args: { data: object[] }): Promise<unknown>;
+  update(args: {
+    where: Record<string, string>;
+    data: object;
+  }): Promise<unknown>;
+}
+
+/**
+ * Inserts the new rows in one statement and updates the existing ones one by
+ * one: a first push of ~150 records over a slow link would outlast the
+ * transaction as row-by-row upserts.
+ */
+async function writeRows(
+  table: Table,
+  keyField: string,
+  rows: Array<Record<string, unknown>>,
+): Promise<void> {
+  if (rows.length === 0) return;
+  const keyOf = (row: Record<string, unknown>) => row[keyField] as string;
+  const existing = new Set(
+    (
+      await table.findMany({
+        where: { [keyField]: { in: rows.map(keyOf) } },
+        select: { [keyField]: true },
+      })
+    ).map((row) => row[keyField]),
+  );
+  const added = rows.filter((row) => !existing.has(keyOf(row)));
+  if (added.length > 0) await table.createMany({ data: added });
+  for (const row of rows.filter((r) => existing.has(keyOf(r)))) {
+    const { [keyField]: key, ...data } = row;
+    await table.update({ where: { [keyField]: key as string }, data });
   }
 }
 
