@@ -80,6 +80,32 @@ describe('CatalogueStore', () => {
     });
   });
 
+  it('refuses a catalogue with no approved perennial flowers', async () => {
+    const { store } = setup({
+      ...CATALOGUE_SEED,
+      perennialFlowers: CATALOGUE_SEED.perennialFlowers.map((f) => ({
+        ...f,
+        status: 'RETIRED',
+      })),
+    });
+    await expect(store.snapshot()).rejects.toMatchObject({
+      reason: 'CATALOGUE_EMPTY',
+    });
+  });
+
+  it('refuses a catalogue with no approved fruit types', async () => {
+    const { store } = setup({
+      ...CATALOGUE_SEED,
+      fruitTypes: CATALOGUE_SEED.fruitTypes.map((t) => ({
+        ...t,
+        status: 'RETIRED',
+      })),
+    });
+    await expect(store.snapshot()).rejects.toMatchObject({
+      reason: 'CATALOGUE_EMPTY',
+    });
+  });
+
   it('never serves an empty catalogue when the database fails', async () => {
     const { store, repo } = setup();
     repo.loadSeed.mockRejectedValueOnce(new Error('connection refused'));
@@ -105,6 +131,8 @@ describe('CatalogueStore', () => {
     ).toEqual({
       catalogueVersion: 1,
       cropCount: CATALOGUE_SEED.crops.length,
+      fruitTypeCount: CATALOGUE_SEED.fruitTypes.length,
+      flowerCount: CATALOGUE_SEED.perennialFlowers.length,
     });
   });
 

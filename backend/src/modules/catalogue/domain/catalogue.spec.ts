@@ -45,6 +45,101 @@ describe('Catalogue', () => {
   });
 });
 
+describe('Catalogue: fruit types, fruit entries and perennial flowers', () => {
+  const retire = <K extends 'fruitTypes' | 'perennialFlowers'>(
+    list: K,
+    key: string,
+    status: 'RETIRED' | 'DRAFT',
+  ): CatalogueSeed => ({
+    ...CATALOGUE_SEED,
+    [list]: CATALOGUE_SEED[list].map((r) =>
+      ('key' in r ? r.key : r.family) === key ? { ...r, status } : r,
+    ),
+    // A served entry may not sit on a draft type, so drafts take their entries along.
+    fruitPlants:
+      list === 'fruitTypes' && status === 'DRAFT'
+        ? CATALOGUE_SEED.fruitPlants.filter((p) => p.species_family !== key)
+        : CATALOGUE_SEED.fruitPlants,
+  });
+
+  it('a retired fruit type keeps matching and its life profile, but leaves search', () => {
+    const catalogue = Catalogue.from(
+      validateSeed(retire('fruitTypes', 'mango', 'RETIRED')),
+      1,
+    );
+    expect(catalogue.fruitType('mango')?.key).toBe('mango');
+    expect(catalogue.lifeProfile('mango')).not.toBeNull();
+    expect(catalogue.fruitFamilyIn('my mango tree')).toEqual({
+      family: 'mango',
+      alias: 'mango',
+    });
+    expect(
+      catalogue.searchEntries().filter((e) => e.species_family === 'mango'),
+    ).toEqual([]);
+    expect(
+      catalogue.searchEntries().some((e) => e.species_family === 'guava'),
+    ).toBe(true);
+  });
+
+  it('a draft perennial flower is found by nothing', () => {
+    const catalogue = Catalogue.from(
+      validateSeed(retire('perennialFlowers', 'jasmine', 'DRAFT')),
+      1,
+    );
+    expect(catalogue.perennialFlower('jasmine')).toBeNull();
+    expect(catalogue.flowerFamilyIn('mogra')).toBeNull();
+    expect(catalogue.lifeProfile('jasmine')).toBeNull();
+    expect(catalogue.searchEntries().map((e) => e.key)).not.toContain(
+      'jasmine',
+    );
+  });
+
+  it('matches the longest flower alias first, whatever the seed order', () => {
+    const roseFirst = {
+      ...CATALOGUE_SEED,
+      perennialFlowers: [...CATALOGUE_SEED.perennialFlowers].sort((a) =>
+        a.family === 'rose' ? -1 : 1,
+      ),
+    };
+    const catalogue = Catalogue.from(validateSeed(roseFirst), 1);
+    expect(catalogue.flowerFamilyIn('My China Rose')).toBe('hibiscus');
+    expect(catalogue.flowerFamilyIn('desert rose')).toBe('adenium');
+    expect(catalogue.flowerFamilyIn('red rose')).toBe('rose');
+  });
+
+  it("gives a flower's life profile from its bloom and lifespan, with its note", () => {
+    const catalogue = Catalogue.from(validateSeed(CATALOGUE_SEED), 1);
+    const periwinkle = catalogue.perennialFlower('periwinkle')!;
+    expect(catalogue.lifeProfile('periwinkle')).toEqual({
+      first_fruit_months: periwinkle.first_bloom_months,
+      productive_until_months: periwinkle.lifespan_months,
+      lifespan_months: periwinkle.lifespan_months,
+      note_key: 'periwinkle',
+    });
+    expect(catalogue.lifeProfile('lotus')).toBeNull();
+    expect(catalogue.lifeProfile(null)).toBeNull();
+  });
+
+  it('lists flowers in search the way the boot fill did', () => {
+    const catalogue = Catalogue.from(validateSeed(CATALOGUE_SEED), 1);
+    const rose = catalogue.searchEntries().find((e) => e.key === 'rose');
+    expect(rose).toEqual({
+      key: 'rose',
+      species_family: 'rose',
+      species: 'rose',
+      variety: null,
+      display_name: 'Rose',
+      plant_type: 'perennial_flower',
+      aliases: ['rose', 'gulab'],
+      languages: { hi: ['गुलाब'] },
+      regions: [],
+      confidence_weight: 0.85,
+    });
+    const weights = catalogue.searchEntries().map((e) => e.confidence_weight);
+    expect(weights).toEqual([...weights].sort((a, b) => b - a));
+  });
+});
+
 describe('validateSeed', () => {
   const reason = (seed: unknown) => {
     try {

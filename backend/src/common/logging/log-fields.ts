@@ -29,6 +29,8 @@ const ALLOWED = new Set([
   'kind',
   'step',
   'catalogueVersion',
+  'fruitTypeCount',
+  'flowerCount',
 ]);
 
 /** Internal ids and counts are fine to log; values about a person are not. */
