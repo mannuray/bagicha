@@ -5,6 +5,7 @@ import { redisConnection } from './common/redis/redis-connection';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { CatalogueModule } from './modules/catalogue';
 import { AuthModule } from './modules/auth/auth.module';
 import { RedisModule } from './common/redis/redis.module';
 import { MonitorModule } from './common/monitor';
@@ -55,6 +56,7 @@ import { AuditModule } from './modules/audit';
     MonitorModule,
     PrismaModule,
     RedisModule,
+    CatalogueModule,
     AuthModule,
     PlantLedgerModule,
     SeasonalModule,
