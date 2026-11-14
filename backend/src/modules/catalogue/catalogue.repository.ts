@@ -122,8 +122,11 @@ export class CatalogueRepository {
         update: { version: { increment: 1 } },
       });
       return meta.version;
-    });
+    }, PUSH_TRANSACTION);
   }
 }
+
+/** Prisma's 5 s default is too short for a full push from a laptop to Neon. */
+const PUSH_TRANSACTION = { timeout: 60_000, maxWait: 10_000 };
 
 const json = (value: object) => value as Prisma.InputJsonValue;

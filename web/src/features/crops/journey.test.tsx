@@ -55,6 +55,14 @@ describe('the crop page', () => {
     await waitFor(() => expect(posts).toEqual([{ type: 'SOWING', metadata: { method: 'DIRECT', place_id: 'pl1' } }]));
   });
 
+  it('a retired crop (gone from the calendar) still shows its journey to someone growing it', async () => {
+    handlers({ name: 'Spinach (Palak)', crop_id: 'palak', crop_stage: 'PLANNED' });
+    server.use(http.get(`${API}/crops/calendar`, () => HttpResponse.json(ok([tomatoItem, flowerItem()]))));
+    renderWithApp(routes, { route: '/plants/c1' });
+    const journey = await screen.findByRole('region', { name: /journey/i });
+    expect(within(journey).getByRole('button', { name: /^start$/i })).toBeInTheDocument();
+  });
+
   it('bought seedlings transplant straight in, with the rotation note for the place', async () => {
     const posts = handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'PLANNED' }, { conflict: true });
     renderWithApp(routes, { route: '/plants/c1' });

@@ -101,6 +101,17 @@ describe('catalogue push', () => {
     expect(await repo.version()).toBe(0);
   });
 
+  it('rejects an approved crop using a draft method, which the API could not load', async () => {
+    const seed = {
+      ...CATALOGUE_SEED,
+      methods: CATALOGUE_SEED.methods.map((m) =>
+        m.key === 'CLOVE' ? { ...m, status: 'DRAFT' } : m,
+      ),
+    };
+    expect(await reasonOf(push.push(seed))).toBe('CATALOGUE_INVALID');
+    expect(await repo.version()).toBe(0);
+  });
+
   it('stores the status the seed gives', async () => {
     await push.push(editCrop('carrot', () => ({ status: 'RETIRED' })));
     const stored = await repo.loadSeed(['RETIRED']);

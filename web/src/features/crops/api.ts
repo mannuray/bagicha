@@ -15,9 +15,10 @@ export function useCropCalendar() {
 }
 
 /** One crop with its timings, care and sowing windows for the user's region. */
-export function useCropDetail(cropId: string) {
+export function useCropDetail(cropId: string, options: { enabled?: boolean } = {}) {
   const api = useApi();
   return useQuery({
+    enabled: options.enabled ?? true,
     queryKey: queryKeys.crops.detail(cropId),
     queryFn: () => api.get(`/crops/calendar/${encodeURIComponent(cropId)}`, cropDetailSchema),
   });

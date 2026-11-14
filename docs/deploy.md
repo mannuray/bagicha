@@ -43,7 +43,7 @@ docker run --rm --dns 1.1.1.1 \
 
 ## Plant catalogue push (after the migration, before the deploy)
 
-Crops, flowers, planting methods and care steps live in the database. The API reads them from there and refuses to start without an approved catalogue. They are edited in `backend/src/modules/catalogue/seed/` and written to the database by the push. Run it whenever a commit changes a seed file, and once for the stage that creates the tables. Order: **migration → push → deploy**.
+Crops, flowers, planting methods and care steps live in the database. The API reads them from there and refuses to start without an approved catalogue. They are edited in `backend/src/modules/catalogue/seed/` and written to the database by the push. Run it whenever a commit changes a seed file, and once for the stage that creates the tables. Order: **migration → push → API deploy → web**. The web from the catalogue release expects the API's new crop fields (`journey`, `method_short`, care-step texts), so the API goes live first, and rolling the API back means rolling the web back with it.
 
 ```bash
 cd backend

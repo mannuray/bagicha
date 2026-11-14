@@ -69,6 +69,42 @@ describe('validateSeed', () => {
     ).toBe('CATALOGUE_INVALID');
   });
 
+  it('rejects a listed crop whose method is a draft (the API could not load it)', () => {
+    expect(
+      reason({
+        ...CATALOGUE_SEED,
+        methods: CATALOGUE_SEED.methods.map((m) =>
+          m.key === 'CLOVE' ? { ...m, status: 'DRAFT' } : m,
+        ),
+      }),
+    ).toBe('CATALOGUE_INVALID');
+  });
+
+  it('rejects a listed crop whose care step is a draft', () => {
+    expect(
+      reason({
+        ...CATALOGUE_SEED,
+        careSteps: CATALOGUE_SEED.careSteps.map((s) =>
+          s.key === 'stake' ? { ...s, status: 'DRAFT' } : s,
+        ),
+      }),
+    ).toBe('CATALOGUE_INVALID');
+  });
+
+  it('a draft crop may use a draft method', () => {
+    expect(
+      reason({
+        ...CATALOGUE_SEED,
+        crops: CATALOGUE_SEED.crops.map((c) =>
+          c.id === 'garlic' ? { ...c, status: 'DRAFT' } : c,
+        ),
+        methods: CATALOGUE_SEED.methods.map((m) =>
+          m.key === 'CLOVE' ? { ...m, status: 'DRAFT' } : m,
+        ),
+      }),
+    ).toBe('valid');
+  });
+
   it('rejects an unknown field', () => {
     expect(reason(withCrop(() => ({ colour: 'orange' })))).toBe(
       'CATALOGUE_INVALID',

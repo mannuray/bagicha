@@ -114,14 +114,24 @@ export function validateSeed(input: unknown): CatalogueSeed {
       'care step',
     ),
   ];
-  const methods = new Set(seed.methods.map((m) => m.key));
-  const steps = new Set(seed.careSteps.map((s) => s.key));
+  // A crop the API serves (approved or retired) may only use methods and care
+  // steps the API also serves: the API loads only non-draft records.
+  const keys = (
+    records: Array<{ key: string; status: string }>,
+    all: boolean,
+  ) =>
+    new Set(
+      records.filter((r) => all || r.status !== 'DRAFT').map((r) => r.key),
+    );
   for (const crop of seed.crops) {
+    const draft = crop.status === 'DRAFT';
+    const methods = keys(seed.methods, draft);
+    const steps = keys(seed.careSteps, draft);
     if (!methods.has(crop.method))
-      issues.push(`${crop.id}: unknown method ${crop.method}`);
+      issues.push(`${crop.id}: unknown or draft method ${crop.method}`);
     for (const c of crop.care)
       if (!steps.has(c.key))
-        issues.push(`${crop.id}: unknown care step ${c.key}`);
+        issues.push(`${crop.id}: unknown or draft care step ${c.key}`);
   }
   if (issues.length > 0) throw invalid(issues);
   return seed;
