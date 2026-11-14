@@ -3,6 +3,7 @@ import { FixedClock } from '../../../common/time';
 import { PlantRepository } from '../repositories/plant.repository';
 import { LifecycleService } from './lifecycle.service';
 import { PlantRecordService } from './plant-record.service';
+import { seededCatalogueStore } from '../../catalogue/testing';
 import { SpeciesNormalizationService } from './species-normalization.service';
 
 const NOW = new Date('2026-11-10T06:00:00Z');
@@ -18,10 +19,10 @@ function build(plant: Record<string, unknown>) {
     getJobCounts: jest.fn(),
   };
   const clock = new FixedClock(NOW);
-  const species = new SpeciesNormalizationService();
+  const species = new SpeciesNormalizationService(seededCatalogueStore());
   const service = new PlantRecordService(
     repo as unknown as PlantRepository,
-    new LifecycleService(clock, species),
+    new LifecycleService(clock),
     {} as never,
     species,
     clock,

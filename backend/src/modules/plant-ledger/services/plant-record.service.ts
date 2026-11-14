@@ -1,4 +1,8 @@
-import { bloomStatus, perennialFlower } from '../domain/flower-care';
+import { bloomStatus } from '../domain/flower-care';
+import type {
+  SpeciesResolver,
+  TreeIdentityInput,
+} from '../domain/species-resolver';
 import { climateGroupFor } from '../domain/crop-calendar';
 import { InjectQueue } from '@nestjs/bullmq';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
@@ -26,7 +30,6 @@ import {
   TaskGenerationJob,
 } from '../processors/task.processor';
 import { PlantDetail, PlantRepository } from '../repositories/plant.repository';
-import { lifeProfileFor } from '../domain/species-life-profiles';
 import { laterStage, LifecycleService } from './lifecycle.service';
 import {
   SeasonalIntelligenceService,
@@ -96,7 +99,7 @@ export class PlantRecordService implements OnModuleInit {
     if (!plant.lifecycle_stage_manual && !ended && !plant.crop_id) {
       const stage = laterStage(
         plant.lifecycle_stage,
-        this.lifecycle.calculateStage(plant),
+        this.lifecycle.calculateStage(plant, await this.species.resolver()),
       );
       if (stage !== plant.lifecycle_stage) {
         await this.plants.updateOwned(userId, plant.id, {
@@ -112,14 +115,15 @@ export class PlantRecordService implements OnModuleInit {
   /** Plant detail as the API returns it: the plant plus its species life profile. */
   async detailView(user: Pick<User, 'id' | 'region_cluster'>, plantId: string) {
     const plant = await this.getDetail(user.id, plantId);
+    const species = await this.species.resolver();
     return {
       ...plant,
       bloom:
         plant.record_kind === RecordKind.FLOWER && !plant.crop_id
-          ? this.bloomFor(plant, user.region_cluster)
+          ? this.bloomFor(plant, user.region_cluster, species)
           : null,
-      life_profile: lifeProfileFor(
-        plant.species_family ?? this.species.resolveSpeciesFamily(plant),
+      life_profile: species.catalogue.lifeProfile(
+        plant.species_family ?? species.family(plant),
       ),
     };
   }
@@ -165,12 +169,15 @@ export class PlantRecordService implements OnModuleInit {
     );
     const stage =
       dto.lifecycle_stage ??
-      this.lifecycle.calculateStage({
-        planting_date: planting.date,
-        species: dto.species,
-        record_kind: dto.record_kind,
-        bearing_status: bearing.bearing_status,
-      });
+      this.lifecycle.calculateStage(
+        {
+          planting_date: planting.date,
+          species: dto.species,
+          record_kind: dto.record_kind,
+          bearing_status: bearing.bearing_status,
+        },
+        await this.species.resolver(),
+      );
 
     const plant = await this.plants.create(userId, {
       name: dto.name,
@@ -259,15 +266,18 @@ export class PlantRecordService implements OnModuleInit {
       dto.planting_date !== undefined ||
       dto.planting_date_precision !== undefined ||
       (dto.species !== undefined && dto.species !== plant.species);
-    const computed = this.lifecycle.calculateStage({
-      ...plant,
-      planting_date: planting.date,
-      species,
-      ...cleared,
-      species_family: dto.species ? null : plant.species_family,
-      record_kind: recordKind,
-      bearing_status: bearing.bearing_status,
-    });
+    const computed = this.lifecycle.calculateStage(
+      {
+        ...plant,
+        planting_date: planting.date,
+        species,
+        ...cleared,
+        species_family: dto.species ? null : plant.species_family,
+        record_kind: recordKind,
+        bearing_status: bearing.bearing_status,
+      },
+      await this.species.resolver(),
+    );
     const stage =
       dto.lifecycle_stage ??
       (ageInputsChanged
@@ -308,15 +318,20 @@ export class PlantRecordService implements OnModuleInit {
     const plant = await this.plants.findOwnedWithOwnerLocation(userId, plantId);
     if (!plant) throw plantNotFound();
     const { user, ...fields } = plant;
-    return this.seasonalIntelligence.inferTreeSeasonalState(fields, user);
+    return this.seasonalIntelligence.inferTreeSeasonalState(
+      fields,
+      user,
+      await this.species.resolver(),
+    );
   }
 
   /** A perennial flower's usual bloom months for the user's climate (plains when unknown); null if we don't know it. */
   private bloomFor(
-    plant: Parameters<SpeciesNormalizationService['resolveSpeciesFamily']>[0],
+    plant: TreeIdentityInput,
     region: RegionCluster | null,
+    species: SpeciesResolver,
   ) {
-    const flower = perennialFlower(this.species.resolveSpeciesFamily(plant));
+    const flower = species.catalogue.perennialFlower(species.family(plant));
     if (!flower) return null;
     const group = region ? climateGroupFor(region) : 'PLAINS';
     return bloomStatus(flower, group, this.clock.now());
@@ -326,11 +341,12 @@ export class PlantRecordService implements OnModuleInit {
   async getContextForAi(userId: string, plantId: string) {
     const plant = await this.plants.findOwnedWithContext(userId, plantId);
     if (!plant) throw plantNotFound();
+    const species = await this.species.resolver();
     return {
       plant: {
         id: plant.id,
         name: plant.name,
-        species_family: this.species.resolveSpeciesFamily(plant),
+        species_family: species.family(plant),
         species: plant.species,
         variety: plant.variety,
         lifecycle_stage: plant.lifecycle_stage,
@@ -346,9 +362,13 @@ export class PlantRecordService implements OnModuleInit {
         plant.record_kind === RecordKind.FLOWER && !plant.crop_id
           ? {
               kind: 'perennial_flower' as const,
-              bloom: this.bloomFor(plant, plant.user.region_cluster),
+              bloom: this.bloomFor(plant, plant.user.region_cluster, species),
             }
-          : this.seasonalIntelligence.inferTreeSeasonalState(plant, plant.user),
+          : this.seasonalIntelligence.inferTreeSeasonalState(
+              plant,
+              plant.user,
+              species,
+            ),
       recent_cycles: plant.cycles.map((cycle) => ({
         cycle_year: cycle.cycle_year,
         yield_quantity: cycle.yield_quantity,

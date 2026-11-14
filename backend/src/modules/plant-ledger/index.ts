@@ -13,6 +13,7 @@ export type { TaskCreationResult, TaskDraft } from './services/task.service';
 export { SeasonalIntelligenceService } from './services/seasonal-intelligence.service';
 export type { TreeSeasonalState } from './services/seasonal-intelligence.service';
 export { SpeciesNormalizationService } from './services/species-normalization.service';
+export type { SpeciesResolver } from './domain/species-resolver';
 export {
   taskCategoryFromCategory,
   taskCategoryFromIssue,

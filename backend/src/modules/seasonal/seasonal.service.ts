@@ -29,7 +29,6 @@ import {
   climateGroupFor,
   windowStatus,
   flowerCareDue,
-  perennialFlower,
   taskCategoryFromCategory,
   taskPriorityFrom,
   taskTypeFromCategory,
@@ -38,7 +37,11 @@ import {
   treeCareDue,
   TREE_CARE_REGISTRY,
 } from '../plant-ledger';
-import type { CareReminder, FamilyCare } from '../plant-ledger';
+import type {
+  CareReminder,
+  FamilyCare,
+  SpeciesResolver,
+} from '../plant-ledger';
 import { isPremium, UserRepository } from '../user';
 import {
   asTaskTemplates,
@@ -229,7 +232,8 @@ export class SeasonalService implements OnModuleInit {
   }
 
   private async materializeFlowerCare(userId: string, plant: Plant) {
-    const flower = perennialFlower(this.species.resolveSpeciesFamily(plant));
+    const species = await this.species.resolver();
+    const flower = species.catalogue.perennialFlower(species.family(plant));
     if (!flower) return { results: [], created_count: 0 };
     const user = await this.users.findById(userId);
     if (!user) throw new NotFoundError('USER_NOT_FOUND', 'User not found');
@@ -266,14 +270,15 @@ export class SeasonalService implements OnModuleInit {
     if (!user) throw new NotFoundError('USER_NOT_FOUND', 'User not found');
     const now = this.clock.now();
     const premium = isPremium(user, now);
+    const species = await this.species.resolver();
     // A region still pending verification keeps the season pack.
-    const familyCare = this.careOf(plant);
+    const familyCare = this.careOf(plant, species);
     const care =
       familyCare && careApplies(familyCare, regionFor(user))
         ? familyCare
         : null;
     // The pack row stays the overlay's anchor; for a care family its guidance comes from care data.
-    const anchor = await this.getOrCreatePack(plant, user);
+    const anchor = await this.getOrCreatePack(plant, user, species);
     const phase = care
       ? carePhaseView(care, {
           region: regionFor(user),
@@ -308,18 +313,19 @@ export class SeasonalService implements OnModuleInit {
   }
 
   /** Reviewed care for this tree's family, if its batch has shipped (flowers have their own care). */
-  private careOf(plant: Plant): FamilyCare | null {
+  private careOf(plant: Plant, species: SpeciesResolver): FamilyCare | null {
     if (plant.record_kind === RecordKind.FLOWER) return null;
-    return this.careRegistry[this.species.resolveSpeciesFamily(plant)] ?? null;
+    return this.careRegistry[species.family(plant)] ?? null;
   }
 
   private async getOrCreatePack(
     plant: Plant,
     user: User,
+    species: SpeciesResolver,
   ): Promise<SeasonalPack> {
     const cohort = {
       region_cluster: regionFor(user),
-      species_family: this.species.resolveSpeciesFamily(plant),
+      species_family: species.family(plant),
       lifecycle_stage: plant.lifecycle_stage,
       season_window: resolveSeasonWindow(this.clock.now()),
       pack_version: PACK_VERSION,
@@ -330,6 +336,7 @@ export class SeasonalService implements OnModuleInit {
     const inferred = this.seasonalIntelligence.inferTreeSeasonalState(
       plant,
       user,
+      species,
     );
     const data = {
       ...cohort,

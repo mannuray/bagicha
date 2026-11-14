@@ -4,15 +4,14 @@
  */
 import { PERENNIAL_FLOWERS } from '../../plant-ledger/domain/flower-care';
 import { lifeProfileFor } from '../../plant-ledger/domain/species-life-profiles';
-import { SpeciesNormalizationService } from '../../plant-ledger/services/species-normalization.service';
+import { LEGACY_FRUIT_ALIASES } from '../../plant-ledger/domain/legacy-fruit-aliases';
+import { SpeciesResolver } from '../../plant-ledger/domain/species-resolver';
 import { FRUIT_CATALOGUE } from '../../plants/domain/fruit-catalogue';
 import { CATALOGUE_SEED } from '../seed';
+import { Catalogue } from './catalogue';
+import { validateSeed } from './schemas';
 
-const OLD_ALIASES = (
-  new SpeciesNormalizationService() as unknown as {
-    familyAliases: Record<string, string[]>;
-  }
-).familyAliases;
+const OLD_ALIASES = LEGACY_FRUIT_ALIASES;
 
 const hasWords = (haystack: string, alias: string) =>
   ` ${haystack} `.includes(` ${alias} `);
@@ -57,13 +56,15 @@ describe('stage 2 seed parity', () => {
       expect(f.note_key).toBe(f.family === 'periwinkle' ? 'periwinkle' : null);
   });
 
-  it('every old alias resolves to the first seed fruit type that matches it', () => {
-    const service = new SpeciesNormalizationService();
+  it('every old alias resolves as the old first-match did', () => {
+    const resolver = new SpeciesResolver(
+      Catalogue.from(validateSeed(CATALOGUE_SEED), 1),
+    );
     for (const alias of Object.values(OLD_ALIASES).flat()) {
-      const first = CATALOGUE_SEED.fruitTypes.find((t) =>
-        t.match_aliases.some((a) => hasWords(alias, a)),
-      );
-      expect(service.resolveSpeciesFamily({ species: alias })).toBe(first?.key);
+      const oldFamily = Object.entries(OLD_ALIASES).find(([, words]) =>
+        words.some((a) => hasWords(alias, a)),
+      )?.[0];
+      expect(resolver.family({ species: alias })).toBe(oldFamily);
     }
   });
 });

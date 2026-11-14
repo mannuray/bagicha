@@ -5,10 +5,8 @@ import {
   PlantingDatePrecision,
 } from '@prisma/client';
 import { Clock } from '../../../common/time';
-import { perennialFlower } from '../domain/flower-care';
-import { lifeProfileFor } from '../domain/species-life-profiles';
 import { predatesFirsts } from '../domain/bearing';
-import { SpeciesNormalizationService } from './species-normalization.service';
+import type { SpeciesResolver } from '../domain/species-resolver';
 
 const ORDER: LifecycleStage[] = [
   LifecycleStage.SAPLING,
@@ -45,54 +43,54 @@ function earlierStage(a: LifecycleStage, b: LifecycleStage): LifecycleStage {
 
 @Injectable()
 export class LifecycleService {
-  constructor(
-    private readonly clock: Clock,
-    private readonly species: SpeciesNormalizationService,
-  ) {}
+  constructor(private readonly clock: Clock) {}
 
   /**
    * The stage from age, timed by the species' life profile when we have one,
    * and never earlier than what the gardener has recorded (flowering, harvest).
    */
-  calculateStage(input: StageInput): LifecycleStage {
-    if (input.record_kind === 'FLOWER') return this.flowerStage(input);
+  calculateStage(input: StageInput, species: SpeciesResolver): LifecycleStage {
+    if (input.record_kind === 'FLOWER') return this.flowerStage(input, species);
     // "Not yet fruited": age alone never takes the tree past juvenile.
     const byAge =
       input.bearing_status === 'NOT_YET'
-        ? earlierStage(this.byAge(input), LifecycleStage.JUVENILE)
-        : this.byAge(input);
+        ? earlierStage(this.byAge(input, species), LifecycleStage.JUVENILE)
+        : this.byAge(input, species);
     return laterStage(byAge, this.byMilestones(input));
   }
 
   /** Whether a log today would not be this tree's "first" (it fruited before Bagicha). */
-  predatesFirsts(input: StageInput): boolean {
+  predatesFirsts(input: StageInput, species: SpeciesResolver): boolean {
     if (input.record_kind && input.record_kind !== 'TREE') return false;
     const family =
-      input.species_family ??
-      this.species.resolveSpeciesFamily({ species: input.species });
+      input.species_family ?? species.family({ species: input.species });
     return predatesFirsts(
       {
         bearing_status: input.bearing_status ?? null,
         planting_date: input.planting_date,
         planting_date_precision: input.planting_date_precision,
-        profile: lifeProfileFor(family),
+        profile: species.catalogue.lifeProfile(family),
       },
       this.clock.now(),
     );
   }
 
   /** Flowers are young, then blooming; never bearing (spec flowers §2.2). */
-  private flowerStage(input: StageInput): LifecycleStage {
+  private flowerStage(
+    input: StageInput,
+    species: SpeciesResolver,
+  ): LifecycleStage {
     if (input.first_flowering_at) return LifecycleStage.FIRST_FLOWERING;
     if (!input.planting_date) return LifecycleStage.JUVENILE;
     const months =
       (this.clock.now().getTime() - new Date(input.planting_date).getTime()) /
       MONTH_MS;
-    const family = this.species.resolveSpeciesFamily({
+    const family = species.family({
       species: input.species,
       record_kind: 'FLOWER',
     });
-    const [min] = perennialFlower(family)?.first_bloom_months ?? [6, 12];
+    const [min] = species.catalogue.perennialFlower(family)
+      ?.first_bloom_months ?? [6, 12];
     return months < min
       ? LifecycleStage.JUVENILE
       : LifecycleStage.FIRST_FLOWERING;
@@ -106,15 +104,14 @@ export class LifecycleService {
     return LifecycleStage.SAPLING;
   }
 
-  private byAge(input: StageInput): LifecycleStage {
+  private byAge(input: StageInput, species: SpeciesResolver): LifecycleStage {
     if (!input.planting_date) return LifecycleStage.SAPLING;
     const months =
       (this.clock.now().getTime() - new Date(input.planting_date).getTime()) /
       MONTH_MS;
     const family =
-      input.species_family ??
-      this.species.resolveSpeciesFamily({ species: input.species });
-    const profile = lifeProfileFor(family);
+      input.species_family ?? species.family({ species: input.species });
+    const profile = species.catalogue.lifeProfile(family);
     if (!profile) {
       // No profile: the original age thresholds.
       if (months < 12) return LifecycleStage.SAPLING;

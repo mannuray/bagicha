@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { LifecycleStage, Plant, User } from '@prisma/client';
-import { SpeciesNormalizationService } from './species-normalization.service';
+import type { SpeciesResolver } from '../domain/species-resolver';
 import { Clock, istMonth } from '../../../common/time';
 
 type Confidence = 'low' | 'medium' | 'high';
@@ -28,18 +28,15 @@ interface SeasonalRuleOutput {
 
 @Injectable()
 export class SeasonalIntelligenceService {
-  constructor(
-    private speciesNormalizationService: SpeciesNormalizationService,
-    private readonly clock: Clock,
-  ) {}
+  constructor(private readonly clock: Clock) {}
 
   inferTreeSeasonalState(
     plant: Plant,
     user: Pick<User, 'district' | 'latitude' | 'longitude'>,
+    species: SpeciesResolver,
   ): TreeSeasonalState {
     const month = istMonth(this.clock.now());
-    const speciesFamily =
-      this.speciesNormalizationService.resolveSpeciesFamily(plant);
+    const speciesFamily = species.family(plant);
     const seasonalWindow = this.resolveSeasonalWindow(month, user.district);
 
     const guidance = this.buildGuidance(
@@ -47,8 +44,7 @@ export class SeasonalIntelligenceService {
       plant.lifecycle_stage,
       seasonalWindow,
     );
-    const speciesBasis =
-      this.speciesNormalizationService.buildClassificationBasis(plant);
+    const speciesBasis = species.classificationBasis(plant);
 
     return {
       species_family: speciesFamily,

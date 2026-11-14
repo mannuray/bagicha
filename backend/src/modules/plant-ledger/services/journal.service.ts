@@ -22,6 +22,7 @@ import { CycleService } from './cycle.service';
 import { CropJourneyService } from './crop-journey.service';
 import { TaskService } from './task.service';
 import { LifecycleService } from './lifecycle.service';
+import { SpeciesNormalizationService } from './species-normalization.service';
 
 export interface NewJournalEntry {
   type: LogType;
@@ -76,6 +77,7 @@ export class JournalService {
     private readonly transactions: TransactionRunner,
     private readonly clock: Clock,
     private readonly lifecycle: LifecycleService,
+    private readonly species: SpeciesNormalizationService,
   ) {}
 
   /**
@@ -138,7 +140,7 @@ export class JournalService {
       plant,
       log.type,
       log.timestamp,
-      this.lifecycle.predatesFirsts(plant),
+      this.lifecycle.predatesFirsts(plant, await this.species.resolver()),
     );
     if (Object.keys(milestones).length > 0) {
       await this.plants.updateOwned(userId, plant.id, milestones, tx);

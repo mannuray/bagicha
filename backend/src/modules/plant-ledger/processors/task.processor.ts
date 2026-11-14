@@ -61,7 +61,8 @@ export class TaskProcessor extends WorkerHost {
 
     // A family with reviewed care gets its first tasks from its care calendar
     // (materialised when the plant opens); the rest get a first watering check.
-    if (this.careRegistry[this.species.resolveSpeciesFamily({ species })]) {
+    const family = (await this.species.resolver()).family({ species });
+    if (this.careRegistry[family]) {
       return { created_count: 0 };
     }
     const drafts = [draft(TaskType.WATER, addDays(now, 3))];

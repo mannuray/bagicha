@@ -80,7 +80,7 @@ export class CycleService {
     eventAt: Date,
     tx?: Tx,
   ): Promise<PlantCycle> {
-    const family = this.species.resolveSpeciesFamily(plant);
+    const family = (await this.species.resolver()).family(plant);
     const cycle = await this.cycles.upsertForYear(
       userId,
       plant.id,

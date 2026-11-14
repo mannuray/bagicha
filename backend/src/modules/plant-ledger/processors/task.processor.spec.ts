@@ -3,6 +3,7 @@ import { Job } from 'bullmq';
 import { PinoLogger } from 'nestjs-pino';
 import { FixedClock } from '../../../common/time';
 import { TaskDraft, TaskService } from '../services/task.service';
+import { seededCatalogueStore } from '../../catalogue/testing';
 import { SpeciesNormalizationService } from '../services/species-normalization.service';
 import type { FamilyCare } from '../domain/care';
 import { TaskProcessor } from './task.processor';
@@ -30,7 +31,7 @@ function build(registry: Record<string, FamilyCare> = {}) {
     tasks as unknown as TaskService,
     new FixedClock(new Date('2026-01-15T00:00:00Z')),
     logger as unknown as PinoLogger,
-    new SpeciesNormalizationService(),
+    new SpeciesNormalizationService(seededCatalogueStore()),
     registry,
   );
   return { processor, calls, logger, tasks };

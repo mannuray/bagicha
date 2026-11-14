@@ -1,7 +1,26 @@
+import { seededCatalogue, seededCatalogueStore } from '../../catalogue/testing';
+import { SpeciesResolver } from '../domain/species-resolver';
 import { SpeciesNormalizationService } from './species-normalization.service';
 
-const family = (species: string) =>
-  new SpeciesNormalizationService().resolveSpeciesFamily({ species });
+const species = new SpeciesResolver(seededCatalogue());
+const family = (name: string) => species.family({ species: name });
+
+describe('SpeciesNormalizationService', () => {
+  it('hands out a resolver over the current catalogue', async () => {
+    const resolver = await new SpeciesNormalizationService(
+      seededCatalogueStore(),
+    ).resolver();
+    expect(
+      resolver.family({ name: 'my desert rose', record_kind: 'FLOWER' }),
+    ).toBe('adenium');
+    expect(resolver.classificationBasis({ species: 'Dasheri' })).toBe(
+      'normalized_alias:dasheri',
+    );
+    expect(resolver.classificationBasis({ species: 'Lotus' })).toBe(
+      'species_text_fallback',
+    );
+  });
+});
 
 describe('resolveSpeciesFamily for the new fruit families', () => {
   it.each([
@@ -23,9 +42,8 @@ describe('resolveSpeciesFamily for the new fruit families', () => {
 });
 
 describe('flowers', () => {
-  const svc = new SpeciesNormalizationService();
-  const flower = (species: string) =>
-    svc.resolveSpeciesFamily({ species, record_kind: 'FLOWER' });
+  const flower = (name: string) =>
+    species.family({ species: name, record_kind: 'FLOWER' });
 
   it('files roses and Indian flower names by their flower family, never litchi', () => {
     expect(flower('Rose')).toBe('rose');
@@ -37,12 +55,10 @@ describe('flowers', () => {
   });
 
   it('still files a rose-scented litchi tree as litchi', () => {
-    expect(
-      svc.resolveSpeciesFamily({ species: 'Litchi', variety: 'Rose scented' }),
-    ).toBe('litchi');
-    expect(svc.resolveSpeciesFamily({ species: 'Rose' })).toBe(
-      'generic_perennial',
+    expect(species.family({ species: 'Litchi', variety: 'Rose scented' })).toBe(
+      'litchi',
     );
+    expect(species.family({ species: 'Rose' })).toBe('generic_perennial');
   });
 });
 

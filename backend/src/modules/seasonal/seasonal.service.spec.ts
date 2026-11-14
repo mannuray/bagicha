@@ -102,9 +102,7 @@ function build(opts: {
       update: jest.fn(),
     } as unknown as OverlayRepository,
     {} as unknown as SeasonalIntelligenceService,
-    {
-      resolveSpeciesFamily: () => 'mango',
-    } as unknown as SpeciesNormalizationService,
+    new SpeciesNormalizationService(seededCatalogueStore()),
     new FixedClock(NOW),
     { registerQueueDepth: jest.fn() } as any,
     { warn: jest.fn() } as any,

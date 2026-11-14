@@ -1,7 +1,8 @@
 import { LifecycleStage } from '@prisma/client';
 import { FixedClock } from '../../../common/time';
 import { laterStage, LifecycleService } from './lifecycle.service';
-import { SpeciesNormalizationService } from './species-normalization.service';
+import { seededCatalogue } from '../../catalogue/testing';
+import { SpeciesResolver } from '../domain/species-resolver';
 
 const NOW = new Date('2026-11-10T06:00:00Z');
 const monthsAgo = (m: number) => {
@@ -9,47 +10,57 @@ const monthsAgo = (m: number) => {
   d.setUTCMonth(d.getUTCMonth() - m);
   return d;
 };
-const service = new LifecycleService(
-  new FixedClock(NOW),
-  new SpeciesNormalizationService(),
-);
+const service = new LifecycleService(new FixedClock(NOW));
+const resolver = new SpeciesResolver(seededCatalogue());
 const stage = (
   species: string,
   months: number | null,
   extra: Record<string, Date> = {},
 ) =>
-  service.calculateStage({
-    planting_date: months === null ? null : monthsAgo(months),
-    species,
-    ...extra,
-  });
+  service.calculateStage(
+    {
+      planting_date: months === null ? null : monthsAgo(months),
+      species,
+      ...extra,
+    },
+    resolver,
+  );
 
 describe('LifecycleService.calculateStage', () => {
   it('a tree the gardener says already fruits is at least at first harvest', () => {
     expect(
-      service.calculateStage({
-        planting_date: monthsAgo(12),
-        species: 'Mango',
-        bearing_status: 'BEARING',
-      }),
+      service.calculateStage(
+        {
+          planting_date: monthsAgo(12),
+          species: 'Mango',
+          bearing_status: 'BEARING',
+        },
+        resolver,
+      ),
     ).toBe(LifecycleStage.FIRST_HARVEST);
   });
 
   it('a tree that has not fruited yet stops at juvenile by age, until something is recorded', () => {
     expect(
-      service.calculateStage({
-        planting_date: monthsAgo(110),
-        species: 'Mango',
-        bearing_status: 'NOT_YET',
-      }),
+      service.calculateStage(
+        {
+          planting_date: monthsAgo(110),
+          species: 'Mango',
+          bearing_status: 'NOT_YET',
+        },
+        resolver,
+      ),
     ).toBe(LifecycleStage.JUVENILE);
     expect(
-      service.calculateStage({
-        planting_date: monthsAgo(110),
-        species: 'Mango',
-        bearing_status: 'NOT_YET',
-        first_harvest_at: monthsAgo(1),
-      }),
+      service.calculateStage(
+        {
+          planting_date: monthsAgo(110),
+          species: 'Mango',
+          bearing_status: 'NOT_YET',
+          first_harvest_at: monthsAgo(1),
+        },
+        resolver,
+      ),
     ).toBe(LifecycleStage.FIRST_HARVEST);
   });
 
@@ -101,12 +112,15 @@ describe('flowers', () => {
     months: number,
     extra: Record<string, Date> = {},
   ) =>
-    service.calculateStage({
-      planting_date: monthsAgo(months),
-      species,
-      record_kind: 'FLOWER',
-      ...extra,
-    });
+    service.calculateStage(
+      {
+        planting_date: monthsAgo(months),
+        species,
+        record_kind: 'FLOWER',
+        ...extra,
+      },
+      resolver,
+    );
 
   it('a flower is young, then flowering, never bearing', () => {
     expect(flowerStage('Rose', 2)).toBe(LifecycleStage.JUVENILE);
