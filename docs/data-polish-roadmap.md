@@ -8,8 +8,8 @@ The live app (bagicha-web.vercel.app) works end to end; this is the list of data
 2. Home season guidance — **done, live**
 3. Tree catalogue — **in progress** (phases 1–2 done)
 4. + 5. + 6. Tree care, first tasks and life profiles — together, tree type by tree type, after item 3
-7. Crop and flower photos
-8. Task-title wording
+7. Crop and flower photos — **done, live**
+8. Task-title wording — **done**
 9. More vegetables
 10. Bulbs
 11. Hindi translation
@@ -69,8 +69,8 @@ Done tree type by tree type over everything the catalogue holds:
 
 ## Later items
 
-7. **Crop and flower photos:** 8 of 42 have one; the rest show a family icon.
-8. **Task-title wording:** a short name for titles ("Pinch the marigold tips", not "Pinch the marigold (genda) tips").
+7. **Crop and flower photos:** done: every crop and flower has its own photo (made with Stitch, 480×480).
+8. **Task-title wording:** done: titles use the short name ("Thin the spinach seedlings", not "Thin the spinach (palak) seedlings"); tasks created before keep their old title.
 9. **More vegetables:** beetroot, turnip, spring onion, amaranth (chaulai), bathua, sem, lobia, tinda, parwal, ash gourd — checked against what Indian home gardeners grow.
 10. **Bulbs:** dahlia, gladiolus, rajnigandha, lilies — plant, bloom, lift and store.
 11. **Hindi translation:** users can pick Hindi; the app is English only.

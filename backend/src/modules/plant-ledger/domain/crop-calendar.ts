@@ -1087,12 +1087,17 @@ export function windowContaining(
   );
 }
 
+/** The crop's name for task titles: "Spinach (Palak)" → "spinach". The page still shows the full name. */
+export function titleName(crop: CropInfo): string {
+  return crop.name.replace(/\s*\(.*\)\s*$/, '').toLowerCase();
+}
+
 /**
  * The "has it come up?" reminder: seedlings only for seeds raised in a tray;
  * seeds sown in the bed sprout, and tubers, cloves and rhizomes send up shoots.
  */
 export function sproutCheckTitle(crop: CropInfo, nursery: boolean): string {
-  const name = crop.name.toLowerCase();
+  const name = titleName(crop);
   if (nursery) return `Check the ${name} seedlings have come up`;
   return crop.method === 'DIRECT_SOW' || crop.method === 'NURSERY_TRANSPLANT'
     ? `Check the sown ${name} for sprouts`

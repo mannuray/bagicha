@@ -7,6 +7,7 @@ import {
   inGroup,
   nextWindow,
   sproutCheckTitle,
+  titleName,
   windowStatus,
 } from './crop-calendar';
 
@@ -160,6 +161,24 @@ describe('flowers on the calendar', () => {
     expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(29);
     expect(cropById('marigold')?.kind).toBe('FLOWER');
     expect(cropById('tomato')?.kind).toBe('CROP');
+  });
+});
+
+describe('titleName', () => {
+  it('drops the Hindi name in brackets and lower-cases, for task titles', () => {
+    expect(titleName(cropById('palak')!)).toBe('spinach');
+    expect(titleName(cropById('marigold')!)).toBe('marigold');
+    expect(titleName(cropById('tomato')!)).toBe('tomato');
+  });
+
+  it('no crop or flower title keeps a bracket', () => {
+    for (const crop of CROPS) expect(titleName(crop)).not.toMatch(/[()]/);
+  });
+
+  it('the seedling check uses the short name', () => {
+    expect(sproutCheckTitle(cropById('palak')!, false)).toBe(
+      'Check the sown spinach for sprouts',
+    );
   });
 });
 

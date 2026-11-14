@@ -419,6 +419,8 @@ describe('crops', () => {
       expect(tasks.find((t) => /thin/i.test(t.title))).toBeTruthy();
       expect(tasks.find((t) => /transplant/i.test(t.title))).toBeUndefined();
       expect(tasks.find((t) => /another row/i.test(t.title))).toBeTruthy();
+      expect(tasks.map((t) => t.title)).toContain('Thin the spinach seedlings');
+      expect(tasks.filter((t) => /[()]/.test(t.title))).toEqual([]);
       const cycles = (await a.get(`/api/v1/ledger/plants/${palak.id}/cycles`))
         .body.data;
       expect(cycles[0].place_id).toBe(bag.id);

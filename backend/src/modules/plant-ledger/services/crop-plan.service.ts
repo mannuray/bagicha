@@ -24,6 +24,7 @@ import {
   windowContaining,
   type ClimateGroup,
   type CropInfo,
+  titleName,
 } from '../domain/crop-calendar';
 import { PlantRepository } from '../repositories/plant.repository';
 import { TaskDraft, TaskService } from './task.service';
@@ -169,11 +170,11 @@ export class CropPlanService {
         category: TaskCategory.OBSERVATION,
         priority: TaskPriority.MEDIUM,
         title: material
-          ? `Get ${material} for ${crop.name.toLowerCase()}`
-          : `Get ${crop.name.toLowerCase()} seeds`,
+          ? `Get ${material} for ${titleName(crop)}`
+          : `Get ${titleName(crop)} seeds`,
         source: TaskSource.CROP_PLAN,
         sourceKey: key('seeds'),
-        reason: `Sowing season for ${crop.name.toLowerCase()} starts soon in your region.`,
+        reason: `Sowing season for ${titleName(crop)} starts soon in your region.`,
         // TODO(seed-order): link this step to ordering seeds in the app (marketplace module).
         metadata: {
           crop_id: crop.id,
@@ -190,13 +191,13 @@ export class CropPlanService {
         category: TaskCategory.OBSERVATION,
         priority: TaskPriority.HIGH,
         title: material
-          ? `Plant ${crop.name.toLowerCase()}`
+          ? `Plant ${titleName(crop)}`
           : nursery
-            ? `Sow ${crop.name.toLowerCase()} in a nursery tray`
-            : `Sow ${crop.name.toLowerCase()} in the bed`,
+            ? `Sow ${titleName(crop)} in a nursery tray`
+            : `Sow ${titleName(crop)} in the bed`,
         source: TaskSource.CROP_PLAN,
         sourceKey: key('sow'),
-        reason: `It's the right time to sow ${crop.name.toLowerCase()} in your region.`,
+        reason: `It's the right time to sow ${titleName(crop)} in your region.`,
         metadata: {
           crop_id: crop.id,
           step: 'sow',

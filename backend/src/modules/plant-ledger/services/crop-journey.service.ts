@@ -21,6 +21,7 @@ import {
   cropById,
   inGroup,
   sproutCheckTitle,
+  titleName,
   windowContaining,
   type ClimateGroup,
   type CropInfo,
@@ -141,7 +142,7 @@ export class CropJourneyService {
             plant,
             cycle,
             c.key,
-            CARE_TITLES[c.key]?.(this.lower(crop)) ?? c.key,
+            CARE_TITLES[c.key]?.(titleName(crop)) ?? c.key,
             addDays(at, c.days),
           ),
         );
@@ -198,7 +199,7 @@ export class CropJourneyService {
               plant,
               cycle,
               'transplant',
-              `Transplant the ${this.lower(crop)} seedlings to the bed`,
+              `Transplant the ${titleName(crop)} seedlings to the bed`,
               addDays(at, crop.transplant_after_days[0]),
             ),
           );
@@ -210,7 +211,7 @@ export class CropJourneyService {
               plant,
               cycle,
               'thin',
-              `Thin the ${this.lower(crop)} seedlings`,
+              `Thin the ${titleName(crop)} seedlings`,
               addDays(at, crop.thin_after_days),
             ),
           );
@@ -306,8 +307,8 @@ export class CropJourneyService {
 
   private readySoon(crop: CropInfo): string {
     return crop.kind === 'FLOWER'
-      ? `${crop.name} should start blooming soon`
-      : `${crop.name} should be ready to pick soon`;
+      ? `The ${titleName(crop)} should start blooming soon`
+      : `The ${titleName(crop)} should be ready to pick soon`;
   }
 
   /** The gardener's climate group (their region decides sowing windows and some harvest days). */
@@ -317,10 +318,6 @@ export class CropJourneyService {
       select: { region_cluster: true, district: true },
     });
     return climateGroupFor(user ? regionFor(user) : RegionCluster.NORTH_INDIA);
-  }
-
-  private lower(crop: CropInfo) {
-    return crop.name.toLowerCase();
   }
 
   /** Moves the stage forward only (a new season may start from planned or resting). */
@@ -383,7 +380,7 @@ export class CropJourneyService {
       plant,
       cycle,
       `row:${isoDay(due)}`,
-      `Sow another row of ${this.lower(crop)}`,
+      `Sow another row of ${titleName(crop)}`,
       due,
     );
     draft.metadata = { crop_id: crop.id, step: 'row' };
@@ -407,7 +404,7 @@ export class CropJourneyService {
       title,
       source: TaskSource.CROP_PLAN,
       sourceKey: `crop:${plant.id}:s${cycle?.id ?? 'none'}:${step}`,
-      reason: `Part of growing ${this.lower(crop)}.`,
+      reason: `Part of growing ${titleName(crop)}.`,
       metadata: { crop_id: crop.id, step } as Prisma.InputJsonValue,
       dueDate,
       plantCycleId: cycle?.id ?? null,
