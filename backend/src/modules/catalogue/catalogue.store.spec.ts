@@ -1,3 +1,4 @@
+import { allowLogFields } from '../../common/logging/log-fields';
 import { PinoLogger } from 'nestjs-pino';
 import { Clock } from '../../common/time';
 import { Metrics } from '../../common/observability';
@@ -34,7 +35,7 @@ function setup(seed: CatalogueSeed = CATALOGUE_SEED) {
     metrics as unknown as Metrics,
     logger as unknown as PinoLogger,
   );
-  return { store, state, clock, repo, metrics };
+  return { store, state, clock, repo, metrics, logger };
 }
 
 describe('CatalogueStore', () => {
@@ -94,6 +95,17 @@ describe('CatalogueStore', () => {
     expect((await store.snapshot()).version).toBe(1);
     clock.at += 61_000;
     expect((await store.snapshot()).version).toBe(2);
+  });
+
+  it('logs the loaded version and crop count under fields the log keeps', async () => {
+    const { store, logger } = setup();
+    await store.snapshot();
+    expect(
+      allowLogFields(logger.info.mock.calls[0][0] as Record<string, unknown>),
+    ).toEqual({
+      catalogueVersion: 1,
+      cropCount: CATALOGUE_SEED.crops.length,
+    });
   });
 
   it('loads at start, so a bad catalogue stops the app starting', async () => {

@@ -5,11 +5,8 @@ import {
   validateSeed,
   type CropInfo,
 } from '../../catalogue';
-import { FLOWERS } from './flower-calendar';
 import {
-  CROPS,
   climateGroupFor,
-  cropById,
   inGroup,
   nextWindow,
   sproutCheckTitle,
@@ -17,7 +14,11 @@ import {
   windowStatus,
 } from './crop-calendar';
 
+/** The approved calendar values live in the catalogue seed; these tests pin them. */
 const seeded = Catalogue.from(validateSeed(CATALOGUE_SEED), 1);
+const CROPS = seeded.listedCrops();
+const FLOWERS = CROPS.filter((c) => c.kind === 'FLOWER');
+const cropById = (id: string) => seeded.crop(id);
 const journeyOf = (crop: CropInfo) => seeded.method(crop.method).journey;
 
 const at = (iso: string) => new Date(`${iso}T06:00:00Z`);

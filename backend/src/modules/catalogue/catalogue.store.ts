@@ -74,7 +74,10 @@ export class CatalogueStore implements OnApplicationBootstrap {
     this.checkedAt = now;
     const crops = catalogue.listedCrops().length;
     this.metrics.catalogueLoaded(version, crops);
-    this.logger.info({ version, crops }, 'Catalogue loaded');
+    this.logger.info(
+      { catalogueVersion: version, cropCount: crops },
+      'Catalogue loaded',
+    );
     return catalogue;
   }
 

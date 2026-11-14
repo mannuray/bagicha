@@ -28,6 +28,7 @@ const ALLOWED = new Set([
   'expected',
   'kind',
   'step',
+  'catalogueVersion',
 ]);
 
 /** Internal ids and counts are fine to log; values about a person are not. */
