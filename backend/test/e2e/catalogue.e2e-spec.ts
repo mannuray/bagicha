@@ -1,14 +1,28 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { Clock, FixedClock } from '../../src/common/time';
+import { CATALOGUE_SEED } from '../../src/modules/catalogue';
+import { CatalogueRepository } from '../../src/modules/catalogue/catalogue.repository';
+import { CataloguePushService } from '../../src/modules/catalogue/push/catalogue-push.service';
 import { PrismaService } from '../../src/prisma/prisma.service';
-import { PlantsService } from '../../src/modules/plants/plants.service';
 import { createTestApp } from './app';
+
+class MovableClock extends FixedClock {
+  private at = Date.now();
+  advance(ms: number) {
+    this.at += ms;
+  }
+  now(): Date {
+    return new Date(this.at);
+  }
+}
 
 describe('plant catalogue', () => {
   let app: INestApplication;
+  const clock = new MovableClock(new Date());
 
   beforeAll(async () => {
-    app = await createTestApp();
+    app = await createTestApp((b) => b.overrideProvider(Clock).useValue(clock));
   });
 
   afterAll(async () => {
@@ -37,59 +51,59 @@ describe('plant catalogue', () => {
     expect(Array.isArray(res.body.data)).toBe(true);
     expect(res.body.pagination).toMatchObject({ page_size: 2 });
   });
-  describe('seeding new families into an existing catalogue', () => {
-    it('adds papaya and chikoo to a catalogue that already has the old rows, without duplicates', async () => {
-      const prisma = app.get(PrismaService);
-      await prisma.plantCatalogEntry.deleteMany({
-        where: {
-          species_family: {
-            in: [
-              'papaya',
-              'grape',
-              'jackfruit',
-              'coconut',
-              'sapota',
-              'amla',
-              'custard_apple',
-              'moringa',
-            ],
-          },
-        },
-      });
-      expect(await prisma.plantCatalogEntry.count()).toBeGreaterThan(0);
+  describe('search reads the pushed catalogue', () => {
+    const sindhuri = {
+      ...CATALOGUE_SEED.fruitPlants.find((p) => p.key === 'mango:malda')!,
+      key: 'mango:Sindhuri',
+      variety: 'Sindhuri',
+      display_name: 'Mango (Sindhuri)',
+      aliases: ['sindhuri'],
+      languages: null,
+    };
 
-      await app.get(PlantsService).onModuleInit();
-      const afterFirst = await prisma.plantCatalogEntry.count();
-      await app.get(PlantsService).onModuleInit();
-      expect(await prisma.plantCatalogEntry.count()).toBe(afterFirst);
+    afterAll(async () => {
+      // The push never deletes: take the test entry out by hand so later pushes match the seed.
+      await app
+        .get(PrismaService)
+        .catalogueFruitPlant.deleteMany({ where: { key: sindhuri.key } });
+    });
 
+    it('finds an entry pushed while the app runs, within a minute', async () => {
       const server = app.getHttpServer();
-      const papita = await request(server).get(
-        '/api/v1/plants/search?q=papita',
-      );
-      expect(papita.body.data[0]).toMatchObject({ species_family: 'papaya' });
-      const chikoo = await request(server).get(
-        '/api/v1/plants/search?q=chikoo',
-      );
-      expect(chikoo.body.data[0]).toMatchObject({ species_family: 'sapota' });
-      const sahjan = await request(server).get(
-        '/api/v1/plants/search?q=sahjan',
-      );
-      expect(sahjan.body.data[0]).toMatchObject({ species_family: 'moringa' });
+      const search = async () =>
+        (await request(server).get('/api/v1/plants/search?q=sindhuri')).body
+          .data as Array<{ id: string; display_name: string }>;
+      expect(await search()).toEqual([]);
+      await new CataloguePushService(app.get(CatalogueRepository)).push({
+        ...CATALOGUE_SEED,
+        fruitPlants: [...CATALOGUE_SEED.fruitPlants, sindhuri],
+      });
+      clock.advance(61_000);
+      expect(await search()).toEqual([
+        expect.objectContaining({
+          id: 'mango:Sindhuri',
+          display_name: 'Mango (Sindhuri)',
+        }),
+      ]);
     });
-  });
 
-  it('a second boot with an unchanged catalogue writes nothing', async () => {
-    const prisma = app.get(PrismaService);
-    await app.get(PlantsService).onModuleInit();
-    const before = await prisma.plantCatalogEntry.aggregate({
-      _max: { updated_at: true },
+    it('starting the app writes nothing to the old catalogue table', async () => {
+      const prisma = app.get(PrismaService);
+      await prisma.plantCatalogEntry.deleteMany();
+      const second = await createTestApp();
+      try {
+        expect(await prisma.plantCatalogEntry.count()).toBe(0);
+        const res = await request(second.getHttpServer()).get(
+          '/api/v1/plants/search?q=aam',
+        );
+        expect(res.body.data[0]).toMatchObject({
+          id: 'mango',
+          species_family: 'mango',
+        });
+      } finally {
+        await second.close();
+      }
     });
-    await app.get(PlantsService).onModuleInit();
-    const after = await prisma.plantCatalogEntry.aggregate({
-      _max: { updated_at: true },
-    });
-    expect(after._max.updated_at).toEqual(before._max.updated_at);
   });
 
   describe('fruit varieties and Hindi names', () => {

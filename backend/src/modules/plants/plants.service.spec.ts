@@ -1,54 +1,28 @@
-import { Clock } from '../../common/time';
-import { CatalogRepository } from './catalog.repository';
+import { seededCatalogueStore } from '../catalogue/testing';
 import { PlantsService } from './plants.service';
 
-const mango = {
-  id: 'c1',
-  species_family: 'mango',
-  species: 'Mango',
-  variety: null,
-  display_name: 'Mango',
-  plant_type: 'fruit_tree',
-  aliases: ['aam'],
-  languages: null,
-  regions: [],
-  confidence_weight: 0.9,
-  active: true,
-};
+const page = { page: 1, page_size: 10 };
 
-function build() {
-  const catalog = {
-    listActive: jest.fn(() => Promise.resolve([mango])),
-    upsertAll: jest.fn(() => Promise.resolve()),
-  };
-  let now = new Date('2026-11-12T00:00:00Z');
-  const clock = {
-    now: () => now,
-    set: (d: Date) => (now = d),
-  };
-  const service = new PlantsService(
-    catalog as unknown as CatalogRepository,
-    clock as unknown as Clock,
-  );
-  return { service, catalog, clock };
-}
+describe('PlantsService over the catalogue', () => {
+  const service = new PlantsService(seededCatalogueStore());
 
-describe('PlantsService catalogue cache', () => {
-  const page = { page: 1, page_size: 10 };
-
-  it('reads the catalogue once for many searches (each keystroke is a search)', async () => {
-    const { service, catalog } = build();
-    await service.search('aa', page);
-    await service.search('aam', page);
-    await service.resolve('aam');
-    expect(catalog.listActive).toHaveBeenCalledTimes(1);
+  it('ranks the catalogue search entries and gives each its key as id', async () => {
+    const result = await service.search('dasheri', page);
+    expect(result.items[0]).toEqual({
+      id: 'mango:Dasheri',
+      display_name: 'Mango (Dasheri)',
+      species_family: 'mango',
+      species: 'mango',
+      variety: 'Dasheri',
+      plant_type: 'fruit_tree',
+    });
   });
 
-  it('reads it again after ten minutes', async () => {
-    const { service, catalog, clock } = build();
-    await service.search('aam', page);
-    clock.set(new Date('2026-11-12T00:10:01Z'));
-    await service.search('aam', page);
-    expect(catalog.listActive).toHaveBeenCalledTimes(2);
+  it('finds perennial flowers by their Hindi names', async () => {
+    const result = await service.resolve('गुलाब');
+    expect(result.match).toMatchObject({
+      id: 'rose',
+      plant_type: 'perennial_flower',
+    });
   });
 });

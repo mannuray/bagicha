@@ -1,37 +1,17 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { PlantCatalogEntry, Prisma } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
 import { Page, PageQuery, toPage } from '../../common/pagination';
-import { Clock } from '../../common/time';
-import { PERENNIAL_FLOWERS } from '../plant-ledger';
-import { CatalogRepository } from './catalog.repository';
-import { FRUIT_CATALOGUE, type PlantSeed } from './domain/fruit-catalogue';
+import { CatalogueStore, type SearchEntry } from '../catalogue';
 
 type ResolveConfidence = 'high' | 'medium' | 'low';
 
-/** The catalogue changes only at boot; a manual edit shows up within this long. */
-const CATALOGUE_CACHE_MS = 10 * 60_000;
-
+/** Add-tree search and name resolution over the plant catalogue's search entries. */
 @Injectable()
-export class PlantsService implements OnModuleInit {
-  private cached: { at: number; entries: PlantCatalogEntry[] } | null = null;
+export class PlantsService {
+  constructor(private readonly catalogue: CatalogueStore) {}
 
-  constructor(
-    private readonly catalog: CatalogRepository,
-    private readonly clock: Clock,
-  ) {}
-
-  async onModuleInit() {
-    await this.bootstrapCatalog();
-    this.cached = null;
-  }
-
-  /** Every search keystroke ranks the whole catalogue: read it once, not per request. */
-  private async activeEntries(): Promise<PlantCatalogEntry[]> {
-    const now = this.clock.now().getTime();
-    if (!this.cached || now - this.cached.at > CATALOGUE_CACHE_MS) {
-      this.cached = { at: now, entries: await this.catalog.listActive() };
-    }
-    return this.cached.entries;
+  /** Every keystroke ranks the whole list; it is held in memory with the catalogue. */
+  private async activeEntries(): Promise<SearchEntry[]> {
+    return (await this.catalogue.snapshot()).searchEntries();
   }
 
   async search(
@@ -91,39 +71,8 @@ export class PlantsService implements OnModuleInit {
     };
   }
 
-  private async bootstrapCatalog() {
-    // Safe to run on every boot: adds missing entries and refreshes existing ones.
-    const seeds: PlantSeed[] = [
-      ...FRUIT_CATALOGUE,
-      // Perennial flowers (flowers spec §2.2): one entry per family in flower-care.ts.
-      ...PERENNIAL_FLOWERS.map(
-        (f): PlantSeed => ({
-          species_family: f.family,
-          species: f.family,
-          display_name: f.name.charAt(0).toUpperCase() + f.name.slice(1),
-          plant_type: 'perennial_flower',
-          aliases: f.aliases.filter((a) => !/[\u0900-\u097F]/.test(a)),
-          languages: { hi: f.aliases.filter((a) => /[\u0900-\u097F]/.test(a)) },
-          confidence_weight: 0.85,
-        }),
-      ),
-    ];
-
-    await this.catalog.upsertAll(
-      seeds.map((seed) => ({
-        ...seed,
-        variety: seed.variety ?? null,
-        languages: seed.languages
-          ? (seed.languages as unknown as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
-        regions: seed.regions ?? [],
-        confidence_weight: seed.confidence_weight ?? 0.5,
-      })),
-    );
-  }
-
   private rankEntries(
-    entries: PlantCatalogEntry[],
+    entries: SearchEntry[],
     query: string,
     regionCluster?: string,
     language?: string,
@@ -145,7 +94,7 @@ export class PlantsService implements OnModuleInit {
         (
           item,
         ): item is {
-          entry: PlantCatalogEntry;
+          entry: SearchEntry;
           score: number;
           matchedAlias: string | null;
         } => !!item,
@@ -154,7 +103,7 @@ export class PlantsService implements OnModuleInit {
   }
 
   private scoreEntry(
-    entry: PlantCatalogEntry,
+    entry: SearchEntry,
     query: string,
     regionCluster: string,
     language: string,
@@ -228,10 +177,7 @@ export class PlantsService implements OnModuleInit {
     return intersection / Math.max(leftTokens.size, rightTokens.size);
   }
 
-  private languageAliases(
-    entry: PlantCatalogEntry,
-    language: string,
-  ): string[] {
+  private languageAliases(entry: SearchEntry, language: string): string[] {
     if (
       !entry.languages ||
       typeof entry.languages !== 'object' ||
@@ -254,9 +200,9 @@ export class PlantsService implements OnModuleInit {
       .map((item) => this.normalize(item));
   }
 
-  toSearchItem(entry: PlantCatalogEntry) {
+  toSearchItem(entry: SearchEntry) {
     return {
-      id: entry.id,
+      id: entry.key,
       display_name: entry.display_name,
       species_family: entry.species_family,
       species: entry.species,
