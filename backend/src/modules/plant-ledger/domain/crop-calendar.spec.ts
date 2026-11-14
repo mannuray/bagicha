@@ -26,8 +26,8 @@ describe('climateGroupFor', () => {
 });
 
 describe('the calendar data', () => {
-  it('has 29 crops, each with a botanical family and a method, nursery crops with transplant timing', () => {
-    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(29);
+  it('has 37 crops, each with a botanical family and a method, nursery crops with transplant timing', () => {
+    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(37);
     const families = [
       'SOLANACEAE',
       'BRASSICACEAE',
@@ -158,7 +158,7 @@ describe('flowers on the calendar', () => {
   });
 
   it('keeps vegetables as CROP, and finds flowers by id', () => {
-    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(29);
+    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(37);
     expect(cropById('marigold')?.kind).toBe('FLOWER');
     expect(cropById('tomato')?.kind).toBe('CROP');
   });
@@ -262,5 +262,180 @@ describe('black carrot, chana and khesari', () => {
       days_to_first_harvest: [110, 120],
     });
     expect(khesari.description).toMatch(/Ratan|Mahateora/);
+  });
+});
+
+describe('the batch-9 vegetables (approved review, 2026-11-14)', () => {
+  const approved: Array<[string, Record<string, unknown>]> = [
+    [
+      'beetroot',
+      {
+        family: 'AMARANTHACEAE',
+        method: 'DIRECT_SOW',
+        windows: { PLAINS: [[9, 11]], PENINSULAR: [[7, 8]], HILLS: [[3, 4]] },
+        germination_days: [5, 10],
+        thin_after_days: 20,
+        days_to_first_harvest: [60, 75],
+        harvest_span_days: 15,
+        succession_every_days: null,
+        care: [],
+        sun: 'FULL',
+        guide: expect.objectContaining({ spacing_cm: [30, 10] }),
+      },
+    ],
+    [
+      'turnip',
+      {
+        family: 'BRASSICACEAE',
+        method: 'DIRECT_SOW',
+        windows: { PLAINS: [[8, 11]], PENINSULAR: [], HILLS: [[7, 10]] },
+        germination_days: [4, 6],
+        thin_after_days: 15,
+        days_to_first_harvest: [45, 60],
+        harvest_span_days: 10,
+        succession_every_days: 15,
+        care: [{ key: 'earth_up', after: 'SOWING', days: 21 }],
+        guide: expect.objectContaining({ spacing_cm: [30, 10] }),
+      },
+    ],
+    [
+      'amaranth',
+      {
+        family: 'AMARANTHACEAE',
+        method: 'DIRECT_SOW',
+        windows: {
+          PLAINS: [
+            [2, 3],
+            [6, 7],
+          ],
+          PENINSULAR: [[1, 12]],
+          HILLS: [],
+        },
+        germination_days: [3, 7],
+        thin_after_days: 8,
+        days_to_first_harvest: [25, 35],
+        harvest_span_days: 60,
+        care: [],
+        guide: expect.objectContaining({ spacing_cm: [20, 15] }),
+      },
+    ],
+    [
+      'bathua',
+      {
+        family: 'AMARANTHACEAE',
+        method: 'DIRECT_SOW',
+        windows: { PLAINS: [[10, 11]], PENINSULAR: [], HILLS: [] },
+        germination_days: [5, 10],
+        thin_after_days: null,
+        days_to_first_harvest: [40, 45],
+        harvest_span_days: 80,
+        care: [],
+        guide: expect.objectContaining({ spacing_cm: [30, 20] }),
+      },
+    ],
+    [
+      'sem',
+      {
+        family: 'FABACEAE',
+        method: 'DIRECT_SOW',
+        windows: { PLAINS: [[6, 7]], PENINSULAR: [[7, 8]], HILLS: [] },
+        germination_days: [4, 10],
+        days_to_first_harvest: [125, 125],
+        harvest_span_days: 90,
+        care: [{ key: 'trellis', after: 'SOWING', days: 20 }],
+        guide: expect.objectContaining({ spacing_cm: [100, 75] }),
+      },
+    ],
+    [
+      'lobia',
+      {
+        family: 'FABACEAE',
+        method: 'DIRECT_SOW',
+        windows: {
+          PLAINS: [
+            [2, 4],
+            [6, 7],
+          ],
+          PENINSULAR: [
+            [2, 3],
+            [6, 7],
+          ],
+          HILLS: [[4, 5]],
+        },
+        germination_days: [6, 10],
+        days_to_first_harvest: [45, 55],
+        harvest_span_days: 30,
+        care: [],
+        sun: 'FULL',
+        guide: expect.objectContaining({ spacing_cm: [45, 15] }),
+      },
+    ],
+    [
+      'tinda',
+      {
+        family: 'CUCURBITACEAE',
+        method: 'DIRECT_SOW',
+        windows: {
+          PLAINS: [
+            [2, 3],
+            [6, 7],
+          ],
+          PENINSULAR: [],
+          HILLS: [[4, 5]],
+        },
+        germination_days: [5, 15],
+        days_to_first_harvest: [54, 60],
+        harvest_span_days: 30,
+        care: [],
+        guide: expect.objectContaining({ spacing_cm: [150, 45] }),
+      },
+    ],
+    [
+      'ash_gourd',
+      {
+        family: 'CUCURBITACEAE',
+        method: 'DIRECT_SOW',
+        windows: {
+          PLAINS: [
+            [2, 3],
+            [6, 7],
+          ],
+          PENINSULAR: [
+            [1, 1],
+            [7, 7],
+          ],
+          HILLS: [[4, 5]],
+        },
+        germination_days: [4, 10],
+        days_to_first_harvest: [110, 150],
+        harvest_span_days: 45,
+        care: [],
+        guide: expect.objectContaining({ spacing_cm: [300, 90] }),
+      },
+    ],
+  ];
+
+  it.each(approved)('%s matches the approved table', (id, values) => {
+    expect(cropById(id)).toMatchObject({ kind: 'CROP', ...values });
+  });
+
+  it('every new crop is full sun and has a Devanagari alias', () => {
+    for (const [id] of approved) {
+      expect(cropById(id)?.sun).toBe('FULL');
+      expect(
+        cropById(id)?.aliases.some((a) => /\p{Script=Devanagari}/u.test(a)),
+      ).toBe(true);
+    }
+  });
+
+  it('leaves out aliases other crops already own', () => {
+    expect(cropById('lobia')?.aliases).not.toContain('barbati');
+    expect(cropById('ash_gourd')?.aliases).not.toContain('kaddu');
+    expect(cropById('sem')?.aliases).not.toContain('bean');
+  });
+
+  it('parwal and spring onion are held back', () => {
+    expect(cropById('parwal')).toBeNull();
+    expect(cropById('spring_onion')).toBeNull();
   });
 });

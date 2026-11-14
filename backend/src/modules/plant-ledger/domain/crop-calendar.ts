@@ -168,6 +168,35 @@ const DETAILS: Record<string, Details> = {
     'Cicer arietinum',
     'Pinch the tips a month after sowing for more branches; water only once, at pod set; pick green pods as hara chana, or let them dry.',
   ),
+  beetroot: d(
+    'Beta vulgaris',
+    'Sweet red roots; sow in the cool months, pull at golf-ball size.',
+  ),
+  turnip: d('Brassica rapa', 'Quick winter root; pull it young and tender.'),
+  amaranth: d(
+    'Amaranthus spp.',
+    'Fast summer greens, red or green; cut every week for months.',
+  ),
+  bathua: d(
+    'Chenopodium album',
+    'The winter green for saag and raita; cut every few weeks till it flowers.',
+  ),
+  sem: d(
+    'Lablab purpureus',
+    'Climbing flat bean; sow in the monsoon, pick pods all winter.',
+  ),
+  lobia: d(
+    'Vigna unguiculata',
+    'Bushy bean with long tender pods; picking starts in about 7 weeks.',
+  ),
+  tinda: d(
+    'Praecitrullus fistulosus',
+    'Small round summer gourd; first fruit about 8 weeks after sowing.',
+  ),
+  ash_gourd: d(
+    'Benincasa hispida',
+    'Big trailing gourd for petha and curries; fruit in about four months.',
+  ),
   khesari: d(
     'Lathyrus sativus',
     'Grow a low-toxin (ODAP) variety such as Ratan or Mahateora. Eat it as an occasional dal or saag, not daily for months; boiling in plenty of water and throwing the water away lowers the toxin.',
@@ -963,6 +992,218 @@ const RAW: Raw[] = [
       plants_for_family_of_4: 'a 2-metre row',
       container: 'best in the ground',
       spacing_cm: [10, 10],
+    },
+  },
+  // Batch 9 (owner-approved review, 2026-11-14). Sources per value are in
+  // the review doc; tiers: U university/ICAR, A advisory, L lecture notes,
+  // R research, S seed seller. "Estimate" values had no source.
+  {
+    id: 'beetroot',
+    name: 'Beetroot',
+    aliases: ['chukandar', 'चुकंदर'],
+    family: 'AMARANTHACEAE',
+    method: 'DIRECT_SOW',
+    // Plains Sep–Nov and hills Mar–Apr (L TNAU lec30); south Jul–Aug (U TNAU CPG).
+    windows: { PLAINS: [[9, 11]], PENINSULAR: [[7, 8]], HILLS: [[3, 4]] },
+    germination_days: [5, 10], // S
+    transplant_after_days: null,
+    days_to_first_harvest: [60, 75], // U KAU; L lec30 56–70
+    harvest_span_days: 15, // derived: lift before roots go spongy
+    thin_after_days: 20, // U TNAU: seed balls hold several seeds
+    succession_every_days: null,
+    care: [],
+    tags: ['container'],
+    guide: {
+      plants_for_family_of_4: 'a 1-metre row',
+      container: '10-inch deep pot',
+      spacing_cm: [30, 10],
+    },
+  },
+  {
+    id: 'turnip',
+    name: 'Turnip',
+    aliases: ['shalgam', 'shaljam', 'शलगम', 'शलजम'],
+    family: 'BRASSICACEAE',
+    method: 'DIRECT_SOW',
+    // PAU: desi Aug–Sep, European Oct–Nov. ICAR HP advisory: mid hills Jul–Oct.
+    windows: { PLAINS: [[8, 11]], PENINSULAR: [], HILLS: [[7, 10]] },
+    germination_days: [4, 6], // L lec29
+    transplant_after_days: null,
+    days_to_first_harvest: [45, 60], // U PAU
+    harvest_span_days: 10, // PAU: a few days' delay makes roots pithy
+    thin_after_days: 15, // L lec29
+    succession_every_days: 15, // A NHB
+    care: [{ key: 'earth_up', after: 'SOWING', days: 21 }], // U PAU
+    tags: ['container'],
+    guide: {
+      plants_for_family_of_4: 'a 1-metre row every 2 weeks',
+      container: '8-inch deep pot',
+      spacing_cm: [30, 10],
+    },
+  },
+  {
+    id: 'amaranth',
+    name: 'Amaranth (Chaulai)',
+    aliases: ['chaulai', 'lal saag', 'chaulai saag', 'चौलाई', 'लाल साग'],
+    family: 'AMARANTHACEAE',
+    method: 'DIRECT_SOW',
+    // Plains: S only (owner decision); south year-round (U TNAU, A VFPCK).
+    windows: {
+      PLAINS: [
+        [2, 3],
+        [6, 7],
+      ],
+      PENINSULAR: [[1, 12]],
+      HILLS: [],
+    },
+    germination_days: [3, 7], // S
+    transplant_after_days: null,
+    days_to_first_harvest: [25, 35], // L lec31; U TNAU
+    harvest_span_days: 60, // derived from lec31: cut from day 24 to 90
+    thin_after_days: 8, // U TNAU
+    succession_every_days: null,
+    care: [],
+    tags: ['container'],
+    guide: {
+      plants_for_family_of_4: 'a 1-metre row',
+      container: '6-inch deep wide pot',
+      spacing_cm: [20, 15],
+    },
+  },
+  {
+    id: 'bathua',
+    name: 'Bathua',
+    aliases: ['bathua saag', 'बथुआ'],
+    family: 'AMARANTHACEAE',
+    method: 'DIRECT_SOW',
+    windows: { PLAINS: [[10, 11]], PENINSULAR: [], HILLS: [] }, // U ICAR-IARI
+    germination_days: [5, 10], // S
+    transplant_after_days: null,
+    days_to_first_harvest: [40, 45], // U ICAR-IARI
+    harvest_span_days: 80, // IARI: cut about every 20 days until day 120
+    thin_after_days: null,
+    succession_every_days: null,
+    care: [],
+    tags: ['container'],
+    guide: {
+      plants_for_family_of_4: 'a 1-metre row',
+      container: '8-inch deep pot',
+      spacing_cm: [30, 20],
+    },
+  },
+  {
+    id: 'sem',
+    name: 'Sem',
+    aliases: ['sem phali', 'semi', 'flat bean', 'lablab', 'सेम', 'सेम फली'],
+    family: 'FABACEAE',
+    method: 'DIRECT_SOW',
+    // Climbing type, short-day: pods come in winter. U IIVR (plains), U TNAU (south).
+    windows: { PLAINS: [[6, 7]], PENINSULAR: [[7, 8]], HILLS: [] },
+    germination_days: [4, 10], // R + S
+    transplant_after_days: null,
+    days_to_first_harvest: [125, 125], // U IIVR Kashi Haritima
+    harvest_span_days: 90, // derived: Kerala picks Nov–Dec to mid-March
+    thin_after_days: null,
+    succession_every_days: null,
+    care: [trellis], // day 20: R UAS trial, vines 60–100 cm by day 30
+    tags: [],
+    guide: {
+      plants_for_family_of_4: '2 plants on a trellis',
+      container: 'a 40-litre grow-bag',
+      spacing_cm: [100, 75],
+    },
+  },
+  {
+    id: 'lobia',
+    name: 'Lobia (Cowpea)',
+    aliases: ['lobiya', 'chawli', 'cowpea', 'लोबिया', 'चवली'],
+    family: 'FABACEAE',
+    method: 'DIRECT_SOW',
+    // U PAU + IIVR (plains), U TNAU (south), A Vikaspedia (hills).
+    windows: {
+      PLAINS: [
+        [2, 4],
+        [6, 7],
+      ],
+      PENINSULAR: [
+        [2, 3],
+        [6, 7],
+      ],
+      HILLS: [[4, 5]],
+    },
+    germination_days: [6, 10], // estimate, as French beans
+    transplant_after_days: null,
+    days_to_first_harvest: [45, 55], // U PAU, TNAU
+    harvest_span_days: 30, // derived: TNAU 75–90 day crop
+    thin_after_days: null,
+    succession_every_days: null,
+    care: [], // bush type
+    tags: ['container'],
+    guide: {
+      plants_for_family_of_4: 'a 2-metre row',
+      container: '20-litre grow bag for 3–4 plants',
+      spacing_cm: [45, 15],
+    },
+  },
+  {
+    id: 'tinda',
+    name: 'Tinda',
+    aliases: ['round gourd', 'tindsi', 'टिंडा'],
+    family: 'CUCURBITACEAE',
+    method: 'DIRECT_SOW',
+    // U PAU (plains); hills by analogy with GBPUAT's gourds; not grown in the south.
+    windows: {
+      PLAINS: [
+        [2, 3],
+        [6, 7],
+      ],
+      PENINSULAR: [],
+      HILLS: [[4, 5]],
+    },
+    germination_days: [5, 15], // S
+    transplant_after_days: null,
+    days_to_first_harvest: [54, 60], // U PAU
+    harvest_span_days: 30, // estimate
+    thin_after_days: null,
+    succession_every_days: null,
+    care: [], // trails on the ground (PAU)
+    tags: [],
+    guide: {
+      plants_for_family_of_4: '3–4 plants',
+      container: 'a 30-litre grow-bag',
+      spacing_cm: [150, 45],
+    },
+  },
+  {
+    id: 'ash_gourd',
+    name: 'Ash gourd (Petha)',
+    aliases: ['petha', 'safed kaddu', 'kumhda', 'पेठा', 'कुम्हड़ा'],
+    family: 'CUCURBITACEAE',
+    method: 'DIRECT_SOW',
+    // U PAU (plains), U TNAU (south), hills by analogy with GBPUAT's gourds.
+    windows: {
+      PLAINS: [
+        [2, 3],
+        [6, 7],
+      ],
+      PENINSULAR: [
+        [1, 1],
+        [7, 7],
+      ],
+      HILLS: [[4, 5]],
+    },
+    germination_days: [4, 10], // U KAU (snippet) + S
+    transplant_after_days: null,
+    days_to_first_harvest: [110, 150], // mature fruit: U IIVR 110, PAU 120–150
+    harvest_span_days: 45, // U TNAU
+    thin_after_days: null,
+    succession_every_days: null,
+    care: [], // trails on the ground (PAU)
+    tags: [],
+    guide: {
+      plants_for_family_of_4: '1–2 plants',
+      container: 'best in the ground, or a 60-litre tub',
+      spacing_cm: [300, 90],
     },
   },
 ];
