@@ -38,7 +38,7 @@ docker run --rm --dns 1.1.1.1 \
 ```
 
 - Use the **direct** connection string from the Neon console (project `bagicha-staging`, role `neondb_owner`, Connection pooling OFF): the host has **no** `-pooler`, and drop `&channel_binding=require` so the string ends in `?sslmode=require`.
-- Add `&connect_timeout=30` to the string: Neon suspends an idle database and waking it takes longer than Prisma's 5 s default, which shows up as `P1001` / "Can't reach database server" even though the host answers. The same goes for the catalogue push.
+- Add `&connect_timeout=30&pool_timeout=60` to the string (the push reads several tables at once; over a slow link they wait for a connection longer than the 10 s default): Neon suspends an idle database and waking it takes longer than Prisma's 5 s default, which shows up as `P1001` / "Can't reach database server" even though the host answers. The same goes for the catalogue push.
 - `--dns 1.1.1.1` is needed because the local router refuses `*.neon.tech`. `--add-host` pins the host to an IPv4 address: Neon also returns IPv6 addresses, which Docker on the Mac can't route, and Prisma's engine gives up with `P1001`. If Neon's address ever changes, look it up with `nslookup ep-misty-mud-a1byhelm.ap-southeast-1.aws.neon.tech 1.1.1.1`.
 - Run it in your own terminal, not through Claude, so the password never lands in a chat. It ends with `All migrations have been successfully applied.`
 
