@@ -41,6 +41,24 @@ docker run --rm --dns 1.1.1.1 \
 - `--dns 1.1.1.1` is needed because the local router refuses `*.neon.tech`. `--add-host` pins the host to an IPv4 address: Neon also returns IPv6 addresses, which Docker on the Mac can't route, and Prisma's engine gives up with `P1001`. If Neon's address ever changes, look it up with `nslookup ep-misty-mud-a1byhelm.ap-southeast-1.aws.neon.tech 1.1.1.1`.
 - Run it in your own terminal, not through Claude, so the password never lands in a chat. It ends with `All migrations have been successfully applied.`
 
+## Plant catalogue push (after the migration, before the deploy)
+
+Crops, flowers, planting methods and care steps live in the database. The API reads them from there and refuses to start without an approved catalogue. They are edited in `backend/src/modules/catalogue/seed/` and written to the database by the push. Run it whenever a commit changes a seed file, and once for the stage that creates the tables. Order: **migration → push → deploy**.
+
+```bash
+cd backend
+docker build --target catalogue-push -t bagicha-catalogue-push .
+docker run --rm --dns 1.1.1.1 \
+  --add-host ep-misty-mud-a1byhelm.ap-southeast-1.aws.neon.tech:13.228.184.177 \
+  -e DATABASE_URL='<the same direct connection string as the migration>' \
+  bagicha-catalogue-push
+```
+
+- It adds new records and updates changed ones; it never deletes. It logs `Catalogue pushed` with the version and each changed record. Running it twice changes nothing.
+- If the database has a record the seed files don't, it stops with `CATALOGUE_MISSING_FROM_SEED` and writes nothing. To take a crop out, set its `status` to `RETIRED` in the seed: it leaves Browse, and gardens that grow it keep their reminders.
+- The running API picks up a push within about a minute; no redeploy is needed for a seed-only change.
+- Locally: `npm run catalogue:push` (uses `DATABASE_URL` from `.env`).
+
 ## Deploy the API (Render)
 
 Render builds `backend/Dockerfile` and waits for `/api/v1/health/live`. The service was created with the Render CLI and, as of the first deploy, **did not auto-deploy on push**: after pushing `main`, start the deploy yourself with `render deploys create srv-dbq3qch5efls739jf6l0 --commit <sha> --confirm` (or Manual Deploy in the dashboard). Connecting the repo under bagicha-api → Settings → Build & Deploy may restore auto-deploy. To redeploy without a commit, use Manual Deploy → Deploy latest commit on `bagicha-api` in the Render dashboard.

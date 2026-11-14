@@ -77,6 +77,10 @@ Done tree type by tree type over everything the catalogue holds:
 12. **Copy gaps:** a seasonal flower's "should start blooming soon" task is typed as a harvest; flower care reasons are generic; end-of-life reasons are tree-flavoured for crops.
 13. **Matching gaps:** Hindi typed in a different Unicode form misses (गुड़हल); a nickname can outrank the species ("Champa's rose"); state-only text ("Goa") and Sikkim's direction names on the server fallback.
 
+## Catalogue in the database
+
+From 2026-11-14 the crop and flower calendar, planting methods and care steps live in the database, filled from `backend/src/modules/catalogue/seed/` by the catalogue push (design: `docs/superpowers/specs/2026-11-14-catalogue-in-database-design.md`). Stages 2–4 (fruit catalogue and life profiles, tree care, season guidance) follow; bulbs (item 10) are the first batch added this way.
+
 ## Still open outside the list
 - Rotate the AWS key, Neon password and Gemini key that were pasted in chat; check the Gemini key works (it starts `AQ.`, not `AIza…`).
 - Render does not redeploy on push; deploys are started by hand (`docs/deploy.md`).
