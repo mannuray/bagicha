@@ -1,3 +1,4 @@
+import { seededCatalogueStore } from '../catalogue/testing';
 import { SubscriptionTier, TaskSource } from '@prisma/client';
 import { FixedClock } from '../../common/time';
 import {
@@ -108,6 +109,7 @@ function build(opts: {
     { registerQueueDepth: jest.fn() } as any,
     { warn: jest.fn() } as any,
     {},
+    seededCatalogueStore(),
   );
   return { service, drafts, packs, pack, weatherQueue };
 }

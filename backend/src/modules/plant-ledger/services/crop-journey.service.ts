@@ -17,14 +17,17 @@ import { NotFoundError } from '../../../common/errors';
 import { Tx } from '../../../common/prisma/transaction';
 import { addDays, Clock, istYear } from '../../../common/time';
 import {
+  CatalogueStore,
+  type Catalogue,
+  type ClimateGroup,
+  type CropInfo,
+} from '../../catalogue';
+import {
   climateGroupFor,
-  cropById,
   inGroup,
   sproutCheckTitle,
   titleName,
   windowContaining,
-  type ClimateGroup,
-  type CropInfo,
 } from '../domain/crop-calendar';
 import { regionFor } from '../../regions';
 import { GardenPlaceRepository } from '../repositories/garden-place.repository';
@@ -45,14 +48,9 @@ const RANK: Record<CropStage, number> = {
   IN_GROUND: 2,
   HARVESTING: 3,
 };
-const CARE_TITLES: Record<string, (name: string) => string> = {
-  stake: (n) => `Stake the ${n} plants`,
-  earth_up: (n) => `Earth up the ${n}`,
-  trellis: (n) => `Give the ${n} a trellis to climb`,
-  support: (n) => `Give the ${n} support to climb`,
-  pinch: (n) => `Pinch the ${n} tips for a bushier plant`,
-  deadhead: (n) => `Deadhead the ${n} to keep it blooming`,
-};
+/** A care step's reminder title for this crop ("Stake the tomato plants"). */
+const careTitle = (catalogue: Catalogue, key: string, crop: CropInfo) =>
+  catalogue.careStep(key)?.title.replace('{name}', titleName(crop)) ?? key;
 
 type Meta = Record<string, unknown> | null;
 const metaOf = (m: unknown): Meta =>
@@ -72,6 +70,7 @@ export class CropJourneyService {
     private readonly tasks: TaskService,
     private readonly places: GardenPlaceRepository,
     private readonly clock: Clock,
+    private readonly catalogue: CatalogueStore,
   ) {}
 
   /** The open season, or a new one when this entry starts the crop off; null otherwise. */
@@ -89,7 +88,9 @@ export class CropJourneyService {
     });
     const opens =
       OPENERS.has(type) ||
-      (BLOOMS.has(type) && cropById(plant.crop_id)?.kind === 'FLOWER');
+      (BLOOMS.has(type) &&
+        (await this.catalogue.snapshot()).crop(plant.crop_id)?.kind ===
+          'FLOWER');
     if (open || !opens) return { cycle: open, opened: false };
     const placeId = metaOf(metadata)?.place_id;
     if (typeof placeId === 'string') {
@@ -122,8 +123,10 @@ export class CropJourneyService {
     cycle: PlantCycle | null,
     opened: boolean,
   ): Promise<void> {
-    const listed = cropById(plant.crop_id);
+    const catalogue = await this.catalogue.snapshot();
+    const listed = catalogue.crop(plant.crop_id);
     if (!listed) return;
+    const journey = catalogue.method(listed.method).journey;
     // The region is looked up at most once, and only when an entry needs it.
     let region: Promise<ClimateGroup> | undefined;
     const group = () => (region ??= this.groupOf(tx, userId));
@@ -142,7 +145,7 @@ export class CropJourneyService {
             plant,
             cycle,
             c.key,
-            CARE_TITLES[c.key]?.(titleName(crop)) ?? c.key,
+            careTitle(catalogue, c.key, crop),
             addDays(at, c.days),
           ),
         );
@@ -161,8 +164,7 @@ export class CropJourneyService {
         }
         const nursery =
           (metaOf(log.metadata)?.method ??
-            (crop.method === 'NURSERY_TRANSPLANT' ? 'NURSERY' : 'DIRECT')) ===
-          'NURSERY';
+            (journey === 'NURSERY' ? 'NURSERY' : 'DIRECT')) === 'NURSERY';
         await this.setStage(
           tx,
           plant,
@@ -175,7 +177,7 @@ export class CropJourneyService {
             plant,
             cycle,
             'germination',
-            sproutCheckTitle(crop, nursery),
+            sproutCheckTitle(crop, journey, nursery),
             addDays(at, crop.germination_days[1]),
             TaskType.INSPECT,
             TaskCategory.INSPECTION,

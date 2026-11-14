@@ -1,3 +1,4 @@
+import { CatalogueModule } from '../catalogue';
 import {
   TREE_CARE_REGISTRY,
   treeCareRegistryProvider,
@@ -27,7 +28,10 @@ import { SpeciesNormalizationService } from './services/species-normalization.se
 import { TaskService } from './services/task.service';
 
 @Module({
-  imports: [BullModule.registerQueue({ name: TASK_GENERATION_QUEUE })],
+  imports: [
+    CatalogueModule,
+    BullModule.registerQueue({ name: TASK_GENERATION_QUEUE }),
+  ],
   controllers: [PlantLedgerController],
   providers: [
     treeCareRegistryProvider,

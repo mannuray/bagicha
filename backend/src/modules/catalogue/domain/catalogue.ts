@@ -59,6 +59,12 @@ export class Catalogue {
     return (id && this.crops.get(id)) || null;
   }
 
+  /** An APPROVED crop: what can be newly added or shown in lists. */
+  listedCrop(id: string): CropInfo | null {
+    const crop = this.crop(id);
+    return crop && this.listed.includes(crop) ? crop : null;
+  }
+
   /** APPROVED crops and flowers, in catalogue order. */
   listedCrops(): CropInfo[] {
     return this.listed;

@@ -23,9 +23,7 @@ export {
 } from './domain/task-mapping';
 export { resolveCycleYear } from './domain/cycle-year';
 export {
-  CROPS,
   climateGroupFor,
-  cropById,
   nextWindow,
   windowContaining,
   inGroup,

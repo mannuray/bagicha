@@ -20,6 +20,8 @@ describe('Catalogue', () => {
     );
     expect(catalogue.crop('carrot')?.name).toBe('Carrot');
     expect(catalogue.listedCrops().map((c) => c.id)).not.toContain('carrot');
+    expect(catalogue.listedCrop('carrot')).toBeNull();
+    expect(catalogue.listedCrop('tomato')?.name).toBe('Tomato');
   });
 
   it('a draft crop is found by nothing', () => {

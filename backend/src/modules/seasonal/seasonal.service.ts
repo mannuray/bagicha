@@ -26,7 +26,6 @@ import {
   TaskCreationResult,
   TaskDraft,
   TaskService,
-  CROPS,
   climateGroupFor,
   windowStatus,
   flowerCareDue,
@@ -47,6 +46,7 @@ import {
   buildTaskTemplates,
   TaskTemplateInput,
 } from './domain/overlay-rules';
+import { CatalogueStore } from '../catalogue';
 import { regionFor } from '../regions';
 import { seasonGuide } from './domain/season-guide';
 import { resolveSeasonWindow } from './domain/season-window';
@@ -80,6 +80,7 @@ export class SeasonalService implements OnModuleInit {
     private readonly logger: PinoLogger,
     @Inject(TREE_CARE_REGISTRY)
     private readonly careRegistry: Readonly<Record<string, FamilyCare>>,
+    private readonly catalogue: CatalogueStore,
   ) {}
 
   onModuleInit(): void {
@@ -108,14 +109,18 @@ export class SeasonalService implements OnModuleInit {
   }
 
   /** Season advice, with "good to sow now" from the crop calendar for the user's region. */
-  getSeasonalGuide(user: Pick<User, 'district' | 'region_cluster'>) {
+  async getSeasonalGuide(user: Pick<User, 'district' | 'region_cluster'>) {
     const region = regionFor(user);
     const group = climateGroupFor(region);
     const now = this.clock.now();
     const { season, headline, points } = seasonGuide(region, now);
-    const crops = CROPS.filter(
-      (c) => c.kind === 'CROP' && windowStatus(c, group, now).status === 'open',
-    ).map((c) => c.name);
+    const listed = (await this.catalogue.snapshot()).listedCrops();
+    const crops = listed
+      .filter(
+        (c) =>
+          c.kind === 'CROP' && windowStatus(c, group, now).status === 'open',
+      )
+      .map((c) => c.name);
     return { season, advice: headline, points, crops };
   }
 

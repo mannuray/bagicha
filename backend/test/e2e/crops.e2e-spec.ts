@@ -78,6 +78,38 @@ describe('crops', () => {
       expect(okra?.status).toBe('later');
     });
 
+    it('carries each method’s journey and wording from the catalogue', async () => {
+      const res = await as(alice).get('/api/v1/crops/calendar');
+      const potato = (res.body.data as Array<{ id: string }>).find(
+        (c) => c.id === 'potato',
+      );
+      expect(potato).toMatchObject({
+        method: 'TUBER',
+        journey: 'PLANT',
+        method_label: 'Plant seed potatoes',
+        method_short: 'tubers',
+      });
+    });
+
+    it('a crop page carries its care-step and material texts', async () => {
+      const tomato = (await as(alice).get('/api/v1/crops/calendar/tomato')).body
+        .data;
+      expect(tomato.material).toBeNull();
+      expect(tomato.care[0]).toEqual({
+        key: 'stake',
+        after: 'TRANSPLANTING',
+        days: 20,
+        title: 'Stake',
+        body: expect.stringMatching(/\w/),
+      });
+      const garlic = (await as(alice).get('/api/v1/crops/calendar/garlic')).body
+        .data;
+      expect(garlic.material).toEqual({
+        title: 'Cloves',
+        body: 'Split a healthy bulb into cloves.',
+      });
+    });
+
     it('feeds the region’s open crops into the seasonal guide', async () => {
       const res = await as(alice).get('/api/v1/seasonal/guide');
       expect(res.status).toBe(200);

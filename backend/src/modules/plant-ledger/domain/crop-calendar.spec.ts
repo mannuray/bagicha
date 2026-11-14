@@ -1,4 +1,10 @@
 import { RegionCluster } from '@prisma/client';
+import {
+  CATALOGUE_SEED,
+  Catalogue,
+  validateSeed,
+  type CropInfo,
+} from '../../catalogue';
 import { FLOWERS } from './flower-calendar';
 import {
   CROPS,
@@ -10,6 +16,9 @@ import {
   titleName,
   windowStatus,
 } from './crop-calendar';
+
+const seeded = Catalogue.from(validateSeed(CATALOGUE_SEED), 1);
+const journeyOf = (crop: CropInfo) => seeded.method(crop.method).journey;
 
 const at = (iso: string) => new Date(`${iso}T06:00:00Z`);
 
@@ -176,9 +185,13 @@ describe('titleName', () => {
   });
 
   it('the seedling check uses the short name', () => {
-    expect(sproutCheckTitle(cropById('palak')!, false)).toBe(
-      'Check the sown spinach for sprouts',
-    );
+    expect(
+      sproutCheckTitle(
+        cropById('palak')!,
+        journeyOf(cropById('palak')!),
+        false,
+      ),
+    ).toBe('Check the sown spinach for sprouts');
   });
 });
 
@@ -186,33 +199,33 @@ describe('sproutCheckTitle', () => {
   const crop = (id: string) => cropById(id)!;
 
   it('says seedlings only for seeds raised in a tray', () => {
-    expect(sproutCheckTitle(crop('tomato'), true)).toBe(
-      'Check the tomato seedlings have come up',
-    );
+    expect(
+      sproutCheckTitle(crop('tomato'), journeyOf(crop('tomato')), true),
+    ).toBe('Check the tomato seedlings have come up');
   });
 
   it('seeds sown in the bed sprout; no seedlings', () => {
-    expect(sproutCheckTitle(crop('peas'), false)).toBe(
+    expect(sproutCheckTitle(crop('peas'), journeyOf(crop('peas')), false)).toBe(
       'Check the sown peas for sprouts',
     );
-    expect(sproutCheckTitle(crop('tomato'), false)).toBe(
-      'Check the sown tomato for sprouts',
-    );
+    expect(
+      sproutCheckTitle(crop('tomato'), journeyOf(crop('tomato')), false),
+    ).toBe('Check the sown tomato for sprouts');
   });
 
   it('tubers, cloves and rhizomes send up shoots', () => {
-    expect(sproutCheckTitle(crop('garlic'), false)).toBe(
-      'Check the planted garlic for shoots',
-    );
-    expect(sproutCheckTitle(crop('potato'), false)).toBe(
-      'Check the planted potato for shoots',
-    );
+    expect(
+      sproutCheckTitle(crop('garlic'), journeyOf(crop('garlic')), false),
+    ).toBe('Check the planted garlic for shoots');
+    expect(
+      sproutCheckTitle(crop('potato'), journeyOf(crop('potato')), false),
+    ).toBe('Check the planted potato for shoots');
   });
 
   it('every title fits a reminder (60 characters)', () => {
     const titles = [...CROPS, ...FLOWERS].flatMap((c) => [
-      sproutCheckTitle(c, true),
-      sproutCheckTitle(c, false),
+      sproutCheckTitle(c, journeyOf(c), true),
+      sproutCheckTitle(c, journeyOf(c), false),
     ]);
     expect(titles.filter((t) => t.length > 60)).toEqual([]);
   });

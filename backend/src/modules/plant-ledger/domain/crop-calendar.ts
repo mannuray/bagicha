@@ -7,9 +7,16 @@
  * Spec: docs/superpowers/specs/2026-11-11-vegetables-design.md §2.1, §6.1.
  */
 import { RegionCluster } from '@prisma/client';
+import type {
+  CareStep,
+  ClimateGroup,
+  CropInfo,
+  Journey,
+} from '../../catalogue';
 import { FLOWERS } from './flower-calendar';
 
-export type ClimateGroup = 'PLAINS' | 'PENINSULAR' | 'HILLS';
+export type { CareStep, ClimateGroup, CropInfo };
+
 export type CropMethod =
   | 'NURSERY_TRANSPLANT'
   | 'DIRECT_SOW'
@@ -35,46 +42,6 @@ export type CropFamily =
   | 'VIOLACEAE'
   | 'RANUNCULACEAE';
 type Months = [number, number];
-
-export interface CareStep {
-  key: string;
-  after: 'SOWING' | 'TRANSPLANTING';
-  days: number;
-}
-
-export interface CropInfo {
-  id: string;
-  /** Vegetables are CROP; seasonal flowers (flower-calendar.ts) are FLOWER. */
-  kind: 'CROP' | 'FLOWER';
-  name: string;
-  aliases: string[];
-  family: CropFamily;
-  method: CropMethod;
-  /** Sowing windows per climate group as [startMonth, endMonth]; may wrap the year end. */
-  windows: Record<ClimateGroup, Months[]>;
-  germination_days: [number, number];
-  transplant_after_days: [number, number] | null;
-  /** From sowing (or planting the tuber, clove or rhizome). */
-  days_to_first_harvest: [number, number];
-  /** Where a climate group ripens much earlier or later (e.g. chana: Punjab vs Tamil Nadu). */
-  harvest_by_group?: Partial<Record<ClimateGroup, [number, number]>>;
-  harvest_span_days: number;
-  thin_after_days: number | null;
-  succession_every_days: number | null;
-  care: CareStep[];
-  /** `quick` for fast vegetables; `long` for flowers that bloom 60+ days. */
-  tags: Array<'container' | 'beginner' | 'quick' | 'long'>;
-  guide: {
-    plants_for_family_of_4: string;
-    container: string;
-    spacing_cm: [number, number];
-  };
-  scientific_name: string;
-  /** One plain line about the crop, for its detail page. */
-  description: string;
-  /** FULL: 6+ hours of direct sun; PARTIAL: 3–5 hours is enough. */
-  sun: 'FULL' | 'PARTIAL';
-}
 
 type Raw = Omit<
   CropInfo,
@@ -1337,12 +1304,16 @@ export function titleName(crop: CropInfo): string {
  * The "has it come up?" reminder: seedlings only for seeds raised in a tray;
  * seeds sown in the bed sprout, and tubers, cloves and rhizomes send up shoots.
  */
-export function sproutCheckTitle(crop: CropInfo, nursery: boolean): string {
+export function sproutCheckTitle(
+  crop: CropInfo,
+  journey: Journey,
+  nursery: boolean,
+): string {
   const name = titleName(crop);
   if (nursery) return `Check the ${name} seedlings have come up`;
-  return crop.method === 'DIRECT_SOW' || crop.method === 'NURSERY_TRANSPLANT'
-    ? `Check the sown ${name} for sprouts`
-    : `Check the planted ${name} for shoots`;
+  return journey === 'PLANT'
+    ? `Check the planted ${name} for shoots`
+    : `Check the sown ${name} for sprouts`;
 }
 
 /** The crop as grown in a climate group: its harvest days where that group differs. */

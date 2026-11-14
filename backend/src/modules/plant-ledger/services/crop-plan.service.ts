@@ -19,11 +19,14 @@ import {
 import { TransactionRunner } from '../../../common/prisma/transaction';
 import { Clock } from '../../../common/time';
 import {
-  cropById,
-  nextWindow,
-  windowContaining,
+  CatalogueStore,
   type ClimateGroup,
   type CropInfo,
+  type PlantingMethod,
+} from '../../catalogue';
+import {
+  nextWindow,
+  windowContaining,
   titleName,
 } from '../domain/crop-calendar';
 import { PlantRepository } from '../repositories/plant.repository';
@@ -31,12 +34,6 @@ import { TaskDraft, TaskService } from './task.service';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SEED_LEAD_DAYS = 21;
-
-const MATERIAL: Record<string, string> = {
-  TUBER: 'seed potatoes',
-  CLOVE: 'garlic cloves',
-  RHIZOME: 'healthy rhizomes',
-};
 
 const later = (a: Date, b: Date) => (a.getTime() >= b.getTime() ? a : b);
 const isoDay = (d: Date) => d.toISOString().slice(0, 10);
@@ -53,6 +50,7 @@ export class CropPlanService {
     private readonly tasks: TaskService,
     private readonly transactions: TransactionRunner,
     private readonly clock: Clock,
+    private readonly catalogue: CatalogueStore,
   ) {}
 
   /** The crop on the user's list (not ended), creating it as PLANNED if new. */
@@ -60,7 +58,8 @@ export class CropPlanService {
     userId: string,
     cropId: string,
   ): Promise<{ plant: Plant; created: boolean }> {
-    const crop = cropById(cropId);
+    // Only listed crops can be newly added; a retired one stays with those who grow it.
+    const crop = (await this.catalogue.snapshot()).listedCrop(cropId);
     if (!crop) throw new ValidationError('VALIDATION_ERROR', 'Unknown crop');
     const existing = await this.plants.findActiveCrop(userId, crop.id);
     if (existing) return { plant: existing, created: false };
@@ -102,8 +101,9 @@ export class CropPlanService {
   ): Promise<{ created_count: number }> {
     const now = this.clock.now();
     let created = 0;
+    const catalogue = await this.catalogue.snapshot();
     for (const plant of await this.plants.listWaitingCrops(userId)) {
-      const crop = cropById(plant.crop_id);
+      const crop = catalogue.crop(plant.crop_id);
       if (!crop) continue;
       const used = (await this.plants.seasonStarts(plant.id))
         .map((start) => windowContaining(crop, group, start)?.start)
@@ -114,7 +114,14 @@ export class CropPlanService {
       const results = await this.tasks.createTasks(
         userId,
         plant.id,
-        this.reminders(crop, plant, window.start, window.end, now),
+        this.reminders(
+          crop,
+          catalogue.method(crop.method),
+          plant,
+          window.start,
+          window.end,
+          now,
+        ),
       );
       created += results.filter((r) => r.status === 'created').length;
     }
@@ -155,6 +162,7 @@ export class CropPlanService {
 
   private reminders(
     crop: CropInfo,
+    method: PlantingMethod,
     plant: Plant,
     windowStart: Date,
     windowEnd: Date,
@@ -162,8 +170,7 @@ export class CropPlanService {
   ): TaskDraft[] {
     const key = (step: string) =>
       `crop:${plant.id}:${isoDay(windowStart)}:${step}`;
-    const material = MATERIAL[crop.method];
-    const nursery = crop.method === 'NURSERY_TRANSPLANT';
+    const { material, journey } = method;
     return [
       {
         type: TaskType.OBSERVE,
@@ -190,11 +197,12 @@ export class CropPlanService {
         type: TaskType.OBSERVE,
         category: TaskCategory.OBSERVATION,
         priority: TaskPriority.HIGH,
-        title: material
-          ? `Plant ${titleName(crop)}`
-          : nursery
-            ? `Sow ${titleName(crop)} in a nursery tray`
-            : `Sow ${titleName(crop)} in the bed`,
+        title:
+          journey === 'PLANT'
+            ? `Plant ${titleName(crop)}`
+            : journey === 'NURSERY'
+              ? `Sow ${titleName(crop)} in a nursery tray`
+              : `Sow ${titleName(crop)} in the bed`,
         source: TaskSource.CROP_PLAN,
         sourceKey: key('sow'),
         reason: `It's the right time to sow ${titleName(crop)} in your region.`,
