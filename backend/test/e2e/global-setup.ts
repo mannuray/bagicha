@@ -3,6 +3,7 @@ import { resolve } from 'path';
 import { PrismaClient } from '@prisma/client';
 import { CATALOGUE_SEED } from '../../src/modules/catalogue';
 import { CatalogueRepository } from '../../src/modules/catalogue/catalogue.repository';
+import { CataloguePushService } from '../../src/modules/catalogue/push/catalogue-push.service';
 import type { PrismaService } from '../../src/prisma/prisma.service';
 import { loadTestEnv } from './load-env';
 
@@ -38,14 +39,7 @@ export default async function globalSetup(): Promise<void> {
   const client = new PrismaClient();
   try {
     const repo = new CatalogueRepository(client as unknown as PrismaService);
-    await repo.applyPush({
-      crops: CATALOGUE_SEED.crops.map((c, sort_order) => ({
-        ...c,
-        sort_order,
-      })),
-      methods: CATALOGUE_SEED.methods,
-      careSteps: CATALOGUE_SEED.careSteps,
-    });
+    await new CataloguePushService(repo).push(CATALOGUE_SEED);
   } finally {
     await client.$disconnect();
   }

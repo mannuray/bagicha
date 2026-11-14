@@ -14,6 +14,12 @@ RUN DATABASE_URL=postgresql://build:build@localhost:5432/build npx prisma genera
 FROM build AS migrate
 CMD ["npx", "prisma", "migrate", "deploy"]
 
+# The plant catalogue push (after the migration, before the deploy): writes the
+# seed files in src/modules/catalogue/seed to the database.
+# docker build --target catalogue-push -t bagicha-catalogue-push . ; run with DATABASE_URL set.
+FROM build AS catalogue-push
+CMD ["node", "dist/modules/catalogue/push/push.main.js"]
+
 FROM node:22-bookworm-slim
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
