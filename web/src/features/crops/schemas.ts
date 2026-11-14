@@ -6,7 +6,11 @@ export const cropItemSchema = z.object({
   name: z.string(),
   aliases: z.array(z.string()),
   family: z.string(),
-  method: z.enum(['NURSERY_TRANSPLANT', 'DIRECT_SOW', 'TUBER', 'CLOVE', 'RHIZOME']),
+  // Methods are catalogue data (a new one can arrive any time); the journey shape is what the app knows.
+  method: z.string(),
+  journey: z.enum(['NURSERY', 'DIRECT', 'PLANT']),
+  method_label: z.string(),
+  method_short: z.string(),
   tags: z.array(z.enum(['container', 'beginner', 'quick', 'long'])),
   days_to_first_harvest: z.tuple([z.number(), z.number()]),
   guide: z.object({ plants_for_family_of_4: z.string(), container: z.string(), spacing_cm: z.tuple([z.number(), z.number()]) }),
@@ -27,7 +31,8 @@ export const cropDetailSchema = cropItemSchema.extend({
   harvest_span_days: z.number().nullable(),
   thin_after_days: z.number().nullable(),
   succession_every_days: z.number().nullable(),
-  care: z.array(z.object({ key: z.string(), after: z.string(), days: z.number() })),
+  care: z.array(z.object({ key: z.string(), after: z.string(), days: z.number(), title: z.string(), body: z.string() })),
+  material: z.object({ title: z.string(), body: z.string() }).nullable(),
   windows: z.array(z.object({ start_month: z.number(), end_month: z.number(), label: z.string().nullable() })),
 });
 export type CropDetail = z.infer<typeof cropDetailSchema>;

@@ -24,7 +24,7 @@ export function useCropJourney(plant: PlantDetail, now: Date) {
   const navigate = useNavigate();
   const rotation = useRotation(placeId, plant.crop_id);
 
-  const nursery = crop?.method === 'NURSERY_TRANSPLANT';
+  const nursery = crop?.journey === 'NURSERY';
   const stage = plant.crop_stage ?? 'PLANNED';
   const steps = journeySteps(nursery);
   const next = nextStep(tasks.data?.items ?? []);

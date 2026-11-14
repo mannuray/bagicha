@@ -10,7 +10,7 @@ export function useStartCrop(plantId: string, crop: CropItem, initialPath: Start
   const log = useAddJournalEntry(plantId);
   const places = usePlaces();
   const detail = useCropDetail(crop.id);
-  const nurseryCrop = crop.method === 'NURSERY_TRANSPLANT';
+  const nurseryCrop = crop.journey === 'NURSERY';
   const [path, setPath] = useState<StartPath | null>(initialPath ?? null);
   // Only nursery crops grown from seed choose a method; everything else sows direct.
   const [method, setMethod] = useState<StartMethod | null>(nurseryCrop ? null : 'DIRECT');

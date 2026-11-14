@@ -21,10 +21,10 @@ export function CropDetailScreen() {
   const crop = detail.data;
   const hindi = hindiName(crop);
   const flower = crop.kind === 'FLOWER';
-  const steps: Step[] = growingSteps(crop).map((key) => ({
+  const steps: Step[] = growingSteps(crop).map(({ key, text }) => ({
     key,
-    title: t(`crops.steps.${key}.title`),
-    body: t(`crops.steps.${key}.body`),
+    title: text?.title ?? t(`crops.steps.${key}.title`),
+    body: text?.body ?? t(`crops.steps.${key}.body`),
   }));
   const facts = cropFacts(crop).map((f) => ({
     icon: f.icon,
@@ -41,7 +41,7 @@ export function CropDetailScreen() {
       <main className="space-y-5 px-4 pt-4">
         <header className="space-y-1">
           <p className="font-label text-[11px] font-bold uppercase tracking-[0.2em] text-secondary">
-            {t(`crops.family.${crop.family}`, { defaultValue: crop.family })} · {t(`crops.methodShort.${crop.method}`)}
+            {t(`crops.family.${crop.family}`, { defaultValue: crop.family })} · {crop.method_short}
           </p>
           <h1 className="font-headline text-3xl font-bold text-primary">{crop.name}</h1>
           {hindi && <p className="font-body text-base text-on-surface-variant">{hindi}</p>}

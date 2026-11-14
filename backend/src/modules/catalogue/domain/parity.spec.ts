@@ -1,17 +1,9 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import { CROPS } from '../../plant-ledger/domain/crop-calendar';
 import { CATALOGUE_SEED } from '../seed';
 import { Catalogue } from './catalogue';
 import { validateSeed } from './schemas';
 
 /** Stage 1 switch-over guard: the seed gives exactly what the code constants give today. */
-const en = JSON.parse(
-  readFileSync(
-    join(__dirname, '../../../../../web/src/locales/en.json'),
-    'utf8',
-  ),
-) as { crops: Record<string, Record<string, unknown>> };
 const catalogue = Catalogue.from(validateSeed(CATALOGUE_SEED), 1);
 
 describe('catalogue seed matches the code calendar', () => {
@@ -42,26 +34,5 @@ describe('catalogue seed matches the code calendar', () => {
       expect(catalogue.careStep(key)?.title.replace('{name}', 'tomato')).toBe(
         title,
       );
-  });
-
-  it('carries the web labels for methods and care steps', () => {
-    const steps = en.crops.steps as Record<
-      string,
-      { title: string; body: string }
-    > & { material: Record<string, { title: string; body: string }> };
-    for (const step of CATALOGUE_SEED.careSteps)
-      expect([step.label_title, step.label_body]).toEqual([
-        steps[step.key].title,
-        steps[step.key].body,
-      ]);
-    for (const m of CATALOGUE_SEED.methods) {
-      expect(m.label).toBe(en.crops.method[m.key]);
-      expect(m.short).toBe(en.crops.methodShort[m.key]);
-      expect([m.material_title, m.material_body]).toEqual(
-        steps.material[m.key]
-          ? [steps.material[m.key].title, steps.material[m.key].body]
-          : [null, null],
-      );
-    }
   });
 });

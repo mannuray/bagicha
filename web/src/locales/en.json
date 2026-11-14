@@ -583,13 +583,6 @@
     "notGrownHere": "Not usually grown in your region",
     "opensIn_one": "Opens in {{count}} day · {{window}}",
     "opensIn_other": "Opens in {{count}} days · {{window}}",
-    "method": {
-      "NURSERY_TRANSPLANT": "Nursery, then transplant",
-      "DIRECT_SOW": "Sow straight in the bed",
-      "TUBER": "Plant seed potatoes",
-      "CLOVE": "Plant cloves",
-      "RHIZOME": "Plant rhizomes"
-    },
     "firstHarvest": "first harvest in {{min}}–{{max}} days",
     "guideLine": "{{plants}} · {{container}}",
     "add": "Add to Want to grow",
@@ -687,13 +680,6 @@
     "toSowNow_other": "{{count}} crops to sow now",
     "search": "Search crops",
     "laterList": "Not sowing time: {{names}}",
-    "methodShort": {
-      "NURSERY_TRANSPLANT": "nursery",
-      "DIRECT_SOW": "direct",
-      "TUBER": "tubers",
-      "CLOVE": "cloves",
-      "RHIZOME": "rhizomes"
-    },
     "firstHarvestShort": "First harvest {{span}} days",
     "family": {
       "SOLANACEAE": "Nightshade family",
@@ -771,22 +757,6 @@
         "title": "Thin",
         "body": "Pull the weakest seedlings so the rest have room."
       },
-      "stake": {
-        "title": "Stake",
-        "body": "Tie the plant to a stake as it grows tall."
-      },
-      "trellis": {
-        "title": "Trellis",
-        "body": "Give the vines something to climb."
-      },
-      "support": {
-        "title": "Support",
-        "body": "Add a few sticks or a net to hold the plants up."
-      },
-      "earth_up": {
-        "title": "Earth up",
-        "body": "Pile soil around the base to cover what's growing underground."
-      },
       "plant": {
         "title": "Plant",
         "body": "Set them in the soil at the right depth."
@@ -794,28 +764,6 @@
       "harvest": {
         "title": "Harvest",
         "body": "Pick as it ripens; regular picking keeps many crops going."
-      },
-      "material": {
-        "TUBER": {
-          "title": "Seed potatoes",
-          "body": "Use sprouted potatoes from a nursery or your kitchen."
-        },
-        "CLOVE": {
-          "title": "Cloves",
-          "body": "Split a healthy bulb into cloves."
-        },
-        "RHIZOME": {
-          "title": "Rhizomes",
-          "body": "Use plump rhizome pieces with a bud each."
-        }
-      },
-      "pinch": {
-        "title": "Pinch",
-        "body": "Nip the growing tips once for a bushier plant with more flowers."
-      },
-      "deadhead": {
-        "title": "Deadhead",
-        "body": "Pick off faded flowers so the plant keeps blooming."
       },
       "bloom": {
         "title": "Bloom",

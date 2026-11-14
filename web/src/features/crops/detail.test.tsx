@@ -17,15 +17,17 @@ const detail = (over: Record<string, unknown> = {}) => ({
   thin_after_days: 14,
   succession_every_days: 14,
   care: [],
+  material: null,
   windows: [{ start_month: 9, end_month: 11, label: 'Sep–Nov' }],
   ...over,
 });
 
 const tomato = detail({
   id: 'tomato', name: 'Tomato', aliases: ['tamatar', 'टमाटर'], family: 'SOLANACEAE', method: 'NURSERY_TRANSPLANT',
+  journey: 'NURSERY', method_label: 'Nursery, then transplant', method_short: 'nursery',
   scientific_name: 'Solanum lycopersicum', description: 'The kitchen garden staple.', sun: 'FULL',
   germination_days: [5, 10], transplant_after_days: [25, 30], days_to_first_harvest: [90, 110],
-  thin_after_days: null, succession_every_days: null, care: [{ key: 'stake', after: 'TRANSPLANTING', days: 20 }],
+  thin_after_days: null, succession_every_days: null, care: [{ key: 'stake', after: 'TRANSPLANTING', days: 20, title: 'Stake', body: 'Tie the plant to a stake as it grows tall.' }],
 });
 
 function Where() {
@@ -106,7 +108,10 @@ describe('crop detail', () => {
   it('speaks of blooms for a flower, with pinch and deadhead steps and no rotation tip', async () => {
     setup(detail({
       ...flowerItem(), germination_days: [5, 7], transplant_after_days: [25, 30], harvest_span_days: 90, thin_after_days: null, succession_every_days: null,
-      care: [{ key: 'pinch', after: 'TRANSPLANTING', days: 20 }, { key: 'deadhead', after: 'TRANSPLANTING', days: 40 }],
+      care: [
+        { key: 'pinch', after: 'TRANSPLANTING', days: 20, title: 'Pinch', body: 'Nip the tips.' },
+        { key: 'deadhead', after: 'TRANSPLANTING', days: 40, title: 'Deadhead', body: 'Pick off faded flowers.' },
+      ],
     }));
     await screen.findByRole('heading', { level: 1, name: 'Marigold (Genda)' });
     const facts = screen.getByRole('list', { name: /at a glance/i });
@@ -116,5 +121,20 @@ describe('crop detail', () => {
     const steps = within(screen.getByRole('list', { name: /how it grows/i })).getAllByRole('listitem').map((li) => li.querySelector('h3')?.textContent);
     expect(steps).toEqual(['Seeds', 'Nursery tray', 'Transplant', 'Pinch', 'Deadhead', 'Bloom']);
     expect(screen.queryByText(/don't follow it with/i)).not.toBeInTheDocument();
+  });
+
+  it('takes method, material and care-step texts from the catalogue, even for a method it has never seen', async () => {
+    setup(detail({
+      ...flowerItem(), id: 'gladiolus', name: 'Gladiolus', method: 'CORM', journey: 'PLANT', method_label: 'Plant corms', method_short: 'corms',
+      germination_days: [16, 31], transplant_after_days: null, harvest_span_days: 15, thin_after_days: null, succession_every_days: null,
+      material: { title: 'Corms', body: 'Buy flowering-size corms.' },
+      care: [{ key: 'lift', after: 'SOWING', days: 150, title: 'Lift and store', body: 'Dig the corms when the leaves yellow.' }],
+    }));
+    await screen.findByRole('heading', { level: 1, name: 'Gladiolus' });
+    expect(screen.getByText(/· corms/)).toBeInTheDocument();
+    const list = within(screen.getByRole('list', { name: /how it grows/i }));
+    const steps = list.getAllByRole('listitem').map((li) => li.querySelector('h3')?.textContent);
+    expect(steps).toEqual(['Corms', 'Plant', 'Lift and store', 'Bloom']);
+    expect(list.getByText('Dig the corms when the leaves yellow.')).toBeInTheDocument();
   });
 });

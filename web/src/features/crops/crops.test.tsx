@@ -12,7 +12,7 @@ import { cropItem, flowerItem } from './test-fixtures';
 const calendar = [
   flowerItem(),
   cropItem({ aliases: ['palak', 'पालक'] }),
-  cropItem({ id: 'tomato', name: 'Tomato', family: 'SOLANACEAE', method: 'NURSERY_TRANSPLANT', tags: ['container'], sun: 'FULL', status: 'soon', opens_in_days: 12, window_label: 'Jan–Feb' }),
+  cropItem({ id: 'tomato', name: 'Tomato', family: 'SOLANACEAE', method: 'NURSERY_TRANSPLANT', journey: 'NURSERY', tags: ['container'], sun: 'FULL', status: 'soon', opens_in_days: 12, window_label: 'Jan–Feb' }),
   cropItem({ id: 'pumpkin', name: 'Pumpkin', family: 'CUCURBITACEAE', tags: ['beginner'], status: 'later', next_month: 2, window_label: 'Feb–Mar' }),
 ];
 
@@ -170,5 +170,13 @@ describe('what can I sow now?', () => {
     handlers();
     renderWithApp(<CropsScreen />, { route: '/crops?kind=flower' });
     expect(await screen.findByText('Marigold (Genda)')).toBeInTheDocument();
+  });
+
+  it('lists a crop whose planting method is new to the app', async () => {
+    handlers();
+    server.use(http.get(`${API}/crops/calendar`, () => HttpResponse.json(ok([cropItem({ id: 'gladiolus', name: 'Gladiolus', method: 'CORM', journey: 'PLANT', method_short: 'corms' })]))));
+    renderWithApp(<CropsScreen />, { route: '/crops' });
+    const card = (await screen.findByText('Gladiolus', { selector: 'h3' })).closest('article') as HTMLElement;
+    expect(within(card).getByText(/corms/)).toBeInTheDocument();
   });
 });

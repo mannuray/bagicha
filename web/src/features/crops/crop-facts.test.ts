@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cropFacts } from './names';
 
-const base = { kind: 'CROP', method: 'DIRECT_SOW', germination_days: [5, 8] as [number, number], transplant_after_days: null, days_to_first_harvest: [45, 60] as [number, number], harvest_span_days: null };
+const base = { kind: 'CROP', journey: 'DIRECT' as const, germination_days: [5, 8] as [number, number], transplant_after_days: null, days_to_first_harvest: [45, 60] as [number, number], harvest_span_days: null };
 
 describe('cropFacts: the crop page\'s quick facts', () => {
   it('a direct-sown vegetable: germination and first harvest', () => {
@@ -12,7 +12,7 @@ describe('cropFacts: the crop page\'s quick facts', () => {
   });
 
   it('a nursery crop adds when to transplant; facts without a value are left out', () => {
-    expect(cropFacts({ ...base, method: 'NURSERY_TRANSPLANT', transplant_after_days: [25, 30], germination_days: null }).map((f) => f.labelKey)).toEqual([
+    expect(cropFacts({ ...base, journey: 'NURSERY', transplant_after_days: [25, 30], germination_days: null }).map((f) => f.labelKey)).toEqual([
       'crops.detail.transplantAt',
       'crops.detail.firstHarvest',
     ]);

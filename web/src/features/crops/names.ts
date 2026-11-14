@@ -78,14 +78,32 @@ export function suitsSun(crop: { sun: 'FULL' | 'PARTIAL' }, place: Sun): boolean
   return SUN_RANK[place] >= SUN_RANK[crop.sun];
 }
 
-/** The order a crop goes through, from its method and care steps. */
-export function growingSteps(crop: { kind?: string; method: string; care: Array<{ key: string }>; thin_after_days: number | null }): string[] {
-  const care = crop.care.map((c) => c.key);
+interface StepText {
+  title: string;
+  body: string;
+}
+/** A step on the crop page: the journey's own steps are named by key (app strings); care and material bring their texts. */
+export interface GrowingStep {
+  key: string;
+  text?: StepText;
+}
+
+/** The order a crop goes through, from its journey shape and care steps. */
+export function growingSteps(crop: {
+  kind?: string;
+  journey: 'NURSERY' | 'DIRECT' | 'PLANT';
+  care: Array<{ key: string } & StepText>;
+  material: StepText | null;
+  thin_after_days: number | null;
+}): GrowingStep[] {
+  const care = crop.care.map((c) => ({ key: c.key, text: { title: c.title, body: c.body } }));
+  const own = (...keys: string[]) => keys.map((key) => ({ key }));
   // A flower's journey ends in bloom, not harvest.
-  const end = crop.kind === 'FLOWER' ? 'bloom' : 'harvest';
-  if (crop.method === 'NURSERY_TRANSPLANT') return ['seeds', 'nursery', 'transplant', ...care, end];
-  if (crop.method === 'DIRECT_SOW') return ['seeds', 'sow', ...(crop.thin_after_days ? ['thin'] : []), ...care, end];
-  return [`material.${crop.method}`, 'plant', ...care, end];
+  const end = own(crop.kind === 'FLOWER' ? 'bloom' : 'harvest');
+  if (crop.journey === 'NURSERY') return [...own('seeds', 'nursery', 'transplant'), ...care, ...end];
+  if (crop.journey === 'DIRECT') return [...own('seeds', 'sow', ...(crop.thin_after_days ? ['thin'] : [])), ...care, ...end];
+  const material = crop.material ? [{ key: 'material', text: crop.material }] : [];
+  return [...material, ...own('plant'), ...care, ...end];
 }
 
 
@@ -135,7 +153,7 @@ export interface CropFact {
 /** The crop page's quick facts; ones with no value are left out. */
 export function cropFacts(crop: {
   kind: string;
-  method: string;
+  journey: 'NURSERY' | 'DIRECT' | 'PLANT';
   germination_days: [number, number] | null;
   transplant_after_days: [number, number] | null;
   days_to_first_harvest: [number, number] | null;
@@ -144,7 +162,7 @@ export function cropFacts(crop: {
   const flower = crop.kind === 'FLOWER';
   const facts: Array<CropFact | null> = [
     crop.germination_days ? { icon: 'psychiatry', labelKey: 'crops.detail.germinates', range: crop.germination_days } : null,
-    crop.method === 'NURSERY_TRANSPLANT' && crop.transplant_after_days
+    crop.journey === 'NURSERY' && crop.transplant_after_days
       ? { icon: 'move_down', labelKey: 'crops.detail.transplantAt', range: crop.transplant_after_days }
       : null,
     crop.days_to_first_harvest

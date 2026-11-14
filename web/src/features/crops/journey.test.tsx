@@ -9,7 +9,7 @@ import { renderWithApp } from '../../test/render';
 import { PlantDetailScreen } from '../biography';
 import { cropItem, flowerItem } from './test-fixtures';
 
-const tomatoItem = cropItem({ id: 'tomato', name: 'Tomato', family: 'SOLANACEAE', method: 'NURSERY_TRANSPLANT', sun: 'FULL', guide: { plants_for_family_of_4: '4–6 plants', container: '12–14 inch pot or grow-bag per plant', spacing_cm: [45, 60] } });
+const tomatoItem = cropItem({ id: 'tomato', name: 'Tomato', family: 'SOLANACEAE', method: 'NURSERY_TRANSPLANT', journey: 'NURSERY', sun: 'FULL', guide: { plants_for_family_of_4: '4–6 plants', container: '12–14 inch pot or grow-bag per plant', spacing_cm: [45, 60] } });
 
 function handlers(plant: Record<string, unknown>, opts: { conflict?: boolean; places?: Array<Record<string, unknown>> } = {}) {
   const posts: Array<Record<string, unknown>> = [];
@@ -21,7 +21,7 @@ function handlers(plant: Record<string, unknown>, opts: { conflict?: boolean; pl
     http.get(`${API}/crops/calendar`, () => HttpResponse.json(ok([cropItem(), tomatoItem, flowerItem()]))),
     http.get(`${API}/garden/places`, () => HttpResponse.json(ok(opts.places ?? [{ id: 'pl1', name: 'Terrace bag', kind: 'GROW_BAG', archived_at: null }]))),
     http.get(`${API}/crops/calendar/:id`, ({ params }) =>
-      HttpResponse.json(ok({ ...(params.id === 'tomato' ? tomatoItem : cropItem()), germination_days: [5, 10], transplant_after_days: params.id === 'tomato' ? [25, 30] : null, harvest_span_days: 60, thin_after_days: null, succession_every_days: null, care: [], windows: [] })),
+      HttpResponse.json(ok({ ...(params.id === 'tomato' ? tomatoItem : cropItem()), germination_days: [5, 10], transplant_after_days: params.id === 'tomato' ? [25, 30] : null, harvest_span_days: 60, thin_after_days: null, succession_every_days: null, care: [], material: null, windows: [] })),
     ),
     http.get(`${API}/garden/places/pl1/rotation`, () =>
       HttpResponse.json(ok(opts.conflict ? { conflict: true, last: { crop_id: 'potato', crop_name: 'Potato', family: 'SOLANACEAE', season_label: 'Oct 2026' } } : { conflict: false, last: null })),

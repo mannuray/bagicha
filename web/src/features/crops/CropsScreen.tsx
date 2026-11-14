@@ -148,7 +148,7 @@ function CropCard({ crop, onList, className }: { crop: CropItem; onList: boolean
           <h3 className="font-headline text-base font-bold leading-tight text-primary">{crop.name}</h3>
           {hindi && <p className="font-body text-xs text-on-surface-variant">{hindi}</p>}
           <p className="font-label text-[10px] font-bold uppercase tracking-wider text-secondary">
-            {when} · {t(`crops.methodShort.${crop.method}`)}
+            {when} · {crop.method_short}
           </p>
           <p className="font-body text-[11px] text-on-surface-variant">
             {t('crops.firstHarvestShort', { span: daySpan(crop.days_to_first_harvest) })}
