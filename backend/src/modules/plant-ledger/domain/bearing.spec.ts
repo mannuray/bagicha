@@ -1,8 +1,9 @@
-import { lifeProfileFor } from './species-life-profiles';
+import { seededCatalogue } from '../../catalogue/testing';
 import { firstsToClear, predatesFirsts, resolveBearing } from './bearing';
 
+const catalogue = seededCatalogue();
 const NOW = new Date('2026-11-11T06:00:00Z');
-const mango = lifeProfileFor('mango');
+const mango = catalogue.lifeProfile('mango');
 const planted = (year: number) => new Date(`${year}-06-01T00:00:00Z`);
 
 describe('predatesFirsts: the tree fruited before we knew it', () => {
@@ -64,7 +65,7 @@ describe('predatesFirsts: the tree fruited before we knew it', () => {
 });
 
 describe('the planted year alone counts from the end of that year', () => {
-  const banana = lifeProfileFor('banana');
+  const banana = catalogue.lifeProfile('banana');
   it('a banana planted "2025" is not past its first fruit in Nov 2026', () => {
     expect(
       predatesFirsts(

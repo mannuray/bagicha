@@ -1,13 +1,15 @@
 import { RegionCluster } from '@prisma/client';
 import { CARE_PENDING, TREE_CARE } from '../../plant-ledger';
 import type { CareItem, FamilyCare, RegionCare } from '../../plant-ledger';
-import { FRUIT_CATALOGUE } from './fruit-catalogue';
+import { CATALOGUE_SEED } from '../../catalogue';
+
+const FRUIT_CATALOGUE = CATALOGUE_SEED.fruitPlants;
 
 const families = [...new Set(FRUIT_CATALOGUE.map((s) => s.species_family))];
 const grownByCatalogue = (family: string): RegionCluster[] => [
   ...new Set(
     FRUIT_CATALOGUE.filter((s) => s.species_family === family).flatMap((s) =>
-      (s.regions ?? []).map((r) => r.toUpperCase() as RegionCluster),
+      s.regions.map((r) => r.toUpperCase() as RegionCluster),
     ),
   ),
 ];

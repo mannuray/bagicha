@@ -1,6 +1,14 @@
-import { LIFE_PROFILE_FAMILIES, lifeProfileFor } from './species-life-profiles';
+import { seededCatalogue } from '../testing';
+import { CATALOGUE_SEED } from '.';
 
-describe('lifeProfileFor', () => {
+const catalogue = seededCatalogue();
+const lifeProfileFor = (family: string | null) => catalogue.lifeProfile(family);
+const LIFE_PROFILE_FAMILIES = [
+  ...CATALOGUE_SEED.fruitTypes.map((t) => t.key),
+  ...CATALOGUE_SEED.perennialFlowers.map((f) => f.family),
+];
+
+describe('life profiles in the seed', () => {
   it('stores short-lived species in months', () => {
     expect(lifeProfileFor('papaya')).toMatchObject({
       first_fruit_months: [8, 12],

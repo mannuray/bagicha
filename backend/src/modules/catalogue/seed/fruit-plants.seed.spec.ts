@@ -1,5 +1,8 @@
-import { lifeProfileFor } from '../../plant-ledger/domain/species-life-profiles';
-import { FRUIT_CATALOGUE } from './fruit-catalogue';
+import { seededCatalogue } from '../testing';
+import { CATALOGUE_SEED } from '.';
+
+const FRUIT_CATALOGUE = CATALOGUE_SEED.fruitPlants;
+const catalogue = seededCatalogue();
 
 const FAMILIES = [
   'mango',
@@ -31,7 +34,7 @@ const FAMILIES = [
   'dragon_fruit',
 ];
 
-describe('the fruit catalogue', () => {
+describe('the fruit plants seed', () => {
   it('has a plain entry for each fruit family, plus their popular varieties', () => {
     for (const family of FAMILIES) {
       expect(
@@ -44,7 +47,7 @@ describe('the fruit catalogue', () => {
   it('uses only families that have a life profile, and never repeats a name', () => {
     const names = new Set<string>();
     for (const e of FRUIT_CATALOGUE) {
-      expect(lifeProfileFor(e.species_family)).not.toBeNull();
+      expect(catalogue.lifeProfile(e.species_family)).not.toBeNull();
       expect(names.has(e.display_name)).toBe(false);
       names.add(e.display_name);
       expect(e.plant_type).toBe('fruit_tree');

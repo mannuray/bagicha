@@ -30,11 +30,7 @@ export {
   inGroup,
   windowStatus,
 } from './domain/crop-calendar';
-export {
-  flowerCareDue,
-  PERENNIAL_FLOWERS,
-  perennialFlower,
-} from './domain/flower-care';
+export { flowerCareDue } from './domain/flower-care';
 export type {
   ClimateGroup,
   CropInfo,

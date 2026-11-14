@@ -1,5 +1,5 @@
 import type { BearingStatus, PlantingDatePrecision } from '@prisma/client';
-import type { LifeProfile } from './species-life-profiles';
+import type { LifeProfile } from '../../catalogue';
 import { ValidationError } from '../../../common/errors';
 
 const MONTH_MS = (365.25 / 12) * 24 * 60 * 60 * 1000;

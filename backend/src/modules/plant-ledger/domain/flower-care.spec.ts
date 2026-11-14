@@ -1,9 +1,10 @@
-import {
-  bloomStatus,
-  flowerCareDue,
-  PERENNIAL_FLOWERS,
-  perennialFlower,
-} from './flower-care';
+import { CATALOGUE_SEED } from '../../catalogue';
+import { seededCatalogue } from '../../catalogue/testing';
+import { bloomStatus, flowerCareDue } from './flower-care';
+
+const PERENNIAL_FLOWERS = CATALOGUE_SEED.perennialFlowers;
+const catalogue = seededCatalogue();
+const perennialFlower = (family: string) => catalogue.perennialFlower(family);
 
 const ist = (iso: string) => new Date(`${iso}T06:00:00Z`);
 
