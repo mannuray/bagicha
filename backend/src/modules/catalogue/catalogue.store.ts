@@ -52,7 +52,7 @@ export class CatalogueStore implements OnApplicationBootstrap {
       return version === this.current.version
         ? this.mark(now)
         : await this.load(now);
-    } catch (error) {
+    } catch (error: unknown) {
       // A blip after start: keep serving what we have, try again next minute.
       this.logger.warn(
         { err: error },
