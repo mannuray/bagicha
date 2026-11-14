@@ -43,7 +43,7 @@ docker run --rm --dns 1.1.1.1 \
 
 ## Plant catalogue push (after the migration, before the deploy)
 
-Crops, flowers, planting methods and care steps live in the database. The API reads them from there and refuses to start without an approved catalogue. They are edited in `backend/src/modules/catalogue/seed/` and written to the database by the push. Run it whenever a commit changes a seed file, and once for the stage that creates the tables. Order: **migration → push → API deploy → web**. The web from the catalogue release expects the API's new crop fields (`journey`, `method_short`, care-step texts), so the API goes live first, and rolling the API back means rolling the web back with it.
+Crops, seasonal flowers, planting methods, care steps, fruit types (their matching words and life profiles), add-tree search entries and perennial flowers live in the database. The API reads them from there and refuses to start without an approved catalogue (crops, fruit types and perennial flowers). Nothing writes catalogue data at start any more; the old `plant_catalog_entries` table is unused. They are edited in `backend/src/modules/catalogue/seed/` and written to the database by the push. Run it whenever a commit changes a seed file, and once for the stage that creates the tables. Order: **migration → push → API deploy → web**. The web from the catalogue release expects the API's new crop fields (`journey`, `method_short`, care-step texts), so the API goes live first, and rolling the API back means rolling the web back with it.
 
 ```bash
 cd backend
@@ -58,6 +58,7 @@ docker run --rm --dns 1.1.1.1 \
 - If the database has a record the seed files don't, it stops with `CATALOGUE_MISSING_FROM_SEED` and writes nothing. To take a crop out, set its `status` to `RETIRED` in the seed: it leaves Browse, and gardens that grow it keep their reminders.
 - The running API picks up a push within about a minute; no redeploy is needed for a seed-only change.
 - Locally: `npm run catalogue:push` (uses `DATABASE_URL` from `.env`).
+- Stage 2 (fruit types, add-tree entries, perennial flowers, migration `20261115120000_catalogue_fruit_flowers`): migration → push → API deploy. No web deploy is needed; a search result's `id` is now its catalogue key (`mango:Dasheri`) instead of a row id, and the web uses it only as a list key.
 
 ## Deploy the API (Render)
 

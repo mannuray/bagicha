@@ -57,7 +57,7 @@ Each tree type touches four things: the **catalogue entry** (add-tree search, Hi
 - Banana: G9 (Grand Naine), Robusta, Dwarf Cavendish (Basrai), Malbhog, Poovan, Nendran, Elaichi, Red.
 - Guava, litchi, pomegranate, papaya, grape, coconut, chikoo, amla, custard apple (incl. Ramphal), moringa, jackfruit varieties.
 - Search keeps letters in any script and matches Hindi names; variety names typed as the species are recognised.
-- Data lives in `backend/src/modules/plants/domain/fruit-catalogue.ts`.
+- Data lives in `backend/src/modules/catalogue/seed/fruit-plants.seed.ts` (and `fruit-types.seed.ts` for matching words and life profiles).
 
 ## 4 + 5 + 6. Tree care, first tasks, life profiles (after item 3)
 
@@ -79,7 +79,7 @@ Done tree type by tree type over everything the catalogue holds:
 
 ## Catalogue in the database
 
-From 2026-11-14 the crop and flower calendar, planting methods and care steps live in the database, filled from `backend/src/modules/catalogue/seed/` by the catalogue push (design: `docs/superpowers/specs/2026-11-14-catalogue-in-database-design.md`). Stages 2–4 (fruit catalogue and life profiles, tree care, season guidance) follow; bulbs (item 10) are the first batch added this way.
+From 2026-11-14 the crop and flower calendar, planting methods and care steps live in the database, filled from `backend/src/modules/catalogue/seed/` by the catalogue push (design: `docs/superpowers/specs/2026-11-14-catalogue-in-database-design.md`). Stage 2 (fruit types with their matching words and life profiles, add-tree search entries, perennial flowers) moves the tree catalogue there too, so new trees (item 3, phase 3) are seed edits plus a push. Stages 3–4 (tree care, season guidance) follow. Bulbs (item 10) were the first batch added this way.
 
 ## Still open outside the list
 - Rotate the AWS key, Neon password and Gemini key that were pasted in chat; check the Gemini key works (it starts `AQ.`, not `AIza…`).
