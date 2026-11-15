@@ -6,13 +6,14 @@ import type { PlantDetail } from '../../plants';
 import { usePlantRestore } from '../usePlantRestore';
 import { monthYear } from './format';
 
-/** A calm note at the top of an ended tree's page, with Restore and Plant a replacement. */
-export function EndedBanner({ plant }: { plant: PlantDetail }) {
+/** A calm note at the top of an ended plant's page, with Restore (and, for a tree, Plant a replacement). */
+export function EndedBanner({ plant, crop = false }: { plant: PlantDetail; crop?: boolean }) {
   const { t, i18n } = useTranslation();
   const restore = usePlantRestore(plant.id);
   if (!plant.ended_at) return null;
   const reason = plant.end_reason ?? 'UNKNOWN_CAUSE';
-  const verb = t(`biography.end.verb.${reason === 'REMOVED' || reason === 'REPLACED' ? reason : 'died'}`);
+  const verb =
+    crop && reason === 'REMOVED' ? t('biography.end.pulledOut') : t(`biography.end.verb.${reason === 'REMOVED' || reason === 'REPLACED' ? reason : 'died'}`);
   const date = monthYear(plant.ended_at, i18n.language);
   const line =
     reason === 'REMOVED' || reason === 'REPLACED'
@@ -36,7 +37,8 @@ export function EndedBanner({ plant }: { plant: PlantDetail }) {
         </p>
       )}
       <div className="flex flex-wrap gap-3">
-        {!plant.replaced_by && (
+        {/* A crop's next season starts from the crop calendar, not the tree form. */}
+        {!plant.replaced_by && !crop && (
           <Link to={`/plants/new?replaces=${plant.id}`} className="bg-primary-gradient inline-flex min-h-11 items-center rounded-full px-5 font-label text-sm font-bold text-on-primary">
             {t('biography.end.replace')}
           </Link>

@@ -241,6 +241,24 @@ describe('the crop page', () => {
       expect(await screen.findByRole('button', { name: /stop growing this crop/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /mark as ended/i })).not.toBeInTheDocument();
     });
+
+    it('offers crop reasons, not tree ones, when stopping a crop', async () => {
+      handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'IN_GROUND' });
+      renderWithApp(routes, { route: '/plants/c1' });
+      await userEvent.click(await screen.findByRole('button', { name: /stop growing this crop/i }));
+      const sheet = screen.getByRole('dialog', { name: /stop growing this crop/i });
+      const reasons = within(sheet).getAllByRole('button').map((b) => b.textContent);
+      expect(reasons).toEqual(expect.arrayContaining(['Disease or pest', 'Weather', 'Water', 'Unknown cause', 'Pulled out']));
+      expect(reasons).not.toContain('Old age');
+      expect(reasons).not.toContain('Replaced');
+    });
+
+    it('an ended crop says it was pulled out, with no tree replacement', async () => {
+      handlers({ name: 'Tomato', crop_id: 'tomato', crop_stage: 'IN_GROUND', ended_at: '2026-03-15T06:00:00.000Z', end_reason: 'REMOVED' });
+      renderWithApp(routes, { route: '/plants/c1' });
+      expect(await screen.findByText(/pulled out · mar 2026/i)).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /plant a replacement/i })).not.toBeInTheDocument();
+    });
   });
 
   describe('start sheet', () => {

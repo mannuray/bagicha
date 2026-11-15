@@ -74,7 +74,7 @@ function Biography({ plant }: { plant: PlantDetail }) {
         ))}
         {ended ? (
           // An ended tree is a record: its history stays, the growing work goes.
-          <EndedBanner plant={plant} />
+          <EndedBanner plant={plant} crop={crop} />
         ) : crop ? (
           // A calendar crop follows its journey, not the tree sections.
           <>

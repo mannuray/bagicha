@@ -470,6 +470,7 @@
         "REMOVED": "Removed",
         "REPLACED": "Replaced"
       },
+      "pulledOut": "Pulled out",
       "date": "Date",
       "dateHint": "Leave blank for today.",
       "note": "Note (optional)",

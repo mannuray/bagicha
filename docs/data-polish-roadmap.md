@@ -13,8 +13,8 @@ The live app (bagicha-web.vercel.app) works end to end; this is the list of data
 9. More vegetables — **done** (8 of 10; parwal and spring onion held back)
 10. Bulbs — **done, live**
 11. Hindi translation
-12. Copy gaps
-13. Matching gaps
+12. Copy gaps — **done** (one held: see below)
+13. Matching gaps — **done**
 
 ## Done
 
@@ -80,8 +80,8 @@ Done tree type by tree type over everything the catalogue holds:
 9. **More vegetables:** done: beetroot, turnip, amaranth (chaulai), bathua, sem, lobia, tinda, ash gourd, source-checked and owner-approved (review doc 2026-11-14). Held back: parwal (perennial from cuttings; add with perennials) and spring onion (no guide covers the home method).
 10. **Bulbs:** done: gladiolus (corms), dahlia (root tubers), rajnigandha and Asiatic lily (bulbs), with a "Lift and store" step for gladiolus and dahlia; owner-approved (review doc 2026-11-14). Added as catalogue data only. Later: photos; rajnigandha's second and third years (ratoon care); Asiatic lily windows for the south and hills once sources agree; rain lily.
 11. **Hindi translation:** users can pick Hindi; the app is English only.
-12. **Copy gaps:** a seasonal flower's "should start blooming soon" task is typed as a harvest; flower care reasons are generic; end-of-life reasons are tree-flavoured for crops.
-13. **Matching gaps:** Hindi typed in a different Unicode form misses (गुड़हल); a nickname can outrank the species ("Champa's rose"); state-only text ("Goa") and Sikkim's direction names on the server fallback.
+12. **Copy gaps:** done: the "should start blooming soon" task is an observation, not a harvest; stopping a crop offers crop reasons (no "Old age" or "Replaced"; "Removed" reads "Pulled out") and an ended crop has no tree "Plant a replacement" link. Held: flower care reasons are generic, but no screen shows a task's reason yet; write them when one does.
+13. **Matching gaps:** done: Hindi with ड़ typed either way matches; a plant's species and variety are read before its name ("Champa's rose" with species Rose is a rose); text naming only a one-region state (Goa, Kerala, Sikkim) gets that region; Sikkim's "North", "East"… match with the state. Found on the way: guava has no "amrood" matching word (needs the playbook).
 
 ## Catalogue in the database
 

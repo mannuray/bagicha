@@ -190,8 +190,7 @@ export class CropJourneyService {
             'harvest_soon',
             this.readySoon(crop),
             addDays(at, crop.days_to_first_harvest[0]),
-            TaskType.HARVEST,
-            TaskCategory.HARVEST,
+            ...this.readySoonKind(crop),
           ),
         ];
         if (nursery && crop.transplant_after_days) {
@@ -256,8 +255,7 @@ export class CropJourneyService {
               'harvest_soon',
               this.readySoon(crop),
               addDays(at, Math.max(head, 7)),
-              TaskType.HARVEST,
-              TaskCategory.HARVEST,
+              ...this.readySoonKind(crop),
             ),
           );
         }
@@ -311,6 +309,13 @@ export class CropJourneyService {
     return crop.kind === 'FLOWER'
       ? `The ${titleName(crop)} should start blooming soon`
       : `The ${titleName(crop)} should be ready to pick soon`;
+  }
+
+  /** Blooming is something to watch for; picking a vegetable is a harvest. */
+  private readySoonKind(crop: CropInfo): [TaskType, TaskCategory] {
+    return crop.kind === 'FLOWER'
+      ? [TaskType.OBSERVE, TaskCategory.OBSERVATION]
+      : [TaskType.HARVEST, TaskCategory.HARVEST];
   }
 
   /** The gardener's climate group (their region decides sowing windows and some harvest days). */

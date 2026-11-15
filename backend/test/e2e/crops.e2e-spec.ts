@@ -324,6 +324,8 @@ describe('crops', () => {
       status: string;
       due_date: string;
       source: string;
+      type: string;
+      category: string;
     };
     const tasksOf = async (a: ReturnType<typeof as>, id: string) =>
       (await a.get(`/api/v1/ledger/plants/${id}/tasks`)).body.data as Task[];
@@ -358,7 +360,10 @@ describe('crops', () => {
       const germ = tasks.find((t) => /come up|sprouts|shoots/i.test(t.title))!;
       expect(istDate(germ.due_date)).toBe('2026-10-20');
       expect(tasks.find((t) => /transplant/i.test(t.title))).toBeTruthy();
-      expect(tasks.find((t) => /ready to pick/i.test(t.title))).toBeTruthy();
+      expect(tasks.find((t) => /ready to pick/i.test(t.title))).toMatchObject({
+        type: 'HARVEST',
+        category: 'HARVEST',
+      });
       const cycles = (await a.get(`/api/v1/ledger/plants/${tomato.id}/cycles`))
         .body.data;
       expect(cycles[0]).toMatchObject({ season_no: 1, closed_at: null });
@@ -390,6 +395,12 @@ describe('crops', () => {
       const zinnia = (await a.post('/api/v1/crops/plan', { crop_id: 'zinnia' }))
         .body.data;
       await log(a, zinnia.id, 'SOWING', { method: 'DIRECT' });
+      // Blooming is something to watch for, not a harvest.
+      expect(
+        (await tasksOf(a, zinnia.id)).find((t) =>
+          /blooming soon/.test(t.title),
+        ),
+      ).toMatchObject({ type: 'OBSERVE', category: 'OBSERVATION' });
       expect((await log(a, zinnia.id, 'FLOWERING')).status).toBe(201);
       expect((await plantOf(a, zinnia.id)).crop_stage).toBe('HARVESTING');
     });

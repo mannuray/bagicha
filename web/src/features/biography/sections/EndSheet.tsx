@@ -6,7 +6,13 @@ import type { PlantEndReason } from '../../plants';
 import { useEndPlantForm } from '../useEndPlantForm';
 import { humanize, shortDate } from './format';
 
-const REASONS: PlantEndReason[] = ['DISEASE_OR_PEST', 'WEATHER', 'WATER', 'OLD_AGE', 'UNKNOWN_CAUSE', 'REMOVED', 'REPLACED'];
+const TREE_REASONS: PlantEndReason[] = ['DISEASE_OR_PEST', 'WEATHER', 'WATER', 'OLD_AGE', 'UNKNOWN_CAUSE', 'REMOVED', 'REPLACED'];
+/** A season's crop doesn't die of old age or get replaced like a tree; it is pulled out. */
+const CROP_REASONS: PlantEndReason[] = ['DISEASE_OR_PEST', 'WEATHER', 'WATER', 'UNKNOWN_CAUSE', 'REMOVED'];
+
+/** "Removed" reads as "Pulled out" for a crop. */
+const reasonKey = (reason: PlantEndReason, crop: boolean) =>
+  crop && reason === 'REMOVED' ? 'biography.end.pulledOut' : `biography.end.reason.${reason}`;
 
 /** Record that a tree died or was removed. Calm by design: its history stays. */
 export function EndSheet({ plantId, entries, now, crop = false, onClose }: { plantId: string; entries: JournalEntry[]; now: Date; crop?: boolean; onClose: () => void }) {
@@ -20,9 +26,9 @@ export function EndSheet({ plantId, entries, now, crop = false, onClose }: { pla
         <p className="mt-1 font-body text-sm text-on-surface-variant">{t('biography.end.intro')}</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        {REASONS.map((r) => (
+        {(crop ? CROP_REASONS : TREE_REASONS).map((r) => (
           <Pill key={r} selected={reason === r} onClick={() => setReason(r)}>
-            {t(`biography.end.reason.${r}`)}
+            {t(reasonKey(r, crop))}
           </Pill>
         ))}
       </div>
