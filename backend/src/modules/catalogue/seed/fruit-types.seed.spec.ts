@@ -39,6 +39,18 @@ describe('fruit type matching words in the seed', () => {
     ['gola pear', 'pear'],
     ['satluj purple', 'plum'],
     ['japani phal', 'persimmon'],
+    // Common names, 2026-11-15 review
+    ['amrood', 'guava'],
+    ['jamrukh', 'guava'],
+    ['nimbu', 'citrus'],
+    ['malta', 'citrus'],
+    ['aam ka ped', 'mango'],
+    ['anaar', 'pomegranate'],
+    ['shevga', 'moringa'],
+    ['kaitha bel', 'wood_apple'],
+    ['katbel', 'wood_apple'],
+    ['bel ka ped', 'bael'],
+    ['chikku', 'sapota'],
   ])('keeps "%s" as %s', (text, family) => {
     expect(catalogue.fruitFamilyIn(text)?.family).toBe(family);
   });

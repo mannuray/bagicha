@@ -27,6 +27,8 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
       'chaunsa',
       'mallika',
       'benishan',
+      'aam',
+      'mamidi',
     ],
     life: {
       first_fruit_months: [36, 60],
@@ -56,6 +58,14 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
       'santra',
       'pomelo',
       'chakotra',
+      'nimbu',
+      'nimboo',
+      'neembu',
+      'nimbe',
+      'limbu',
+      'narangi',
+      'musambi',
+      'malta',
     ],
     life: {
       first_fruit_months: [24, 48],
@@ -69,7 +79,7 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'litchi',
-    match_aliases: ['litchi', 'lychee', 'shahi', 'china'],
+    match_aliases: ['litchi', 'lychee', 'shahi', 'china', 'lichi', 'leechi'],
     life: {
       first_fruit_months: [48, 72],
       productive_until_months: [480, 720],
@@ -82,7 +92,19 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'guava',
-    match_aliases: ['guava', 'allahabad safeda', 'lalit', 'lucknow 49'],
+    match_aliases: [
+      'guava',
+      'allahabad safeda',
+      'lucknow 49',
+      'amrood',
+      'amrud',
+      'peru',
+      'peyara',
+      'koyya',
+      'jamrukh',
+      'jamphal',
+      'jamfal',
+    ],
     life: {
       first_fruit_months: [24, 36],
       productive_until_months: [180, 300],
@@ -95,7 +117,17 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'pomegranate',
-    match_aliases: ['pomegranate', 'anar', 'bhagawa', 'bhagwa', 'kandhari'],
+    match_aliases: [
+      'pomegranate',
+      'anar',
+      'bhagawa',
+      'bhagwa',
+      'kandhari',
+      'anaar',
+      'dalimb',
+      'dalim',
+      'madulai',
+    ],
     life: {
       first_fruit_months: [24, 36],
       productive_until_months: [180, 240],
@@ -120,6 +152,9 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
       'nendran',
       'yelakki',
       'basrai',
+      'kele',
+      'kadali',
+      'vazhai',
     ],
     life: {
       first_fruit_months: [9, 15],
@@ -133,7 +168,14 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'papaya',
-    match_aliases: ['papaya', 'papita', 'red lady'],
+    match_aliases: [
+      'papaya',
+      'papita',
+      'red lady',
+      'papeeta',
+      'papaiya',
+      'pappali',
+    ],
     life: {
       first_fruit_months: [8, 12],
       productive_until_months: [24, 36],
@@ -146,7 +188,7 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'grape',
-    match_aliases: ['grape', 'angoor', 'angur'],
+    match_aliases: ['grape', 'angoor', 'angur', 'draksha'],
     life: {
       first_fruit_months: [24, 36],
       productive_until_months: [240, 360],
@@ -159,7 +201,7 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'jackfruit',
-    match_aliases: ['jackfruit', 'jack fruit', 'kathal'],
+    match_aliases: ['jackfruit', 'jack fruit', 'kathal', 'kathhal', 'phanas'],
     life: {
       first_fruit_months: [48, 96],
       productive_until_months: [600, 840],
@@ -172,7 +214,7 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'coconut',
-    match_aliases: ['coconut', 'nariyal'],
+    match_aliases: ['coconut', 'nariyal', 'naariyal', 'naral', 'thengai'],
     life: {
       first_fruit_months: [48, 84],
       productive_until_months: [600, 840],
@@ -185,7 +227,15 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'sapota',
-    match_aliases: ['sapota', 'chikoo', 'chiku', 'sapodilla', 'kalipatti'],
+    match_aliases: [
+      'sapota',
+      'chikoo',
+      'chiku',
+      'sapodilla',
+      'kalipatti',
+      'chickoo',
+      'chikku',
+    ],
     life: {
       first_fruit_months: [36, 60],
       productive_until_months: [480, 720],
@@ -198,7 +248,15 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'amla',
-    match_aliases: ['amla', 'aonla', 'indian gooseberry'],
+    match_aliases: [
+      'amla',
+      'aonla',
+      'indian gooseberry',
+      'avla',
+      'amalaki',
+      'nellikai',
+      'nellikka',
+    ],
     life: {
       first_fruit_months: [36, 60],
       productive_until_months: [480, 600],
@@ -211,7 +269,14 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'custard_apple',
-    match_aliases: ['custard apple', 'sitaphal', 'sharifa', 'sugar apple'],
+    match_aliases: [
+      'custard apple',
+      'sitaphal',
+      'sharifa',
+      'sugar apple',
+      'seetaphal',
+      'sitafal',
+    ],
     life: {
       first_fruit_months: [36, 48],
       productive_until_months: [180, 240],
@@ -224,7 +289,18 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'moringa',
-    match_aliases: ['moringa', 'drumstick', 'sahjan', 'sehjan', 'munga'],
+    match_aliases: [
+      'moringa',
+      'drumstick',
+      'sahjan',
+      'sehjan',
+      'munga',
+      'sahijan',
+      'saijan',
+      'shevga',
+      'murungai',
+      'munaga',
+    ],
     life: {
       first_fruit_months: [6, 8],
       productive_until_months: [48, 72],
@@ -269,6 +345,11 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
       'kath bel',
       'elephant apple',
       'kavath',
+      'kaitha',
+      'kaith bel',
+      'kaitha bel',
+      'kathbel',
+      'katbel',
     ],
     life: {
       first_fruit_months: [60, 120],
@@ -282,7 +363,7 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'bael',
-    match_aliases: ['bael', 'bel', 'bilva', 'bengal quince'],
+    match_aliases: ['bael', 'bel', 'bilva', 'bengal quince', 'bilwa', 'beal'],
     life: {
       first_fruit_months: [48, 84],
       productive_until_months: [480, 720],
@@ -308,7 +389,7 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'mulberry',
-    match_aliases: ['mulberry', 'shahtoot', 'shehtoot', 'tut'],
+    match_aliases: ['mulberry', 'shahtoot', 'shehtoot', 'shahtut'],
     life: {
       first_fruit_months: [24, 36],
       productive_until_months: [240, 360],
@@ -327,6 +408,7 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
       'kamrakh',
       'kamranga',
       'carambola',
+      'kamrak',
     ],
     life: {
       first_fruit_months: [36, 48],
@@ -366,7 +448,7 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'tamarind',
-    match_aliases: ['tamarind', 'imli', 'chinch'],
+    match_aliases: ['tamarind', 'imli', 'chinch', 'amli'],
     life: {
       first_fruit_months: [60, 144],
       productive_until_months: [720, 960],
@@ -536,7 +618,7 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
   },
   {
     key: 'walnut',
-    match_aliases: ['walnut', 'akhrot'],
+    match_aliases: ['walnut', 'akhrot', 'akrot'],
     life: {
       first_fruit_months: [48, 72],
       productive_until_months: [600, 900],
