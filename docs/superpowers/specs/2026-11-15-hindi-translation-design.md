@@ -71,14 +71,18 @@ Sanskritised Hindi ("छिड़काव", "सहेजें"). Short and pl
   plant's name is still exactly the catalogue's English name for its crop or
   add-tree entry, plant responses show the catalogue's Hindi name instead; a
   name the user changed ("Dadi's tomato") shows as written. This touches the
-  plant and ledger read responses, not only catalogue ones. Switching back to
+  plant and ledger read responses, not only catalogue ones. Responses keep
+  `name` as saved and add a `display_name`, so editing never saves the
+  Hindi name. *(My call.)* Switching back to
   English shows English again; no saved data changes.
 - **Release (owner's decision): all at once.** Screen text and catalogue
   Hindi ship together after the owner approves the whole review, so a Hindi
   user never sees half-translated screens. Until then, `hi.json` and the
   Hindi seed values may exist on a branch but are not served.
-- **Month labels** the server builds today ("Oct–Nov") move to client-side
-  `hi-IN`/`en-IN` formatting, matching the dates rule. *(My call.)*
+- **Month labels** the server builds today ("Oct–Nov", in three places) are
+  written by the server in the request's language (`hi-IN` month names);
+  English labels stay exactly as today. *(My call; first said client-side,
+  changed in planning because the server builds them in three places.)*
 - **Care steps:** only their web labels (`label_title`, `label_body`) get
   Hindi; `title` is the reminder template and stays with the reminder
   non-goal. *(My call.)*
