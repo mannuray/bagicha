@@ -15,6 +15,18 @@ describe('fruit type matching words in the seed', () => {
     expect(stolen).toEqual([]);
   });
 
+  it("resolves every fruit type's Hindi names to that type", () => {
+    const stolen = CATALOGUE_SEED.fruitTypes.flatMap((t) => {
+      const hi =
+        CATALOGUE_SEED.fruitPlants.find((p) => p.key === t.key)?.languages
+          ?.hi ?? [];
+      return hi
+        .filter((n) => catalogue.fruitFamilyIn(n)?.family !== t.key)
+        .map((n) => `${n} → ${catalogue.fruitFamilyIn(n)?.family}`);
+    });
+    expect(stolen).toEqual([]);
+  });
+
   it.each([
     ['custard apple', 'custard_apple'],
     ['wood apple', 'wood_apple'],

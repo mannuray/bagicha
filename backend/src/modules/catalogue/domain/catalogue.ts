@@ -43,6 +43,8 @@ export class Catalogue {
       careSteps: Map<string, CareStepInfo>;
       /** Served fruit types in seed order: the first whose words match wins. */
       fruitTypes: FruitTypeInfo[];
+      /** Each fruit type's Hindi names (its plain add-tree entry's), NFC. */
+      fruitHindi: Map<string, string[]>;
       flowers: Map<string, PerennialFlower>;
       /** Served flower aliases, longest first ("china rose" before "rose"). */
       flowerAliases: Array<{ alias: string; family: string }>;
@@ -71,6 +73,11 @@ export class Catalogue {
     const fruitTypes = seed.fruitTypes
       .filter(served)
       .map(({ status: _s, notes: _n, ...t }) => t);
+    const fruitHindi = new Map(
+      seed.fruitPlants
+        .filter((p) => served(p) && p.key === p.species_family)
+        .map((p) => [p.key, (p.languages?.hi ?? []).map((n) => hindiWords(n))]),
+    );
     const servedFlowers = seed.perennialFlowers.filter(served);
     const flowers = new Map(
       servedFlowers.map((f) => [f.family, toPerennialFlower(f)]),
@@ -103,6 +110,7 @@ export class Catalogue {
       methods,
       careSteps,
       fruitTypes,
+      fruitHindi,
       flowers,
       flowerAliases,
       search,
@@ -142,10 +150,19 @@ export class Catalogue {
     return this.parts.fruitTypes.find((t) => t.key === key) ?? null;
   }
 
-  /** The first fruit type, in seed order, one of whose words appears whole in this lower-case text. */
-  fruitFamilyIn(haystack: string): { family: string; alias: string } | null {
+  /**
+   * The first fruit type, in seed order, one of whose words appears whole in
+   * this text: its English-letter words, or its Hindi names ("अमरूद").
+   */
+  fruitFamilyIn(text: string): { family: string; alias: string } | null {
+    const latin = latinWords(text);
+    const hindi = hindiWords(text);
     for (const type of this.parts.fruitTypes) {
-      const alias = type.match_aliases.find((a) => hasWords(haystack, a));
+      const alias =
+        type.match_aliases.find((a) => hasWords(latin, a)) ??
+        this.parts.fruitHindi
+          .get(type.key)
+          ?.find((n) => n && hasWords(hindi, n));
       if (alias) return { family: type.key, alias };
     }
     return null;
@@ -197,6 +214,21 @@ const served = (r: { status: CatalogueStatus }) => r.status !== 'DRAFT';
 const approved = (r: { status: CatalogueStatus }) => r.status === 'APPROVED';
 
 /** Whole words only: "ber" must not match inside "mulberry". */
+/** Lower-case English letters and digits, single-spaced. */
+const latinWords = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+/** Any script, NFC (so ड़ typed either way reads the same), single-spaced. */
+const hindiWords = (text: string) =>
+  text
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{M}0-9]+/gu, ' ')
+    .trim();
+
 const hasWords = (haystack: string, alias: string) =>
   ` ${haystack.trim()} `.includes(` ${alias} `);
 

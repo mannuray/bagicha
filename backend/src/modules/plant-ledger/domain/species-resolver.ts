@@ -34,7 +34,7 @@ export class SpeciesResolver {
   }
 
   private match(input: TreeIdentityInput) {
-    return firstOf(input, (text) => this.catalogue.fruitFamilyIn(latin(text)));
+    return firstOf(input, (text) => this.catalogue.fruitFamilyIn(text));
   }
 }
 
@@ -49,11 +49,3 @@ function firstOf<T>(
   const kind = [input.species, input.variety].filter(Boolean).join(' ');
   return (kind && find(kind)) || (input.name ? find(input.name) : null);
 }
-
-/** Lower-case Latin letters and digits only, single-spaced. */
-const latin = (text: string) =>
-  text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();

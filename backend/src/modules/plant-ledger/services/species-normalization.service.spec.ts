@@ -54,6 +54,22 @@ describe('the species beats a nickname', () => {
   });
 });
 
+describe('fruit trees named in Hindi script', () => {
+  it.each([
+    ['अमरूद', 'guava'],
+    ['मेरा आम का पेड़', 'mango'],
+    ['नींबू', 'citrus'],
+    ['कटहल', 'jackfruit'],
+    ['आड़ू', 'peach'],
+  ])('%s → %s', (name, expected) => {
+    expect(species.family({ name })).toBe(expected);
+  });
+
+  it('reads ड़ typed as one code point too', () => {
+    expect(species.family({ name: 'आ\u095Cू' })).toBe('peach');
+  });
+});
+
 describe('resolveSpeciesFamily for the new fruit families', () => {
   it.each([
     ['Drumstick', 'moringa'],
