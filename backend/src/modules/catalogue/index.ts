@@ -3,6 +3,7 @@ export { CatalogueModule } from './catalogue.module';
 export { CatalogueStore, CatalogueUnavailableError } from './catalogue.store';
 export { Catalogue, UnknownMethodError } from './domain/catalogue';
 export { validateSeed } from './domain/schemas';
+export { pick } from './domain/pick';
 export { CATALOGUE_SEED } from './seed';
 export type {
   CareStep,

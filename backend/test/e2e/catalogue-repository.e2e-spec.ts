@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { CATALOGUE_SEED } from '../../src/modules/catalogue';
 import { CatalogueRepository } from '../../src/modules/catalogue/catalogue.repository';
 import type { CatalogueSeed } from '../../src/modules/catalogue';
+import { hindiSeed } from '../../src/modules/catalogue/testing';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
 
@@ -64,6 +65,17 @@ describe('catalogue repository', () => {
     const version = await repo.applyPush(writeOf(small));
     expect(version).toBe(1);
     expect(await repo.loadSeed(['APPROVED', 'RETIRED'])).toEqual(small);
+  });
+
+  it('round-trips Hindi texts', async () => {
+    const hi = hindiSeed();
+    const withHindi: CatalogueSeed = {
+      ...small,
+      crops: [hi.crops.find((c) => c.id === 'tomato')!, small.crops[1]],
+      methods: hi.methods.filter((m) => m.key === 'NURSERY_TRANSPLANT'),
+    };
+    await repo.applyPush(writeOf(withHindi));
+    expect(await repo.loadSeed(['APPROVED', 'RETIRED'])).toEqual(withHindi);
   });
 
   it('a later push changes only what it carries and bumps the version', async () => {

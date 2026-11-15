@@ -55,6 +55,13 @@ export interface CropInfo {
   description: string;
   /** FULL: 6+ hours of direct sun; PARTIAL: 3–5 hours is enough. */
   sun: 'FULL' | 'PARTIAL';
+  /** Hindi texts, where written; English shows where one is missing. */
+  hi?: {
+    name?: string;
+    description?: string;
+    container?: string;
+    plants_for_family_of_4?: string;
+  };
 }
 
 export interface PlantingMethod {
@@ -69,6 +76,12 @@ export interface PlantingMethod {
   /** Web: the material step on the crop page; null when it is seed. */
   material_title: string | null;
   material_body: string | null;
+  hi?: {
+    label?: string;
+    short?: string;
+    material_title?: string;
+    material_body?: string;
+  };
 }
 
 export interface CareStepInfo {
@@ -78,6 +91,8 @@ export interface CareStepInfo {
   /** Web: the step on the crop page. */
   label_title: string;
   label_body: string;
+  /** Hindi web labels; the reminder `title` is not translated yet. */
+  hi?: { label_title?: string; label_body?: string };
 }
 
 /** A crop as written in the seed and stored: `quick` and `long` are never stored, they are derived. */
@@ -126,6 +141,7 @@ export interface FruitPlantInfo {
   /** Lower-case region clusters where it is grown. */
   regions: string[];
   confidence_weight: number;
+  hi?: { display_name?: string };
 }
 
 /** What add-tree search ranks: fruit entries, and perennial flowers in the same shape. */
@@ -151,6 +167,7 @@ export interface PerennialFlower {
   lifespan_months: Months;
   /** Web translation key for the species pattern note, if any. */
   note_key: string | null;
+  hi?: { name?: string };
 }
 
 type Seeded<T> = T & {

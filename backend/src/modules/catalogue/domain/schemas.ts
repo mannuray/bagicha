@@ -7,6 +7,14 @@ const month = z.number().int().min(1).max(12);
 const range = z.tuple([z.number().int().min(0), z.number().int().min(0)]);
 const windows = z.array(z.tuple([month, month]));
 const text = z.string().min(1);
+/** A Hindi text: non-empty, with Devanagari in it. */
+const hindiText = z
+  .string()
+  .min(1)
+  .regex(/[\u0900-\u097F]/, 'needs Devanagari');
+/** Optional Hindi versions of some of a record's texts; no other keys. */
+const hindi = <T extends z.ZodRawShape>(shape: T) =>
+  z.object(shape).strict().optional();
 
 export const cropSeedSchema = z
   .object({
@@ -53,6 +61,12 @@ export const cropSeedSchema = z
     scientific_name: text,
     description: text,
     sun: z.enum(['FULL', 'PARTIAL']),
+    hi: hindi({
+      name: hindiText.optional(),
+      description: hindiText.optional(),
+      container: hindiText.optional(),
+      plants_for_family_of_4: hindiText.optional(),
+    }),
     status,
     notes: z.string().nullable(),
   })
@@ -67,6 +81,12 @@ export const methodSeedSchema = z
     short: text,
     material_title: text.nullable(),
     material_body: text.nullable(),
+    hi: hindi({
+      label: hindiText.optional(),
+      short: hindiText.optional(),
+      material_title: hindiText.optional(),
+      material_body: hindiText.optional(),
+    }),
     status,
   })
   .strict();
@@ -77,6 +97,10 @@ export const careStepSeedSchema = z
     title: z.string().includes('{name}'),
     label_title: text,
     label_body: text,
+    hi: hindi({
+      label_title: hindiText.optional(),
+      label_body: hindiText.optional(),
+    }),
     status,
   })
   .strict();
@@ -122,6 +146,7 @@ export const fruitPlantSeedSchema = z
     languages: z.record(z.string(), z.array(text)).nullable(),
     regions: z.array(text),
     confidence_weight: z.number().min(0).max(1),
+    hi: hindi({ display_name: hindiText.optional() }),
     status,
     notes: z.string().nullable(),
   })
@@ -148,6 +173,7 @@ export const perennialFlowerSeedSchema = z
     first_bloom_months: ordered,
     lifespan_months: ordered,
     note_key: text.nullable(),
+    hi: hindi({ name: hindiText.optional() }),
     status,
     notes: z.string().nullable(),
   })

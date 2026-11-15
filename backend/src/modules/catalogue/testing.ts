@@ -20,3 +20,24 @@ export function seededCatalogueStore(
     snapshot: () => Promise.resolve(catalogue),
   } as unknown as CatalogueStore;
 }
+
+/** The repo seed with a few Hindi texts, as Task 7 will add them. */
+export const hindiSeed = (): CatalogueSeed => ({
+  ...CATALOGUE_SEED,
+  crops: CATALOGUE_SEED.crops.map((c) =>
+    c.id === 'tomato' ? { ...c, hi: { name: 'टमाटर' } } : c,
+  ),
+  methods: CATALOGUE_SEED.methods.map((m) =>
+    m.key === 'NURSERY_TRANSPLANT'
+      ? { ...m, hi: { label: 'नर्सरी, फिर रोपाई' } }
+      : m,
+  ),
+  fruitPlants: CATALOGUE_SEED.fruitPlants.map((p) =>
+    p.key === 'mango:Dasheri'
+      ? { ...p, hi: { display_name: 'आम (दशहरी)' } }
+      : p,
+  ),
+  perennialFlowers: CATALOGUE_SEED.perennialFlowers.map((f) =>
+    f.family === 'rose' ? { ...f, hi: { name: 'गुलाब' } } : f,
+  ),
+});

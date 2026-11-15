@@ -46,6 +46,8 @@ export class Catalogue {
       /** Each fruit type's Hindi names (its plain add-tree entry's), NFC. */
       fruitHindi: Map<string, string[]>;
       flowers: Map<string, PerennialFlower>;
+      /** Hindi add-tree names of served fruit entries and flowers, by English display name. */
+      hindiNames: Map<string, { family: string; hi: string }>;
       /** Served flower aliases, longest first ("china rose" before "rose"). */
       flowerAliases: Array<{ alias: string; family: string }>;
       search: SearchEntry[];
@@ -104,6 +106,21 @@ export class Catalogue {
         b.confidence_weight - a.confidence_weight ||
         a.display_name.localeCompare(b.display_name, 'en'),
     );
+    const hindiNames = new Map(
+      [
+        ...seed.fruitPlants.filter(served),
+        ...seed.perennialFlowers.filter(served).map(flowerSearchEntry),
+      ].flatMap((e) =>
+        e.hi?.display_name
+          ? [
+              [
+                e.display_name,
+                { family: e.species_family, hi: e.hi.display_name },
+              ] as const,
+            ]
+          : [],
+      ),
+    );
     return new Catalogue(version, {
       listed,
       crops,
@@ -113,6 +130,7 @@ export class Catalogue {
       fruitHindi,
       flowers,
       flowerAliases,
+      hindiNames,
       search,
       approved: {
         fruitTypes: seed.fruitTypes.filter(approved).length,
@@ -205,6 +223,22 @@ export class Catalogue {
   }
 
   /** What add-tree search ranks: APPROVED entries, by weight, then name. */
+  /**
+   * A plant's Hindi name while it still carries its catalogue name (the crop's
+   * name, or an add-tree entry's of the same family); null once renamed or
+   * when no Hindi is written.
+   */
+  hindiPlantName(plant: {
+    name: string;
+    crop_id: string | null;
+    species_family: string | null;
+  }): string | null {
+    const crop = this.crop(plant.crop_id);
+    if (crop) return crop.name === plant.name ? (crop.hi?.name ?? null) : null;
+    const entry = this.parts.hindiNames.get(plant.name);
+    return entry && entry.family === plant.species_family ? entry.hi : null;
+  }
+
   searchEntries(): SearchEntry[] {
     return this.parts.search;
   }
@@ -255,6 +289,7 @@ function flowerSearchEntry(f: PerennialFlowerSeed): SearchEntry {
     languages: { hi: f.aliases.filter((a) => DEVANAGARI.test(a)) },
     regions: [],
     confidence_weight: 0.85,
+    ...(f.hi?.name ? { hi: { display_name: f.hi.name } } : {}),
   };
 }
 
