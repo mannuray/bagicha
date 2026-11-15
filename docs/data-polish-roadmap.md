@@ -6,12 +6,12 @@ The live app (bagicha-web.vercel.app) works end to end; this is the list of data
 
 1. District → region map — **done, live**
 2. Home season guidance — **done, live**
-3. Tree catalogue — **in progress** (phases 1–2 done)
+3. Tree catalogue — **in progress** (phases 1–3 done)
 4. + 5. + 6. Tree care, first tasks and life profiles — together, tree type by tree type, after item 3
 7. Crop and flower photos — **done, live**
 8. Task-title wording — **done**
 9. More vegetables — **done** (8 of 10; parwal and spring onion held back)
-10. Bulbs — **done** (seed committed; live after the catalogue push)
+10. Bulbs — **done, live**
 11. Hindi translation
 12. Copy gaps
 13. Matching gaps
@@ -41,10 +41,16 @@ Each tree type touches four things: the **catalogue entry** (add-tree search, Hi
 |---|---|---|
 | 1 | Popular varieties for the 14 known fruit types, with Hindi names; Hindi search works | **Done, live** (79 entries) |
 | 2 | Common home fruit trees we don't have: jamun, ber, bael, fig, mulberry, star fruit (kamrakh), karonda, phalsa, wood apple (kaith), tamarind, kokum, dragon fruit | **Done** (106 entries, 26 fruit types) |
-| 3 | Hill and cool-climate fruit: apple, pear, peach, plum, apricot, cherry, walnut, almond, kiwi, persimmon | Next |
+| 3 | Hill and cool-climate fruit: apple, pear, peach, plum, apricot, cherry, walnut, almond, kiwi, persimmon | **Done** (142 entries, 36 fruit types; seed only, live after the catalogue push) |
 | 4 | Shade, ornamental and sacred trees: neem, peepal, ashoka, curry leaf and others (no fruit stages; care more like the perennial flowers) | Planned |
 
 **For each new tree type (phases 2–4):** catalogue entries with Hindi names, name-matching aliases, a life profile. Care stays generic until item 4.
+
+### Phase 3 detail (done)
+- Apple (Royal Delicious, Golden Delicious, Ambri, low-chill HRMN-99 for the plains), pear (Patharnakh, Punjab Beauty, William Bartlett), peach (Shan-i-Punjab, Florda Prince, Partap, July Elberta), plum (Satluj Purple, Kala Amritsari, Santa Rosa), apricot (New Castle, Halman), cherry (Stella, Mishri), walnut, almond (Waris, Shalimar, Makhdoom), kiwi (Hayward, Allison, Bruno), persimmon (Fuyu, Hachiya). Source-checked and owner-approved (review doc 2026-11-15).
+- "badam" does not mean almond (it also means Indian almond); variety names that are also people's names (Stella, Mishri, kaki…) find the variety in search but never mark a tree's type.
+- "kath bel" now resolves to wood apple, not bael (wood apple moved above bael in the fruit list).
+- Later, with tree care: pollination notes (kiwi male vine 1:8; Satluj Purple needs Kala Amritsari).
 
 ### Phase 2 detail (done)
 - Jamun (Konkan Bahadoli, Jamwant), ber (Apple Ber, Gola, Umran, Banarasi Karaka), bael (NB-5), fig (Poona, Brown Turkey), mulberry (black, long), star fruit (kamrakh), karonda, phalsa, wood apple (kaith), tamarind (PKM-1, sweet), kokum, dragon fruit (red and white flesh), each with Hindi names and a life profile.

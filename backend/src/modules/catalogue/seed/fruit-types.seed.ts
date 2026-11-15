@@ -262,6 +262,25 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
       'life: typical Indian home-garden values for usual nursery stock, shown as ranges; source: general horticulture references (spec 2026-11-10-tree-life-and-loss §2.2).',
   },
   {
+    key: 'wood_apple',
+    match_aliases: [
+      'wood apple',
+      'kaith',
+      'kath bel',
+      'elephant apple',
+      'kavath',
+    ],
+    life: {
+      first_fruit_months: [60, 120],
+      productive_until_months: [600, 720],
+      lifespan_months: [720, 1200],
+      note_key: null,
+    },
+    status: 'APPROVED',
+    notes:
+      'life: typical Indian home-garden values for usual nursery stock, shown as ranges; source: general horticulture references (spec 2026-11-10-tree-life-and-loss §2.2).',
+  },
+  {
     key: 'bael',
     match_aliases: ['bael', 'bel', 'bilva', 'bengal quince'],
     life: {
@@ -346,25 +365,6 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
       'life: typical Indian home-garden values for usual nursery stock, shown as ranges; source: general horticulture references (spec 2026-11-10-tree-life-and-loss §2.2).',
   },
   {
-    key: 'wood_apple',
-    match_aliases: [
-      'wood apple',
-      'kaith',
-      'kath bel',
-      'elephant apple',
-      'kavath',
-    ],
-    life: {
-      first_fruit_months: [60, 120],
-      productive_until_months: [600, 720],
-      lifespan_months: [720, 1200],
-      note_key: null,
-    },
-    status: 'APPROVED',
-    notes:
-      'life: typical Indian home-garden values for usual nursery stock, shown as ranges; source: general horticulture references (spec 2026-11-10-tree-life-and-loss §2.2).',
-  },
-  {
     key: 'tamarind',
     match_aliases: ['tamarind', 'imli', 'chinch'],
     life: {
@@ -402,5 +402,195 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
     status: 'APPROVED',
     notes:
       'life: typical Indian home-garden values for usual nursery stock, shown as ranges; source: general horticulture references (spec 2026-11-10-tree-life-and-loss §2.2).',
+  },
+  {
+    key: 'apple',
+    match_aliases: [
+      'apple',
+      'seb',
+      'saib',
+      'royal delicious',
+      'golden delicious',
+      'ambri',
+      'hrmn 99',
+      'harman 99',
+    ],
+    life: {
+      first_fruit_months: [36, 96],
+      productive_until_months: [360, 480],
+      lifespan_months: [480, 600],
+      note_key: null,
+    },
+    status: 'APPROVED',
+    notes:
+      "life: phase 3 review 2026-11-15 (Claude Doc 'Tree catalogue phase 3: hill fruit review'), source check against PAU PoP Fruits 2021, ICAR/KVK kiwi papers, Indian Horticulture temperate-fruit economics; lifespan is an estimate (no Indian source).",
+  },
+  {
+    key: 'pear',
+    match_aliases: [
+      'pear',
+      'nashpati',
+      'nakh',
+      'naakh',
+      'babugosha',
+      'patharnakh',
+      'pathar nakh',
+      'sand pear',
+      'gola pear',
+      'punjab beauty',
+      'william bartlett',
+      'bartlett',
+    ],
+    life: {
+      first_fruit_months: [48, 72],
+      productive_until_months: [300, 600],
+      lifespan_months: [600, 900],
+      note_key: null,
+    },
+    status: 'APPROVED',
+    notes:
+      "life: phase 3 review 2026-11-15 (Claude Doc 'Tree catalogue phase 3: hill fruit review'), source check against PAU PoP Fruits 2021, ICAR/KVK kiwi papers, Indian Horticulture temperate-fruit economics; productive and lifespan is an estimate (no Indian source).",
+  },
+  {
+    key: 'peach',
+    match_aliases: [
+      'peach',
+      'aadu',
+      'aaru',
+      'aru',
+      'adoo',
+      'aadoo',
+      'shan i punjab',
+      'shan e punjab',
+      'florda prince',
+      'florida prince',
+      'july elberta',
+      'elberta',
+    ],
+    life: {
+      first_fruit_months: [24, 36],
+      productive_until_months: [120, 180],
+      lifespan_months: [180, 240],
+      note_key: null,
+    },
+    status: 'APPROVED',
+    notes:
+      "life: phase 3 review 2026-11-15 (Claude Doc 'Tree catalogue phase 3: hill fruit review'), source check against PAU PoP Fruits 2021, ICAR/KVK kiwi papers, Indian Horticulture temperate-fruit economics.",
+  },
+  {
+    key: 'plum',
+    match_aliases: [
+      'plum',
+      'aloo bukhara',
+      'alubukhara',
+      'alucha',
+      'satluj purple',
+      'kala amritsari',
+      'santa rosa',
+    ],
+    life: {
+      first_fruit_months: [36, 48],
+      productive_until_months: [180, 300],
+      lifespan_months: [300, 360],
+      note_key: null,
+    },
+    status: 'APPROVED',
+    notes:
+      "life: phase 3 review 2026-11-15 (Claude Doc 'Tree catalogue phase 3: hill fruit review'), source check against PAU PoP Fruits 2021, ICAR/KVK kiwi papers, Indian Horticulture temperate-fruit economics; lifespan is an estimate (no Indian source).",
+  },
+  {
+    key: 'apricot',
+    match_aliases: [
+      'apricot',
+      'khubani',
+      'khumani',
+      'chuli',
+      'chulli',
+      'zardalu',
+      'new castle',
+      'newcastle',
+      'halman',
+    ],
+    life: {
+      first_fruit_months: [36, 60],
+      productive_until_months: [240, 300],
+      lifespan_months: [300, 480],
+      note_key: null,
+    },
+    status: 'APPROVED',
+    notes:
+      "life: phase 3 review 2026-11-15 (Claude Doc 'Tree catalogue phase 3: hill fruit review'), source check against PAU PoP Fruits 2021, ICAR/KVK kiwi papers, Indian Horticulture temperate-fruit economics.",
+  },
+  {
+    key: 'cherry',
+    match_aliases: ['cherry', 'gilas'],
+    life: {
+      first_fruit_months: [48, 84],
+      productive_until_months: [240, 360],
+      lifespan_months: [360, 480],
+      note_key: null,
+    },
+    status: 'APPROVED',
+    notes:
+      "life: phase 3 review 2026-11-15 (Claude Doc 'Tree catalogue phase 3: hill fruit review'), source check against PAU PoP Fruits 2021, ICAR/KVK kiwi papers, Indian Horticulture temperate-fruit economics; lifespan is an estimate (no Indian source).",
+  },
+  {
+    key: 'walnut',
+    match_aliases: ['walnut', 'akhrot'],
+    life: {
+      first_fruit_months: [48, 72],
+      productive_until_months: [600, 900],
+      lifespan_months: [900, 1200],
+      note_key: null,
+    },
+    status: 'APPROVED',
+    notes:
+      "life: phase 3 review 2026-11-15 (Claude Doc 'Tree catalogue phase 3: hill fruit review'), source check against PAU PoP Fruits 2021, ICAR/KVK kiwi papers, Indian Horticulture temperate-fruit economics; productive and lifespan is an estimate (no Indian source).",
+  },
+  {
+    key: 'almond',
+    match_aliases: ['almond', 'makhdoom'],
+    life: {
+      first_fruit_months: [36, 48],
+      productive_until_months: [300, 360],
+      lifespan_months: [360, 600],
+      note_key: null,
+    },
+    status: 'APPROVED',
+    notes:
+      "life: phase 3 review 2026-11-15 (Claude Doc 'Tree catalogue phase 3: hill fruit review'), source check against PAU PoP Fruits 2021, ICAR/KVK kiwi papers, Indian Horticulture temperate-fruit economics.",
+  },
+  {
+    key: 'kiwi',
+    match_aliases: ['kiwi', 'kiwifruit', 'kiwi fruit', 'hayward'],
+    life: {
+      first_fruit_months: [24, 60],
+      productive_until_months: [360, 480],
+      lifespan_months: [480, 600],
+      note_key: null,
+    },
+    status: 'APPROVED',
+    notes:
+      "life: phase 3 review 2026-11-15 (Claude Doc 'Tree catalogue phase 3: hill fruit review'), source check against PAU PoP Fruits 2021, ICAR/KVK kiwi papers, Indian Horticulture temperate-fruit economics; productive and lifespan is an estimate (no Indian source).",
+  },
+  {
+    key: 'persimmon',
+    match_aliases: [
+      'persimmon',
+      'japani phal',
+      'japani fal',
+      'japanese fruit',
+      'fuyu',
+      'hachiya',
+    ],
+    life: {
+      first_fruit_months: [48, 72],
+      productive_until_months: [300, 480],
+      lifespan_months: [360, 600],
+      note_key: null,
+    },
+    status: 'APPROVED',
+    notes:
+      "life: phase 3 review 2026-11-15 (Claude Doc 'Tree catalogue phase 3: hill fruit review'), source check against PAU PoP Fruits 2021, ICAR/KVK kiwi papers, Indian Horticulture temperate-fruit economics; productive is an estimate (no Indian source).",
   },
 ];

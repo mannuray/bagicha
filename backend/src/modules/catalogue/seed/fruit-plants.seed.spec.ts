@@ -32,6 +32,17 @@ const FAMILIES = [
   'tamarind',
   'kokum',
   'dragon_fruit',
+  // Phase 3: hill and cool-climate fruit
+  'apple',
+  'pear',
+  'peach',
+  'plum',
+  'apricot',
+  'cherry',
+  'walnut',
+  'almond',
+  'kiwi',
+  'persimmon',
 ];
 
 describe('the fruit plants seed', () => {
@@ -41,7 +52,7 @@ describe('the fruit plants seed', () => {
         FRUIT_CATALOGUE.some((e) => e.species_family === family && !e.variety),
       ).toBe(true);
     }
-    expect(FRUIT_CATALOGUE.length).toBeGreaterThanOrEqual(95);
+    expect(FRUIT_CATALOGUE.length).toBeGreaterThanOrEqual(142);
   });
 
   it('uses only families that have a life profile, and never repeats a name', () => {

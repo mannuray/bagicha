@@ -162,6 +162,8 @@ const RECORDED: Record<
       'Ber (Umran)',
       'Mulberry (Black)',
       'Mulberry (Long)',
+      // Phase 3: search matches inside names, as with "mulberry".
+      'Peach (July Elberta)',
       'Mulberry',
       'Amla',
     ],

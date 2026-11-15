@@ -64,6 +64,17 @@ export const CARE_PENDING: readonly string[] = [
   'tamarind',
   'kokum',
   'dragon_fruit',
+  // Phase 3: hill and cool-climate fruit
+  'apple',
+  'pear',
+  'peach',
+  'plum',
+  'apricot',
+  'cherry',
+  'walnut',
+  'almond',
+  'kiwi',
+  'persimmon',
 ];
 
 export function careFor(family: string): FamilyCare | null {
