@@ -1,3 +1,4 @@
+import { savedName, type PlantNamer } from '../services/plant-names.service';
 import {
   Prisma,
   TaskCategory,
@@ -90,30 +91,39 @@ export function buildTaskSourceSummary(task: {
   return null;
 }
 
-export function mapTaskView(task: {
-  id: string;
-  type: TaskType;
-  title: string | null;
-  category: TaskCategory | null;
-  priority: TaskPriority;
-  status: TaskStatus;
-  source: TaskSource;
-  reason: string | null;
-  due_date: Date;
-  completed_at: Date | null;
-  plant_cycle_id: string | null;
-  plant_cycle?: { cycle_year: number } | null;
-  plant?: { id: string; name: string; record_kind: string } | null;
-  seasonal_pack?: {
-    current_phase: string | null;
-    upcoming_phase: string | null;
-  } | null;
-  personalized_overlay?: {
-    reasoning_summary: string | null;
-    adjusted_phase: string | null;
-  } | null;
-  metadata?: Prisma.JsonValue | null;
-}) {
+export function mapTaskView(
+  task: {
+    id: string;
+    type: TaskType;
+    title: string | null;
+    category: TaskCategory | null;
+    priority: TaskPriority;
+    status: TaskStatus;
+    source: TaskSource;
+    reason: string | null;
+    due_date: Date;
+    completed_at: Date | null;
+    plant_cycle_id: string | null;
+    plant_cycle?: { cycle_year: number } | null;
+    plant?: {
+      id: string;
+      name: string;
+      record_kind: string;
+      crop_id?: string | null;
+      species_family?: string | null;
+    } | null;
+    seasonal_pack?: {
+      current_phase: string | null;
+      upcoming_phase: string | null;
+    } | null;
+    personalized_overlay?: {
+      reasoning_summary: string | null;
+      adjusted_phase: string | null;
+    } | null;
+    metadata?: Prisma.JsonValue | null;
+  },
+  displayName: PlantNamer = savedName,
+) {
   return {
     id: task.id,
     type: task.type,
@@ -126,7 +136,7 @@ export function mapTaskView(task: {
     due_date: task.due_date,
     completed_at: task.completed_at,
     plant_id: task.plant?.id ?? null,
-    tree_name: task.plant?.name ?? null,
+    tree_name: task.plant ? displayName(task.plant) : null,
     record_kind: task.plant?.record_kind ?? null,
     plant_cycle_id: task.plant_cycle_id,
     cycle_year: task.plant_cycle?.cycle_year ?? null,

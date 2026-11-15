@@ -3,7 +3,6 @@ import { hindiSeed } from '../testing';
 import { Catalogue } from './catalogue';
 import { pick } from './pick';
 import { validateSeed } from './schemas';
-import type { CatalogueSeed } from './types';
 
 const withCrop = (hi: unknown): unknown => ({
   ...CATALOGUE_SEED,

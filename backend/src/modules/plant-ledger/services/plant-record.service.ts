@@ -1,3 +1,4 @@
+import type { Lang } from '../../../common/http/lang';
 import { bloomStatus } from '../domain/flower-care';
 import type {
   SpeciesResolver,
@@ -113,14 +114,18 @@ export class PlantRecordService implements OnModuleInit {
   }
 
   /** Plant detail as the API returns it: the plant plus its species life profile. */
-  async detailView(user: Pick<User, 'id' | 'region_cluster'>, plantId: string) {
+  async detailView(
+    user: Pick<User, 'id' | 'region_cluster'>,
+    plantId: string,
+    lang: Lang = 'en',
+  ) {
     const plant = await this.getDetail(user.id, plantId);
     const species = await this.species.resolver();
     return {
       ...plant,
       bloom:
         plant.record_kind === RecordKind.FLOWER && !plant.crop_id
-          ? this.bloomFor(plant, user.region_cluster, species)
+          ? this.bloomFor(plant, user.region_cluster, species, lang)
           : null,
       life_profile: species.catalogue.lifeProfile(
         plant.species_family ?? species.family(plant),
@@ -330,11 +335,12 @@ export class PlantRecordService implements OnModuleInit {
     plant: TreeIdentityInput,
     region: RegionCluster | null,
     species: SpeciesResolver,
+    lang: Lang,
   ) {
     const flower = species.catalogue.perennialFlower(species.family(plant));
     if (!flower) return null;
     const group = region ? climateGroupFor(region) : 'PLAINS';
-    return bloomStatus(flower, group, this.clock.now());
+    return bloomStatus(flower, group, this.clock.now(), lang);
   }
 
   /** Plant history and season context sent to the AI for diagnosis. */
@@ -362,7 +368,12 @@ export class PlantRecordService implements OnModuleInit {
         plant.record_kind === RecordKind.FLOWER && !plant.crop_id
           ? {
               kind: 'perennial_flower' as const,
-              bloom: this.bloomFor(plant, plant.user.region_cluster, species),
+              bloom: this.bloomFor(
+                plant,
+                plant.user.region_cluster,
+                species,
+                'en',
+              ),
             }
           : this.seasonalIntelligence.inferTreeSeasonalState(
               plant,

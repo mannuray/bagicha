@@ -11,6 +11,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { RequestLang, type Lang } from '../../common/http/lang';
+import { PlantNamesService } from './services/plant-names.service';
 import { PaginationQueryDto } from '../../common/pagination';
 import { TimelineQueryDto } from './dto/timeline-query.dto';
 import { EndPlantDto } from './dto/end-plant.dto';
@@ -42,22 +44,31 @@ export class PlantLedgerController {
     private readonly mitigation: MitigationService,
     private readonly clock: Clock,
     private readonly ending: PlantEndService,
+    private readonly names: PlantNamesService,
   ) {}
 
   @Post('plants')
   async createPlant(
     @Request() req: AuthedRequest,
     @Body() dto: CreatePlantDto,
+    @RequestLang() lang: Lang,
   ) {
-    return toPlantView(await this.plants.create(req.user.id, dto));
+    return toPlantView(
+      await this.plants.create(req.user.id, dto),
+      await this.names.namer(lang),
+    );
   }
 
   @Get('plants')
   async getPlants(
     @Request() req: AuthedRequest,
     @Query() q: ListPlantsQueryDto,
+    @RequestLang() lang: Lang,
   ) {
-    return mapPage(await this.plants.list(req.user.id, q), toPlantView);
+    const name = await this.names.namer(lang);
+    return mapPage(await this.plants.list(req.user.id, q), (p) =>
+      toPlantView(p, name),
+    );
   }
 
   @Post('plants/:id/end')
@@ -65,18 +76,36 @@ export class PlantLedgerController {
     @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Body() dto: EndPlantDto,
+    @RequestLang() lang: Lang,
   ) {
-    return toPlantView(await this.ending.end(req.user.id, id, dto));
+    return toPlantView(
+      await this.ending.end(req.user.id, id, dto),
+      await this.names.namer(lang),
+    );
   }
 
   @Post('plants/:id/restore')
-  async restorePlant(@Request() req: AuthedRequest, @Param('id') id: string) {
-    return toPlantView(await this.ending.restore(req.user.id, id));
+  async restorePlant(
+    @Request() req: AuthedRequest,
+    @Param('id') id: string,
+    @RequestLang() lang: Lang,
+  ) {
+    return toPlantView(
+      await this.ending.restore(req.user.id, id),
+      await this.names.namer(lang),
+    );
   }
 
   @Get('plants/:id')
-  async getPlantDetail(@Request() req: AuthedRequest, @Param('id') id: string) {
-    return toPlantView(await this.plants.detailView(req.user, id));
+  async getPlantDetail(
+    @Request() req: AuthedRequest,
+    @Param('id') id: string,
+    @RequestLang() lang: Lang,
+  ) {
+    return toPlantView(
+      await this.plants.detailView(req.user, id, lang),
+      await this.names.namer(lang),
+    );
   }
 
   @Get('plants/:id/seasonal-state')
@@ -89,8 +118,12 @@ export class PlantLedgerController {
     @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Body() dto: UpdatePlantDto,
+    @RequestLang() lang: Lang,
   ) {
-    return toPlantView(await this.plants.update(req.user.id, id, dto));
+    return toPlantView(
+      await this.plants.update(req.user.id, id, dto),
+      await this.names.namer(lang),
+    );
   }
 
   @Post('plants/:id/journal')
@@ -137,14 +170,29 @@ export class PlantLedgerController {
     @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Query() q: PaginationQueryDto,
+    @RequestLang() lang: Lang,
   ) {
     await this.plants.getOwnedOrThrow(req.user.id, id);
-    return this.tasks.listForPlant(req.user.id, id, q);
+    return this.tasks.listForPlant(
+      req.user.id,
+      id,
+      q,
+      await this.names.namer(lang),
+    );
   }
 
   @Get('tasks')
-  getUserTasks(@Request() req: AuthedRequest, @Query() q: ListTasksQueryDto) {
-    return this.tasks.listForUser(req.user.id, q, q.status);
+  async getUserTasks(
+    @Request() req: AuthedRequest,
+    @Query() q: ListTasksQueryDto,
+    @RequestLang() lang: Lang,
+  ) {
+    return this.tasks.listForUser(
+      req.user.id,
+      q,
+      q.status,
+      await this.names.namer(lang),
+    );
   }
 
   @Get('plants/:id/mitigation-plan')
@@ -162,6 +210,7 @@ export class PlantLedgerController {
     @Param('id') id: string,
     @Param('taskId') taskId: string,
     @Body() dto: UpdateTaskStatusDto,
+    @RequestLang() lang: Lang,
   ) {
     await this.plants.assertGrowing(req.user.id, id);
     return this.tasks.updateStatus(
@@ -170,6 +219,7 @@ export class PlantLedgerController {
       taskId,
       dto.status,
       this.clock.now(),
+      await this.names.namer(lang),
     );
   }
 }

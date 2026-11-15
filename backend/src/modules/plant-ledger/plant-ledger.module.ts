@@ -24,6 +24,7 @@ import { CropPlanService } from './services/crop-plan.service';
 import { CropJourneyService } from './services/crop-journey.service';
 import { PlantRecordService } from './services/plant-record.service';
 import { SeasonalIntelligenceService } from './services/seasonal-intelligence.service';
+import { PlantNamesService } from './services/plant-names.service';
 import { SpeciesNormalizationService } from './services/species-normalization.service';
 import { TaskService } from './services/task.service';
 
@@ -52,6 +53,7 @@ import { TaskService } from './services/task.service';
     SpeciesNormalizationService,
     SeasonalIntelligenceService,
     TaskProcessor,
+    PlantNamesService,
   ],
   exports: [
     TREE_CARE_REGISTRY,
@@ -63,6 +65,7 @@ import { TaskService } from './services/task.service';
     TaskService,
     SeasonalIntelligenceService,
     SpeciesNormalizationService,
+    PlantNamesService,
   ],
 })
 export class PlantLedgerModule {}

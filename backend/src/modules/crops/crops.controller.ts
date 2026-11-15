@@ -20,12 +20,15 @@ import { CropsService } from './crops.service';
 import { CreatePlaceDto, UpdatePlaceDto } from './dto/place.dto';
 import { AddToPlanDto } from './dto/plan.dto';
 import { toPlaceView } from './place-view';
-import { toPlantView } from '../plant-ledger';
+import { PlantNamesService, toPlantView } from '../plant-ledger';
 
 @Controller()
 @UseGuards(AuthGuard('jwt'))
 export class CropsController {
-  constructor(private readonly crops: CropsService) {}
+  constructor(
+    private readonly crops: CropsService,
+    private readonly names: PlantNamesService,
+  ) {}
 
   @Get('crops/calendar')
   calendar(@Request() req: AuthedRequest, @RequestLang() lang: Lang) {
@@ -69,13 +72,14 @@ export class CropsController {
     @Request() req: AuthedRequest,
     @Body() dto: AddToPlanDto,
     @Res({ passthrough: true }) res: Response,
+    @RequestLang() lang: Lang,
   ) {
     const { plant, created } = await this.crops.addToPlan(
       req.user.id,
       dto.crop_id,
     );
     res.status(created ? 201 : 200);
-    return toPlantView(plant);
+    return toPlantView(plant, await this.names.namer(lang));
   }
 
   @Delete('crops/plan/:plantId')

@@ -39,6 +39,7 @@ export type {
 export { GardenPlaceRepository } from './repositories/garden-place.repository';
 export { CropPlanService } from './services/crop-plan.service';
 export { toPlantView } from './domain/plant-view';
+export { PlantNamesService } from './services/plant-names.service';
 export {
   CARE_PENDING,
   careApplies,

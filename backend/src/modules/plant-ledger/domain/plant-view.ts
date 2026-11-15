@@ -1,4 +1,9 @@
 import { pickFields } from '../../../common/http/pick-fields';
+import {
+  savedName,
+  type NamedPlant,
+  type PlantNamer,
+} from '../services/plant-names.service';
 
 /** The plant columns clients see — every column except the owner id and bookkeeping. */
 export const PLANT_FIELDS = [
@@ -48,10 +53,19 @@ type PlantLike = { [K in (typeof PLANT_FIELDS)[number]]?: unknown } & {
   [K in (typeof PLANT_EXTRAS)[number]]?: unknown;
 };
 
-/** A plant as clients see it, built field by field. */
-export function toPlantView<T extends PlantLike>(plant: T) {
-  return pickFields(plant, [
-    ...PLANT_FIELDS,
-    ...PLANT_EXTRAS,
-  ] as unknown as readonly (keyof T)[]);
+/**
+ * A plant as clients see it, built field by field. `display_name` is how to
+ * show it in the request's language; `name` stays the saved, editable one.
+ */
+export function toPlantView<T extends PlantLike & { name: string }>(
+  plant: T,
+  displayName: PlantNamer = savedName,
+) {
+  return {
+    ...pickFields(plant, [
+      ...PLANT_FIELDS,
+      ...PLANT_EXTRAS,
+    ] as unknown as readonly (keyof T)[]),
+    display_name: displayName(plant as NamedPlant),
+  };
 }

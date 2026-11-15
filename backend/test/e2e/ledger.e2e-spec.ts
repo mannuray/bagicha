@@ -258,6 +258,36 @@ describe('plant ledger loop', () => {
       expect(res.body.pagination.total_items).toBe(2);
     });
   });
+  it('a Hindi request adds a display name and never changes the saved name', async () => {
+    const auth = { Authorization: `Bearer ${tokenFor(app, alice)}` };
+    const hi = { ...auth, 'Accept-Language': 'hi' };
+    const server = app.getHttpServer();
+    const plant = (
+      await request(server)
+        .post('/api/v1/ledger/plants')
+        .set(hi)
+        .send({ name: "Dadi's mango", species: 'Mango' })
+    ).body.data;
+    expect(plant).toMatchObject({
+      name: "Dadi's mango",
+      display_name: "Dadi's mango",
+    });
+    await request(server)
+      .put(`/api/v1/ledger/plants/${plant.id}`)
+      .set(hi)
+      .send({ planted_context: 'GROUND' });
+    const after = (
+      await request(server).get(`/api/v1/ledger/plants/${plant.id}`).set(auth)
+    ).body.data;
+    expect(after).toMatchObject({
+      name: "Dadi's mango",
+      display_name: "Dadi's mango",
+    });
+    const tasks = (await request(server).get('/api/v1/ledger/tasks').set(hi))
+      .body.data;
+    expect(tasks.every((t: { tree_name: string }) => t.tree_name)).toBe(true);
+  });
+
   it('returns the species life profile on plant detail', async () => {
     const a = as(alice);
     const papaya = await a.post('/api/v1/ledger/plants', {

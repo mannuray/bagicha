@@ -8,7 +8,15 @@ import { Rows, SkipTake } from './types';
 export type NewTaskData = Omit<Prisma.TaskUncheckedCreateInput, 'plant_id'>;
 
 export const taskViewInclude = {
-  plant: { select: { id: true, name: true, record_kind: true } },
+  plant: {
+    select: {
+      id: true,
+      name: true,
+      record_kind: true,
+      crop_id: true,
+      species_family: true,
+    },
+  },
   plant_cycle: { select: { cycle_year: true } },
   seasonal_pack: { select: { current_phase: true, upcoming_phase: true } },
   personalized_overlay: {
