@@ -1,3 +1,4 @@
+import { RequestLang, type Lang } from '../../common/http/lang';
 import {
   Body,
   Controller,
@@ -27,13 +28,17 @@ export class CropsController {
   constructor(private readonly crops: CropsService) {}
 
   @Get('crops/calendar')
-  calendar(@Request() req: AuthedRequest) {
-    return this.crops.calendar(req.user);
+  calendar(@Request() req: AuthedRequest, @RequestLang() lang: Lang) {
+    return this.crops.calendar(req.user, lang);
   }
 
   @Get('crops/calendar/:id')
-  detail(@Request() req: AuthedRequest, @Param('id') id: string) {
-    return this.crops.detail(req.user, id);
+  detail(
+    @Request() req: AuthedRequest,
+    @Param('id') id: string,
+    @RequestLang() lang: Lang,
+  ) {
+    return this.crops.detail(req.user, id, lang);
   }
 
   @Get('garden/places')
@@ -92,7 +97,8 @@ export class CropsController {
     @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Query('crop_id') cropId: string,
+    @RequestLang() lang: Lang,
   ) {
-    return this.crops.rotation(req.user.id, id, cropId ?? '');
+    return this.crops.rotation(req.user.id, id, cropId ?? '', lang);
   }
 }

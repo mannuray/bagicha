@@ -53,6 +53,21 @@ describe('perennial flowers', () => {
     });
   });
 
+  it('reports bloom months in Hindi when asked', () => {
+    const mogra = perennialFlower('jasmine')!;
+    expect(bloomStatus(mogra, 'PLAINS', ist('2026-04-10'), 'hi')).toEqual({
+      status: 'in_season',
+      window_label: 'मार्च–जून',
+    });
+    const sadabahar = perennialFlower('periwinkle')!;
+    expect(
+      bloomStatus(sadabahar, 'PLAINS', ist('2026-04-10'), 'hi').window_label,
+    ).toBe('साल भर');
+    expect(
+      bloomStatus(sadabahar, 'PLAINS', ist('2026-04-10')).window_label,
+    ).toBe('All year');
+  });
+
   it('gives each care month its own key, so a second feed in the year is not lost', () => {
     const hibiscus = perennialFlower('hibiscus')!;
     const march = flowerCareDue(hibiscus, 'PLAINS', ist('2026-03-05')).map(

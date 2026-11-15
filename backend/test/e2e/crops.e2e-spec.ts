@@ -56,6 +56,22 @@ describe('crops', () => {
   };
 
   describe('calendar', () => {
+    it('answers a Hindi request with the same crops and statuses, months in Hindi', async () => {
+      const en = (await as(alice).get('/api/v1/crops/calendar')).body.data;
+      const hi = (
+        await as(alice)
+          .get('/api/v1/crops/calendar')
+          .set('Accept-Language', 'hi-IN,hi;q=0.9')
+      ).body.data;
+      const shape = (items: Array<{ id: string; status: string }>) =>
+        items.map((c) => [c.id, c.status]);
+      expect(shape(hi)).toEqual(shape(en));
+      const labelled = hi.find(
+        (c: { window_label: string | null }) => c.window_label,
+      );
+      expect(labelled.window_label).toMatch(/[\u0900-\u097F]/);
+    });
+
     it('lists crops with their status for the user’s region', async () => {
       const res = await as(alice).get('/api/v1/crops/calendar');
       expect(res.status).toBe(200);

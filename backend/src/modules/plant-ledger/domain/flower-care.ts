@@ -3,25 +3,11 @@
  * months, care calendar, life ranges) live in the catalogue.
  * Spec: docs/superpowers/specs/2026-11-11-flowers-design.md §2.2.
  */
-import { istMonth, istYear } from '../../../common/time';
+import type { Lang } from '../../../common/http/lang';
+import { istMonth, istYear, monthRange } from '../../../common/time';
 import type { ClimateGroup, PerennialFlower } from '../../catalogue';
 
 type Months = [number, number];
-
-const MONTHS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
 
 /** Midnight IST on the 1st of a month. */
 function firstOfMonthIst(year: number, month: number): Date {
@@ -58,22 +44,25 @@ export function flowerCareDue(
 
 const contains = ([a, b]: Months, m: number) =>
   a <= b ? m >= a && m <= b : m >= a || m <= b;
-const label = ([a, b]: Months) =>
-  a === 1 && b === 12 ? 'All year' : `${MONTHS[a - 1]}–${MONTHS[b - 1]}`;
+const ALL_YEAR: Record<Lang, string> = { en: 'All year', hi: 'साल भर' };
+const label = ([a, b]: Months, lang: Lang) =>
+  a === 1 && b === 12 ? ALL_YEAR[lang] : monthRange(a, b, lang);
 
 /** Whether the flower is in its usual bloom months now, and which window to show. */
 export function bloomStatus(
   flower: PerennialFlower,
   group: ClimateGroup,
   now: Date,
+  lang: Lang = 'en',
 ): { status: 'in_season' | 'later'; window_label: string } {
   const month = istMonth(now);
   const windows = flower.bloom[group];
   const current = windows.find((w) => contains(w, month));
-  if (current) return { status: 'in_season', window_label: label(current) };
+  if (current)
+    return { status: 'in_season', window_label: label(current, lang) };
   const ahead = (w: Months) => (w[0] - month + 12) % 12;
   const upcoming = [...windows].sort((x, y) => ahead(x) - ahead(y))[0];
-  return { status: 'later', window_label: label(upcoming) };
+  return { status: 'later', window_label: label(upcoming, lang) };
 }
 
 /**
