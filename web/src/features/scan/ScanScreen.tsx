@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { messageFor } from '../../lib/error-messages';
 import { Button, ErrorState, Icon, Screen, TextField, cx, formSubmit } from '../../ui';
+import { plantName } from '../plants';
 import { useStartScan } from './useStartScan';
 
 /** Stitch "Vision Scan": choose identify or diagnose, pick the tree, take a photo. */
@@ -51,7 +52,7 @@ export function ScanScreen() {
                 <option value="">{t('scan.chooseTree')}</option>
                 {plants.data?.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name}
+                    {plantName(p)}
                   </option>
                 ))}
               </select>

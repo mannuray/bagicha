@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import leavesPhoto from '../../assets/stitch/moment-leaves.jpg';
 import { Button, ErrorState, Icon, LoadingState, Pill, TextField, formSubmit } from '../../ui';
-import { isPlantMissing, NotInGarden, usePlant } from '../plants';
+import { isPlantMissing, NotInGarden, plantName, usePlant } from '../plants';
 import { DROP_SEVERITIES, DROP_TYPES, FLOWER_LOGGABLE, HARVEST_QUALITIES, HARVEST_UNITS, TREE_LOGGABLE } from './log-types';
 import { useLogMoment } from './useLogMoment';
 
@@ -39,7 +39,7 @@ export function LogMomentScreen() {
               {isPlantMissing(plant.error) ? <NotInGarden /> : <ErrorState error={plant.error} onRetry={() => void plant.refetch()} />}
             </div>
           ) : plant.data ? (
-            <MomentForm plantId={id} plantName={plant.data.name} flower={plant.data.record_kind === 'FLOWER'} />
+            <MomentForm plantId={id} plantName={plantName(plant.data)} flower={plant.data.record_kind === 'FLOWER'} />
           ) : (
             <LoadingState />
           )}

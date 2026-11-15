@@ -35,6 +35,19 @@ function client(tokens = memoryTokens(), onUnauthorized = vi.fn()) {
 }
 
 describe('api client', () => {
+  it('sends the app language with every request', async () => {
+    let lang: string | null = null;
+    server.use(
+      http.get(`${API}/ledger/plants/p1`, ({ request }) => {
+        lang = request.headers.get('Accept-Language');
+        return ok({ id: 'p1', name: 'Aam' });
+      }),
+    );
+    const api = createApiClient({ baseUrl: API, tokens: memoryTokens(), onUnauthorized: vi.fn(), language: () => 'hi' });
+    await api.get('/ledger/plants/p1', plant);
+    expect(lang).toBe('hi');
+  });
+
   it('unwraps data from the success envelope', async () => {
     server.use(http.get(`${API}/ledger/plants/p1`, () => ok({ id: 'p1', name: 'Aam' })));
     await expect(client().api.get('/ledger/plants/p1', plant)).resolves.toEqual({

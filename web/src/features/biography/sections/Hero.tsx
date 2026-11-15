@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import treeHero from '../../../assets/stitch/tree-hero.jpg';
 import { cx, Icon } from '../../../ui';
 import { useMediaUrl } from '../../journal';
-import type { PlantDetail } from '../../plants';
+import { plantName, type PlantDetail } from '../../plants';
 import type { healthLabel } from '../health-label';
 import { ageUntil, heroPhoto } from '../hero-view';
 import { plantAge } from '../plant-age';
@@ -34,7 +34,7 @@ export function Hero({ plant, health, photoKey, now }: { plant: PlantDetail; hea
       <div className="absolute bottom-5 left-4 right-4 flex items-end justify-between gap-3">
         <div className="min-w-0">
           {kicker && <p className="mb-1 font-label text-xs font-bold uppercase tracking-[0.15em] text-secondary-container">{kicker}</p>}
-          <h1 className="font-headline text-3xl font-bold leading-none text-on-primary">{plant.name}</h1>
+          <h1 className="font-headline text-3xl font-bold leading-none text-on-primary">{plantName(plant)}</h1>
           {ageLine && <p className="mt-1.5 font-body text-sm text-on-primary/85">{ageLine}</p>}
         </div>
         {/* TODO(vitality): Stitch shows a "Vitality 94%" score here. It needs a backend

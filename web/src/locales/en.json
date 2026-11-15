@@ -74,8 +74,7 @@
     "step": "Step {{step}} of {{total}}",
     "language": {
       "title": "Choose Your Language",
-      "subtitle": "Pick the language you're most comfortable with.",
-      "englishForNow": "Hindi is on its way — the app shows English for now, and we'll switch when it's ready."
+      "subtitle": "Pick the language you're most comfortable with."
     },
     "region": {
       "title": "Locate Your Sanctuary",

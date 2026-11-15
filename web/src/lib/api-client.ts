@@ -43,6 +43,8 @@ export interface ApiClientOptions {
   report?: (err: unknown, context: Record<string, unknown>) => void;
   /** A fresh id for each request's X-Request-Id (default: crypto). */
   requestId?: () => string;
+  /** The app's language, sent as Accept-Language so the API answers in it. */
+  language?: () => string;
   /** The page origin a relative baseUrl resolves against (default: the current page's). */
   origin?: string;
 }
@@ -127,6 +129,8 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
     }
     const headers = new Headers(init.headers);
     headers.set('X-Request-Id', nextRequestId());
+    const language = opts.language?.();
+    if (language) headers.set('Accept-Language', language);
     const token = opts.tokens.get();
     if (token) headers.set('Authorization', `Bearer ${token}`);
 

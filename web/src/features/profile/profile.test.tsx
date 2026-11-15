@@ -99,10 +99,10 @@ describe('onboarding', () => {
     ]);
   });
 
-  it('notes that Hindi shows English for now', async () => {
+  it('no longer says Hindi shows English', async () => {
     renderWithApp(<Onboarding />, { route: '/onboarding/language', user: incomplete });
     await userEvent.click(screen.getByRole('button', { name: /हिन्दी/ }));
-    expect(screen.getByText(/english for now/i)).toBeInTheDocument();
+    expect(screen.queryByText(/english for now/i)).not.toBeInTheDocument();
   });
 
   it('a returning user who only lacked a region goes home after choosing it', async () => {

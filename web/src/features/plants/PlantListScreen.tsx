@@ -6,6 +6,7 @@ import { useNow } from '../../lib/clock';
 import { monthYear } from '../../lib/format';
 import { Button, cx, EmptyState, ErrorState, Icon, LoadingState, Screen } from '../../ui';
 import { usePlants } from './api';
+import { plantName } from './plant-name';
 import type { Plant } from './schemas';
 import { plantStatus } from './status';
 import { LIST_GROUPS, type ListStatus } from './list-view';
@@ -161,7 +162,7 @@ function PlantCard({ plant, now, cropParts }: { plant: Plant; now: Date; cropPar
       className="flex items-center gap-3 rounded-xl bg-surface-container-low px-3 py-2.5 transition-colors hover:bg-surface-container"
     >
       {crop ? (
-        <crop.Pebble cropId={crop.id} name={plant.name} className="pebble-large h-11 w-11 shrink-0 overflow-hidden" />
+        <crop.Pebble cropId={crop.id} name={plantName(plant)} className="pebble-large h-11 w-11 shrink-0 overflow-hidden" />
       ) : (
         <span className="pebble-large flex h-11 w-11 shrink-0 items-center justify-center bg-primary-gradient text-on-primary">
           <Icon name={plant.record_kind === 'TREE' ? 'park' : plant.record_kind === 'FLOWER' ? 'local_florist' : 'grass'} filled />
@@ -169,7 +170,7 @@ function PlantCard({ plant, now, cropParts }: { plant: Plant; now: Date; cropPar
       )}
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-baseline gap-2">
-          <span className="shrink-0 font-headline text-base text-primary">{plant.name}</span>
+          <span className="shrink-0 font-headline text-base text-primary">{plantName(plant)}</span>
           <span className="truncate font-body text-sm text-on-surface-variant">
             {crop ? <crop.Aside cropId={crop.id} /> : plant.species !== plant.name ? species : null}
           </span>

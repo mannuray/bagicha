@@ -20,6 +20,8 @@ export type LifeProfile = z.infer<typeof lifeProfileSchema>;
 export const plantSchema = z.object({
   id: z.string(),
   name: z.string(),
+  /** The name to show, in the request's language; `name` is the saved, editable one. */
+  display_name: z.string().optional(),
   species: z.string(),
   species_family: z.string().nullable(),
   variety: z.string().nullable(),

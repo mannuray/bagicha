@@ -69,6 +69,12 @@ describe('my plants', () => {
     expect(within(row).queryByRole('img')).toBeNull();
   });
 
+  it('shows a plant by its display name, in the language asked for', async () => {
+    server.use(http.get(`${API}/ledger/plants`, () => HttpResponse.json(pageOf([plantRecord({ name: 'Mango (Dasheri)', display_name: 'आम (दशहरी)', species: 'Mango' })]))));
+    renderWithApp(routes, { route: '/plants' });
+    expect(await screen.findByRole('link', { name: /आम \(दशहरी\)/ })).toBeInTheDocument();
+  });
+
   it('invites the first tree when the garden is empty', async () => {
     server.use(http.get(`${API}/ledger/plants`, () => HttpResponse.json(pageOf([]))));
     renderWithApp(routes, { route: '/plants' });

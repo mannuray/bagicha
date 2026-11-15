@@ -36,11 +36,6 @@ export function LanguageScreen() {
           </button>
         ))}
       </div>
-      {lang !== 'en' && (
-        <p className="mb-3 rounded-xl bg-secondary-fixed px-4 py-3 font-body text-sm text-on-secondary-fixed">
-          {t('onboarding.language.englishForNow')}
-        </p>
-      )}
       {step.error !== null && (
         <p role="alert" className="mb-4 text-center font-body text-sm text-error">
           {messageFor(step.error, t)}

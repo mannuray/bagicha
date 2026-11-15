@@ -11,3 +11,4 @@ export { isPlantMissing } from './missing';
 export { cropDay, cropStageKey, FLOWER_STAGES, flowerStage, plantStatus } from './status';
 export type { PlantStatus } from './status';
 export { LIST_VIEW_KEY } from './usePlantList';
+export { plantName } from './plant-name';

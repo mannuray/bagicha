@@ -14,6 +14,8 @@ import { createServerWake } from './server-wake-store';
 import { APP_TABS } from './nav-tabs';
 import { NavTabsProvider } from '../ui';
 import { reportError } from '../lib/report-error';
+import i18n from '../lib/i18n';
+import { followLanguage } from '../lib/language';
 import { ReporterProvider } from '../lib/reporter';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1';
@@ -32,6 +34,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       onUnauthorized: () => session.expire(),
       onSlow: wake.set,
       report: reportError,
+      language: () => i18n.language,
     });
     return { session, queryClient, api, wake, once };
   });
@@ -40,6 +43,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
   useEffect(() => {
     services.api.get('/health/live', z.unknown()).catch(() => undefined);
   }, [services]);
+
+  // Show the app in the user's language (the device's before sign-in).
+  useEffect(() => followLanguage(services.session, i18n, services.queryClient, localKeyValueStore), [services]);
 
   // Never show one user's cached data to the next.
   useEffect(
