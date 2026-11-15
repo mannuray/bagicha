@@ -169,6 +169,6 @@
 ### Task 8: Ship all at once
 
 - [ ] **Step 1:** Final whole-branch review; fix Critical/Important findings.
-- [ ] **Step 2:** Merge `hindi-1` to `main`. Order: catalogue push (Hindi texts; English responses unchanged, so safe before the code) → push `main` → Render deploy → Vercel builds the web.
+- [ ] **Step 2:** Merge `hindi-1` to `main`. Order: push `main` → Render deploy, wait until live → catalogue push (Hindi texts) → Vercel builds the web. *Code first: the live API's strict catalogue schema rejects the new `hi` fields; pushing the catalogue first took the API down on 2026-11-15 until the old seed was re-pushed.*
 - [ ] **Step 3: Verify live:** `GET /crops/calendar` with `Accept-Language: hi` returns Devanagari names; without it, English. Open the web with a Hindi profile and check Home, a crop page and the garden list.
 - [ ] **Step 4:** Roadmap: item 11 round 1 done; round 2 (reminders, tree care, season tips) after stages 3–4.
