@@ -7,7 +7,7 @@ const nullableOptional = z
   .transform((v) => v ?? null);
 
 const range = z.tuple([z.number(), z.number()]);
-const plantLink = z.object({ id: z.string(), name: z.string() });
+const plantLink = z.object({ id: z.string(), name: z.string(), display_name: z.string().optional() });
 
 export const lifeProfileSchema = z.object({
   first_fruit_months: range,

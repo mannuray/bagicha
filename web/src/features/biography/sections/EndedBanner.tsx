@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { messageFor } from '../../../lib/error-messages';
 import { Button, Icon } from '../../../ui';
-import type { PlantDetail } from '../../plants';
+import { plantName, type PlantDetail } from '../../plants';
 import { usePlantRestore } from '../usePlantRestore';
 import { monthYear } from './format';
 
@@ -28,7 +28,7 @@ export function EndedBanner({ plant, crop = false }: { plant: PlantDetail; crop?
       {plant.end_note && <p className="font-body text-sm text-on-surface-variant">{plant.end_note}</p>}
       {plant.replaced_by && (
         <Link to={`/plants/${plant.replaced_by.id}`} className="inline-flex min-h-11 items-center font-label text-sm font-bold text-secondary">
-          {t('biography.end.replacedBy', { name: plant.replaced_by.name })}
+          {t('biography.end.replacedBy', { name: plantName(plant.replaced_by) })}
         </Link>
       )}
       {restore.error !== null && (

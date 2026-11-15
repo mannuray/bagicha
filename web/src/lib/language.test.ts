@@ -28,6 +28,14 @@ describe('the app language', () => {
     expect(storage.get('bagicha.lang')).toBe('hi');
   });
 
+  it('tells the browser the page language, so screen readers read Hindi as Hindi', async () => {
+    const { i18n, queryClient } = await setup();
+    await applyLanguage('hi', i18n, queryClient, memory());
+    expect(document.documentElement.lang).toBe('hi');
+    await applyLanguage('en', i18n, queryClient, memory());
+    expect(document.documentElement.lang).toBe('en');
+  });
+
   it('does nothing when the language is already in use', async () => {
     const { i18n, queryClient } = await setup();
     await applyLanguage('en', i18n, queryClient, memory());

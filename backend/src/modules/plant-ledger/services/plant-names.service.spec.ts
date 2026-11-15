@@ -26,6 +26,25 @@ describe('plant names in the request language', () => {
     expect(view.display_name).toBe("Dadi's tomato");
   });
 
+  it('names the plants it replaces, or was replaced by, the same way', async () => {
+    const view = toPlantView(
+      {
+        ...tomato,
+        replaced_by: { ...tomato, id: 'p2' },
+        replaces: [{ ...tomato, id: 'p0', name: "Dadi's tomato" }],
+      },
+      await names.namer('hi'),
+    );
+    expect(view.replaced_by).toMatchObject({
+      id: 'p2',
+      name: 'Tomato',
+      display_name: 'टमाटर',
+    });
+    expect(view.replaces).toEqual([
+      expect.objectContaining({ id: 'p0', display_name: "Dadi's tomato" }),
+    ]);
+  });
+
   it('shows the saved name in English', async () => {
     expect(toPlantView(tomato, await names.namer('en')).display_name).toBe(
       'Tomato',

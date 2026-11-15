@@ -67,5 +67,24 @@ export function toPlantView<T extends PlantLike & { name: string }>(
       ...PLANT_EXTRAS,
     ] as unknown as readonly (keyof T)[]),
     display_name: displayName(plant as NamedPlant),
+    ...('replaced_by' in plant
+      ? { replaced_by: linkView(plant.replaced_by, displayName) }
+      : {}),
+    ...('replaces' in plant && Array.isArray(plant.replaces)
+      ? {
+          replaces: (plant.replaces as NamedLink[]).map((p) =>
+            linkView(p, displayName),
+          ),
+        }
+      : {}),
   };
+}
+
+type NamedLink = NamedPlant & { id: string };
+
+/** A linked plant (replaced by / replaces): id, saved name and display name. */
+function linkView(link: unknown, displayName: PlantNamer) {
+  if (!link) return null;
+  const { id, name } = link as NamedLink;
+  return { id, name, display_name: displayName(link as NamedLink) };
 }

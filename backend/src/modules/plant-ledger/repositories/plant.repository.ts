@@ -37,10 +37,18 @@ export type PlantWithAiContext = Prisma.PlantGetPayload<{
   include: typeof aiContextInclude;
 }>;
 
+/** What a linked plant shows: its names (crop and family let it be named in Hindi). */
+const plantLinkSelect = {
+  id: true,
+  name: true,
+  crop_id: true,
+  species_family: true,
+} satisfies Prisma.PlantSelect;
+
 const detailInclude = {
   _count: { select: { journal_entries: true } },
-  replaced_by: { select: { id: true, name: true } },
-  replaces: { select: { id: true, name: true } },
+  replaced_by: { select: plantLinkSelect },
+  replaces: { select: plantLinkSelect },
 } satisfies Prisma.PlantInclude;
 
 export type PlantDetail = Prisma.PlantGetPayload<{

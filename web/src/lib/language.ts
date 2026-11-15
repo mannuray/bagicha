@@ -21,6 +21,8 @@ export function initialLanguage(storage: KeyValueStore): AppLanguage {
  */
 export async function applyLanguage(lang: AppLanguage, i18n: I18n, queryClient: QueryClient, storage: KeyValueStore): Promise<void> {
   storage.set(LANG_KEY, lang);
+  // Screen readers, fonts and hyphenation follow the page's declared language.
+  if (typeof document !== 'undefined') document.documentElement.lang = lang;
   if (i18n.language === lang) return;
   await i18n.changeLanguage(lang);
   await queryClient.resetQueries();

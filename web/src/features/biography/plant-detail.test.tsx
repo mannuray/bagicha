@@ -278,6 +278,12 @@ describe('tree biography', () => {
     expect(await screen.findByRole('link', { name: /replaces old nimbu/i })).toHaveAttribute('href', '/plants/p0');
   });
 
+  it('names linked plants by their display name', async () => {
+    handlers({ plant: { ended_at: '2026-03-15T06:00:00.000Z', end_reason: 'REPLACED', replaced_by_id: 'p2', replaced_by: { id: 'p2', name: 'Lemon', display_name: 'नींबू' }, replaces: [] } });
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByRole('link', { name: /replaced by नींबू/i })).toHaveAttribute('href', '/plants/p2');
+  });
+
   it('drops Do now, Botanical Essence and the Cycles section', async () => {
     handlers();
     renderWithApp(routes, { route: '/plants/p1' });

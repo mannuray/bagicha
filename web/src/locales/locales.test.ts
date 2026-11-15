@@ -31,4 +31,14 @@ describe.runIf(HINDI_READY)('Hindi screen text', () => {
       .map(([k]) => k);
     expect(wrong).toEqual([]);
   });
+
+  // Hindi plural rules treat 0 as singular ("0 फ़सल उग रही है"); a _zero key gives it the plural.
+  it('says zero in the plural wherever singular and plural differ', () => {
+    const wrong = [...hiText.keys()]
+      .filter((k) => k.endsWith('_one'))
+      .map((k) => k.slice(0, -4))
+      .filter((base) => hiText.get(`${base}_one`) !== hiText.get(`${base}_other`))
+      .filter((base) => hiText.get(`${base}_zero`) !== hiText.get(`${base}_other`));
+    expect(wrong).toEqual([]);
+  });
 });

@@ -272,7 +272,9 @@ describe('when a tree ends', () => {
       name: 'Nimbu 2',
     });
     const fresh = await a.get(`/api/v1/ledger/plants/${created.body.data.id}`);
-    expect(fresh.body.data.replaces).toEqual([{ id, name: 'Nimbu' }]);
+    expect(fresh.body.data.replaces).toEqual([
+      { id, name: 'Nimbu', display_name: 'Nimbu' },
+    ]);
   });
   it('refuses to save a diagnosis to an ended tree through diagnosis/finalize', async () => {
     const { a, id, base } = await plantWithTask();

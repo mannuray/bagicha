@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router';
 import { Button, ErrorState, Icon, LoadingState, Screen } from '../../ui';
 import { CropHero, JourneyCard } from '../crops';
 import { useStorage } from '../../lib/storage';
-import { isPlantMissing, LIST_VIEW_KEY, type PlantDetail, NotInGarden, usePlant } from '../plants';
+import { isPlantMissing, LIST_VIEW_KEY, type PlantDetail, NotInGarden, plantName, usePlant } from '../plants';
 import { AtAGlance } from './sections/AtAGlance';
 import { EndedBanner } from './sections/EndedBanner';
 import { EndSheet } from './sections/EndSheet';
@@ -69,7 +69,7 @@ function Biography({ plant }: { plant: PlantDetail }) {
         {plant.replaces.map((old) => (
           <Link key={old.id} to={`/plants/${old.id}`} className="inline-flex min-h-11 items-center gap-1 font-label text-sm font-bold text-secondary">
             <Icon name="history" className="text-base" />
-            {t('biography.end.replaces', { name: old.name })}
+            {t('biography.end.replaces', { name: plantName(old) })}
           </Link>
         ))}
         {ended ? (
