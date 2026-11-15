@@ -14,6 +14,7 @@ export const METHOD_SEED: MethodSeed[] = [
     short: 'nursery',
     material_title: null,
     material_body: null,
+    hi: { label: 'पहले नर्सरी, फिर रोपाई', short: 'नर्सरी' },
     status: 'APPROVED',
   },
   {
@@ -24,6 +25,7 @@ export const METHOD_SEED: MethodSeed[] = [
     short: 'direct',
     material_title: null,
     material_body: null,
+    hi: { label: 'सीधे क्यारी में बोएं', short: 'सीधी बुवाई' },
     status: 'APPROVED',
   },
   {
@@ -34,6 +36,12 @@ export const METHOD_SEED: MethodSeed[] = [
     short: 'tubers',
     material_title: 'Seed potatoes',
     material_body: 'Use sprouted potatoes from a nursery or your kitchen.',
+    hi: {
+      label: 'बीज आलू लगाएं',
+      short: 'आलू',
+      material_title: 'बीज आलू',
+      material_body: 'नर्सरी या रसोई के अंकुर निकले आलू लें।',
+    },
     status: 'APPROVED',
   },
   {
@@ -44,6 +52,12 @@ export const METHOD_SEED: MethodSeed[] = [
     short: 'cloves',
     material_title: 'Cloves',
     material_body: 'Split a healthy bulb into cloves.',
+    hi: {
+      label: 'कलियां लगाएं',
+      short: 'कलियां',
+      material_title: 'कलियां',
+      material_body: 'एक स्वस्थ गांठ को तोड़कर कलियां अलग करें।',
+    },
     status: 'APPROVED',
   },
   {
@@ -54,6 +68,12 @@ export const METHOD_SEED: MethodSeed[] = [
     short: 'rhizomes',
     material_title: 'Rhizomes',
     material_body: 'Use plump rhizome pieces with a bud each.',
+    hi: {
+      label: 'गांठें लगाएं',
+      short: 'गांठें',
+      material_title: 'गांठें',
+      material_body: 'मोटे गांठ के टुकड़े लें, हर टुकड़े पर एक आंख हो।',
+    },
     status: 'APPROVED',
   },
   {
@@ -64,6 +84,12 @@ export const METHOD_SEED: MethodSeed[] = [
     short: 'corms',
     material_title: 'Corms',
     material_body: 'Buy plump, flowering-size corms from a nursery.',
+    hi: {
+      label: 'कंद लगाएं',
+      short: 'कंद',
+      material_title: 'कंद',
+      material_body: 'नर्सरी से मोटे, फूल देने लायक कंद खरीदें।',
+    },
     status: 'APPROVED',
   },
   {
@@ -74,6 +100,12 @@ export const METHOD_SEED: MethodSeed[] = [
     short: 'bulbs',
     material_title: 'Bulbs',
     material_body: 'Buy firm, healthy bulbs from a nursery.',
+    hi: {
+      label: 'बल्ब लगाएं',
+      short: 'बल्ब',
+      material_title: 'बल्ब',
+      material_body: 'नर्सरी से सख्त, स्वस्थ बल्ब खरीदें।',
+    },
     status: 'APPROVED',
   },
   {
@@ -84,6 +116,12 @@ export const METHOD_SEED: MethodSeed[] = [
     short: 'root tubers',
     material_title: 'Root tubers',
     material_body: 'Each piece needs an eye and a bit of old stem.',
+    hi: {
+      label: 'जड़ के कंद लगाएं',
+      short: 'जड़ कंद',
+      material_title: 'जड़ के कंद',
+      material_body: 'हर टुकड़े में एक आंख और पुराने तने का थोड़ा हिस्सा हो।',
+    },
     status: 'APPROVED',
   },
 ];

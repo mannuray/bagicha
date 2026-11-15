@@ -22,7 +22,14 @@ describe('crops in the request language', () => {
   });
 
   it('keeps English for a crop with no Hindi, inside a Hindi answer', async () => {
-    const calendar = await service().calendar(user, 'hi');
+    const seed = hindiSeed();
+    const noHindi = {
+      ...seed,
+      crops: seed.crops.map((c) =>
+        c.id === 'brinjal' ? { ...c, hi: undefined } : c,
+      ),
+    };
+    const calendar = await service(noHindi).calendar(user, 'hi');
     const brinjal = calendar.find((c) => c.id === 'brinjal')!;
     expect(brinjal.name).toMatch(/^Brinjal/);
     expect(brinjal.method_label).toBe('नर्सरी, फिर रोपाई');

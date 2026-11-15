@@ -141,6 +141,7 @@ describe('Catalogue: fruit types, fruit entries and perennial flowers', () => {
       languages: { hi: ['गुलाब'] },
       regions: [],
       confidence_weight: 0.85,
+      hi: { display_name: 'गुलाब' },
     });
     const weights = catalogue.searchEntries().map((e) => e.confidence_weight);
     expect(weights).toEqual([...weights].sort((a, b) => b - a));

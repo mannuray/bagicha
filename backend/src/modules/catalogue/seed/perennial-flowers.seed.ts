@@ -83,6 +83,7 @@ export const PERENNIAL_FLOWER_SEED: PerennialFlowerSeed[] = [
     first_bloom_months: [4, 8],
     lifespan_months: [120, 180],
     note_key: null,
+    hi: { name: 'गुलाब' },
     status: 'APPROVED',
     notes:
       'Typical Indian home-garden values from general floriculture references (spec 2026-11-11-flowers-design §2.2); weather and variety move them.',
@@ -180,6 +181,7 @@ export const PERENNIAL_FLOWER_SEED: PerennialFlowerSeed[] = [
     first_bloom_months: [6, 12],
     lifespan_months: [120, 240],
     note_key: null,
+    hi: { name: 'गुड़हल' },
     status: 'APPROVED',
     notes:
       'Typical Indian home-garden values from general floriculture references (spec 2026-11-11-flowers-design §2.2); weather and variety move them.',
@@ -240,6 +242,7 @@ export const PERENNIAL_FLOWER_SEED: PerennialFlowerSeed[] = [
     first_bloom_months: [6, 12],
     lifespan_months: [120, 240],
     note_key: null,
+    hi: { name: 'मोगरा' },
     status: 'APPROVED',
     notes:
       'Typical Indian home-garden values from general floriculture references (spec 2026-11-11-flowers-design §2.2); weather and variety move them.',
@@ -300,6 +303,7 @@ export const PERENNIAL_FLOWER_SEED: PerennialFlowerSeed[] = [
     first_bloom_months: [8, 18],
     lifespan_months: [240, 360],
     note_key: null,
+    hi: { name: 'बोगनविलिया' },
     status: 'APPROVED',
     notes:
       'Typical Indian home-garden values from general floriculture references (spec 2026-11-11-flowers-design §2.2); weather and variety move them.',
@@ -354,6 +358,7 @@ export const PERENNIAL_FLOWER_SEED: PerennialFlowerSeed[] = [
     first_bloom_months: [6, 12],
     lifespan_months: [120, 240],
     note_key: null,
+    hi: { name: 'रुग्मिनी' },
     status: 'APPROVED',
     notes:
       'Typical Indian home-garden values from general floriculture references (spec 2026-11-11-flowers-design §2.2); weather and variety move them.',
@@ -396,6 +401,7 @@ export const PERENNIAL_FLOWER_SEED: PerennialFlowerSeed[] = [
     first_bloom_months: [12, 24],
     lifespan_months: [240, 480],
     note_key: null,
+    hi: { name: 'कनेर' },
     status: 'APPROVED',
     notes:
       'Typical Indian home-garden values from general floriculture references (spec 2026-11-11-flowers-design §2.2); weather and variety move them.',
@@ -438,6 +444,7 @@ export const PERENNIAL_FLOWER_SEED: PerennialFlowerSeed[] = [
     first_bloom_months: [24, 36],
     lifespan_months: [240, 480],
     note_key: null,
+    hi: { name: 'हरसिंगार' },
     status: 'APPROVED',
     notes:
       'Typical Indian home-garden values from general floriculture references (spec 2026-11-11-flowers-design §2.2); weather and variety move them.',
@@ -480,6 +487,7 @@ export const PERENNIAL_FLOWER_SEED: PerennialFlowerSeed[] = [
     first_bloom_months: [24, 36],
     lifespan_months: [360, 600],
     note_key: null,
+    hi: { name: 'चंपा' },
     status: 'APPROVED',
     notes:
       'Typical Indian home-garden values from general floriculture references (spec 2026-11-11-flowers-design §2.2); weather and variety move them.',
@@ -540,6 +548,7 @@ export const PERENNIAL_FLOWER_SEED: PerennialFlowerSeed[] = [
     first_bloom_months: [12, 24],
     lifespan_months: [180, 300],
     note_key: null,
+    hi: { name: 'एडेनियम' },
     status: 'APPROVED',
     notes:
       'Typical Indian home-garden values from general floriculture references (spec 2026-11-11-flowers-design §2.2); weather and variety move them.',
@@ -582,6 +591,7 @@ export const PERENNIAL_FLOWER_SEED: PerennialFlowerSeed[] = [
     first_bloom_months: [2, 3],
     lifespan_months: [24, 36],
     note_key: 'periwinkle',
+    hi: { name: 'सदाबहार' },
     status: 'APPROVED',
     notes:
       'Typical Indian home-garden values from general floriculture references (spec 2026-11-11-flowers-design §2.2); weather and variety move them.',

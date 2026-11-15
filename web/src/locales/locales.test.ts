@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import en from './en.json';
 import hi from './hi.json';
 
-/** Off until the owner-approved Hindi is written (plan Task 7). */
-const HINDI_READY = false;
+/** The owner approved the Hindi on 2026-11-15. */
+const HINDI_READY = true;
 /** Keys that stay English on purpose. */
 const INTENTIONALLY_ENGLISH = new Set(['app.name']);
 
@@ -18,6 +18,8 @@ describe.runIf(HINDI_READY)('Hindi screen text', () => {
   it('has every English key, in Devanagari', () => {
     const missing = flat(en as Tree)
       .filter(([k]) => !INTENTIONALLY_ENGLISH.has(k))
+      // Strings that are only {{placeholders}} and punctuation have no words to translate.
+      .filter(([, v]) => /\p{L}/u.test(v.replace(/{{\s*\w+\s*}}/g, '')))
       .filter(([k]) => !/[ऀ-ॿ]/.test(hiText.get(k) ?? ''))
       .map(([k]) => k);
     expect(missing).toEqual([]);
