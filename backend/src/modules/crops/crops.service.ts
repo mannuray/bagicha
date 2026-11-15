@@ -184,6 +184,8 @@ export class CropsService {
       id: crop.id,
       kind: crop.kind,
       name: pick(crop.name, crop.hi?.name, lang),
+      /** The English name, so search by it works in any language. */
+      name_en: crop.name,
       aliases: crop.aliases,
       family: crop.family,
       method: crop.method,

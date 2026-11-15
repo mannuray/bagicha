@@ -3,8 +3,9 @@ export function shortName(crop: { name: string }): string {
   return /\(([^)]+)\)/.exec(crop.name)?.[1] ?? crop.name;
 }
 
-/** The first Devanagari alias, e.g. "पालक". */
-export function hindiName(crop: { aliases: string[] }): string | null {
+/** The first Devanagari alias, e.g. "पालक", to show under an English name; null when the name is already Hindi. */
+export function hindiName(crop: { name: string; aliases: string[] }): string | null {
+  if (/[ऀ-ॿ]/.test(crop.name)) return null;
   return crop.aliases.find((a) => /[ऀ-ॿ]/.test(a)) ?? null;
 }
 
@@ -51,7 +52,7 @@ function nearWord(q: string, name: string): boolean {
 }
 
 /** Matches the name or any alias, in English or Hindi, forgiving Hinglish spellings and a small typo. */
-export function matchesSearch(crop: { name: string; aliases: string[] }, query: string): boolean {
+export function matchesSearch(crop: { name: string; name_en?: string; aliases: string[] }, query: string): boolean {
   // NFC, so ड़ typed as one code point or as ड + nukta reads the same.
   const raw = query.trim().normalize('NFC').toLowerCase();
   if (!raw) return true;
@@ -59,7 +60,7 @@ export function matchesSearch(crop: { name: string; aliases: string[] }, query: 
   // Hindi script matches anywhere (गोभी in फूलगोभी); Latin from the start of a word,
   // so "matar" is peas, not the middle of "tamatar".
   const hindi = /\p{Script=Devanagari}/u.test(raw);
-  return [crop.name, ...crop.aliases].some((n) => {
+  return [crop.name, ...(crop.name_en ? [crop.name_en] : []), ...crop.aliases].some((n) => {
     const name = sound(n);
     if (hindi) return n.normalize('NFC').toLowerCase().includes(raw);
     return name.startsWith(q) || name.includes(` ${q}`) || nearWord(q, name);

@@ -288,6 +288,40 @@ describe('plant ledger loop', () => {
     expect(tasks.every((t: { tree_name: string }) => t.tree_name)).toBe(true);
   });
 
+  it('a crop added in Hindi reads back with its Hindi name, the saved name kept', async () => {
+    const hi = {
+      Authorization: `Bearer ${tokenFor(app, alice)}`,
+      'Accept-Language': 'hi',
+    };
+    const server = app.getHttpServer();
+    const added = (
+      await request(server)
+        .post('/api/v1/crops/plan')
+        .set(hi)
+        .send({ crop_id: 'tomato' })
+    ).body.data;
+    expect(added).toMatchObject({ name: 'Tomato', display_name: 'टमाटर' });
+    const listed = (
+      await request(server).get('/api/v1/ledger/plants?status=planned').set(hi)
+    ).body.data;
+    expect(listed.find((p: { id: string }) => p.id === added.id)).toMatchObject(
+      {
+        name: 'Tomato',
+        display_name: 'टमाटर',
+      },
+    );
+    await request(server).post('/api/v1/crops/plan/sync').set(hi);
+    const tasks = (
+      await request(server)
+        .get(`/api/v1/ledger/plants/${added.id}/tasks`)
+        .set(hi)
+    ).body.data;
+    expect(tasks.length).toBeGreaterThan(0);
+    expect(
+      tasks.every((t: { tree_name: string }) => t.tree_name === 'टमाटर'),
+    ).toBe(true);
+  });
+
   it('returns the species life profile on plant detail', async () => {
     const a = as(alice);
     const papaya = await a.post('/api/v1/ledger/plants', {

@@ -4,6 +4,8 @@ export const cropItemSchema = z.object({
   id: z.string(),
   kind: z.enum(['CROP', 'FLOWER']).optional().transform((v) => v ?? 'CROP'),
   name: z.string(),
+  /** The English name (the API sends it beside a Hindi `name`). */
+  name_en: z.string().optional(),
   aliases: z.array(z.string()),
   family: z.string(),
   // Methods are catalogue data (a new one can arrive any time); the journey shape is what the app knows.

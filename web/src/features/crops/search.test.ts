@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchesSearch } from './names';
+import { hindiName, matchesSearch } from './names';
 
 const cauliflower = { name: 'Cauliflower', aliases: ['phool gobhi', 'gobhi', 'फूलगोभी'] };
 const cabbage = { name: 'Cabbage', aliases: ['patta gobhi', 'bandh gobhi', 'पत्तागोभी'] };
@@ -22,6 +22,17 @@ describe('crop search: English, Hindi and the ways people spell them', () => {
     expect(matchesSearch(kakri, 'कक\u095Cी')).toBe(true);
     expect(matchesSearch({ ...kakri, aliases: ['कक\u095Cी'] }, 'कक\u0921\u093Cी')).toBe(true);
     expect(matchesSearch(okra, 'कक\u095Cी')).toBe(false);
+  });
+
+  it('in Hindi, still finds a crop by its English name', () => {
+    const hindiTomato = { name: 'टमाटर', name_en: 'Tomato', aliases: ['tamatar', 'टमाटर'] };
+    expect(matchesSearch(hindiTomato, 'tomato')).toBe(true);
+    expect(matchesSearch(hindiTomato, 'टमा')).toBe(true);
+  });
+
+  it('shows the Hindi alias under an English name only', () => {
+    expect(hindiName({ name: 'Tomato', aliases: ['tamatar', 'टमाटर'] })).toBe('टमाटर');
+    expect(hindiName({ name: 'टमाटर', aliases: ['tamatar', 'टमाटर'] })).toBeNull();
   });
 
   it('forgives Hinglish spelling swaps', () => {

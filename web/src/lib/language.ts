@@ -10,6 +10,11 @@ const LANG_KEY = 'bagicha.lang';
 const asLanguage = (value: string | null | undefined): AppLanguage | null =>
   value === 'hi' || value === 'en' ? value : null;
 
+/** The language to start in: the last one used on this device, so a Hindi user sees no English first. */
+export function initialLanguage(storage: KeyValueStore): AppLanguage {
+  return asLanguage(storage.get(LANG_KEY)) ?? 'en';
+}
+
 /**
  * Shows the app in this language. Data already fetched came in the old one,
  * so it is dropped and refetched; nothing happens when it is already in use.

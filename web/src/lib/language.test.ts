@@ -1,7 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { createInstance } from 'i18next';
 import { describe, expect, it } from 'vitest';
-import { applyLanguage, followLanguage } from './language';
+import { applyLanguage, followLanguage, initialLanguage } from './language';
 import type { KeyValueStore } from './storage';
 
 const memory = (): KeyValueStore => {
@@ -51,5 +51,14 @@ describe('the app language', () => {
     listeners.forEach((l) => l());
     await new Promise((r) => setTimeout(r, 0));
     expect(i18n.language).toBe('en');
+  });
+
+  it('starts in the last language used on this device, so Hindi users see no English flash', () => {
+    const storage = memory();
+    expect(initialLanguage(storage)).toBe('en');
+    storage.set('bagicha.lang', 'hi');
+    expect(initialLanguage(storage)).toBe('hi');
+    storage.set('bagicha.lang', 'fr');
+    expect(initialLanguage(storage)).toBe('en');
   });
 });

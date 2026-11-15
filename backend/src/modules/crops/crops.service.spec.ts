@@ -17,6 +17,8 @@ describe('crops in the request language', () => {
   it('gives a crop its Hindi texts and Hindi month names', async () => {
     const tomato = await service().detail(user, 'tomato', 'hi');
     expect(tomato.name).toBe('टमाटर');
+    // The English name rides along, so search by it still works in Hindi.
+    expect(tomato.name_en).toBe('Tomato');
     expect(tomato.method_label).toBe('नर्सरी, फिर रोपाई');
     expect(tomato.windows[0].label).toMatch(/[ऀ-ॿ]/);
   });
