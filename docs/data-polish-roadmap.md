@@ -12,7 +12,7 @@ The live app (bagicha-web.vercel.app) works end to end; this is the list of data
 8. Task-title wording — **done**
 9. More vegetables — **done** (8 of 10; parwal and spring onion held back)
 10. Bulbs — **done, live**
-11. Hindi translation
+11. Hindi translation — **round 1 done, live** (screens and catalogue); round 2 (reminders, tree care, season tips) after stages 3–4
 12. Copy gaps — **done** (one held: see below)
 13. Matching gaps — **done**
 
@@ -79,7 +79,7 @@ Done tree type by tree type over everything the catalogue holds:
 8. **Task-title wording:** done: titles use the short name ("Thin the spinach seedlings", not "Thin the spinach (palak) seedlings"); tasks created before keep their old title.
 9. **More vegetables:** done: beetroot, turnip, amaranth (chaulai), bathua, sem, lobia, tinda, ash gourd, source-checked and owner-approved (review doc 2026-11-14). Held back: parwal (perennial from cuttings; add with perennials) and spring onion (no guide covers the home method).
 10. **Bulbs:** done: gladiolus (corms), dahlia (root tubers), rajnigandha and Asiatic lily (bulbs), with a "Lift and store" step for gladiolus and dahlia; owner-approved (review doc 2026-11-14). Added as catalogue data only. Later: photos; rajnigandha's second and third years (ratoon care); Asiatic lily windows for the south and hills once sources agree; rain lily.
-11. **Hindi translation:** users can pick Hindi; the app is English only.
+11. **Hindi translation:** round 1 live 2026-11-15: every screen and the catalogue's names and texts in everyday Hindi, owner-reviewed; plant names show in Hindi while they keep their catalogue name. Round 2 after catalogue stages 3–4: reminder titles, tree-care advice, season tips. Small gaps: `<html lang>`, replacement links, plural at 0, q-values in Accept-Language.
 12. **Copy gaps:** done: the "should start blooming soon" task is an observation, not a harvest; stopping a crop offers crop reasons (no "Old age" or "Replaced"; "Removed" reads "Pulled out") and an ended crop has no tree "Plant a replacement" link. Held: flower care reasons are generic, but no screen shows a task's reason yet; write them when one does.
 13. **Matching gaps:** done: Hindi with ड़ typed either way matches; a plant's species and variety are read before its name ("Champa's rose" with species Rose is a rose); text naming only a one-region state (Goa, Kerala, Sikkim) gets that region; Sikkim's "North", "East"… match with the state. Then (2026-11-15, source-checked, owner-approved): fruit trees named in Hindi script are recognised from each fruit's Hindi names, and about 60 common Hindi and regional names were added (amrood, nimbu, aam, anaar, shevga, kaitha bel…); "tut" and "lalit" no longer mark a tree's type. Plain "bel" stays bael; wood apple answers to "kath bel", "kaitha bel", "katbel".
 
