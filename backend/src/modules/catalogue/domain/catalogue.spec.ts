@@ -107,6 +107,13 @@ describe('Catalogue: fruit types, fruit entries and perennial flowers', () => {
     expect(catalogue.flowerFamilyIn('red rose')).toBe('rose');
   });
 
+  it('finds a Hindi flower name typed in either Unicode form', () => {
+    const catalogue = Catalogue.from(validateSeed(CATALOGUE_SEED), 1);
+    // ड़ as one code point (U+095C) or as ड + nukta (U+0921 U+093C).
+    expect(catalogue.flowerFamilyIn('गु\u095Cहल')).toBe('hibiscus');
+    expect(catalogue.flowerFamilyIn('गु\u0921\u093Cहल')).toBe('hibiscus');
+  });
+
   it("gives a flower's life profile from its bloom and lifespan, with its note", () => {
     const catalogue = Catalogue.from(validateSeed(CATALOGUE_SEED), 1);
     const periwinkle = catalogue.perennialFlower('periwinkle')!;

@@ -52,7 +52,8 @@ function nearWord(q: string, name: string): boolean {
 
 /** Matches the name or any alias, in English or Hindi, forgiving Hinglish spellings and a small typo. */
 export function matchesSearch(crop: { name: string; aliases: string[] }, query: string): boolean {
-  const raw = query.trim().toLowerCase();
+  // NFC, so ड़ typed as one code point or as ड + nukta reads the same.
+  const raw = query.trim().normalize('NFC').toLowerCase();
   if (!raw) return true;
   const q = sound(raw);
   // Hindi script matches anywhere (गोभी in फूलगोभी); Latin from the start of a word,
@@ -60,7 +61,7 @@ export function matchesSearch(crop: { name: string; aliases: string[] }, query: 
   const hindi = /\p{Script=Devanagari}/u.test(raw);
   return [crop.name, ...crop.aliases].some((n) => {
     const name = sound(n);
-    if (hindi) return n.toLowerCase().includes(raw);
+    if (hindi) return n.normalize('NFC').toLowerCase().includes(raw);
     return name.startsWith(q) || name.includes(` ${q}`) || nearWord(q, name);
   });
 }

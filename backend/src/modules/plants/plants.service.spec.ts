@@ -18,6 +18,13 @@ describe('PlantsService over the catalogue', () => {
     });
   });
 
+  it('finds a Hindi name typed in either Unicode form', async () => {
+    for (const q of ['आ\u095Cू', 'आ\u0921\u093Cू']) {
+      const result = await service.search(q, page);
+      expect(result.items[0]?.display_name).toBe('Peach');
+    }
+  });
+
   it('finds perennial flowers by their Hindi names', async () => {
     const result = await service.resolve('गुलाब');
     expect(result.match).toMatchObject({

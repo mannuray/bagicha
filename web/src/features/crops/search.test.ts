@@ -16,6 +16,14 @@ describe('crop search: English, Hindi and the ways people spell them', () => {
     expect(matchesSearch(cauliflower, '')).toBe(true);
   });
 
+  it('matches Hindi typed in either Unicode form (ड़ as one code point or ड + nukta)', () => {
+    const okra = { name: 'Okra (Bhindi)', aliases: ['bhindi', 'भिंडी'] };
+    const kakri = { name: 'Kakdi', aliases: ['ककड़ी'] };
+    expect(matchesSearch(kakri, 'कक\u095Cी')).toBe(true);
+    expect(matchesSearch({ ...kakri, aliases: ['कक\u095Cी'] }, 'कक\u0921\u093Cी')).toBe(true);
+    expect(matchesSearch(okra, 'कक\u095Cी')).toBe(false);
+  });
+
   it('forgives Hinglish spelling swaps', () => {
     expect(matchesSearch(cauliflower, 'govi')).toBe(true);
     expect(matchesSearch(cauliflower, 'gobi')).toBe(true);

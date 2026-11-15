@@ -76,7 +76,12 @@ export class Catalogue {
       servedFlowers.map((f) => [f.family, toPerennialFlower(f)]),
     );
     const flowerAliases = servedFlowers
-      .flatMap((f) => f.aliases.map((alias) => ({ alias, family: f.family })))
+      .flatMap((f) =>
+        f.aliases.map((alias) => ({
+          alias: alias.normalize('NFC'),
+          family: f.family,
+        })),
+      )
       .sort((a, b) => b.alias.length - a.alias.length);
     // A retired fruit type takes its entries out of search; trees already grown keep it.
     const listedTypes = new Set(
@@ -152,7 +157,11 @@ export class Catalogue {
 
   /** The perennial flower named in this text, or null. */
   flowerFamilyIn(text: string): string | null {
-    const haystack = text.toLowerCase().replace(/[^\p{L}\p{M}0-9]+/gu, ' ');
+    // NFC, so ड़ typed as one code point or as ड + nukta reads the same.
+    const haystack = text
+      .normalize('NFC')
+      .toLowerCase()
+      .replace(/[^\p{L}\p{M}0-9]+/gu, ' ');
     return (
       this.parts.flowerAliases.find(({ alias }) => hasWords(haystack, alias))
         ?.family ?? null

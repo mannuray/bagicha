@@ -22,6 +22,38 @@ describe('SpeciesNormalizationService', () => {
   });
 });
 
+describe('the species beats a nickname', () => {
+  it('reads the species and variety before the name', () => {
+    // "Champa" is plumeria; the gardener said the plant is a rose.
+    expect(
+      species.family({
+        name: "Champa's rose",
+        species: 'Rose',
+        record_kind: 'FLOWER',
+      }),
+    ).toBe('rose');
+    expect(species.family({ name: 'Mango corner', species: 'Guava' })).toBe(
+      'guava',
+    );
+    expect(
+      species.classificationBasis({ name: 'Mango corner', species: 'Guava' }),
+    ).toBe('normalized_alias:guava');
+  });
+
+  it('still uses the name when the species says nothing it knows', () => {
+    expect(species.family({ name: 'Old mango', species: 'tree' })).toBe(
+      'mango',
+    );
+    expect(
+      species.family({
+        name: 'Gulab',
+        species: 'flower',
+        record_kind: 'FLOWER',
+      }),
+    ).toBe('rose');
+  });
+});
+
 describe('resolveSpeciesFamily for the new fruit families', () => {
   it.each([
     ['Drumstick', 'moringa'],

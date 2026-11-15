@@ -1,6 +1,7 @@
 import { RegionCluster } from '@prisma/client';
 import { DISTRICTS } from './districts';
 import {
+  DIRECTIONS,
   districtLabel,
   matchDistrict,
   regionForDistrict,
@@ -73,7 +74,7 @@ describe('the district list', () => {
     }
   });
 
-  it('never reuses an alias across districts, except the seven shared names', () => {
+  it('never reuses an alias across districts, except the seven shared names and state-only directions', () => {
     const owner = new Map<string, string>();
     for (const d of DISTRICTS) {
       for (const form of [d.name, ...d.aliases]) {
@@ -82,6 +83,7 @@ describe('the district list', () => {
           owner.has(k) &&
           owner.get(k) !== d.state &&
           !SHARED.includes(form) &&
+          !DIRECTIONS.has(form) &&
           !d.needsState
         ) {
           throw new Error(
@@ -138,6 +140,28 @@ describe('regions by district', () => {
   });
 });
 
+describe('a state with no district', () => {
+  it.each([
+    ['Goa', R.COASTAL_HUMID],
+    ['Kerala', R.COASTAL_HUMID],
+    ['Sikkim', R.HILLS_COOL],
+    ['Bihar', R.EAST_INDIA],
+    ['Punjab', R.NORTH_INDIA],
+  ])('places %s, whose districts share one region', (state, region) => {
+    expect(regionForDistrict(state)).toBe(region);
+  });
+
+  it('makes no guess for a state that spans regions', () => {
+    expect(regionForDistrict('Karnataka')).toBeNull();
+    expect(regionForDistrict('Uttarakhand')).toBeNull();
+    expect(regionForDistrict('my garden')).toBeNull();
+  });
+
+  it('still prefers a district named with the state', () => {
+    expect(regionForDistrict('Udupi, Karnataka')).toBe(R.COASTAL_HUMID);
+  });
+});
+
 describe('matching what people type', () => {
   it('knows old and common names', () => {
     expect(matchDistrict('gurgaon')?.name).toBe('Gurugram');
@@ -179,6 +203,16 @@ describe('matching what people type', () => {
       state: 'Delhi',
     });
     expect(matchDistrict('East Godavari')?.state).toBe('Andhra Pradesh');
+    expect(matchDistrict('North, Sikkim')).toMatchObject({
+      name: 'Mangan',
+      state: 'Sikkim',
+    });
+    expect(matchDistrict('South Sikkim')?.name).toBe('Namchi');
+    expect(matchDistrict('West, Sikkim')?.name).toBe('Gyalshing');
+    expect(matchDistrict('North')).toBeNull();
+    expect(matchDistrict('North, Delhi')?.state).toBe('Delhi');
+    // A direction alias is matched with the state, but the saved label stays plain.
+    expect(districtLabel(matchDistrict('Mangan')!)).toBe('Mangan');
   });
 
   it('returns null for text that names no district', () => {

@@ -12,6 +12,9 @@ export const SHARED_NAMES = new Set([
   'Raigarh',
 ]);
 
+/** Sikkim's "North", "East"…: an alias only together with the state, like Delhi's. */
+export const DIRECTIONS = new Set(['North', 'South', 'East', 'West']);
+
 /** Lower-case, accents and punctuation gone, single spaces: "Leh(Ladakh)" → "leh ladakh". */
 function normalize(text: string): string {
   return text
@@ -33,7 +36,7 @@ const FORMS: Form[] = DISTRICTS.flatMap((d) =>
   [d.name, ...d.aliases].map((f) => ({
     text: normalize(f),
     district: d,
-    shared: SHARED_NAMES.has(f),
+    shared: SHARED_NAMES.has(f) || (DIRECTIONS.has(f) && f !== d.name),
   })),
 );
 const STATE_FORMS = new Map<string, string[]>(
@@ -95,8 +98,22 @@ export function matchDistrict(text: string): District | null {
   );
 }
 
+/** Each state's region, when all its districts share one ("Goa"); none for Karnataka. */
+const STATE_REGION = new Map(
+  [...STATE_FORMS.keys()].flatMap((state) => {
+    const regions = new Set(
+      DISTRICTS.filter((d) => d.state === state).map((d) => d.region),
+    );
+    return regions.size === 1 ? [[state, [...regions][0]] as const] : [];
+  }),
+);
+
+/** The district's region, else that of a lone state named in the text whose districts all share one. */
 export function regionForDistrict(text: string): RegionCluster | null {
-  return matchDistrict(text)?.region ?? null;
+  const district = matchDistrict(text);
+  if (district) return district.region;
+  const states = [...statesIn(normalize(text))];
+  return states.length === 1 ? (STATE_REGION.get(states[0]) ?? null) : null;
 }
 
 /** How the district is saved and shown: "Gaya", or "Aurangabad, Bihar" when the name alone is ambiguous. */

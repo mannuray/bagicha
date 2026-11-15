@@ -18,7 +18,10 @@ export class SpeciesResolver {
 
   family(input: TreeIdentityInput): string {
     if (input.record_kind === 'FLOWER')
-      return this.catalogue.flowerFamilyIn(words(input)) ?? 'generic_flower';
+      return (
+        firstOf(input, (text) => this.catalogue.flowerFamilyIn(text)) ??
+        'generic_flower'
+      );
     return this.match(input)?.family ?? 'generic_perennial';
   }
 
@@ -31,16 +34,25 @@ export class SpeciesResolver {
   }
 
   private match(input: TreeIdentityInput) {
-    return this.catalogue.fruitFamilyIn(haystack(input));
+    return firstOf(input, (text) => this.catalogue.fruitFamilyIn(latin(text)));
   }
 }
 
-const words = (input: TreeIdentityInput) =>
-  [input.name, input.species, input.variety].filter(Boolean).join(' ');
+/**
+ * What the gardener said the plant is (species, variety) before what they
+ * call it: in "Champa's rose" with species "Rose", the nickname must not win.
+ */
+function firstOf<T>(
+  input: TreeIdentityInput,
+  find: (text: string) => T | null,
+): T | null {
+  const kind = [input.species, input.variety].filter(Boolean).join(' ');
+  return (kind && find(kind)) || (input.name ? find(input.name) : null);
+}
 
 /** Lower-case Latin letters and digits only, single-spaced. */
-const haystack = (input: TreeIdentityInput) =>
-  words(input)
+const latin = (text: string) =>
+  text
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
