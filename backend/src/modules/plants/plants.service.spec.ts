@@ -1,4 +1,4 @@
-import { seededCatalogueStore } from '../catalogue/testing';
+import { hindiSeed, seededCatalogueStore } from '../catalogue/testing';
 import { PlantsService } from './plants.service';
 
 const page = { page: 1, page_size: 10 };
@@ -16,6 +16,20 @@ describe('PlantsService over the catalogue', () => {
       variety: 'Dasheri',
       plant_type: 'fruit_tree',
     });
+  });
+
+  it('names results in Hindi when asked, keeping ids and order', async () => {
+    const hindi = new PlantsService(seededCatalogueStore(hindiSeed()));
+    const hi = await hindi.search('dasheri', page, 'hi');
+    expect(hi.items[0]).toMatchObject({
+      id: 'mango:Dasheri',
+      display_name: 'आम (दशहरी)',
+    });
+    const en = await hindi.search('dasheri', page);
+    expect(en.items.map((i) => i.id)).toEqual(hi.items.map((i) => i.id));
+    expect(en.items[0].display_name).toBe('Mango (Dasheri)');
+    const rose = await hindi.resolve('gulab', undefined, undefined, 'hi');
+    expect(rose.match?.display_name).toBe('गुलाब');
   });
 
   it('finds a Hindi name typed in either Unicode form', async () => {

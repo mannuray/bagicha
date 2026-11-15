@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Page, PageQuery, toPage } from '../../common/pagination';
-import { CatalogueStore, type SearchEntry } from '../catalogue';
+import type { Lang } from '../../common/http/lang';
+import { CatalogueStore, pick, type SearchEntry } from '../catalogue';
 
 type ResolveConfidence = 'high' | 'medium' | 'low';
 
@@ -17,6 +18,7 @@ export class PlantsService {
   async search(
     rawQuery: string,
     q: PageQuery,
+    lang: Lang = 'en',
   ): Promise<Page<ReturnType<PlantsService['toSearchItem']>>> {
     const query = this.normalize(rawQuery);
     if (!query) return toPage([], 0, q);
@@ -26,13 +28,18 @@ export class PlantsService {
     return toPage(
       ranked
         .slice(start, start + q.page_size)
-        .map(({ entry }) => this.toSearchItem(entry)),
+        .map(({ entry }) => this.toSearchItem(entry, lang)),
       ranked.length,
       q,
     );
   }
 
-  async resolve(rawQuery: string, regionCluster?: string, language?: string) {
+  async resolve(
+    rawQuery: string,
+    regionCluster?: string,
+    language?: string,
+    lang: Lang = 'en',
+  ) {
     const query = this.normalize(rawQuery);
     if (!query) {
       return {
@@ -54,20 +61,20 @@ export class PlantsService {
         matched_alias: null,
         alternatives: rest
           .slice(0, 3)
-          .map(({ entry }) => this.toSearchItem(entry)),
+          .map(({ entry }) => this.toSearchItem(entry, lang)),
       };
     }
 
     return {
       match: {
-        ...this.toSearchItem(best.entry),
+        ...this.toSearchItem(best.entry, lang),
         matched_alias: best.matchedAlias,
       },
       confidence: this.scoreToConfidence(best.score),
       matched_alias: best.matchedAlias,
       alternatives: rest
         .slice(0, 3)
-        .map(({ entry }) => this.toSearchItem(entry)),
+        .map(({ entry }) => this.toSearchItem(entry, lang)),
     };
   }
 
@@ -200,10 +207,11 @@ export class PlantsService {
       .map((item) => this.normalize(item));
   }
 
-  toSearchItem(entry: SearchEntry) {
+  /** One result; its name in Hindi when asked for and written. */
+  toSearchItem(entry: SearchEntry, lang: Lang = 'en') {
     return {
       id: entry.key,
-      display_name: entry.display_name,
+      display_name: pick(entry.display_name, entry.hi?.display_name, lang),
       species_family: entry.species_family,
       species: entry.species,
       variety: entry.variety,
