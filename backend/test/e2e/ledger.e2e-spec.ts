@@ -320,6 +320,15 @@ describe('plant ledger loop', () => {
     expect(
       tasks.every((t: { tree_name: string }) => t.tree_name === 'टमाटर'),
     ).toBe(true);
+    // Reminder titles too, from the sentence each crop reminder saved.
+    const titles = tasks.map((t: { title: string }) => t.title);
+    expect(titles).toContain('टमाटर के बीज नर्सरी ट्रे में बोएं');
+    const english = (
+      await request(server)
+        .get(`/api/v1/ledger/plants/${added.id}/tasks`)
+        .set({ Authorization: hi.Authorization })
+    ).body.data.map((t: { title: string }) => t.title);
+    expect(english).toContain('Sow tomato in a nursery tray');
   });
 
   it('returns the species life profile on plant detail', async () => {

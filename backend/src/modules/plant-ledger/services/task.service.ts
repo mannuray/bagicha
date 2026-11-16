@@ -18,7 +18,12 @@ import {
 } from '../../../common/pagination';
 import { Tx } from '../../../common/prisma/transaction';
 import { mapTaskView } from '../domain/task-view';
-import { savedName, type PlantNamer } from './plant-names.service';
+import {
+  savedName,
+  savedTitle,
+  type PlantNamer,
+  type TaskTitler,
+} from './plant-names.service';
 import { isUniqueViolation } from '../../../common/prisma/unique-violation';
 import type { TaskListStatus } from '../dto/list-tasks-query.dto';
 import { TaskRepository } from '../repositories/task.repository';
@@ -239,6 +244,7 @@ export class TaskService {
     plantId: string,
     q: PageQuery,
     displayName: PlantNamer = savedName,
+    titleOf: TaskTitler = savedTitle,
   ): Promise<Page<TaskView>> {
     const { rows, total } = await this.tasks.listForPlant(
       userId,
@@ -246,7 +252,7 @@ export class TaskService {
       toSkipTake(q),
     );
     return toPage(
-      rows.map((r) => mapTaskView(r, displayName)),
+      rows.map((r) => mapTaskView(r, displayName, titleOf)),
       total,
       q,
     );
@@ -257,6 +263,7 @@ export class TaskService {
     q: PageQuery,
     status?: TaskListStatus,
     displayName: PlantNamer = savedName,
+    titleOf: TaskTitler = savedTitle,
   ): Promise<Page<TaskView>> {
     const { rows, total } = await this.tasks.listForUser(
       userId,
@@ -264,7 +271,7 @@ export class TaskService {
       status,
     );
     return toPage(
-      rows.map((r) => mapTaskView(r, displayName)),
+      rows.map((r) => mapTaskView(r, displayName, titleOf)),
       total,
       q,
     );
@@ -277,6 +284,7 @@ export class TaskService {
     status: TaskStatus,
     now: Date,
     displayName: PlantNamer = savedName,
+    titleOf: TaskTitler = savedTitle,
   ): Promise<TaskView> {
     const updated = await this.tasks.updateStatus(
       userId,
@@ -287,6 +295,6 @@ export class TaskService {
     );
     if (!updated) throw new NotFoundError('TASK_NOT_FOUND', 'Task not found');
     if (status === TaskStatus.COMPLETED) this.metrics.taskCompleted();
-    return mapTaskView(updated, displayName);
+    return mapTaskView(updated, displayName, titleOf);
   }
 }

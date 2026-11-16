@@ -29,6 +29,7 @@ import {
   windowContaining,
   titleName,
 } from '../domain/crop-calendar';
+import { fillCropTitle, type CropTitleKey } from '../domain/task-titles';
 import { PlantRepository } from '../repositories/plant.repository';
 import { TaskDraft, TaskService } from './task.service';
 
@@ -171,14 +172,24 @@ export class CropPlanService {
     const key = (step: string) =>
       `crop:${plant.id}:${isoDay(windowStart)}:${step}`;
     const { material, journey } = method;
+    const seedsKey: Exclude<CropTitleKey, 'care'> = material
+      ? 'seeds.material'
+      : 'seeds';
+    const sowKey: Exclude<CropTitleKey, 'care'> =
+      journey === 'PLANT'
+        ? 'sow.plant'
+        : journey === 'NURSERY'
+          ? 'sow.nursery'
+          : 'sow.bed';
+    // Titles are saved in English; the key in metadata writes them in other languages.
+    const titleOf = (k: Exclude<CropTitleKey, 'care'>) =>
+      fillCropTitle(k, titleName(crop), material ?? '');
     return [
       {
         type: TaskType.OBSERVE,
         category: TaskCategory.OBSERVATION,
         priority: TaskPriority.MEDIUM,
-        title: material
-          ? `Get ${material} for ${titleName(crop)}`
-          : `Get ${titleName(crop)} seeds`,
+        title: titleOf(seedsKey),
         source: TaskSource.CROP_PLAN,
         sourceKey: key('seeds'),
         reason: `Sowing season for ${titleName(crop)} starts soon in your region.`,
@@ -186,6 +197,7 @@ export class CropPlanService {
         metadata: {
           crop_id: crop.id,
           step: 'seeds',
+          title: { key: seedsKey, crop: crop.id },
           window_end: windowEnd.toISOString(),
         },
         dueDate: later(
@@ -197,18 +209,14 @@ export class CropPlanService {
         type: TaskType.OBSERVE,
         category: TaskCategory.OBSERVATION,
         priority: TaskPriority.HIGH,
-        title:
-          journey === 'PLANT'
-            ? `Plant ${titleName(crop)}`
-            : journey === 'NURSERY'
-              ? `Sow ${titleName(crop)} in a nursery tray`
-              : `Sow ${titleName(crop)} in the bed`,
+        title: titleOf(sowKey),
         source: TaskSource.CROP_PLAN,
         sourceKey: key('sow'),
         reason: `It's the right time to sow ${titleName(crop)} in your region.`,
         metadata: {
           crop_id: crop.id,
           step: 'sow',
+          title: { key: sowKey, crop: crop.id },
           window_end: windowEnd.toISOString(),
         },
         dueDate: later(now, windowStart),

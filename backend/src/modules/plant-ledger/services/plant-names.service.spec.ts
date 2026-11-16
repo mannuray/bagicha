@@ -70,4 +70,81 @@ describe('plant names in the request language', () => {
     expect(mapTaskView(task, await names.namer('hi')).tree_name).toBe('टमाटर');
     expect(mapTaskView(task).tree_name).toBe('Tomato');
   });
+
+  describe('reminder titles', () => {
+    const base = {
+      id: 't1',
+      type: 'OBSERVE',
+      category: 'OBSERVATION',
+      priority: 'MEDIUM',
+      status: 'PENDING',
+      reason: null,
+      due_date: new Date(),
+      completed_at: null,
+      plant_cycle_id: null,
+      plant: { ...tomato, record_kind: 'CROP' },
+    };
+    const task = (over: Record<string, unknown>) =>
+      ({ ...base, ...over }) as unknown as Parameters<typeof mapTaskView>[0];
+
+    it('writes a crop reminder in Hindi from its saved sentence', async () => {
+      const t = task({
+        source: 'CROP_PLAN',
+        title: 'Stake the tomato plants',
+        metadata: {
+          crop_id: 'tomato',
+          step: 'stake',
+          title: { key: 'care', crop: 'tomato', step: 'stake' },
+        },
+      });
+      const hi = mapTaskView(
+        t,
+        await names.namer('hi'),
+        await names.titler('hi'),
+      );
+      expect(hi.title).toBe('टमाटर के पौधों को डंडी से सहारा दें');
+      const en = mapTaskView(
+        t,
+        await names.namer('en'),
+        await names.titler('en'),
+      );
+      expect(en.title).toBe('Stake the tomato plants');
+    });
+
+    it('keeps an older crop reminder with no saved sentence in English', async () => {
+      const t = task({
+        source: 'CROP_PLAN',
+        title: 'Stake the tomato plants',
+        metadata: { crop_id: 'tomato', step: 'stake' },
+      });
+      expect(
+        mapTaskView(t, await names.namer('hi'), await names.titler('hi')).title,
+      ).toBe('Stake the tomato plants');
+    });
+
+    it('writes perennial flower care and untitled reminders in Hindi', async () => {
+      const flower = task({
+        source: 'FLOWER_CARE',
+        title: 'Prune the rose',
+        source_key: 'rose:prune:2026-10',
+      });
+      expect(
+        mapTaskView(flower, await names.namer('hi'), await names.titler('hi'))
+          .title,
+      ).toMatch(/गुलाब/);
+      const untitled = task({ source: 'SYSTEM', type: 'WATER', title: null });
+      expect(
+        mapTaskView(untitled, await names.namer('hi'), await names.titler('hi'))
+          .title,
+      ).toBe('पौधे को पानी दें');
+      expect(mapTaskView(untitled).title).toBe('Water the plant');
+    });
+
+    it('leaves tree care and typed reminders as saved', async () => {
+      const t = task({ source: 'TREE_CARE', title: 'Bag the guava fruits' });
+      expect(
+        mapTaskView(t, await names.namer('hi'), await names.titler('hi')).title,
+      ).toBe('Bag the guava fruits');
+    });
+  });
 });

@@ -5,7 +5,6 @@ import {
   LogType,
   Plant,
   PlantCycle,
-  Prisma,
   RegionCluster,
   TaskCategory,
   TaskPriority,
@@ -25,10 +24,10 @@ import {
 import {
   climateGroupFor,
   inGroup,
-  sproutCheckTitle,
   titleName,
   windowContaining,
 } from '../domain/crop-calendar';
+import { cropTitle, type CropTitleRef } from '../domain/task-titles';
 import { regionFor } from '../../regions';
 import { GardenPlaceRepository } from '../repositories/garden-place.repository';
 import { TaskDraft, TaskService } from './task.service';
@@ -48,9 +47,6 @@ const RANK: Record<CropStage, number> = {
   IN_GROUND: 2,
   HARVESTING: 3,
 };
-/** A care step's reminder title for this crop ("Stake the tomato plants"). */
-const careTitle = (catalogue: Catalogue, key: string, crop: CropInfo) =>
-  catalogue.careStep(key)?.title.replace('{name}', titleName(crop)) ?? key;
 
 type Meta = Record<string, unknown> | null;
 const metaOf = (m: unknown): Meta =>
@@ -141,11 +137,12 @@ export class CropJourneyService {
         .filter((c) => c.after === from)
         .map((c) =>
           this.draft(
+            catalogue,
             crop,
             plant,
             cycle,
             c.key,
-            careTitle(catalogue, c.key, crop),
+            { key: 'care', step: c.key },
             addDays(at, c.days),
           ),
         );
@@ -159,7 +156,16 @@ export class CropJourneyService {
         if (!opened) {
           // A succession row in an open season: no stage change, no repeated steps.
           await this.completeSteps(tx, plant.id, ['row']);
-          await this.createRow(tx, userId, plant, crop, cycle, at, group);
+          await this.createRow(
+            tx,
+            userId,
+            catalogue,
+            plant,
+            crop,
+            cycle,
+            at,
+            group,
+          );
           return;
         }
         const nursery =
@@ -173,22 +179,30 @@ export class CropJourneyService {
         await this.completeSteps(tx, plant.id, ['seeds', 'sow']);
         const drafts: TaskDraft[] = [
           this.draft(
+            catalogue,
             crop,
             plant,
             cycle,
             'germination',
-            sproutCheckTitle(crop, journey, nursery),
+            {
+              key: nursery
+                ? 'sprout.nursery'
+                : journey === 'PLANT'
+                  ? 'sprout.plant'
+                  : 'sprout.sown',
+            },
             addDays(at, crop.germination_days[1]),
             TaskType.INSPECT,
             TaskCategory.INSPECTION,
           ),
           ...steps('SOWING'),
           this.draft(
+            catalogue,
             crop,
             plant,
             cycle,
             'harvest_soon',
-            this.readySoon(crop),
+            this.readySoonTitle(crop),
             addDays(at, crop.days_to_first_harvest[0]),
             ...this.readySoonKind(crop),
           ),
@@ -196,11 +210,12 @@ export class CropJourneyService {
         if (nursery && crop.transplant_after_days) {
           drafts.push(
             this.draft(
+              catalogue,
               crop,
               plant,
               cycle,
               'transplant',
-              `Transplant the ${titleName(crop)} seedlings to the bed`,
+              { key: 'transplant' },
               addDays(at, crop.transplant_after_days[0]),
             ),
           );
@@ -208,17 +223,27 @@ export class CropJourneyService {
         if (!nursery && crop.thin_after_days) {
           drafts.push(
             this.draft(
+              catalogue,
               crop,
               plant,
               cycle,
               'thin',
-              `Thin the ${titleName(crop)} seedlings`,
+              { key: 'thin' },
               addDays(at, crop.thin_after_days),
             ),
           );
         }
         await this.tasks.createTasks(userId, plant.id, drafts, tx);
-        await this.createRow(tx, userId, plant, crop, cycle, at, group);
+        await this.createRow(
+          tx,
+          userId,
+          catalogue,
+          plant,
+          crop,
+          cycle,
+          at,
+          group,
+        );
         return;
       }
       case LogType.TRANSPLANTING: {
@@ -249,11 +274,12 @@ export class CropJourneyService {
             (crop.transplant_after_days?.[1] ?? 0);
           drafts.push(
             this.draft(
+              catalogue,
               crop,
               plant,
               cycle,
               'harvest_soon',
-              this.readySoon(crop),
+              this.readySoonTitle(crop),
               addDays(at, Math.max(head, 7)),
               ...this.readySoonKind(crop),
             ),
@@ -272,7 +298,16 @@ export class CropJourneyService {
           'thin',
           'harvest_soon',
         ]);
-        await this.createRow(tx, userId, plant, crop, cycle, at, group);
+        await this.createRow(
+          tx,
+          userId,
+          catalogue,
+          plant,
+          crop,
+          cycle,
+          at,
+          group,
+        );
         return;
       case LogType.GERMINATION:
         await this.completeSteps(tx, plant.id, ['germination']);
@@ -305,10 +340,8 @@ export class CropJourneyService {
     }
   }
 
-  private readySoon(crop: CropInfo): string {
-    return crop.kind === 'FLOWER'
-      ? `The ${titleName(crop)} should start blooming soon`
-      : `The ${titleName(crop)} should be ready to pick soon`;
+  private readySoonTitle(crop: CropInfo): Pick<CropTitleRef, 'key'> {
+    return { key: crop.kind === 'FLOWER' ? 'ready.bloom' : 'ready.pick' };
   }
 
   /** Blooming is something to watch for; picking a vegetable is a harvest. */
@@ -364,6 +397,7 @@ export class CropJourneyService {
   private async createRow(
     tx: Tx,
     userId: string,
+    catalogue: Catalogue,
     plant: Plant,
     crop: CropInfo,
     cycle: PlantCycle | null,
@@ -383,36 +417,44 @@ export class CropJourneyService {
     const due = addDays(at, crop.succession_every_days);
     if (!windowContaining(crop, await group(), due)) return;
     const draft = this.draft(
+      catalogue,
       crop,
       plant,
       cycle,
       `row:${isoDay(due)}`,
-      `Sow another row of ${titleName(crop)}`,
+      { key: 'succession' },
       due,
     );
-    draft.metadata = { crop_id: crop.id, step: 'row' };
+    draft.metadata = {
+      crop_id: crop.id,
+      step: 'row',
+      title: { key: 'succession', crop: crop.id },
+    };
     await this.tasks.createTasks(userId, plant.id, [draft], tx);
   }
 
+  /** One crop reminder; its title is saved in English and its sentence in metadata, for other languages. */
   private draft(
+    catalogue: Catalogue,
     crop: CropInfo,
     plant: Plant,
     cycle: PlantCycle | null,
     step: string,
-    title: string,
+    sentence: Omit<CropTitleRef, 'crop'>,
     dueDate: Date,
     type: TaskType = TaskType.OBSERVE,
     category: TaskCategory = TaskCategory.OBSERVATION,
   ): TaskDraft {
+    const title: CropTitleRef = { ...sentence, crop: crop.id };
     return {
       type,
       category,
       priority: TaskPriority.MEDIUM,
-      title,
+      title: cropTitle(title, catalogue, 'en') ?? step,
       source: TaskSource.CROP_PLAN,
       sourceKey: `crop:${plant.id}:s${cycle?.id ?? 'none'}:${step}`,
       reason: `Part of growing ${titleName(crop)}.`,
-      metadata: { crop_id: crop.id, step } as Prisma.InputJsonValue,
+      metadata: { crop_id: crop.id, step, title: { ...title } },
       dueDate,
       plantCycleId: cycle?.id ?? null,
     };

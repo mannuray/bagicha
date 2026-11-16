@@ -178,6 +178,7 @@ export class PlantLedgerController {
       id,
       q,
       await this.names.namer(lang),
+      await this.names.titler(lang),
     );
   }
 
@@ -192,6 +193,7 @@ export class PlantLedgerController {
       q,
       q.status,
       await this.names.namer(lang),
+      await this.names.titler(lang),
     );
   }
 
@@ -220,6 +222,7 @@ export class PlantLedgerController {
       dto.status,
       this.clock.now(),
       await this.names.namer(lang),
+      await this.names.titler(lang),
     );
   }
 }

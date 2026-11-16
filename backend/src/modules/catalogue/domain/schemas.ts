@@ -98,6 +98,7 @@ export const careStepSeedSchema = z
     label_title: text,
     label_body: text,
     hi: hindi({
+      title: hindiText.includes('{name}').optional(),
       label_title: hindiText.optional(),
       label_body: hindiText.optional(),
     }),
@@ -166,6 +167,7 @@ export const perennialFlowerSeedSchema = z
             month,
             title: text,
             category: z.enum(['PRUNING', 'FEEDING', 'GENERAL']),
+            hi: hindi({ title: hindiText.optional() }),
           })
           .strict(),
       ),

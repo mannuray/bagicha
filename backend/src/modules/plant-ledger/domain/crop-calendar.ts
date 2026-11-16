@@ -5,12 +5,7 @@
  * Spec: docs/superpowers/specs/2026-11-11-vegetables-design.md §2.1, §6.1.
  */
 import { RegionCluster } from '@prisma/client';
-import type {
-  CareStep,
-  ClimateGroup,
-  CropInfo,
-  Journey,
-} from '../../catalogue';
+import type { CareStep, ClimateGroup, CropInfo } from '../../catalogue';
 
 export type { CareStep, ClimateGroup, CropInfo };
 
@@ -118,22 +113,6 @@ export function windowContaining(
 /** The crop's name for task titles: "Spinach (Palak)" → "spinach". The page still shows the full name. */
 export function titleName(crop: CropInfo): string {
   return crop.name.replace(/\s*\(.*\)\s*$/, '').toLowerCase();
-}
-
-/**
- * The "has it come up?" reminder: seedlings only for seeds raised in a tray;
- * seeds sown in the bed sprout, and tubers, cloves and rhizomes send up shoots.
- */
-export function sproutCheckTitle(
-  crop: CropInfo,
-  journey: Journey,
-  nursery: boolean,
-): string {
-  const name = titleName(crop);
-  if (nursery) return `Check the ${name} seedlings have come up`;
-  return journey === 'PLANT'
-    ? `Check the planted ${name} for shoots`
-    : `Check the sown ${name} for sprouts`;
 }
 
 /** The crop as grown in a climate group: its harvest days where that group differs. */

@@ -1,4 +1,9 @@
-import { savedName, type PlantNamer } from '../services/plant-names.service';
+import {
+  savedName,
+  savedTitle,
+  type PlantNamer,
+  type TaskTitler,
+} from '../services/plant-names.service';
 import {
   Prisma,
   TaskCategory,
@@ -7,27 +12,6 @@ import {
   TaskStatus,
   TaskType,
 } from '@prisma/client';
-
-export function defaultTaskTitle(type: string): string {
-  switch (type) {
-    case 'WATER':
-      return 'Water the plant';
-    case 'INSPECT':
-      return 'Inspect the plant';
-    case 'OBSERVE':
-      return 'Observe the plant';
-    case 'PRUNE':
-      return 'Prune the plant';
-    case 'FEED':
-      return 'Feed the plant';
-    case 'HARVEST':
-      return 'Prepare for harvest';
-    case 'TREAT':
-      return 'Apply treatment';
-    default:
-      return 'Plant task';
-  }
-}
 
 export function buildTaskSourceSummary(task: {
   source: string;
@@ -100,6 +84,7 @@ export function mapTaskView(
     priority: TaskPriority;
     status: TaskStatus;
     source: TaskSource;
+    source_key?: string | null;
     reason: string | null;
     due_date: Date;
     completed_at: Date | null;
@@ -123,11 +108,12 @@ export function mapTaskView(
     metadata?: Prisma.JsonValue | null;
   },
   displayName: PlantNamer = savedName,
+  titleOf: TaskTitler = savedTitle,
 ) {
   return {
     id: task.id,
     type: task.type,
-    title: task.title ?? defaultTaskTitle(task.type),
+    title: titleOf(task),
     category: task.category,
     priority: task.priority,
     status: task.status,

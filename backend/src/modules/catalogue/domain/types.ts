@@ -91,8 +91,8 @@ export interface CareStepInfo {
   /** Web: the step on the crop page. */
   label_title: string;
   label_body: string;
-  /** Hindi web labels; the reminder `title` is not translated yet. */
-  hi?: { label_title?: string; label_body?: string };
+  /** Hindi web labels and reminder title (with the same `{name}` slot). */
+  hi?: { title?: string; label_title?: string; label_body?: string };
 }
 
 /** A crop as written in the seed and stored: `quick` and `long` are never stored, they are derived. */
@@ -154,6 +154,7 @@ export interface CareItem {
   month: number;
   title: string;
   category: CareCategory;
+  hi?: { title?: string };
 }
 
 /** A flower that stays for years (rose, hibiscus, mogra…). */
