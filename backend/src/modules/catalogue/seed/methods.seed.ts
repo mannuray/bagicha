@@ -124,4 +124,22 @@ export const METHOD_SEED: MethodSeed[] = [
     },
     status: 'APPROVED',
   },
+  {
+    key: 'ONION_SET',
+    journey: 'PLANT',
+    material: 'onion sets',
+    label: 'Plant onion sets',
+    short: 'sets',
+    material_title: 'Onion sets',
+    material_body:
+      'Small onion sets, 1.5–2 cm across, raised in spring or bought.',
+    hi: {
+      label: 'प्याज़ की छोटी गांठें लगाएं',
+      short: 'गांठें',
+      material_title: 'प्याज़ की छोटी गांठें',
+      material_body:
+        '1.5–2 सेमी की छोटी गांठें, बसंत में खुद तैयार करें या खरीदें।',
+    },
+    status: 'APPROVED',
+  },
 ];

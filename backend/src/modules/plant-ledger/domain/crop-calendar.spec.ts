@@ -37,7 +37,7 @@ describe('climateGroupFor', () => {
 
 describe('the calendar data', () => {
   it('has 37 crops, each with a botanical family and a method, nursery crops with transplant timing', () => {
-    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(37);
+    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(38);
     const families = [
       'SOLANACEAE',
       'BRASSICACEAE',
@@ -172,7 +172,7 @@ describe('flowers on the calendar', () => {
   });
 
   it('keeps vegetables as CROP, and finds flowers by id', () => {
-    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(37);
+    expect(CROPS.filter((c) => c.kind === 'CROP')).toHaveLength(38);
     expect(cropById('marigold')?.kind).toBe('FLOWER');
     expect(cropById('tomato')?.kind).toBe('CROP');
   });
@@ -521,8 +521,33 @@ describe('the batch-9 vegetables (approved review, 2026-11-14)', () => {
     expect(cropById('sem')?.aliases).not.toContain('bean');
   });
 
-  it('parwal and spring onion are held back', () => {
+  // Owner, 2026-11-16: parwal is dropped (perennial; sources thin); spring onion is added below.
+  it('parwal stays out', () => {
     expect(cropById('parwal')).toBeNull();
-    expect(cropById('spring_onion')).toBeNull();
+  });
+});
+
+describe('spring onion (owner-approved 2026-11-16: PAU, YSPUHF and IARI onion-set practice)', () => {
+  const crop = () => cropById('spring_onion')!;
+
+  it('is planted from onion sets on the plant-it journey', () => {
+    expect(crop().method).toBe('ONION_SET');
+    expect(seeded.method('ONION_SET')).toMatchObject({
+      journey: 'PLANT',
+      label: 'Plant onion sets',
+      material_title: 'Onion sets',
+    });
+  });
+
+  it('pins the approved windows, timing and spacing', () => {
+    expect(crop().windows).toEqual({
+      PLAINS: [[8, 9]],
+      PENINSULAR: [],
+      HILLS: [[8, 8]],
+    });
+    expect(crop().days_to_first_harvest).toEqual([30, 90]);
+    expect(crop().harvest_span_days).toBe(60);
+    expect(crop().guide.spacing_cm).toEqual([8, 10]);
+    expect(crop().care).toEqual([]);
   });
 });

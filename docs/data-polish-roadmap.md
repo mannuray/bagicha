@@ -10,7 +10,7 @@ The live app (bagicha-web.vercel.app) works end to end; this is the list of data
 4. + 5. + 6. Tree care, first tasks and life profiles — together, tree type by tree type, after item 3
 7. Crop and flower photos — **done, live**
 8. Task-title wording — **done**
-9. More vegetables — **done** (8 of 10; parwal and spring onion held back)
+9. More vegetables — **done** (9 of 10: spring onion added 2026-11-16; parwal dropped)
 10. Bulbs — **done, live**
 11. Hindi translation — **round 1 done, live** (screens and catalogue); round 2 (reminders, tree care, season tips) after stages 3–4
 12. Copy gaps — **done** (one held: see below)
@@ -77,7 +77,7 @@ Done tree type by tree type over everything the catalogue holds:
 
 7. **Crop and flower photos:** done: every crop and flower has its own photo (made with Stitch, 480×480).
 8. **Task-title wording:** done: titles use the short name ("Thin the spinach seedlings", not "Thin the spinach (palak) seedlings"); tasks created before keep their old title.
-9. **More vegetables:** done: beetroot, turnip, amaranth (chaulai), bathua, sem, lobia, tinda, ash gourd, source-checked and owner-approved (review doc 2026-11-14). Held back: parwal (perennial from cuttings; add with perennials) and spring onion (no guide covers the home method).
+9. **More vegetables:** done: beetroot, turnip, amaranth (chaulai), bathua, sem, lobia, tinda, ash gourd, source-checked and owner-approved (review doc 2026-11-14). Spring onion added 2026-11-16 from the documented onion-set method (PAU, YSPUHF, IARI): plant small sets in late August, pull young plants as greens Oct–Dec; no window for the south (sources cover bulbs only). Parwal dropped (owner, 2026-11-16): perennial, and sources cover only the plains.
 10. **Bulbs:** done: gladiolus (corms), dahlia (root tubers), rajnigandha and Asiatic lily (bulbs), with a "Lift and store" step for gladiolus and dahlia; owner-approved (review doc 2026-11-14). Added as catalogue data only. Later: photos; rajnigandha's second and third years (ratoon care); Asiatic lily windows for the south and hills once sources agree; rain lily.
 11. **Hindi translation:** round 1 live 2026-11-15: every screen and the catalogue's names and texts in everyday Hindi, owner-reviewed; plant names show in Hindi while they keep their catalogue name. Round 2 after catalogue stages 3–4: reminder titles, tree-care advice, season tips. Small gaps: `<html lang>`, replacement links, plural at 0, q-values in Accept-Language.
 12. **Copy gaps:** done: the "should start blooming soon" task is an observation, not a harvest; stopping a crop offers crop reasons (no "Old age" or "Replaced"; "Removed" reads "Pulled out") and an ended crop has no tree "Plant a replacement" link. Held: flower care reasons are generic, but no screen shows a task's reason yet; write them when one does.

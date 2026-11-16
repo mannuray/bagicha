@@ -1627,6 +1627,52 @@ export const CROP_SEED: CropSeed[] = [
       "U PAU (plains), U TNAU (south), hills by analogy with GBPUAT's gourds.\ngermination_days: U KAU (snippet) + S\ndays_to_first_harvest: mature fruit: U IIVR 110, PAU 120–150\nharvest_span_days: U TNAU\ncare: trails on the ground (PAU)",
   },
   {
+    id: 'spring_onion',
+    name: 'Spring onion (Hara pyaz)',
+    aliases: [
+      'hara pyaz',
+      'hari pyaz',
+      'green onion',
+      'pyaz ki patti',
+      'हरा प्याज',
+    ],
+    family: 'AMARYLLIDACEAE',
+    method: 'ONION_SET',
+    windows: {
+      PLAINS: [[8, 9]],
+      PENINSULAR: [],
+      HILLS: [[8, 8]],
+    },
+    germination_days: [7, 14],
+    transplant_after_days: null,
+    days_to_first_harvest: [30, 90],
+    harvest_span_days: 60,
+    thin_after_days: null,
+    succession_every_days: null,
+    care: [],
+    guide: {
+      plants_for_family_of_4: 'a 1-metre row (about 12 sets)',
+      container: '12-inch pot for about 12 sets',
+      spacing_cm: [8, 10],
+    },
+    kind: 'CROP',
+    scientific_name: 'Allium cepa',
+    description:
+      'Small onion sets planted in late monsoon and pulled young for their green leaves.',
+    sun: 'FULL',
+    tags: ['container'],
+    hi: {
+      name: 'हरा प्याज',
+      description:
+        'बरसात के आखिर में प्याज़ की छोटी गांठें लगाएं और हरी पत्तियों के लिए कच्चे पौधे उखाड़ें।',
+      container: 'लगभग 12 गांठों के लिए 12 इंच का गमला',
+      plants_for_family_of_4: '1 मीटर की कतार (लगभग 12 गांठें)',
+    },
+    status: 'APPROVED',
+    notes:
+      'Owner-approved 2026-11-16. Method and windows: PAU Package of Practices (Vegetables), onion sets planted 2nd fortnight of Aug, sold as green onion Nov–Dec; YSPUHF (Indian Horticulture 2020) sets planted 2nd fortnight of Aug, green Sep–Dec, kitchen-garden use; IARI Pusa route for green onion. Peninsular left empty: sources cover full bulbs only. days_to_first_harvest derived from those dates. harvest_span ~60 days (weak). spacing 7.5–10 cm (PAU/YSPUHF), stored as 8–10. germination_days (sprouting of sets) not sourced (check). Guide counts derived from spacing.',
+  },
+  {
     id: 'marigold',
     name: 'Marigold (Genda)',
     aliases: ['genda', 'गेंदा', 'african marigold', 'french marigold'],
