@@ -2,9 +2,11 @@ import { INestApplication } from '@nestjs/common';
 import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import {
-  TREE_CARE_REGISTRY,
+  CATALOGUE_SEED,
+  CatalogueStore,
   type FamilyCare,
-} from '../../src/modules/plant-ledger';
+} from '../../src/modules/catalogue';
+import { seededCatalogueStore } from '../../src/modules/catalogue/testing';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
 import { resetDb, seedPlant, seedUser, tokenFor } from './fixtures';
@@ -88,7 +90,15 @@ describe('tree care families', () => {
 
   beforeAll(async () => {
     app = await createTestApp((b) =>
-      b.overrideProvider(TREE_CARE_REGISTRY).useValue({ mango: FIXTURE }),
+      b.overrideProvider(CatalogueStore).useValue(
+        seededCatalogueStore({
+          ...CATALOGUE_SEED,
+          treeCare: [
+            { ...FIXTURE, status: 'APPROVED', notes: null },
+            ...CATALOGUE_SEED.treeCare.filter((c) => c.family !== 'mango'),
+          ],
+        }),
+      ),
     );
     prisma = app.get(PrismaService);
   });

@@ -1,6 +1,6 @@
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import {
   PersonalizedOverlay,
   Plant,
@@ -35,7 +35,6 @@ import {
   carePhaseView,
   careApplies,
   treeCareDue,
-  TREE_CARE_REGISTRY,
 } from '../plant-ledger';
 import type {
   CareReminder,
@@ -49,7 +48,7 @@ import {
   buildTaskTemplates,
   TaskTemplateInput,
 } from './domain/overlay-rules';
-import { CatalogueStore } from '../catalogue';
+import { CatalogueStore, type Catalogue } from '../catalogue';
 import { regionFor } from '../regions';
 import { seasonGuide } from './domain/season-guide';
 import { resolveSeasonWindow } from './domain/season-window';
@@ -81,8 +80,6 @@ export class SeasonalService implements OnModuleInit {
     private readonly metrics: Metrics,
     @InjectPinoLogger(SeasonalService.name)
     private readonly logger: PinoLogger,
-    @Inject(TREE_CARE_REGISTRY)
-    private readonly careRegistry: Readonly<Record<string, FamilyCare>>,
     private readonly catalogue: CatalogueStore,
   ) {}
 
@@ -272,7 +269,11 @@ export class SeasonalService implements OnModuleInit {
     const premium = isPremium(user, now);
     const species = await this.species.resolver();
     // A region still pending verification keeps the season pack.
-    const familyCare = this.careOf(plant, species);
+    const familyCare = this.careOf(
+      plant,
+      species,
+      await this.catalogue.snapshot(),
+    );
     const care =
       familyCare && careApplies(familyCare, regionFor(user))
         ? familyCare
@@ -313,9 +314,13 @@ export class SeasonalService implements OnModuleInit {
   }
 
   /** Reviewed care for this tree's family, if its batch has shipped (flowers have their own care). */
-  private careOf(plant: Plant, species: SpeciesResolver): FamilyCare | null {
+  private careOf(
+    plant: Plant,
+    species: SpeciesResolver,
+    catalogue: Catalogue,
+  ): FamilyCare | null {
     if (plant.record_kind === RecordKind.FLOWER) return null;
-    return this.careRegistry[species.family(plant)] ?? null;
+    return catalogue.treeCare(species.family(plant));
   }
 
   private async getOrCreatePack(

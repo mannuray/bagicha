@@ -1,9 +1,18 @@
 import { RegionCluster } from '@prisma/client';
-import { CARE_PENDING, TREE_CARE } from '../../plant-ledger';
-import type { CareItem, FamilyCare, RegionCare } from '../../plant-ledger';
-import { CATALOGUE_SEED } from '../../catalogue';
+import { CARE_PENDING, CATALOGUE_SEED } from '../../catalogue';
+import type {
+  FamilyCare,
+  RegionCare,
+  TreeCareItem as CareItem,
+} from '../../catalogue';
 
 const FRUIT_CATALOGUE = CATALOGUE_SEED.fruitPlants;
+/** Approved care by family, as the catalogue serves it. */
+const TREE_CARE: Record<string, FamilyCare> = Object.fromEntries(
+  CATALOGUE_SEED.treeCare
+    .filter((c) => c.status === 'APPROVED')
+    .map((c) => [c.family, c]),
+);
 
 const families = [...new Set(FRUIT_CATALOGUE.map((s) => s.species_family))];
 const grownByCatalogue = (family: string): RegionCluster[] => [

@@ -1,7 +1,9 @@
 import { LifecycleStage } from '@prisma/client';
 import { carePhaseView, treeCareDue } from './engine';
-import { GUAVA_CARE } from './guava';
 import { careApplies } from './region-care';
+import { seededCatalogue } from '../../../catalogue/testing';
+
+const GUAVA_CARE = seededCatalogue().treeCare('guava')!;
 
 const ist = (s: string) => new Date(`${s}T06:00:00+05:30`);
 const bearing = LifecycleStage.MATURE_BEARING;

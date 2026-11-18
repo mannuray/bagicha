@@ -1,7 +1,9 @@
 import { LifecycleStage } from '@prisma/client';
 import { NOT_GROWN_NOTE, treeCareDue } from './engine';
 import { careApplies } from './region-care';
-import { SAPOTA_CARE } from './sapota';
+import { seededCatalogue } from '../../../catalogue/testing';
+
+const SAPOTA_CARE = seededCatalogue().treeCare('sapota')!;
 
 const ist = (s: string) => new Date(`${s}T06:00:00+05:30`);
 const bearing = LifecycleStage.MATURE_BEARING;

@@ -1,3 +1,4 @@
+import { CATALOGUE_SEED } from '../catalogue';
 import { seededCatalogueStore } from '../catalogue/testing';
 import { SubscriptionTier, TaskSource } from '@prisma/client';
 import { FixedClock } from '../../common/time';
@@ -106,8 +107,11 @@ function build(opts: {
     new FixedClock(NOW),
     { registerQueueDepth: jest.fn() } as any,
     { warn: jest.fn() } as any,
-    {},
-    seededCatalogueStore(),
+    // Season-pack behaviour: this catalogue has no mango care.
+    seededCatalogueStore({
+      ...CATALOGUE_SEED,
+      treeCare: CATALOGUE_SEED.treeCare.filter((c) => c.family !== 'mango'),
+    }),
   );
   return { service, drafts, packs, pack, weatherQueue };
 }

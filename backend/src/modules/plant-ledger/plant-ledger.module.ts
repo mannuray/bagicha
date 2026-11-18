@@ -1,8 +1,4 @@
 import { CatalogueModule } from '../catalogue';
-import {
-  TREE_CARE_REGISTRY,
-  treeCareRegistryProvider,
-} from './domain/care/registry';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { PlantLedgerController } from './plant-ledger.controller';
@@ -35,7 +31,6 @@ import { TaskService } from './services/task.service';
   ],
   controllers: [PlantLedgerController],
   providers: [
-    treeCareRegistryProvider,
     PlantRepository,
     JournalRepository,
     CycleRepository,
@@ -56,7 +51,6 @@ import { TaskService } from './services/task.service';
     PlantNamesService,
   ],
   exports: [
-    TREE_CARE_REGISTRY,
     GardenPlaceRepository,
     CropPlanService,
     PlantRecordService,

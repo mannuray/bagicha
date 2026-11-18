@@ -1,7 +1,9 @@
 import { LifecycleStage } from '@prisma/client';
 import { carePhaseView, treeCareDue } from './engine';
-import { AMLA_CARE } from './amla';
 import { careApplies } from './region-care';
+import { seededCatalogue } from '../../../catalogue/testing';
+
+const AMLA_CARE = seededCatalogue().treeCare('amla')!;
 
 const ist = (s: string) => new Date(`${s}T06:00:00+05:30`);
 const bearing = LifecycleStage.MATURE_BEARING;

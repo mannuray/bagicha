@@ -1,7 +1,5 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Inject } from '@nestjs/common';
-import { TREE_CARE_REGISTRY } from '../domain/care/registry';
-import type { FamilyCare } from '../domain/care';
+import { CatalogueStore } from '../../catalogue';
 import { SpeciesNormalizationService } from '../services/species-normalization.service';
 import { TaskPriority, TaskSource, TaskType } from '@prisma/client';
 import { Job } from 'bullmq';
@@ -27,8 +25,7 @@ export class TaskProcessor extends WorkerHost {
     @InjectPinoLogger(TaskProcessor.name)
     private readonly logger: PinoLogger,
     private readonly species: SpeciesNormalizationService,
-    @Inject(TREE_CARE_REGISTRY)
-    private readonly careRegistry: Readonly<Record<string, FamilyCare>>,
+    private readonly catalogue: CatalogueStore,
   ) {
     super();
   }
@@ -62,7 +59,7 @@ export class TaskProcessor extends WorkerHost {
     // A family with reviewed care gets its first tasks from its care calendar
     // (materialised when the plant opens); the rest get a first watering check.
     const family = (await this.species.resolver()).family({ species });
-    if (this.careRegistry[family]) {
+    if ((await this.catalogue.snapshot()).treeCare(family)) {
       return { created_count: 0 };
     }
     const drafts = [draft(TaskType.WATER, addDays(now, 3))];

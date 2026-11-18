@@ -3,12 +3,13 @@ import { Job } from 'bullmq';
 import { PinoLogger } from 'nestjs-pino';
 import { FixedClock } from '../../../common/time';
 import { TaskDraft, TaskService } from '../services/task.service';
-import { seededCatalogueStore } from '../../catalogue/testing';
+import { CATALOGUE_SEED, type TreeCareSeed } from '../../catalogue';
+import { seededCatalogueStore, treeCareFixture } from '../../catalogue/testing';
 import { SpeciesNormalizationService } from '../services/species-normalization.service';
-import type { FamilyCare } from '../domain/care';
 import { TaskProcessor } from './task.processor';
 
-function build(registry: Record<string, FamilyCare> = {}) {
+/** A processor over a catalogue whose tree care is exactly `treeCare`. */
+function build(treeCare: TreeCareSeed[] = []) {
   const pending = new Set<string>();
   const calls: TaskDraft[][] = [];
   const tasks = {
@@ -32,7 +33,7 @@ function build(registry: Record<string, FamilyCare> = {}) {
     new FixedClock(new Date('2026-01-15T00:00:00Z')),
     logger as unknown as PinoLogger,
     new SpeciesNormalizationService(seededCatalogueStore()),
-    registry,
+    seededCatalogueStore({ ...CATALOGUE_SEED, treeCare }),
   );
   return { processor, calls, logger, tasks };
 }
@@ -41,9 +42,7 @@ const job = (data: Record<string, unknown>) => ({ data }) as Job;
 
 describe('TaskProcessor', () => {
   it('creates nothing for a family with care data (its care calendar gives the first tasks)', async () => {
-    const { processor, tasks } = build({
-      mango: { family: 'mango', sources: [], grownIn: [], regions: {} },
-    });
+    const { processor, tasks } = build([treeCareFixture()]);
     const result = await processor.process(
       job({
         user_id: 'u1',

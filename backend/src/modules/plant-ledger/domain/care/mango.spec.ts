@@ -1,6 +1,8 @@
 import { LifecycleStage } from '@prisma/client';
 import { carePhaseView, treeCareDue } from './engine';
-import { MANGO_CARE } from './mango';
+import { seededCatalogue } from '../../../catalogue/testing';
+
+const MANGO_CARE = seededCatalogue().treeCare('mango')!;
 
 const ist = (s: string) => new Date(`${s}T06:00:00+05:30`);
 const bearing = LifecycleStage.MATURE_BEARING;

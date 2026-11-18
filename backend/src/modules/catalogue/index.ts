@@ -5,6 +5,7 @@ export { Catalogue, UnknownMethodError } from './domain/catalogue';
 export { validateSeed } from './domain/schemas';
 export { pick } from './domain/pick';
 export { CATALOGUE_SEED } from './seed';
+export { CARE_PENDING } from './seed/tree-care';
 export type {
   CareStep,
   CareStepInfo,
