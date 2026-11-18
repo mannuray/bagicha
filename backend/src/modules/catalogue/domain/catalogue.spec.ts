@@ -148,6 +148,32 @@ describe('Catalogue: fruit types, fruit entries and perennial flowers', () => {
   });
 });
 
+describe('Catalogue: tree care', () => {
+  const mango = CATALOGUE_SEED.treeCare.find((c) => c.family === 'mango')!;
+  const withMango = (status: 'APPROVED' | 'RETIRED' | 'DRAFT') =>
+    Catalogue.from(
+      validateSeed({
+        ...CATALOGUE_SEED,
+        treeCare: CATALOGUE_SEED.treeCare.map((c) =>
+          c.family === 'mango' ? { ...c, status } : c,
+        ),
+      }),
+      1,
+    );
+
+  it('treeCare serves approved care, without its seed status and notes', () => {
+    const { status: _s, notes: _n, ...care } = mango;
+    expect(withMango('APPROVED').treeCare('mango')).toEqual(care);
+  });
+
+  it('treeCare is null for a retired or draft record and an unknown family', () => {
+    expect(withMango('RETIRED').treeCare('mango')).toBeNull();
+    expect(withMango('DRAFT').treeCare('mango')).toBeNull();
+    expect(withMango('APPROVED').treeCare('banana')).toBeNull();
+    expect(withMango('APPROVED').treeCare(null)).toBeNull();
+  });
+});
+
 describe('validateSeed', () => {
   const reason = (seed: unknown) => {
     try {

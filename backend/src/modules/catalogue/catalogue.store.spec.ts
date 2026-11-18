@@ -106,6 +106,26 @@ describe('CatalogueStore', () => {
     });
   });
 
+  it('refuses a catalogue with no approved tree care', async () => {
+    const { store } = setup({ ...CATALOGUE_SEED, treeCare: [] });
+    await expect(store.snapshot()).rejects.toMatchObject({
+      reason: 'CATALOGUE_EMPTY',
+    });
+  });
+
+  it('keeps the previous snapshot when a reload has an invalid care record', async () => {
+    const { store, state, clock } = setup();
+    await store.snapshot();
+    const [first, ...rest] = CATALOGUE_SEED.treeCare;
+    state.version = 2;
+    state.seed = {
+      ...CATALOGUE_SEED,
+      treeCare: [{ ...first, grownIn: ['NOT_A_REGION' as never] }, ...rest],
+    };
+    clock.at += 61_000;
+    expect((await store.snapshot()).version).toBe(1);
+  });
+
   it('never serves an empty catalogue when the database fails', async () => {
     const { store, repo } = setup();
     repo.loadSeed.mockRejectedValueOnce(new Error('connection refused'));
@@ -133,6 +153,7 @@ describe('CatalogueStore', () => {
       cropCount: CATALOGUE_SEED.crops.length,
       fruitTypeCount: CATALOGUE_SEED.fruitTypes.length,
       flowerCount: CATALOGUE_SEED.perennialFlowers.length,
+      treeCareCount: CATALOGUE_SEED.treeCare.length,
     });
   });
 

@@ -12,6 +12,7 @@ import type {
   PlantingMethod,
   SearchEntry,
 } from './types';
+import type { FamilyCare } from './tree-care';
 
 /** Vegetables ready in fewer days than this are tagged `quick`. */
 const QUICK_DAYS = 45;
@@ -51,8 +52,10 @@ export class Catalogue {
       /** Served flower aliases, longest first ("china rose" before "rose"). */
       flowerAliases: Array<{ alias: string; family: string }>;
       search: SearchEntry[];
-      /** APPROVED fruit types and perennial flowers: what the catalogue can offer. */
-      approved: { fruitTypes: number; flowers: number };
+      /** Approved tree care by family (retired care sends trees back to the season pack). */
+      treeCare: Map<string, FamilyCare>;
+      /** APPROVED fruit types, perennial flowers and tree care: what the catalogue can offer. */
+      approved: { fruitTypes: number; flowers: number; treeCare: number };
     },
   ) {}
 
@@ -121,6 +124,11 @@ export class Catalogue {
           : [],
       ),
     );
+    const treeCare = new Map(
+      seed.treeCare
+        .filter(approved)
+        .map(({ status: _s, notes: _n, ...care }) => [care.family, care]),
+    );
     return new Catalogue(version, {
       listed,
       crops,
@@ -132,9 +140,11 @@ export class Catalogue {
       flowerAliases,
       hindiNames,
       search,
+      treeCare,
       approved: {
         fruitTypes: seed.fruitTypes.filter(approved).length,
         flowers: seed.perennialFlowers.filter(approved).length,
+        treeCare: treeCare.size,
       },
     });
   }
@@ -186,6 +196,11 @@ export class Catalogue {
     return null;
   }
 
+  /** A fruit family's approved care; null when it has none (it keeps the season pack). */
+  treeCare(family: string | null | undefined): FamilyCare | null {
+    return (family && this.parts.treeCare.get(family)) || null;
+  }
+
   perennialFlower(family: string | null | undefined): PerennialFlower | null {
     return (family && this.parts.flowers.get(family)) || null;
   }
@@ -218,7 +233,7 @@ export class Catalogue {
   }
 
   /** How many APPROVED fruit types and perennial flowers the catalogue offers. */
-  approvedCounts(): { fruitTypes: number; flowers: number } {
+  approvedCounts(): { fruitTypes: number; flowers: number; treeCare: number } {
     return this.parts.approved;
   }
 

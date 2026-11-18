@@ -10,7 +10,7 @@ import { validateSeed } from './domain/schemas';
 /** How often the store asks whether a push has changed the catalogue. */
 const CHECK_EVERY_MS = 60_000;
 
-/** No approved crops, fruit types or perennial flowers: a push hasn't run, or ran wrong. Serving an empty catalogue would look like data loss. */
+/** No approved crops, fruit types, perennial flowers or tree care: a push hasn't run, or ran wrong. Serving an empty catalogue would look like data loss. */
 export class CatalogueUnavailableError extends AppError {
   readonly httpStatus = 503;
   readonly kind = 'programmer' as const;
@@ -69,8 +69,8 @@ export class CatalogueStore implements OnApplicationBootstrap {
     );
     const catalogue = Catalogue.from(seed, version);
     const crops = catalogue.listedCrops().length;
-    const { fruitTypes, flowers } = catalogue.approvedCounts();
-    if (crops === 0 || fruitTypes === 0 || flowers === 0)
+    const { fruitTypes, flowers, treeCare } = catalogue.approvedCounts();
+    if (crops === 0 || fruitTypes === 0 || flowers === 0 || treeCare === 0)
       throw new CatalogueUnavailableError();
     this.current = catalogue;
     this.checkedAt = now;
@@ -81,6 +81,7 @@ export class CatalogueStore implements OnApplicationBootstrap {
         cropCount: crops,
         fruitTypeCount: fruitTypes,
         flowerCount: flowers,
+        treeCareCount: treeCare,
       },
       'Catalogue loaded',
     );
