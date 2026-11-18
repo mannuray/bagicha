@@ -215,8 +215,13 @@ export class SeasonalService implements OnModuleInit {
         : []),
     ];
     const results = await this.tasks.createTasks(userId, plantId, drafts);
-    if (careDue)
-      await this.tasks.retireCareTasksExcept(userId, plantId, careDue.current);
+    // With no care now (variety changed, care retired, region pending), every
+    // care reminder left on the tree is stale.
+    await this.tasks.retireCareTasksExcept(
+      userId,
+      plantId,
+      careDue?.current ?? [],
+    );
     await this.tasks.retireSeasonTasksExcept(
       userId,
       plantId,

@@ -182,6 +182,22 @@ describe('tree care families', () => {
     expect(all.filter((t) => t.source === 'TREE_CARE')).toHaveLength(3);
   });
 
+  it("cancels a tree's care reminders when its care goes away", async () => {
+    const plant = await mango();
+    await materialize(plant.id);
+    // The gardener renames it to a fruit with no care yet (still pending).
+    await prisma.plant.update({
+      where: { id: plant.id },
+      data: { species: 'Jamun', species_family: 'jamun', name: 'Jamun' },
+    });
+    expect((await materialize(plant.id)).status).toBe(201);
+    const all = await tasks(plant.id);
+    expect(
+      all.filter((t) => t.source === 'TREE_CARE' && t.status === 'PENDING'),
+    ).toEqual([]);
+    expect(all.some((t) => t.source === 'SEASONAL_PACK')).toBe(true);
+  });
+
   it('intelligence for a care family reads the phase from care data', async () => {
     const plant = await mango();
     const res = await as(alice).get(

@@ -56,6 +56,7 @@ function build(opts: {
     create: jest.fn(),
   };
   const weatherQueue = { add: jest.fn(() => Promise.resolve()) };
+  const retireCare = jest.fn(() => Promise.resolve(0));
   const service = new SeasonalService(
     weatherQueue as any,
     { getWeather: jest.fn(() => Promise.resolve({ temp: 30 })) } as any,
@@ -77,6 +78,7 @@ function build(opts: {
     } as unknown as JournalService,
     {
       retireSeasonTasksExcept: jest.fn(() => Promise.resolve(0)),
+      retireCareTasksExcept: retireCare,
       createTasks: jest.fn((_u: string, _p: string, d: TaskDraft[]) => {
         drafts.push(...d);
         return Promise.resolve(
@@ -113,7 +115,7 @@ function build(opts: {
       treeCare: CATALOGUE_SEED.treeCare.filter((c) => c.family !== 'mango'),
     }),
   );
-  return { service, drafts, packs, pack, weatherQueue };
+  return { service, drafts, packs, pack, weatherQueue, retireCare };
 }
 
 describe('SeasonalService.materializeTasksForTree', () => {
@@ -125,6 +127,12 @@ describe('SeasonalService.materializeTasksForTree', () => {
     expect(first.created_count).toBe(1);
     expect(second.results.map((r) => r.status)).toEqual(['skipped']);
     expect(second.created_count).toBe(0);
+  });
+
+  it('cancels any care reminders left on a tree whose care went away', async () => {
+    const { service, retireCare } = build({ premium: false });
+    await service.materializeTasksForTree('u1', 'p1');
+    expect(retireCare).toHaveBeenCalledWith('u1', 'p1', []);
   });
 
   it('due dates come from the injected clock', async () => {
