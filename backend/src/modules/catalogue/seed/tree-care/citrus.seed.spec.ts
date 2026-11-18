@@ -50,6 +50,34 @@ describe('citrus care by kind (owner-approved 2026-11-18)', () => {
       expect(careForTree(citrus, { name })).toBeNull();
   });
 
+  it('a place or pet name in the tree name picks no kind', () => {
+    for (const name of ['Nimbu from Nagpur', 'Coorg lemon', 'Daisy'])
+      expect(careForTree(citrus, { name, species: 'lemon' })).toBeNull();
+  });
+
+  it('tree-page windows follow the approved wording', () => {
+    const north = (kind: string, key: string) => {
+      const k = citrus.kinds!.find((c) => c.key === kind)!;
+      const region = k.regions.NORTH_INDIA as {
+        items: Array<{ key: string; when: unknown }>;
+      };
+      return region.items.filter((i) => i.key === key).map((i) => i.when);
+    };
+    const cal = (from: [number, number], to: [number, number]) => ({
+      kind: 'CALENDAR',
+      from,
+      to,
+    });
+    // "Before the monsoon"
+    expect(north('lemon', 'canker_spots')).toEqual([cal([5, 1], [6, 30])]);
+    // No months given: whenever the gardener sees it
+    expect(north('lime', 'fruit_drop')).toEqual([cal([1, 1], [12, 31])]);
+    // Second week of August until picking (Valencia, the last, in March)
+    expect(north('sweet_orange', 'fruit_fly_trap')).toEqual([
+      cal([8, 8], [3, 31]),
+    ]);
+  });
+
   it('sweet lime is sweet orange, plain lime is lime', () => {
     expect(careForTree(citrus, { name: 'sweet lime' })?.family).toBe(
       'citrus:sweet_orange',

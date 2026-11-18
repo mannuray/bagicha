@@ -45,6 +45,21 @@ describe('careForTree', () => {
     expect(keyOf({})).toBeNull();
   });
 
+  it('a place word counts in the variety or species, never in the name', () => {
+    const withPlace: FamilyCare = {
+      ...CITRUS,
+      kinds: [
+        { ...kind('mandarin', ['kinnow']), varietyWords: ['nagpur'] },
+        kind('lime', ['kagzi']),
+      ],
+    };
+    const keyIn = (tree: Parameters<typeof careForTree>[1]) =>
+      careForTree(withPlace, tree)?.family ?? null;
+    expect(keyIn({ variety: 'Nagpur' })).toBe('citrus:mandarin');
+    expect(keyIn({ species: 'nagpur santra' })).toBe('citrus:mandarin');
+    expect(keyIn({ name: 'Nimbu from Nagpur' })).toBeNull();
+  });
+
   it('matches whole words only', () => {
     expect(keyOf({ name: 'lemongrass' })).toBeNull();
   });

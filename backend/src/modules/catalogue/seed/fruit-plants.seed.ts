@@ -565,7 +565,14 @@ export const FRUIT_PLANT_SEED: FruitPlantSeed[] = [
     variety: 'Kagzi',
     display_name: 'Lime (Kagzi)',
     plant_type: 'fruit_tree',
-    aliases: ['kagzi', 'kagzi lime', 'kagzi nimbu', 'acid lime'],
+    aliases: [
+      'kagzi',
+      'kagzi lime',
+      'kagzi nimbu',
+      'acid lime',
+      'kaghzi',
+      'kagji',
+    ],
     languages: {
       hi: ['कागज़ी नींबू', 'कागजी नींबू'],
     },

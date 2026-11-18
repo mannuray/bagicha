@@ -96,6 +96,7 @@ const careKind = z
     key: z.string().regex(/^[a-z][a-z0-9_]*$/),
     label: text,
     words: z.array(text).min(1),
+    varietyWords: z.array(text).optional(),
     grownIn: z.array(region).min(1),
     regions: z.partialRecord(region, regionEntry),
     pendingRegions: z.array(region).optional(),
@@ -169,7 +170,7 @@ function kindIssues(care: TreeCareSeed): string[] {
     if (keys.has(kind.key))
       issues.push(`${care.family}: duplicate kind ${kind.key}`);
     keys.add(kind.key);
-    for (const word of kind.words) {
+    for (const word of [...kind.words, ...(kind.varietyWords ?? [])]) {
       const normal = hindiWords(word);
       const other = words.get(normal);
       if (other && other !== kind.key)

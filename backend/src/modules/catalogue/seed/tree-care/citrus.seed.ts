@@ -171,7 +171,7 @@ const NORTH_ITEMS: Item[] = [
     category: 'PROTECTION',
     stages: ['BEARING'],
     organic:
-      'Bordeaux mixture 2:2:250: 8 g copper sulphate and 8 g quicklime per litre, each dissolved in half the water, then the copper poured into the lime while stirring; skip it if fruit is still on the tree; wear gloves',
+      "Bordeaux mixture 2:2:250: 8 g copper sulphate and 8 g quicklime per litre, each dissolved in half the water, then the copper poured into the lime while stirring; skip it if fruit is still on the tree, and don't spray in rain or in great heat; wear gloves",
     why: 'Protects cuts and the new flush from die-back',
     windows: { NORTH: month(3) },
   },
@@ -388,10 +388,11 @@ const NORTH_ITEMS: Item[] = [
     organic: 'Cut out and burn spotted twigs before the monsoon',
     chemical: `If it spreads: ${SPOTS_CHEMICAL}`,
     why: 'Canker spreads in rain and through leaf miner tunnels',
+    // "Before the monsoon"
     windows: {
       NORTH: [
-        [6, 1],
-        [9, 30],
+        [5, 1],
+        [6, 30],
       ],
     },
   },
@@ -404,12 +405,7 @@ const NORTH_ITEMS: Item[] = [
     organic:
       'Destroy dried fruit left on the tree, bury fallen fruit deep, prune and feed on schedule, and keep water from standing in the basin',
     why: 'Disease and water stress cause most fruit drop',
-    windows: {
-      NORTH: [
-        [7, 1],
-        [12, 31],
-      ],
-    },
+    windows: { NORTH: ALL_YEAR },
   },
   {
     key: 'fruit_fly_trap',
@@ -421,10 +417,11 @@ const NORTH_ITEMS: Item[] = [
     organic:
       'Hang a PAU fruit fly trap 1–1.5 m up in shade until picking; recharge it if fresh damage appears. PAU says traps work less well in home gardens than in orchards',
     why: 'Flies sting fruit at colour break; the fruit rots and drops',
+    // Second week of August until picking (Valencia, the last, in March)
     windows: {
       NORTH: [
         [8, 8],
-        [2, 28],
+        [3, 31],
       ],
     },
   },
@@ -586,7 +583,7 @@ const PHASES = (kind: Kind): PhaseSpec<Group>[] => {
     {
       phase: 'winter_rest',
       months: { NORTH: mandarin ? [12, 12] : [12, 1] },
-      avoid: ['Heavy pruning'],
+      avoid: ['Heavy pruning in active growth'],
       watch: ['Bark-eating caterpillar'],
     },
     ...(mandarin
@@ -696,11 +693,11 @@ const KINDS: CareKind[] = [
       'pahadi nimbu',
       'assam lemon',
       'kaji nemu',
-      'eureka',
       'बारामासी',
       'गलगल',
       'पहाड़ी नींबू',
     ],
+    varietyWords: ['eureka'],
     grownIn: [
       'NORTH_INDIA',
       'EAST_INDIA',
@@ -723,10 +720,8 @@ const KINDS: CareKind[] = [
   {
     key: 'mandarin',
     label: 'Mandarin',
-    words: [
-      'kinnow',
-      'kinnu',
-      'mandarin',
+    words: ['kinnow', 'kinnu', 'mandarin', 'murcott', 'किन्नू', 'किन्नो'],
+    varietyWords: [
       'nagpur',
       'nagpuri',
       'darjeeling',
@@ -734,9 +729,6 @@ const KINDS: CareKind[] = [
       'coorg',
       'kodai',
       'daisy',
-      'murcott',
-      'किन्नू',
-      'किन्नो',
       'नागपुरी',
       'नागपुर',
       'दार्जिलिंग',
@@ -764,8 +756,6 @@ const KINDS: CareKind[] = [
       'malta',
       'blood red',
       'blood orange',
-      'jaffa',
-      'valencia',
       'sathgudi',
       'sathukudi',
       'batavian',
@@ -776,6 +766,7 @@ const KINDS: CareKind[] = [
       'मुसम्मी',
       'माल्टा',
     ],
+    varietyWords: ['jaffa', 'valencia'],
     grownIn: ['NORTH_INDIA', 'WEST_INDIA', 'SOUTH_DECCAN', 'HILLS_COOL'],
     regions: {
       NORTH_INDIA: north('sweet_orange'),

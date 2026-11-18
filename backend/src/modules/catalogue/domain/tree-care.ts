@@ -91,6 +91,12 @@ export interface CareKind {
   label: string;
   /** English or Hindi-script words; each on one kind only. */
   words: string[];
+  /**
+   * Place and variety names (Nagpur, Coorg, Daisy) that pick this kind only in
+   * the tree's variety or species: in a free-text name they may mean something
+   * else ("Nimbu from Nagpur").
+   */
+  varietyWords?: string[];
   grownIn: RegionCluster[];
   regions: Partial<
     Record<RegionCluster, RegionCare | { sameAs: RegionCluster }>
