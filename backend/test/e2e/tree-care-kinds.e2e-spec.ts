@@ -56,7 +56,10 @@ describe('tree care by kind (citrus)', () => {
       b.overrideProvider(CatalogueStore).useValue(
         seededCatalogueStore({
           ...CATALOGUE_SEED,
-          treeCare: [...CATALOGUE_SEED.treeCare, CITRUS],
+          treeCare: [
+            ...CATALOGUE_SEED.treeCare.filter((c) => c.family !== 'citrus'),
+            CITRUS,
+          ],
         }),
       ),
     );

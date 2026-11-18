@@ -85,6 +85,22 @@ describe('citrus care by kind (owner-approved 2026-11-18)', () => {
     expect(careForTree(citrus, { name: 'lime' })?.family).toBe('citrus:lime');
   });
 
+  it("every region a kind has no checked care for is pending, so no tree gets another region's care", () => {
+    const ALL = [
+      'CENTRAL_INDIA',
+      'COASTAL_HUMID',
+      'EAST_INDIA',
+      'HILLS_COOL',
+      'NORTH_INDIA',
+      'SOUTH_DECCAN',
+      'WEST_INDIA',
+    ];
+    for (const kind of citrus.kinds ?? [])
+      expect(
+        [...Object.keys(kind.regions), ...(kind.pendingRegions ?? [])].sort(),
+      ).toEqual(ALL);
+  });
+
   it('ships North India for every kind, and South Deccan for lime and sweet orange', () => {
     const ships = Object.fromEntries(
       (citrus.kinds ?? []).map((k) => [k.key, Object.keys(k.regions).sort()]),

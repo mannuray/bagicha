@@ -86,6 +86,30 @@ describe('TaskProcessor', () => {
     expect(calls[0][0].dueDate.toISOString()).toBe('2026-01-18T00:00:00.000Z');
   });
 
+  it('waters a citrus tree of no known kind in 3 days; a known kind gets its care instead', async () => {
+    const citrus = CATALOGUE_SEED.treeCare.filter((c) => c.family === 'citrus');
+    const nimbu = build(citrus);
+    await nimbu.processor.process(
+      job({
+        user_id: 'u1',
+        plant_id: 'p1',
+        lifecycle_stage: 'SAPLING',
+        species: 'Lemon',
+      }),
+    );
+    expect(nimbu.calls[0].map((d) => d.type)).toEqual([TaskType.WATER]);
+    const kinnow = build(citrus);
+    await kinnow.processor.process(
+      job({
+        user_id: 'u1',
+        plant_id: 'p2',
+        lifecycle_stage: 'SAPLING',
+        species: 'mandarin',
+      }),
+    );
+    expect(kinnow.tasks.createTasks).not.toHaveBeenCalled();
+  });
+
   it('is idempotent: a retried job creates nothing new', async () => {
     const { processor } = build();
     const data = {

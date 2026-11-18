@@ -18,6 +18,8 @@ import type {
  * (just "nimbu") gets no care. Chemicals are listed only with a citrus label
  * claim, a per-litre dose and a waiting period (CIB&RC MUP to 30.09.2026).
  */
+// Every region a kind has no checked care for is pending (approved doc §5), even
+// outside its grownIn: otherwise the engine would lend it the nearest region's care.
 type Group = 'NORTH' | 'SOUTH';
 type Kind = 'lime' | 'lemon' | 'mandarin' | 'sweet_orange';
 type Item = ItemSpec<Group> & { kinds?: Kind[] };
@@ -680,6 +682,7 @@ const KINDS: CareKind[] = [
       'WEST_INDIA',
       'CENTRAL_INDIA',
       'COASTAL_HUMID',
+      'HILLS_COOL',
     ],
   },
   {
@@ -742,7 +745,14 @@ const KINDS: CareKind[] = [
       'HILLS_COOL',
     ],
     regions: { NORTH_INDIA: north('mandarin') },
-    pendingRegions: ['EAST_INDIA', 'WEST_INDIA', 'CENTRAL_INDIA', 'HILLS_COOL'],
+    pendingRegions: [
+      'EAST_INDIA',
+      'WEST_INDIA',
+      'CENTRAL_INDIA',
+      'SOUTH_DECCAN',
+      'COASTAL_HUMID',
+      'HILLS_COOL',
+    ],
   },
   {
     key: 'sweet_orange',
@@ -772,7 +782,13 @@ const KINDS: CareKind[] = [
       NORTH_INDIA: north('sweet_orange'),
       SOUTH_DECCAN: south(SOUTH_SWEET_ORANGE_ITEMS, []),
     },
-    pendingRegions: ['WEST_INDIA', 'HILLS_COOL'],
+    pendingRegions: [
+      'EAST_INDIA',
+      'WEST_INDIA',
+      'CENTRAL_INDIA',
+      'COASTAL_HUMID',
+      'HILLS_COOL',
+    ],
   },
 ];
 

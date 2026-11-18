@@ -82,32 +82,33 @@ const RECORDED: Record<
       alternatives: ['Mango (Malda)', 'Mango (Langra)', 'Mango (Amrapali)'],
     },
   },
+  // Citrus by kind (2026-11-18): the plain entry is "Nimbu"; Kagzi is a lime;
+  // Seedless was retired for Baramasi.
   nimbu: {
-    search: ['Lemon', 'Lemon (Assam lemon)', 'Lemon (Galgal)', 'Lemon (Kagzi)'],
+    search: ['Nimbu', 'Lemon (Assam lemon)', 'Lemon (Galgal)', 'Lime (Kagzi)'],
     resolve: {
-      match: 'Lemon',
+      match: 'Nimbu',
       confidence: 'high',
-      matched_alias: 'nimbu',
-      alternatives: ['Lemon (Assam lemon)', 'Lemon (Galgal)', 'Lemon (Kagzi)'],
+      matched_alias: 'Nimbu',
+      alternatives: ['Lemon (Assam lemon)', 'Lemon (Galgal)', 'Lime (Kagzi)'],
     },
   },
   lemon: {
     search: [
-      'Lemon',
+      'Nimbu',
       'Lemon (Assam lemon)',
+      'Lemon (Baramasi, seedless)',
       'Lemon (Galgal)',
       'Lemon (Gondhoraj)',
-      'Lemon (Kagzi)',
-      'Lemon (Seedless)',
     ],
     resolve: {
-      match: 'Lemon',
+      match: 'Nimbu',
       confidence: 'high',
-      matched_alias: 'Lemon',
+      matched_alias: 'lemon',
       alternatives: [
         'Lemon (Assam lemon)',
+        'Lemon (Baramasi, seedless)',
         'Lemon (Galgal)',
-        'Lemon (Gondhoraj)',
       ],
     },
   },
