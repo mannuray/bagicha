@@ -12,6 +12,8 @@ import type {
   PlantingMethod,
   SearchEntry,
 } from './types';
+import { hasWords, hindiWords, latinWords } from './words';
+import { careForTree, type TreeWords } from './care-kind';
 import type { FamilyCare } from './tree-care';
 
 /** Vegetables ready in fewer days than this are tagged `quick`. */
@@ -201,6 +203,19 @@ export class Catalogue {
     return (family && this.parts.treeCare.get(family)) || null;
   }
 
+  /**
+   * The care this tree gets: its family's care, or for a family split by kind
+   * (citrus) the care of the kind its variety, species or name names. Null
+   * when there is none: the tree keeps the season pack.
+   */
+  treeCareFor(
+    family: string | null | undefined,
+    tree: TreeWords,
+  ): FamilyCare | null {
+    const care = this.treeCare(family);
+    return care && careForTree(care, tree);
+  }
+
   perennialFlower(family: string | null | undefined): PerennialFlower | null {
     return (family && this.parts.flowers.get(family)) || null;
   }
@@ -261,25 +276,6 @@ export class Catalogue {
 
 const served = (r: { status: CatalogueStatus }) => r.status !== 'DRAFT';
 const approved = (r: { status: CatalogueStatus }) => r.status === 'APPROVED';
-
-/** Whole words only: "ber" must not match inside "mulberry". */
-/** Lower-case English letters and digits, single-spaced. */
-const latinWords = (text: string) =>
-  text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-
-/** Any script, NFC (so ड़ typed either way reads the same), single-spaced. */
-const hindiWords = (text: string) =>
-  text
-    .normalize('NFC')
-    .toLowerCase()
-    .replace(/[^\p{L}\p{M}0-9]+/gu, ' ')
-    .trim();
-
-const hasWords = (haystack: string, alias: string) =>
-  ` ${haystack.trim()} `.includes(` ${alias} `);
 
 const DEVANAGARI = /[\u0900-\u097F]/;
 

@@ -162,3 +162,91 @@ describe('tree care records in the seed', () => {
     expect(issuesOf(family(), family())).toMatch(/mango/);
   });
 });
+
+describe('tree care with kinds', () => {
+  const regions = family().regions;
+  const kind = (key: string, words: string[]) => ({
+    key,
+    label: key,
+    words,
+    grownIn: ['NORTH_INDIA' as const],
+    regions,
+  });
+  const citrus = (over: Partial<TreeCareSeed> = {}) =>
+    family({
+      family: 'citrus',
+      grownIn: [],
+      regions: {},
+      kinds: [kind('lime', ['kagzi']), kind('lemon', ['galgal'])],
+      ...over,
+    });
+
+  it('accepts a family whose care is all in its kinds', () => {
+    expect(issuesOf(citrus())).toBe('');
+  });
+
+  it('rejects a family with kinds and its own regions', () => {
+    expect(issuesOf(citrus({ regions }))).toMatch(/kinds/);
+  });
+
+  it('rejects a word on two kinds', () => {
+    expect(
+      issuesOf(
+        citrus({ kinds: [kind('lime', ['kagzi']), kind('lemon', ['kagzi'])] }),
+      ),
+    ).toMatch(/kagzi/);
+  });
+
+  it('rejects duplicate kind keys', () => {
+    expect(
+      issuesOf(
+        citrus({ kinds: [kind('lime', ['kagzi']), kind('lime', ['galgal'])] }),
+      ),
+    ).toMatch(/lime/);
+  });
+
+  it('rejects a kind grownIn region with no care', () => {
+    expect(
+      issuesOf(
+        citrus({
+          kinds: [
+            {
+              ...kind('lime', ['kagzi']),
+              grownIn: ['NORTH_INDIA', 'HILLS_COOL'],
+            },
+          ],
+        }),
+      ),
+    ).toMatch(/HILLS_COOL/);
+  });
+
+  it('still requires grownIn on a family without kinds', () => {
+    expect(issuesOf(family({ grownIn: [] }))).toMatch(/grown/);
+  });
+});
+
+describe('tree care on a draft fruit type', () => {
+  it('rejects served care on a draft fruit type (the API would not load the type)', () => {
+    const seed = {
+      ...CATALOGUE_SEED,
+      fruitTypes: CATALOGUE_SEED.fruitTypes.map((t) =>
+        t.key === 'mango' ? { ...t, status: 'DRAFT' as const } : t,
+      ),
+      fruitPlants: CATALOGUE_SEED.fruitPlants.map((p) =>
+        p.species_family === 'mango' ? { ...p, status: 'DRAFT' as const } : p,
+      ),
+    };
+    const issues = (status: TreeCareSeed['status']) => {
+      try {
+        validateSeed({ ...seed, treeCare: [family({ status })] });
+        return '';
+      } catch (e) {
+        return (
+          (e as { details?: { issues?: string[] } }).details?.issues ?? []
+        ).join('\n');
+      }
+    };
+    expect(issues('APPROVED')).toMatch(/mango/);
+    expect(issues('DRAFT')).toBe('');
+  });
+});

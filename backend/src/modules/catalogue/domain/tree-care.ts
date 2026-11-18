@@ -80,6 +80,24 @@ export interface RegionCare {
   phases: PhaseWindow[];
 }
 
+/**
+ * One kind within a family (lime, lemon, mandarin…) with care of its own. A
+ * tree is of a kind when one of the kind's words is in its variety, species
+ * or name; words that fit several kinds ("nimbu") belong to none.
+ */
+export interface CareKind {
+  /** Stable: part of the task key (`citrus:lime:…`). */
+  key: string;
+  label: string;
+  /** English or Hindi-script words; each on one kind only. */
+  words: string[];
+  grownIn: RegionCluster[];
+  regions: Partial<
+    Record<RegionCluster, RegionCare | { sameAs: RegionCluster }>
+  >;
+  pendingRegions?: RegionCluster[];
+}
+
 export interface FamilyCare {
   family: string;
   sources: string[];
@@ -93,6 +111,11 @@ export interface FamilyCare {
    * gardeners there keep the season-pack advice until it is.
    */
   pendingRegions?: RegionCluster[];
+  /**
+   * Care split by kind: a family with kinds has no care of its own (empty
+   * `grownIn` and `regions`), and a tree whose kind isn't known keeps the season pack.
+   */
+  kinds?: CareKind[];
 }
 
 /** A family's care as the seed and the database hold it. */

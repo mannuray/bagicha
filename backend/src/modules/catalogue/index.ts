@@ -6,6 +6,8 @@ export { validateSeed } from './domain/schemas';
 export { pick } from './domain/pick';
 export { CATALOGUE_SEED } from './seed';
 export { CARE_PENDING } from './seed/tree-care';
+export { careForTree } from './domain/care-kind';
+export type { TreeWords } from './domain/care-kind';
 export type {
   CareStep,
   CareStepInfo,
@@ -33,6 +35,7 @@ export type {
 } from './domain/types';
 export type {
   Anchor,
+  CareKind,
   CareStage,
   Dose,
   DosePart,

@@ -113,3 +113,5 @@ Then sign in on the web app (the code is shown on screen), add a tree, and log a
 | Photos fail to upload | S3 key or bucket setting wrong | Check the `MEDIA_*` settings on Render |
 
 **Rolling back:** web: `vercel rollback --scope mannu-kumars-projects`. API: Render dashboard → bagicha-api → Events → Rollback. A migration is not undone by a rollback.
+
+**Rolling the API back past a catalogue field:** the catalogue schemas are strict, so an older API that meets a field it doesn't know (for example citrus care `kinds`) fails on its next restart. Before such a rollback, set the records using that field to `DRAFT` in the seed and push (the API never loads drafts), then roll back.

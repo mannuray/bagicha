@@ -325,7 +325,7 @@ export class SeasonalService implements OnModuleInit {
     catalogue: Catalogue,
   ): FamilyCare | null {
     if (plant.record_kind === RecordKind.FLOWER) return null;
-    return catalogue.treeCare(species.family(plant));
+    return catalogue.treeCareFor(species.family(plant), plant);
   }
 
   private async getOrCreatePack(
