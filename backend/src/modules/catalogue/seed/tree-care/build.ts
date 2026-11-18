@@ -1,10 +1,10 @@
 import type {
-  CareItem,
+  TreeCareItem,
   CareStage,
   MonthDay,
   PhaseWindow,
   RegionCare,
-} from './types';
+} from '../../domain/tree-care';
 
 /** A calendar window: [from, to], each [month, day]; may cross New Year. */
 export type Window = [MonthDay, MonthDay];
@@ -13,8 +13,11 @@ export const ALL_YEAR: Window = [
   [12, 31],
 ];
 
-/** A care item with its window per timing group (absent group: not done there). */
-export interface ItemSpec<G extends string> extends Omit<CareItem, 'when'> {
+/**
+ * A care item with its window per timing group (absent group: not done
+ * there).
+ */
+export interface ItemSpec<G extends string> extends Omit<TreeCareItem, 'when'> {
   windows: Partial<Record<G, Window | Window[]>>;
 }
 
@@ -23,7 +26,10 @@ export interface PhaseSpec<G extends string> extends Omit<
   PhaseWindow,
   'when' | 'stages'
 > {
-  /** [first month, last month], or an exact window when the table gives days. */
+  /**
+   * [first month, last month], or an exact window when the table gives
+   * days.
+   */
   months: Partial<Record<G, [number, number] | Window>>;
   stages?: CareStage[];
 }

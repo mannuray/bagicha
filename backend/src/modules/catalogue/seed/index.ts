@@ -5,6 +5,7 @@ import { FRUIT_PLANT_SEED } from './fruit-plants.seed';
 import { FRUIT_TYPE_SEED } from './fruit-types.seed';
 import { METHOD_SEED } from './methods.seed';
 import { PERENNIAL_FLOWER_SEED } from './perennial-flowers.seed';
+import { TREE_CARE_SEED } from './tree-care';
 
 /** Everything the catalogue push writes. */
 export const CATALOGUE_SEED: CatalogueSeed = {
@@ -14,4 +15,5 @@ export const CATALOGUE_SEED: CatalogueSeed = {
   fruitTypes: FRUIT_TYPE_SEED,
   fruitPlants: FRUIT_PLANT_SEED,
   perennialFlowers: PERENNIAL_FLOWER_SEED,
+  treeCare: TREE_CARE_SEED,
 };

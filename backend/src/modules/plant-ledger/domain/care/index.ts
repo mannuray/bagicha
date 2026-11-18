@@ -1,10 +1,4 @@
-import { AMLA_CARE } from './amla';
-import { GUAVA_CARE } from './guava';
-import { JACKFRUIT_CARE } from './jackfruit';
-import { LITCHI_CARE } from './litchi';
-import { MANGO_CARE } from './mango';
-import { SAPOTA_CARE } from './sapota';
-import type { FamilyCare } from './types';
+/** The tree-care engine. Care data lives in the catalogue (seed/tree-care). */
 
 export type {
   Anchor,
@@ -28,55 +22,3 @@ export type {
   CareReminder,
   TreeCareInput,
 } from './engine';
-
-/** Tree families whose care follows the add-plant playbook. */
-export const TREE_CARE: Readonly<Record<string, FamilyCare>> = {
-  mango: MANGO_CARE,
-  guava: GUAVA_CARE,
-  litchi: LITCHI_CARE,
-  sapota: SAPOTA_CARE,
-  jackfruit: JACKFRUIT_CARE,
-  amla: AMLA_CARE,
-};
-
-/**
- * Catalogue families still on generic season packs. This list only shrinks:
- * when a family's care ships, it moves from here into TREE_CARE.
- */
-export const CARE_PENDING: readonly string[] = [
-  'citrus',
-  'pomegranate',
-  'banana',
-  'papaya',
-  'grape',
-  'coconut',
-  'custard_apple',
-  'moringa',
-  'jamun',
-  'ber',
-  'bael',
-  'fig',
-  'mulberry',
-  'star_fruit',
-  'karonda',
-  'phalsa',
-  'wood_apple',
-  'tamarind',
-  'kokum',
-  'dragon_fruit',
-  // Phase 3: hill and cool-climate fruit
-  'apple',
-  'pear',
-  'peach',
-  'plum',
-  'apricot',
-  'cherry',
-  'walnut',
-  'almond',
-  'kiwi',
-  'persimmon',
-];
-
-export function careFor(family: string): FamilyCare | null {
-  return TREE_CARE[family] ?? null;
-}

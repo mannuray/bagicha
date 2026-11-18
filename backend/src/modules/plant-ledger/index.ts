@@ -41,16 +41,13 @@ export { CropPlanService } from './services/crop-plan.service';
 export { toPlantView } from './domain/plant-view';
 export { PlantNamesService } from './services/plant-names.service';
 export {
-  CARE_PENDING,
   careApplies,
-  careFor,
   carePhaseView,
   NOT_GROWN_NOTE,
   treeCareDue,
   NEAREST_REGIONS,
   resolveRegionCare,
   stageOf,
-  TREE_CARE,
 } from './domain/care';
 export type {
   Anchor,
@@ -62,7 +59,3 @@ export type {
   PhaseWindow,
   RegionCare,
 } from './domain/care';
-export {
-  TREE_CARE_REGISTRY,
-  treeCareRegistryProvider,
-} from './domain/care/registry';

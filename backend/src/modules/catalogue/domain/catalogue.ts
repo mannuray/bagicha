@@ -12,6 +12,10 @@ import type {
   PlantingMethod,
   SearchEntry,
 } from './types';
+import { FORMER_DISPLAY_NAMES } from './former-names';
+import { hasWords, hindiWords, latinWords } from './words';
+import { careForTree, type TreeWords } from './care-kind';
+import type { FamilyCare } from './tree-care';
 
 /** Vegetables ready in fewer days than this are tagged `quick`. */
 const QUICK_DAYS = 45;
@@ -51,8 +55,10 @@ export class Catalogue {
       /** Served flower aliases, longest first ("china rose" before "rose"). */
       flowerAliases: Array<{ alias: string; family: string }>;
       search: SearchEntry[];
-      /** APPROVED fruit types and perennial flowers: what the catalogue can offer. */
-      approved: { fruitTypes: number; flowers: number };
+      /** Approved tree care by family (retired care sends trees back to the season pack). */
+      treeCare: Map<string, FamilyCare>;
+      /** APPROVED fruit types, perennial flowers and tree care: what the catalogue can offer. */
+      approved: { fruitTypes: number; flowers: number; treeCare: number };
     },
   ) {}
 
@@ -106,20 +112,34 @@ export class Catalogue {
         b.confidence_weight - a.confidence_weight ||
         a.display_name.localeCompare(b.display_name, 'en'),
     );
+    const servedEntries = [
+      ...seed.fruitPlants.filter(served),
+      ...seed.perennialFlowers.filter(served).map(flowerSearchEntry),
+    ];
+    const byKey = new Map(seed.fruitPlants.map((p) => [p.key, p]));
     const hindiNames = new Map(
       [
-        ...seed.fruitPlants.filter(served),
-        ...seed.perennialFlowers.filter(served).map(flowerSearchEntry),
-      ].flatMap((e) =>
+        ...servedEntries.map((e) => [e.display_name, e] as const),
+        // A tree saved under an entry's old name keeps its Hindi name.
+        ...Object.entries(FORMER_DISPLAY_NAMES).flatMap(([old, key]) => {
+          const e = byKey.get(key);
+          return e && served(e) ? [[old, e] as const] : [];
+        }),
+      ].flatMap(([name, e]) =>
         e.hi?.display_name
           ? [
               [
-                e.display_name,
+                name,
                 { family: e.species_family, hi: e.hi.display_name },
               ] as const,
             ]
           : [],
       ),
+    );
+    const treeCare = new Map(
+      seed.treeCare
+        .filter(approved)
+        .map(({ status: _s, notes: _n, ...care }) => [care.family, care]),
     );
     return new Catalogue(version, {
       listed,
@@ -132,9 +152,11 @@ export class Catalogue {
       flowerAliases,
       hindiNames,
       search,
+      treeCare,
       approved: {
         fruitTypes: seed.fruitTypes.filter(approved).length,
         flowers: seed.perennialFlowers.filter(approved).length,
+        treeCare: treeCare.size,
       },
     });
   }
@@ -186,6 +208,24 @@ export class Catalogue {
     return null;
   }
 
+  /** A fruit family's approved care; null when it has none (it keeps the season pack). */
+  treeCare(family: string | null | undefined): FamilyCare | null {
+    return (family && this.parts.treeCare.get(family)) || null;
+  }
+
+  /**
+   * The care this tree gets: its family's care, or for a family split by kind
+   * (citrus) the care of the kind its variety, species or name names. Null
+   * when there is none: the tree keeps the season pack.
+   */
+  treeCareFor(
+    family: string | null | undefined,
+    tree: TreeWords,
+  ): FamilyCare | null {
+    const care = this.treeCare(family);
+    return care && careForTree(care, tree);
+  }
+
   perennialFlower(family: string | null | undefined): PerennialFlower | null {
     return (family && this.parts.flowers.get(family)) || null;
   }
@@ -218,7 +258,7 @@ export class Catalogue {
   }
 
   /** How many APPROVED fruit types and perennial flowers the catalogue offers. */
-  approvedCounts(): { fruitTypes: number; flowers: number } {
+  approvedCounts(): { fruitTypes: number; flowers: number; treeCare: number } {
     return this.parts.approved;
   }
 
@@ -246,25 +286,6 @@ export class Catalogue {
 
 const served = (r: { status: CatalogueStatus }) => r.status !== 'DRAFT';
 const approved = (r: { status: CatalogueStatus }) => r.status === 'APPROVED';
-
-/** Whole words only: "ber" must not match inside "mulberry". */
-/** Lower-case English letters and digits, single-spaced. */
-const latinWords = (text: string) =>
-  text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-
-/** Any script, NFC (so ड़ typed either way reads the same), single-spaced. */
-const hindiWords = (text: string) =>
-  text
-    .normalize('NFC')
-    .toLowerCase()
-    .replace(/[^\p{L}\p{M}0-9]+/gu, ' ')
-    .trim();
-
-const hasWords = (haystack: string, alias: string) =>
-  ` ${haystack.trim()} `.includes(` ${alias} `);
 
 const DEVANAGARI = /[\u0900-\u097F]/;
 

@@ -5,7 +5,7 @@ import {
   type PhaseSpec,
   type Window,
 } from './build';
-import type { Dose, FamilyCare, RegionCare } from './types';
+import type { Dose, FamilyCare, RegionCare } from '../../domain/tree-care';
 
 /**
  * Sapota (chikoo) care, transcribed from the source-checked table approved by

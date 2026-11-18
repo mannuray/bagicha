@@ -77,3 +77,36 @@ describe('Hindi texts in the catalogue', () => {
     expect(pick('a', 'ब', 'hi')).toBe('ब');
   });
 });
+
+describe('Hindi names after an add-tree entry is renamed', () => {
+  const c = Catalogue.from(validateSeed(CATALOGUE_SEED), 1);
+  it('a tree saved under the old name keeps its Hindi name', () => {
+    expect(
+      c.hindiPlantName({
+        name: 'Lemon',
+        crop_id: null,
+        species_family: 'citrus',
+      }),
+    ).toBe('नींबू');
+    expect(
+      c.hindiPlantName({
+        name: 'Lemon (Kagzi)',
+        crop_id: null,
+        species_family: 'citrus',
+      }),
+    ).toBe(
+      c.hindiPlantName({
+        name: 'Lime (Kagzi)',
+        crop_id: null,
+        species_family: 'citrus',
+      }),
+    );
+    expect(
+      c.hindiPlantName({
+        name: 'Lemon',
+        crop_id: null,
+        species_family: 'mango',
+      }),
+    ).toBeNull();
+  });
+});

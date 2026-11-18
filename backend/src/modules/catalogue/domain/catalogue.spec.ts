@@ -148,6 +148,52 @@ describe('Catalogue: fruit types, fruit entries and perennial flowers', () => {
   });
 });
 
+describe('Catalogue: tree care', () => {
+  const mango = CATALOGUE_SEED.treeCare.find((c) => c.family === 'mango')!;
+  const withMango = (status: 'APPROVED' | 'RETIRED' | 'DRAFT') =>
+    Catalogue.from(
+      validateSeed({
+        ...CATALOGUE_SEED,
+        treeCare: CATALOGUE_SEED.treeCare.map((c) =>
+          c.family === 'mango' ? { ...c, status } : c,
+        ),
+      }),
+      1,
+    );
+
+  it('treeCare serves approved care, without its seed status and notes', () => {
+    const { status: _s, notes: _n, ...care } = mango;
+    expect(withMango('APPROVED').treeCare('mango')).toEqual(care);
+  });
+
+  it('treeCare is null for a retired or draft record and an unknown family', () => {
+    expect(withMango('RETIRED').treeCare('mango')).toBeNull();
+    expect(withMango('DRAFT').treeCare('mango')).toBeNull();
+    expect(withMango('APPROVED').treeCare('banana')).toBeNull();
+    expect(withMango('APPROVED').treeCare(null)).toBeNull();
+  });
+});
+
+describe('Catalogue.treeCareFor', () => {
+  const catalogue = Catalogue.from(validateSeed(CATALOGUE_SEED), 1);
+
+  it("gives a citrus tree its kind's care", () => {
+    expect(catalogue.treeCareFor('citrus', { variety: 'Kagzi' })?.family).toBe(
+      'citrus:lime',
+    );
+  });
+
+  it('gives a citrus tree of no known kind no care', () => {
+    expect(catalogue.treeCareFor('citrus', { name: 'nimbu' })).toBeNull();
+  });
+
+  it('gives a family without kinds its own care', () => {
+    expect(catalogue.treeCareFor('mango', { name: 'Aam' })?.family).toBe(
+      'mango',
+    );
+  });
+});
+
 describe('validateSeed', () => {
   const reason = (seed: unknown) => {
     try {

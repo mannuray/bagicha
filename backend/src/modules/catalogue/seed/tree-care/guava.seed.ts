@@ -1,5 +1,5 @@
 import { ALL_YEAR, groupCare, type ItemSpec, type PhaseSpec } from './build';
-import type { Dose, FamilyCare, RegionCare } from './types';
+import type { Dose, FamilyCare, RegionCare } from '../../domain/tree-care';
 
 /**
  * Guava care, transcribed from the source-checked table approved by the owner

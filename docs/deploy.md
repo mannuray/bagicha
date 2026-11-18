@@ -44,7 +44,7 @@ docker run --rm --dns 1.1.1.1 \
 
 ## Plant catalogue push (after the migration, before the deploy)
 
-Crops, seasonal flowers, planting methods, care steps, fruit types (their matching words and life profiles), add-tree search entries and perennial flowers live in the database. The API reads them from there and refuses to start without an approved catalogue (crops, fruit types and perennial flowers). Nothing writes catalogue data at start any more; the old `plant_catalog_entries` table is unused. They are edited in `backend/src/modules/catalogue/seed/` and written to the database by the push. Run it whenever a commit changes a seed file, and once for the stage that creates the tables. Order: **migration → push → API deploy → web**. The web from the catalogue release expects the API's new crop fields (`journey`, `method_short`, care-step texts), so the API goes live first, and rolling the API back means rolling the web back with it.
+Crops, seasonal flowers, planting methods, care steps, fruit types (their matching words and life profiles), add-tree search entries, perennial flowers and tree care (month-by-month reminders per fruit) live in the database. The API reads them from there and refuses to start without an approved catalogue (crops, fruit types, perennial flowers and tree care). Nothing writes catalogue data at start any more; the old `plant_catalog_entries` table is unused. They are edited in `backend/src/modules/catalogue/seed/` and written to the database by the push. Run it whenever a commit changes a seed file, and once for the stage that creates the tables. Order: **migration → push → API deploy → web**. The web from the catalogue release expects the API's new crop fields (`journey`, `method_short`, care-step texts), so the API goes live first, and rolling the API back means rolling the web back with it.
 
 ```bash
 cd backend
@@ -60,6 +60,7 @@ docker run --rm --dns 1.1.1.1 \
 - The running API picks up a push within about a minute; no redeploy is needed for a seed-only change.
 - Locally: `npm run catalogue:push` (uses `DATABASE_URL` from `.env`).
 - Stage 2 (fruit types, add-tree entries, perennial flowers, migration `20261115120000_catalogue_fruit_flowers`): migration → push → API deploy. No web deploy is needed; a search result's `id` is now its catalogue key (`mango:Dasheri`) instead of a row id, and the web uses it only as a list key.
+- Stage 3 (tree care, migration `20261118120000_catalogue_tree_care`): migration → push → API deploy. The push before the deploy is safe: the old API never reads the new table. The API from this release refuses to start until the push has written tree care, so the push must come first. A catalogue push that adds a **new field** to any record goes the other way, code first, because the schemas are strict and an API that meets an unknown field fails on its next restart.
 
 ## Deploy the API (Render)
 
@@ -112,3 +113,5 @@ Then sign in on the web app (the code is shown on screen), add a tree, and log a
 | Photos fail to upload | S3 key or bucket setting wrong | Check the `MEDIA_*` settings on Render |
 
 **Rolling back:** web: `vercel rollback --scope mannu-kumars-projects`. API: Render dashboard → bagicha-api → Events → Rollback. A migration is not undone by a rollback.
+
+**Rolling the API back past a catalogue field:** the catalogue schemas are strict, so an older API that meets a field it doesn't know (for example citrus care `kinds`) fails on its next restart. Before such a rollback, set the records using that field to `DRAFT` in the seed and push (the API never loads drafts), then roll back.

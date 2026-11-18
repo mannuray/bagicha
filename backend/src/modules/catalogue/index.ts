@@ -5,6 +5,9 @@ export { Catalogue, UnknownMethodError } from './domain/catalogue';
 export { validateSeed } from './domain/schemas';
 export { pick } from './domain/pick';
 export { CATALOGUE_SEED } from './seed';
+export { CARE_PENDING } from './seed/tree-care';
+export { careForTree } from './domain/care-kind';
+export type { TreeWords } from './domain/care-kind';
 export type {
   CareStep,
   CareStepInfo,
@@ -30,3 +33,17 @@ export type {
   PlantingMethod,
   SearchEntry,
 } from './domain/types';
+export type {
+  Anchor,
+  CareKind,
+  CareStage,
+  Dose,
+  DosePart,
+  FamilyCare,
+  MonthDay,
+  PhaseWindow,
+  RegionCare,
+  TreeCareCategory,
+  TreeCareItem,
+  TreeCareSeed,
+} from './domain/tree-care';

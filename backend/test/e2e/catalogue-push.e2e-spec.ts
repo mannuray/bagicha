@@ -4,6 +4,7 @@ import type { CatalogueSeed } from '../../src/modules/catalogue';
 import { CatalogueRepository } from '../../src/modules/catalogue/catalogue.repository';
 import { CataloguePushService } from '../../src/modules/catalogue/push/catalogue-push.service';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { treeCareFixture } from '../../src/modules/catalogue/testing';
 import { createTestApp } from './app';
 
 const reasonOf = (p: Promise<unknown>) =>
@@ -38,7 +39,7 @@ describe('catalogue push', () => {
 
   beforeEach(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care',
     );
     await prisma.catalogueMeta.update({
       where: { id: 1 },
@@ -48,7 +49,7 @@ describe('catalogue push', () => {
 
   afterAll(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care',
     );
     await push.push(CATALOGUE_SEED);
     await app.close();
@@ -64,6 +65,7 @@ describe('catalogue push', () => {
       ...r.fruitTypes,
       ...r.fruitPlants,
       ...r.perennialFlowers,
+      ...r.treeCare,
     ];
     expect(outcomes(all(first))).toEqual(['added']);
     expect(first.crops).toHaveLength(CATALOGUE_SEED.crops.length);
@@ -127,6 +129,24 @@ describe('catalogue push', () => {
     await push.push(editCrop('carrot', () => ({ status: 'RETIRED' })));
     const stored = await repo.loadSeed(['RETIRED']);
     expect(stored.crops.map((c) => c.id)).toEqual(['carrot']);
+  });
+
+  it('adds, then leaves unchanged, a tree-care record', async () => {
+    const seed = { ...CATALOGUE_SEED, treeCare: [treeCareFixture()] };
+    const first = await push.push(seed);
+    expect(first.treeCare).toEqual([{ key: 'mango', outcome: 'added' }]);
+    const again = await push.push(seed);
+    expect(again.treeCare).toEqual([{ key: 'mango', outcome: 'unchanged' }]);
+  });
+
+  it('refuses a seed missing a stored tree-care record', async () => {
+    await push.push({ ...CATALOGUE_SEED, treeCare: [treeCareFixture()] });
+    const refusal = await push.push({ ...CATALOGUE_SEED, treeCare: [] }).then(
+      () => null,
+      (e: { reason?: string; details?: { treeCare?: string[] } }) => e,
+    );
+    expect(refusal?.reason).toBe('CATALOGUE_MISSING_FROM_SEED');
+    expect(refusal?.details?.treeCare).toEqual(['mango']);
   });
 
   it('stops with every table unchanged when the seed lacks a stored fruit entry', async () => {
