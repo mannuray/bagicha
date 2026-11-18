@@ -1,5 +1,5 @@
 import { RegionCluster } from '@prisma/client';
-import { CARE_PENDING, CATALOGUE_SEED } from '../../catalogue';
+import { CARE_PENDING, CATALOGUE_SEED, careForTree } from '../../catalogue';
 import type {
   FamilyCare,
   RegionCare,
@@ -15,19 +15,27 @@ const TREE_CARE: Record<string, FamilyCare> = Object.fromEntries(
 );
 
 const families = [...new Set(FRUIT_CATALOGUE.map((s) => s.species_family))];
-const grownByCatalogue = (family: string): RegionCluster[] => [
-  ...new Set(
-    FRUIT_CATALOGUE.filter((s) => s.species_family === family).flatMap((s) =>
-      s.regions.map((r) => r.toUpperCase() as RegionCluster),
-    ),
-  ),
-];
 const regionCares = (care: FamilyCare): RegionCare[] =>
   Object.values(care.regions).filter(
     (r): r is RegionCare => !!r && 'items' in r,
   );
+/** A family's care, or each of its kinds' care (as the engine gets it). */
+const cares = (care: FamilyCare): FamilyCare[] =>
+  care.kinds
+    ? care.kinds.map((k) => careForTree(care, { variety: k.words[0] })!)
+    : [care];
 const allItems = (care: FamilyCare): CareItem[] =>
-  regionCares(care).flatMap((r) => r.items);
+  cares(care).flatMap((c) => regionCares(c).flatMap((r) => r.items));
+/** The care a tree added from this entry gets: its kind's for a family with kinds. */
+const careForEntry = (
+  care: FamilyCare,
+  e: (typeof FRUIT_CATALOGUE)[number],
+): FamilyCare | null =>
+  careForTree(care, {
+    variety: e.variety,
+    species: e.species,
+    name: e.display_name,
+  });
 
 describe('tree care completeness (the add-plant playbook)', () => {
   it('every catalogue tree family has care data or is pending', () => {
@@ -37,29 +45,40 @@ describe('tree care completeness (the add-plant playbook)', () => {
     expect(missing).toEqual([]);
   });
 
-  it('care exists for every region the catalogue grows the family in', () => {
+  it('care exists for every region the catalogue grows each entry in', () => {
     const gaps: string[] = [];
-    for (const [family, care] of Object.entries(TREE_CARE)) {
-      for (const region of grownByCatalogue(family)) {
-        if (!care.grownIn.includes(region))
-          gaps.push(`${family}: grownIn lacks ${region}`);
-        if (care.pendingRegions?.includes(region)) continue;
-        const entry = care.regions[region];
-        const target =
-          entry && 'sameAs' in entry ? care.regions[entry.sameAs] : entry;
-        if (!target || !('items' in target))
-          gaps.push(`${family}: no care for ${region}`);
+    for (const [family, familyCare] of Object.entries(TREE_CARE)) {
+      for (const e of FRUIT_CATALOGUE.filter(
+        (p) => p.species_family === family && p.status === 'APPROVED',
+      )) {
+        // An entry of no kind keeps the season pack on purpose (citrus.seed.spec pins which).
+        const care = careForEntry(familyCare, e);
+        if (!care) continue;
+        for (const region of e.regions.map(
+          (r) => r.toUpperCase() as RegionCluster,
+        )) {
+          if (!care.grownIn.includes(region))
+            gaps.push(`${care.family}: grownIn lacks ${region} (${e.key})`);
+          if (care.pendingRegions?.includes(region)) continue;
+          const entry = care.regions[region];
+          const target =
+            entry && 'sameAs' in entry ? care.regions[entry.sameAs] : entry;
+          if (!target || !('items' in target))
+            gaps.push(`${care.family}: no care for ${region}`);
+        }
       }
     }
     expect(gaps).toEqual([]);
   });
 
   it('a pending region has no care written for it', () => {
-    const both = Object.values(TREE_CARE).flatMap((care) =>
-      (care.pendingRegions ?? [])
-        .filter((r) => care.regions[r])
-        .map((r) => `${care.family}: ${r}`),
-    );
+    const both = Object.values(TREE_CARE)
+      .flatMap(cares)
+      .flatMap((care) =>
+        (care.pendingRegions ?? [])
+          .filter((r) => care.regions[r])
+          .map((r) => `${care.family}: ${r}`),
+      );
     expect(both).toEqual([]);
   });
 

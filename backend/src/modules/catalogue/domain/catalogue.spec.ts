@@ -175,29 +175,7 @@ describe('Catalogue: tree care', () => {
 });
 
 describe('Catalogue.treeCareFor', () => {
-  const mango = CATALOGUE_SEED.treeCare.find((c) => c.family === 'mango')!;
-  const citrus = {
-    ...mango,
-    family: 'citrus',
-    grownIn: [],
-    regions: {},
-    kinds: [
-      {
-        key: 'lime',
-        label: 'Lime',
-        words: ['kagzi'],
-        grownIn: mango.grownIn,
-        regions: mango.regions,
-      },
-    ],
-  };
-  const catalogue = Catalogue.from(
-    validateSeed({
-      ...CATALOGUE_SEED,
-      treeCare: [...CATALOGUE_SEED.treeCare, citrus],
-    }),
-    1,
-  );
+  const catalogue = Catalogue.from(validateSeed(CATALOGUE_SEED), 1);
 
   it("gives a citrus tree its kind's care", () => {
     expect(catalogue.treeCareFor('citrus', { variety: 'Kagzi' })?.family).toBe(
