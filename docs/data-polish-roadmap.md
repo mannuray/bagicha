@@ -85,7 +85,7 @@ Done tree type by tree type over everything the catalogue holds:
 
 ## Catalogue in the database
 
-From 2026-11-14 the crop and flower calendar, planting methods and care steps live in the database, filled from `backend/src/modules/catalogue/seed/` by the catalogue push (design: `docs/superpowers/specs/2026-11-14-catalogue-in-database-design.md`). Stage 2 (fruit types with their matching words and life profiles, add-tree search entries, perennial flowers) moves the tree catalogue there too, so new trees (item 3, phase 3) are seed edits plus a push. Stages 3–4 (tree care, season guidance) follow. Bulbs (item 10) were the first batch added this way.
+From 2026-11-14 the crop and flower calendar, planting methods and care steps live in the database, filled from `backend/src/modules/catalogue/seed/` by the catalogue push (design: `docs/superpowers/specs/2026-11-14-catalogue-in-database-design.md`). Stage 2 (fruit types with their matching words and life profiles, add-tree search entries, perennial flowers) moves the tree catalogue there too, so new trees (item 3, phase 3) are seed edits plus a push. Stage 3 (tree care: the six reviewed calendars move as data, then citrus by kind; design `docs/superpowers/specs/2026-11-18-tree-care-in-catalogue-design.md`) is built and waiting to ship; stage 4 (season guidance) follows. Bulbs (item 10) were the first batch added this way.
 
 ## Still open outside the list
 - Rotate the AWS key, Neon password and Gemini key that were pasted in chat; check the Gemini key works (it starts `AQ.`, not `AIza…`).
