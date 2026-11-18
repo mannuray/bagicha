@@ -1,6 +1,7 @@
 import type { CatalogueStore } from './catalogue.store';
 import { Catalogue } from './domain/catalogue';
 import { validateSeed } from './domain/schemas';
+import type { TreeCareSeed } from './domain/tree-care';
 import type { CatalogueSeed } from './domain/types';
 import { CATALOGUE_SEED } from './seed';
 
@@ -40,4 +41,40 @@ export const hindiSeed = (): CatalogueSeed => ({
   perennialFlowers: CATALOGUE_SEED.perennialFlowers.map((f) =>
     f.family === 'rose' ? { ...f, hi: { name: 'गुलाब' } } : f,
   ),
+});
+
+/** Test helper: a small valid care record (one region, one feed, one phase). */
+export const treeCareFixture = (
+  over: Partial<TreeCareSeed> = {},
+): TreeCareSeed => ({
+  family: 'mango',
+  sources: ['https://example.org/care'],
+  grownIn: ['EAST_INDIA'],
+  regions: {
+    EAST_INDIA: {
+      items: [
+        {
+          key: 'feed',
+          title: 'Feed the tree',
+          category: 'FEEDING',
+          stages: ['BEARING'],
+          when: { kind: 'CALENDAR', from: [2, 1], to: [2, 28] },
+          organic: '5 kg compost',
+          why: 'Fruit set needs food',
+        },
+      ],
+      phases: [
+        {
+          when: { kind: 'CALENDAR', from: [2, 1], to: [3, 31] },
+          stages: ['BEARING'],
+          phase: 'flowering',
+          avoid: ['heavy watering'],
+          watch: ['hoppers'],
+        },
+      ],
+    },
+  },
+  status: 'APPROVED',
+  notes: null,
+  ...over,
 });

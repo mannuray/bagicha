@@ -11,6 +11,7 @@ import type {
   MethodSeed,
   PerennialFlowerSeed,
 } from './domain/types';
+import type { TreeCareSeed } from './domain/tree-care';
 
 /** A record as the push writes it: its seed record and its place in the catalogue. */
 export type Ordered<T> = T & { sort_order: number };
@@ -23,6 +24,7 @@ export interface CatalogueWrite {
   fruitTypes: Ordered<FruitTypeSeed>[];
   fruitPlants: Ordered<FruitPlantSeed>[];
   perennialFlowers: Ordered<PerennialFlowerSeed>[];
+  treeCare: TreeCareSeed[];
 }
 
 /**
@@ -43,7 +45,7 @@ export class CatalogueRepository {
   async loadSeed(statuses: CatalogueStatus[]): Promise<CatalogueSeed> {
     const where = { status: { in: statuses } };
     const inOrder = { where, orderBy: { sort_order: 'asc' as const } };
-    const [crops, methods, careSteps, fruitTypes, fruitPlants, flowers] =
+    const [crops, methods, careSteps, fruitTypes, fruitPlants, flowers, care] =
       await Promise.all([
         this.prisma.catalogueCrop.findMany(inOrder),
         this.prisma.catalogueMethod.findMany({
@@ -57,6 +59,10 @@ export class CatalogueRepository {
         this.prisma.catalogueFruitType.findMany(inOrder),
         this.prisma.catalogueFruitPlant.findMany(inOrder),
         this.prisma.cataloguePerennialFlower.findMany(inOrder),
+        this.prisma.catalogueTreeCare.findMany({
+          where,
+          orderBy: { family: 'asc' },
+        }),
       ]);
     return {
       crops: crops.map(
@@ -117,8 +123,15 @@ export class CatalogueRepository {
             notes: row.notes,
           }) as PerennialFlowerSeed,
       ),
-      // Stored from the next commit (the catalogue_tree_care table).
-      treeCare: [],
+      treeCare: care.map(
+        (row) =>
+          ({
+            ...(row.data as object),
+            family: row.family,
+            status: row.status,
+            notes: row.notes,
+          }) as TreeCareSeed,
+      ),
     };
   }
 
@@ -203,6 +216,16 @@ export class CatalogueRepository {
             data: json(data),
           }),
         ),
+      );
+      await writeRows(
+        tx.catalogueTreeCare as unknown as Table,
+        'family',
+        write.treeCare.map(({ family, status, notes, ...data }) => ({
+          family,
+          status,
+          notes,
+          data: json(data),
+        })),
       );
       const meta = await tx.catalogueMeta.upsert({
         where: { id: 1 },

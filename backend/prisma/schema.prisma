@@ -768,6 +768,20 @@ model CatalogueCareStep {
   @@map("catalogue_care_steps")
 }
 
+/// A fruit family's tree care: month-by-month reminders and phases per region.
+model CatalogueTreeCare {
+  family     String          @id
+  status     CatalogueStatus @default(DRAFT)
+  /// sources, grownIn, regions, pendingRegions; validated on push and load.
+  data       Json
+  /// Source notes kept beside the values.
+  notes      String?
+  created_at DateTime        @default(now())
+  updated_at DateTime        @updatedAt
+
+  @@map("catalogue_tree_care")
+}
+
 /// A fruit type (species family): the words that identify it and its life profile.
 model CatalogueFruitType {
   key        String          @id

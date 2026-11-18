@@ -2,7 +2,10 @@ import { INestApplication } from '@nestjs/common';
 import { CATALOGUE_SEED } from '../../src/modules/catalogue';
 import { CatalogueRepository } from '../../src/modules/catalogue/catalogue.repository';
 import type { CatalogueSeed } from '../../src/modules/catalogue';
-import { hindiSeed } from '../../src/modules/catalogue/testing';
+import {
+  hindiSeed,
+  treeCareFixture,
+} from '../../src/modules/catalogue/testing';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
 
@@ -29,8 +32,14 @@ const writeOf = (seed: CatalogueSeed) => ({
   fruitTypes: inOrder(seed.fruitTypes),
   fruitPlants: inOrder(seed.fruitPlants),
   perennialFlowers: inOrder(seed.perennialFlowers),
+  treeCare: seed.treeCare,
 });
-const none = { fruitTypes: [], fruitPlants: [], perennialFlowers: [] };
+const none = {
+  fruitTypes: [],
+  fruitPlants: [],
+  perennialFlowers: [],
+  treeCare: [],
+};
 
 describe('catalogue repository', () => {
   let app: INestApplication;
@@ -45,7 +54,7 @@ describe('catalogue repository', () => {
 
   beforeEach(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care',
     );
     await prisma.catalogueMeta.update({
       where: { id: 1 },
@@ -55,7 +64,7 @@ describe('catalogue repository', () => {
 
   afterAll(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care',
     );
     await repo.applyPush(writeOf(CATALOGUE_SEED));
     await app.close();
@@ -66,6 +75,12 @@ describe('catalogue repository', () => {
     const version = await repo.applyPush(writeOf(small));
     expect(version).toBe(1);
     expect(await repo.loadSeed(['APPROVED', 'RETIRED'])).toEqual(small);
+  });
+
+  it('round-trips a tree-care record', async () => {
+    const care = treeCareFixture();
+    await repo.applyPush({ ...writeOf(small), treeCare: [care] });
+    expect((await repo.loadSeed(['APPROVED'])).treeCare).toEqual([care]);
   });
 
   it('round-trips Hindi texts', async () => {
