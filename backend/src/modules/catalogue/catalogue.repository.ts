@@ -117,6 +117,8 @@ export class CatalogueRepository {
             notes: row.notes,
           }) as PerennialFlowerSeed,
       ),
+      // Stored from the next commit (the catalogue_tree_care table).
+      treeCare: [],
     };
   }
 

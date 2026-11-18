@@ -14,4 +14,5 @@ export const CATALOGUE_SEED: CatalogueSeed = {
   fruitTypes: FRUIT_TYPE_SEED,
   fruitPlants: FRUIT_PLANT_SEED,
   perennialFlowers: PERENNIAL_FLOWER_SEED,
+  treeCare: [],
 };

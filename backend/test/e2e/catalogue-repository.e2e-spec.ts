@@ -16,6 +16,7 @@ const small: CatalogueSeed = {
   fruitTypes: [],
   fruitPlants: [],
   perennialFlowers: [],
+  treeCare: [],
 };
 const inOrder = <T>(items: T[]) =>
   items.map((item, sort_order) => ({ ...item, sort_order }));

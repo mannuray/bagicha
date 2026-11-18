@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ValidationError } from '../../../common/errors';
+import { treeCareIssues, treeCareSeedSchema } from './tree-care.schema';
 import type { CatalogueSeed } from './types';
 
 const status = z.enum(['DRAFT', 'APPROVED', 'RETIRED']);
@@ -189,6 +190,7 @@ const seedSchema = z
     fruitTypes: z.array(fruitTypeSeedSchema),
     fruitPlants: z.array(fruitPlantSeedSchema),
     perennialFlowers: z.array(perennialFlowerSeedSchema),
+    treeCare: z.array(treeCareSeedSchema),
   })
   .strict();
 
@@ -236,7 +238,7 @@ export function validateSeed(input: unknown): CatalogueSeed {
       if (!steps.has(c.key))
         issues.push(`${crop.id}: unknown or draft care step ${c.key}`);
   }
-  issues.push(...fruitAndFlowerIssues(seed));
+  issues.push(...fruitAndFlowerIssues(seed), ...treeCareIssues(seed));
   if (issues.length > 0) throw invalid(issues);
   return seed;
 }

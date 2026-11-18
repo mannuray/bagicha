@@ -3,6 +3,7 @@
  * push from ../seed); the API serves them from an in-memory Catalogue.
  * Spec: docs/superpowers/specs/2026-11-14-catalogue-in-database-design.md.
  */
+import type { TreeCareSeed } from './tree-care';
 
 export type ClimateGroup = 'PLAINS' | 'PENINSULAR' | 'HILLS';
 
@@ -188,4 +189,5 @@ export interface CatalogueSeed {
   fruitTypes: FruitTypeSeed[];
   fruitPlants: FruitPlantSeed[];
   perennialFlowers: PerennialFlowerSeed[];
+  treeCare: TreeCareSeed[];
 }

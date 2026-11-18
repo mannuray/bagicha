@@ -30,3 +30,16 @@ export type {
   PlantingMethod,
   SearchEntry,
 } from './domain/types';
+export type {
+  Anchor,
+  CareStage,
+  Dose,
+  DosePart,
+  FamilyCare,
+  MonthDay,
+  PhaseWindow,
+  RegionCare,
+  TreeCareCategory,
+  TreeCareItem,
+  TreeCareSeed,
+} from './domain/tree-care';
