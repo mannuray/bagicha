@@ -78,6 +78,39 @@ describe('citrus care by kind (owner-approved 2026-11-18)', () => {
     ]);
   });
 
+  it('kaffir (makrut) lime and "seasonal nimbu" pick no kind', () => {
+    for (const name of ['Kaffir lime', 'makrut lime', 'मौसमी नींबू'])
+      expect(careForTree(citrus, { name })).toBeNull();
+    expect(careForTree(citrus, { variety: 'मौसमी' })?.family).toBe(
+      'citrus:sweet_orange',
+    );
+  });
+
+  it('kagzi lime and kagzi nimbu are lime words, as approved', () => {
+    const lime = citrus.kinds!.find((k) => k.key === 'lime')!;
+    expect(lime.words).toEqual(
+      expect.arrayContaining(['kagzi lime', 'kagzi nimbu']),
+    );
+  });
+
+  it('a window ending in February covers the 29th', () => {
+    const febEnds = (citrus.kinds ?? []).flatMap((k) =>
+      Object.values(k.regions).flatMap((r) =>
+        r && 'items' in r
+          ? r.items.flatMap((i) =>
+              i.when.kind === 'CALENDAR' && i.when.to[0] === 2
+                ? [i.when.to[1]]
+                : [],
+            )
+          : [],
+      ),
+    );
+    expect(febEnds.length).toBeGreaterThan(0);
+    // Month-end windows run to the 29th; a set day (Kinnow picking, Feb 15) stays.
+    expect(febEnds).toContain(29);
+    expect(febEnds).not.toContain(28);
+  });
+
   it('sweet lime is sweet orange, plain lime is lime', () => {
     expect(careForTree(citrus, { name: 'sweet lime' })?.family).toBe(
       'citrus:sweet_orange',

@@ -88,7 +88,6 @@ export interface RegionCare {
 export interface CareKind {
   /** Stable: part of the task key (`citrus:lime:…`). */
   key: string;
-  label: string;
   /** English or Hindi-script words; each on one kind only. */
   words: string[];
   /**
@@ -122,6 +121,11 @@ export interface FamilyCare {
    * `grownIn` and `regions`), and a tree whose kind isn't known keeps the season pack.
    */
   kinds?: CareKind[];
+  /**
+   * Words for a different plant that shares a kind's word ("kaffir lime"):
+   * where one comes first in a field, that field picks no kind.
+   */
+  noKindWords?: string[];
 }
 
 /** A family's care as the seed and the database hold it. */

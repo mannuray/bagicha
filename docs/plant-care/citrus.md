@@ -46,9 +46,9 @@ NFC turns precomposed ज़ (U+095B) into ज + ़ (U+091C U+093C), so both nu
 | sweet_orange | mosambi, mausambi, musambi, mosumbi, sweet orange, malta, blood red, blood orange, jaffa, valencia, sathgudi, sathukudi, batavian, *sweet lime (Q2)* | मौसमी, मौसंबी, मोसंबी, मुसम्मी, माल्टा |
 
 Notes on the words:
-- मौसमी also means "seasonal" in Hindi. That is harmless here, because only trees already resolved to citrus are matched.
+- मौसमी also means "seasonal" in Hindi, so "मौसमी नींबू" could mean a seasonal nimbu. In the app it counts only in a tree's variety or species, never its name (review fix, 2026-11-18).
 - "sweet lime" must win over "lime" by position. It starts earlier in the text, so the earliest-word rule handles it.
-- The species value `sweet_lime` is one token, so it does not contain the whole word "lime".
+- Matching splits on `_`, so the species value `sweet_lime` reads as "sweet lime". It still goes to sweet orange, because "sweet lime" starts before "lime".
 
 ## 2. Ambiguous words: pick NO kind
 nimbu, nimboo, neembu, nimbe, limbu, lebu, nemu, **lemon**, citrus, orange, santra, narangi, pomelo, chakotra, grapefruit, gondhoraj, नींबू, निंबू, संतरा, नारंगी, चकोतरा.

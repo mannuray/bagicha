@@ -56,7 +56,8 @@ const month = (
   to?: number,
 ): [[number, number], [number, number]] => [
   [m, from],
-  [m, to ?? new Date(Date.UTC(2026, m, 0)).getUTCDate()],
+  // February counts 29, as in build.ts, so a leap day is never uncovered.
+  [m, to ?? (m === 2 ? 29 : new Date(Date.UTC(2026, m, 0)).getUTCDate())],
 ];
 
 const NORTH_ITEMS: Item[] = [
@@ -93,7 +94,7 @@ const NORTH_ITEMS: Item[] = [
       "Half the year's urea in the basin, plus SSP from the 4th year (1.37–2.4 kg at 4–7 years, 2.73 kg from 8); water in; wear gloves",
     dose: MANDARIN_UREA,
     why: 'Feeds the spring flush and the flowers',
-    windows: { NORTH: month(2, 1, 28) },
+    windows: { NORTH: month(2) },
   },
   {
     key: 'first_feed',
@@ -104,7 +105,7 @@ const NORTH_ITEMS: Item[] = [
     organic: '',
     chemical: `Half the year's urea in the basin (${UREA_BANDS}); water in; wear gloves`,
     why: 'Feeds the spring flush and the flowers',
-    windows: { NORTH: month(2, 1, 28) },
+    windows: { NORTH: month(2) },
   },
   {
     key: 'second_feed',
@@ -152,7 +153,7 @@ const NORTH_ITEMS: Item[] = [
     windows: {
       NORTH: [
         [1, 1],
-        [2, 28],
+        [2, 29],
       ],
     },
   },
@@ -164,7 +165,7 @@ const NORTH_ITEMS: Item[] = [
     stages: ['BEARING'],
     organic: `After picking, cut dead, dried and diseased twigs back to healthy wood, open up the centre and burn the prunings; seal cuts with ${BORDEAUX_PASTE}`,
     why: 'Stops die-back spreading and lets light in',
-    windows: { NORTH: month(2, 1, 28) },
+    windows: { NORTH: month(2) },
   },
   {
     key: 'bordeaux_spray',
@@ -232,7 +233,7 @@ const NORTH_ITEMS: Item[] = [
     organic: 'Cut out and burn twigs with canker spots',
     chemical: SPOTS_CHEMICAL,
     why: 'Kagzi lime is highly susceptible: corky spots on leaves and fruit',
-    windows: { NORTH: [month(10), month(12), month(2, 1, 28)] },
+    windows: { NORTH: [month(10), month(12), month(2)] },
   },
   {
     key: 'fallen_fruit',
@@ -336,7 +337,7 @@ const NORTH_ITEMS: Item[] = [
         ],
         [
           [1, 1],
-          [2, 28],
+          [2, 29],
         ],
       ],
     },
@@ -654,9 +655,10 @@ const south = (items: Item[], phases: PhaseSpec<Group>[]): RegionCare =>
 const KINDS: CareKind[] = [
   {
     key: 'lime',
-    label: 'Acid lime',
     words: [
       'kagzi',
+      'kagzi lime',
+      'kagzi nimbu',
       'kaghzi',
       'kagji',
       'acid lime',
@@ -687,7 +689,6 @@ const KINDS: CareKind[] = [
   },
   {
     key: 'lemon',
-    label: 'Lemon',
     words: [
       'baramasi',
       'seedless lemon',
@@ -722,7 +723,6 @@ const KINDS: CareKind[] = [
   },
   {
     key: 'mandarin',
-    label: 'Mandarin',
     words: ['kinnow', 'kinnu', 'mandarin', 'murcott', 'किन्नू', 'किन्नो'],
     varietyWords: [
       'nagpur',
@@ -756,7 +756,6 @@ const KINDS: CareKind[] = [
   },
   {
     key: 'sweet_orange',
-    label: 'Sweet orange',
     words: [
       'mosambi',
       'mausambi',
@@ -770,13 +769,13 @@ const KINDS: CareKind[] = [
       'sathukudi',
       'batavian',
       'sweet lime',
-      'मौसमी',
       'मौसंबी',
       'मोसंबी',
       'मुसम्मी',
       'माल्टा',
     ],
-    varietyWords: ['jaffa', 'valencia'],
+    // मौसमी also means "seasonal": only a variety or species saying it counts.
+    varietyWords: ['jaffa', 'valencia', 'मौसमी'],
     grownIn: ['NORTH_INDIA', 'WEST_INDIA', 'SOUTH_DECCAN', 'HILLS_COOL'],
     regions: {
       NORTH_INDIA: north('sweet_orange'),
@@ -804,4 +803,6 @@ export const CITRUS_CARE: FamilyCare = {
   grownIn: [],
   regions: {},
   kinds: KINDS,
+  // Different plants that share the word "lime": no acid-lime care for them.
+  noKindWords: ['kaffir', 'makrut'],
 };

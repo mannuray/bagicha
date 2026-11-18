@@ -15,7 +15,6 @@ import { resetDb, seedPlant, seedUser, tokenFor } from './fixtures';
 /** A kind with one reminder open all year, titled after the kind. */
 const kind = (key: string, words: string[]): CareKind => ({
   key,
-  label: key,
   words,
   grownIn: ['EAST_INDIA'],
   regions: {

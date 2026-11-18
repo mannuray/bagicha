@@ -94,7 +94,6 @@ const regionEntry = z.union([
 const careKind = z
   .object({
     key: z.string().regex(/^[a-z][a-z0-9_]*$/),
-    label: text,
     words: z.array(text).min(1),
     varietyWords: z.array(text).optional(),
     grownIn: z.array(region).min(1),
@@ -112,6 +111,7 @@ export const treeCareSeedSchema = z
     regions: z.partialRecord(region, regionEntry),
     pendingRegions: z.array(region).optional(),
     kinds: z.array(careKind).min(1).optional(),
+    noKindWords: z.array(text).optional(),
     status: z.enum(['DRAFT', 'APPROVED', 'RETIRED']),
     notes: z.string().nullable(),
   })
@@ -160,9 +160,13 @@ function familyIssues(care: TreeCareSeed): string[] {
 function kindIssues(care: TreeCareSeed): string[] {
   const kinds = care.kinds ?? [];
   const issues: string[] = [];
-  if (care.grownIn.length > 0 || Object.keys(care.regions).length > 0)
+  if (
+    care.grownIn.length > 0 ||
+    Object.keys(care.regions).length > 0 ||
+    care.pendingRegions
+  )
     issues.push(
-      `${care.family}: a family with kinds has no grownIn or regions of its own`,
+      `${care.family}: a family with kinds has no grownIn, regions or pendingRegions of its own`,
     );
   const keys = new Set<string>();
   const words = new Map<string, string>();
@@ -199,10 +203,13 @@ function regionIssues(label: string, care: Grown): string[] {
     if (!regionCare) continue;
     const keys = new Set<string>();
     for (const item of regionCare.items) {
+      const when = item.when;
       const start =
-        item.when.kind === 'CALENDAR'
-          ? item.when.from.join('-')
-          : item.when.kind;
+        when.kind === 'CALENDAR'
+          ? when.from.join('-')
+          : when.kind === 'FROM_PLANTING'
+            ? `day ${when.fromDays} after planting`
+            : `day ${when.fromDays} after ${when.choice}`;
       const id = `${item.key}@${start}`;
       if (keys.has(id))
         issues.push(`${label}: ${name} repeats ${item.key} from ${start}`);

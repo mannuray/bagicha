@@ -5,7 +5,6 @@ import type { CareKind, FamilyCare } from './tree-care';
 const regionCare = treeCareFixture().regions;
 const kind = (key: string, words: string[]): CareKind => ({
   key,
-  label: key,
   words,
   grownIn: ['EAST_INDIA'],
   regions: regionCare,
@@ -58,6 +57,21 @@ describe('careForTree', () => {
     expect(keyIn({ variety: 'Nagpur' })).toBe('citrus:mandarin');
     expect(keyIn({ species: 'nagpur santra' })).toBe('citrus:mandarin');
     expect(keyIn({ name: 'Nimbu from Nagpur' })).toBeNull();
+  });
+
+  it('a no-kind word earlier in the field wins over a kind word', () => {
+    const limes: FamilyCare = {
+      ...CITRUS,
+      kinds: [kind('lime', ['kagzi', 'lime'])],
+    };
+    const blocked: FamilyCare = { ...limes, noKindWords: ['kaffir'] };
+    expect(careForTree(limes, { name: 'Kaffir lime' })?.family).toBe(
+      'citrus:lime',
+    );
+    expect(careForTree(blocked, { name: 'Kaffir lime' })).toBeNull();
+    expect(careForTree(blocked, { name: 'Kagzi, not kaffir' })?.family).toBe(
+      'citrus:lime',
+    );
   });
 
   it('matches whole words only', () => {

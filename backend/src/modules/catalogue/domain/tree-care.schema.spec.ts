@@ -143,6 +143,15 @@ describe('tree care records in the seed', () => {
     expect(issuesOf(withItems(item(), item()))).toMatch(/feed/);
   });
 
+  it('accepts planting-timed items with one key and different start days', () => {
+    const planted = (fromDays: number) =>
+      item({
+        when: { kind: 'FROM_PLANTING', fromDays, toDays: fromDays + 30 },
+      });
+    expect(issuesOf(withItems(planted(0), planted(60)))).toBe('');
+    expect(issuesOf(withItems(planted(0), planted(0)))).toMatch(/feed/);
+  });
+
   it('accepts the same key with different starts', () => {
     expect(
       check(
@@ -167,7 +176,6 @@ describe('tree care with kinds', () => {
   const regions = family().regions;
   const kind = (key: string, words: string[]) => ({
     key,
-    label: key,
     words,
     grownIn: ['NORTH_INDIA' as const],
     regions,
@@ -218,6 +226,12 @@ describe('tree care with kinds', () => {
         }),
       ),
     ).toMatch(/HILLS_COOL/);
+  });
+
+  it('rejects pendingRegions on a family with kinds (each kind has its own)', () => {
+    expect(issuesOf(citrus({ pendingRegions: ['HILLS_COOL'] }))).toMatch(
+      /kinds/,
+    );
   });
 
   it('still requires grownIn on a family without kinds', () => {

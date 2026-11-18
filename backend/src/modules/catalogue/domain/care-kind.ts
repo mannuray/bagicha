@@ -12,9 +12,12 @@ export interface TreeWords {
  * The care this tree gets from its family's care. A family without kinds
  * applies as it is. With kinds, the tree's fields are read one at a time
  * (variety, then species, then name): the first field holding any kind's
- * word decides (place and variety names count only in the first two), and within it the earliest word wins. The kind's care comes
- * back under the family key `family:kind`, so its task keys never meet
- * another kind's. Null when no kind fits: the tree keeps the season pack.
+ * word decides, and within it the earliest word wins. Place and variety
+ * names count only in the variety and species; a word for a different
+ * plant ("kaffir lime") that comes first makes its field pick no kind.
+ * The kind's care comes back under the family key `family:kind`, so its
+ * task keys never meet another kind's. Null when no kind fits: the tree
+ * keeps the season pack.
  */
 export function careForTree(
   care: FamilyCare,
@@ -27,9 +30,8 @@ export function careForTree(
     [tree.name, false],
   ];
   for (const [field, withVarietyWords] of fields) {
-    const kind = field
-      ? earliestKind(care.kinds, field, withVarietyWords)
-      : null;
+    const kind = field ? earliestKind(care, field, withVarietyWords) : null;
+    if (kind === BLOCKED) return null;
     if (kind)
       return {
         family: `${care.family}:${kind.key}`,
@@ -42,22 +44,31 @@ export function careForTree(
   return null;
 }
 
+/** A field naming a different plant ("kaffir lime") decides: no kind. */
+const BLOCKED = 'blocked' as const;
+
 function earliestKind(
-  kinds: CareKind[],
+  care: FamilyCare,
   text: string,
   withVarietyWords: boolean,
-): CareKind | null {
+): CareKind | typeof BLOCKED | null {
   // One haystack for both scripts, so positions compare: letters of any
   // script, lower-case, NFC (ड़ typed either way reads the same).
   const haystack = hindiWords(text);
-  let best: { kind: CareKind; at: number } | null = null;
-  for (const kind of kinds)
-    for (const word of [
-      ...kind.words,
-      ...(withVarietyWords ? (kind.varietyWords ?? []) : []),
-    ]) {
-      const at = wordAt(haystack, hindiWords(word));
-      if (at >= 0 && (!best || at < best.at)) best = { kind, at };
-    }
-  return best?.kind ?? null;
+  const found = [
+    ...(care.noKindWords ?? []).map((word) => ({
+      kind: BLOCKED as CareKind | typeof BLOCKED,
+      word,
+    })),
+    ...(care.kinds ?? []).flatMap((kind) =>
+      [
+        ...kind.words,
+        ...(withVarietyWords ? (kind.varietyWords ?? []) : []),
+      ].map((word) => ({ kind, word })),
+    ),
+  ]
+    .map(({ kind, word }) => ({ kind, at: wordAt(haystack, hindiWords(word)) }))
+    .filter((f) => f.at >= 0)
+    .sort((a, b) => a.at - b.at);
+  return found[0]?.kind ?? null;
 }

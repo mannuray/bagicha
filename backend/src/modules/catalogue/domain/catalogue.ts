@@ -12,6 +12,7 @@ import type {
   PlantingMethod,
   SearchEntry,
 } from './types';
+import { FORMER_DISPLAY_NAMES } from './former-names';
 import { hasWords, hindiWords, latinWords } from './words';
 import { careForTree, type TreeWords } from './care-kind';
 import type { FamilyCare } from './tree-care';
@@ -111,15 +112,24 @@ export class Catalogue {
         b.confidence_weight - a.confidence_weight ||
         a.display_name.localeCompare(b.display_name, 'en'),
     );
+    const servedEntries = [
+      ...seed.fruitPlants.filter(served),
+      ...seed.perennialFlowers.filter(served).map(flowerSearchEntry),
+    ];
+    const byKey = new Map(seed.fruitPlants.map((p) => [p.key, p]));
     const hindiNames = new Map(
       [
-        ...seed.fruitPlants.filter(served),
-        ...seed.perennialFlowers.filter(served).map(flowerSearchEntry),
-      ].flatMap((e) =>
+        ...servedEntries.map((e) => [e.display_name, e] as const),
+        // A tree saved under an entry's old name keeps its Hindi name.
+        ...Object.entries(FORMER_DISPLAY_NAMES).flatMap(([old, key]) => {
+          const e = byKey.get(key);
+          return e && served(e) ? [[old, e] as const] : [];
+        }),
+      ].flatMap(([name, e]) =>
         e.hi?.display_name
           ? [
               [
-                e.display_name,
+                name,
                 { family: e.species_family, hi: e.hi.display_name },
               ] as const,
             ]
