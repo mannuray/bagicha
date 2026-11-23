@@ -14,9 +14,10 @@ export type CareStage = 'YOUNG' | 'BEARING';
 export type MonthDay = [number, number];
 
 /**
- * When a care item or phase applies. Only CALENDAR is evaluated today; the
- * planting- and choice-timed kinds (banana, papaya; bahar, pruning) come with
- * per-tree timing and until then show on the plant page only.
+ * When a care item or phase applies. Phases are CALENDAR only. FROM_PLANTING
+ * counts from the tree's planting date (papaya); an item timed this way writes
+ * its amount in the text, never as a `dose`. FROM_CHOICE (bahar, pruning) is
+ * not evaluated yet and shows on the plant page only.
  */
 export type Anchor =
   | { kind: 'CALENDAR'; from: MonthDay; to: MonthDay }
@@ -24,11 +25,7 @@ export type Anchor =
   | { kind: 'FROM_CHOICE'; choice: string; fromDays: number; toDays: number };
 
 export type TreeCareCategory =
-  | 'FEEDING'
-  | 'PRUNING'
-  | 'PROTECTION'
-  | 'WATERING'
-  | 'GENERAL';
+  'FEEDING' | 'PRUNING' | 'PROTECTION' | 'WATERING' | 'GENERAL';
 
 export interface TreeCareItem {
   /** Stable within the family: part of the task key. */
@@ -67,7 +64,7 @@ export interface Dose {
 }
 
 export interface PhaseWindow {
-  when: Anchor;
+  when: Extract<Anchor, { kind: 'CALENDAR' }>;
   stages: CareStage[];
   /** snake_case: the web humanises it and the paid overlay appends to it. */
   phase: string;
