@@ -507,7 +507,9 @@
     "editMilestones": "Edit",
     "thisMonth": "This month",
     "ifYouSee": "When:",
-    "ifYouSeeIt": "Only if you see it ({{count}})"
+    "ifYouSeeIt": "Only if you see it ({{count}})",
+    "plantingMonthAsk": "When did you plant it? Add the month to get care reminders for this tree.",
+    "addPlantingMonth": "Add planting month"
   },
   "scan": {
     "kicker": "Plant doctor",

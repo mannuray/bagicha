@@ -102,7 +102,13 @@ export function useUpdatePlant(id: string) {
   const api = useApi();
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: (changes: Partial<PlantInput>) => api.send('PUT', `/ledger/plants/${id}`, changes, plantSchema),
+    mutationFn: async (changes: Partial<PlantInput>) => {
+      const plant = await api.send('PUT', `/ledger/plants/${id}`, changes, plantSchema);
+      // A new planting date moves planting-timed reminders: refresh them now, best effort.
+      if ('planting_date' in changes || 'planting_date_precision' in changes)
+        await materializeTasks(api, id).catch(() => undefined);
+      return plant;
+    },
     onSuccess: () => invalidate(staleAfter.plantEdit()),
   });
 }

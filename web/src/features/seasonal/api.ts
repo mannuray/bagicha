@@ -46,6 +46,11 @@ export const intelligenceSchema = z.object({
     )
     .nullish()
     .transform((v) => v ?? []),
+  /** The tree has planting-timed care it gets once its planting month is known (false from older servers). */
+  care_needs_planting_month: z
+    .boolean()
+    .nullish()
+    .transform((v) => v ?? false),
   /** Set when the tree isn't usually grown in the gardener's region. */
   care_note: z
     .string()

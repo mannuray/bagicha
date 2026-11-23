@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { ErrorState, Icon, LoadingState, Surface } from '../../../ui';
 import { usePlantIntelligence, type PlantIntelligence } from '../../seasonal';
 
@@ -11,9 +12,11 @@ export function ThisSeason({ plantId }: { plantId: string }) {
   if (!pack) return <LoadingState />;
   const note = intel.data?.care_note ?? null;
   const month = intel.data?.care_this_month ?? [];
-  if (pack.avoid_now.length === 0 && pack.watch_for.length === 0 && !note && month.length === 0) return null;
+  const askMonth = intel.data?.care_needs_planting_month ?? false;
+  if (pack.avoid_now.length === 0 && pack.watch_for.length === 0 && !note && month.length === 0 && !askMonth) return null;
   return (
     <section className="space-y-3">
+      {askMonth && <PlantingMonthAsk plantId={plantId} />}
       <ThisMonth items={month.filter((i) => !i.if_you_see)} />
       <IfYouSee items={month.filter((i) => i.if_you_see)} />
       <h2 className="font-headline text-xl text-primary">{t('biography.thisSeason')}</h2>
@@ -21,6 +24,19 @@ export function ThisSeason({ plantId }: { plantId: string }) {
       <AdviceList title={t('biography.avoid')} icon="block" items={pack.avoid_now} />
       <AdviceList title={t('biography.watchFor')} icon="visibility" items={pack.watch_for} />
     </section>
+  );
+}
+
+/** Planting-timed care waits for the planting month; the edit form is where it is added. */
+function PlantingMonthAsk({ plantId }: { plantId: string }) {
+  const { t } = useTranslation();
+  return (
+    <p className="font-body text-sm text-on-surface-variant">
+      {t('biography.plantingMonthAsk')}{' '}
+      <Link to={`/plants/${plantId}/edit`} className="inline-flex min-h-11 items-center font-label text-sm font-bold text-secondary">
+        {t('biography.addPlantingMonth')}
+      </Link>
+    </p>
   );
 }
 
