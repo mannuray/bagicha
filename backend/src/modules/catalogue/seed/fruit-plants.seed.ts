@@ -225,6 +225,7 @@ export const FRUIT_PLANT_SEED: FruitPlantSeed[] = [
       hi: ['पपीता'],
     },
     regions: [
+      'north_india',
       'east_india',
       'south_deccan',
       'coastal_humid',

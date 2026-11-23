@@ -1,4 +1,4 @@
-# Papaya care: draft + source check (2026-11-23, for owner review)
+# Papaya care: draft + source check (2026-11-23, approved)
 
 Papaya has no kinds. Most care is counted **from the planting date** (`FROM_PLANTING`, per `docs/superpowers/specs/2026-11-23-planting-timed-care-design.md`). Dated seasonal steps use `CALENDAR`, and "only if you see it" steps are `conditional`.
 
@@ -267,4 +267,4 @@ Removed: about 30 chemical lines (item 1) plus the mite and whitefly items. Phas
   - Recommendation: allow a collar drench, 1% (10 g copper sulphate + 10 g lime per litre, 2–3 L per plant, the drench volume in NHB pap002), for collar rot only.
 - **Q9. Papayas kept past the last feed** (month 24, or day 540 in EAST) get no feed reminders. Add a calendar fallback (e.g. KAU's monsoon manure), or accept? Recommendation: accept. All three guides say to replant after 2.5–3 years.
 
-Status: Draft + source check, awaiting owner review — nothing written to data.
+Status: **approved by the owner on 2026-11-23 with every recommendation** (review doc "Papaya care — owner review"). Transcribed into `backend/src/modules/catalogue/seed/tree-care/papaya.seed.ts`. Transcription notes: Feb windows end on the 29th (the house leap-day rule from citrus); the extra-males check is shown from day 90 to day 239 for a tree with a planting date (flowering at 3–7 months), always for one without.
