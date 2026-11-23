@@ -17,11 +17,16 @@ import type {
  * pending: its trees keep the season pack. A citrus tree of no known kind
  * (just "nimbu") gets no care. Chemicals are listed only with a citrus label
  * claim, a per-litre dose and a waiting period (CIB&RC MUP to 30.09.2026).
+ *
+ * Pomelo (chakotra, batabi) added from the draft approved on 2026-11-24 with
+ * every recommendation (docs/plant-care/citrus-pomelo.md): North India from
+ * IH 2026 (ICAR Indian Horticulture) and PAU's citrus-wide rows; "Citrus" label
+ * claims read as the genus. Its East India stays pending.
  */
 // Every region a kind has no checked care for is pending (approved doc §5), even
 // outside its grownIn: otherwise the engine would lend it the nearest region's care.
 type Group = 'NORTH' | 'SOUTH';
-type Kind = 'lime' | 'lemon' | 'mandarin' | 'sweet_orange';
+type Kind = 'lime' | 'lemon' | 'mandarin' | 'sweet_orange' | 'pomelo';
 type Item = ItemSpec<Group> & { kinds?: Kind[] };
 
 /** PAU p.21: Kinnow, per year of age up to 8 years. */
@@ -40,6 +45,15 @@ const FYM_BANDS =
   '5–20 kg at 1–3 years, 25–50 kg at 4–6, 60–90 kg at 7–9, 100 kg from 10 years';
 const UREA_BANDS =
   '110–330 g a year at 1–3 years, 440–550 g at 4–6, 660–880 g at 7–9, 880–1760 g from 10 years';
+/** IH 2026 p.19: pomelo, 10 kg FYM per year of age up to 5 years (the table's lower figure). */
+const POMELO_FYM: Dose = {
+  organic: [{ what: 'FYM', grams: 10000 }],
+  chemical: [],
+  maxAgeYears: 5,
+};
+/** IH 2026 p.19: N by year as urea (N ÷ 0.46), halved for each of the two feeds. */
+const POMELO_UREA_HALF =
+  '90–110 g (1st year), 175–220 g (2nd), 325–380 g (3rd), 490–545 g (4th), 650–705 g (5th on)';
 const BORDEAUX_PASTE =
   'Bordeaux paste (200 g copper sulphate in 1.5 L water, 300 g quicklime in 1.5 L, mixed); wear gloves';
 const SPOTS_CHEMICAL =
@@ -144,7 +158,7 @@ const NORTH_ITEMS: Item[] = [
   },
   {
     key: 'prune',
-    kinds: OTHERS,
+    kinds: [...OTHERS, 'pomelo'],
     title: 'Prune out dead and diseased twigs',
     category: 'PRUNING',
     stages: ['BEARING'],
@@ -169,7 +183,7 @@ const NORTH_ITEMS: Item[] = [
   },
   {
     key: 'bordeaux_spray',
-    kinds: ['mandarin', 'sweet_orange'],
+    kinds: ['mandarin', 'sweet_orange', 'pomelo'],
     title: 'Spray Bordeaux mixture after pruning',
     category: 'PROTECTION',
     stages: ['BEARING'],
@@ -180,6 +194,7 @@ const NORTH_ITEMS: Item[] = [
   },
   {
     key: 'summer_water',
+    kinds: ['lime', 'lemon', 'mandarin', 'sweet_orange'],
     title: 'Water every 2–3 weeks in the hot months',
     category: 'WATERING',
     stages: ['BEARING'],
@@ -237,7 +252,7 @@ const NORTH_ITEMS: Item[] = [
   },
   {
     key: 'fallen_fruit',
-    kinds: ['mandarin', 'sweet_orange'],
+    kinds: ['mandarin', 'sweet_orange', 'pomelo'],
     title: 'Collect and bury fallen fruit',
     category: 'GENERAL',
     stages: ['BEARING'],
@@ -284,6 +299,83 @@ const NORTH_ITEMS: Item[] = [
       'Soon after fruit set in the 3rd and 4th year, thin heavy loads (400–500 fruits is too many)',
     why: 'An over-loaded young tree can die',
     windows: { NORTH: month(5) },
+  },
+  // Pomelo's own rows (IH 2026): its dose, summer watering and Oct–Nov picking.
+  {
+    key: 'manure',
+    kinds: ['pomelo'],
+    title: "Spread the year's manure under the tree",
+    category: 'FEEDING',
+    stages: ['YOUNG', 'BEARING'],
+    organic:
+      "All the year's FYM in the basin under the canopy, forked in lightly: 10 kg per year of age, up to 5 years (50 kg)",
+    dose: POMELO_FYM,
+    why: 'Manure goes in during the winter rest, before spring growth',
+    windows: {
+      NORTH: [
+        [12, 1],
+        [1, 31],
+      ],
+    },
+  },
+  {
+    key: 'first_feed',
+    kinds: ['pomelo'],
+    title: 'Give the first feed before flowering',
+    category: 'FEEDING',
+    stages: ['YOUNG', 'BEARING'],
+    organic: '',
+    chemical: `Half the year's urea in the basin: ${POMELO_UREA_HALF}; water in; wear gloves`,
+    why: 'Feeds the spring flush and the flowers',
+    windows: { NORTH: month(2) },
+  },
+  {
+    key: 'second_feed',
+    kinds: ['pomelo'],
+    title: 'Give the second feed after fruit set',
+    category: 'FEEDING',
+    stages: ['YOUNG', 'BEARING'],
+    organic: '',
+    chemical: `The other half of the year's urea in the basin: ${POMELO_UREA_HALF}; water in; wear gloves`,
+    why: 'Feeds the young fruit',
+    windows: {
+      NORTH: [
+        [4, 1],
+        [5, 31],
+      ],
+    },
+  },
+  {
+    key: 'summer_water_pomelo',
+    kinds: ['pomelo'],
+    title: 'Water every 7–10 days through the summer',
+    category: 'WATERING',
+    stages: ['YOUNG', 'BEARING'],
+    organic:
+      "Bearing tree: every 7–10 days. Young tree: twice a week. Use a ring basin so water doesn't touch the trunk; don't flood. Keep the basin weed-free",
+    why: 'Steady water from flowering to harvest holds the fruit and stops splitting',
+    windows: {
+      NORTH: [
+        [4, 1],
+        [6, 30],
+      ],
+    },
+  },
+  {
+    key: 'pick_pomelo',
+    kinds: ['pomelo'],
+    title: 'Pick pomelos when the rind turns bright yellow',
+    category: 'GENERAL',
+    stages: ['BEARING'],
+    organic:
+      "Pick at full eating ripeness: the oil glands on the rind grow larger and glossier, and the colour turns from dull to bright yellow. Clip with a short stalk; don't pull. Pick on time: fruit left too long goes dry and grainy inside",
+    why: "Pomelo doesn't ripen further once picked",
+    windows: {
+      NORTH: [
+        [10, 1],
+        [11, 30],
+      ],
+    },
   },
   // Shown on the plant page when the gardener sees the problem; never reminders.
   {
@@ -383,7 +475,7 @@ const NORTH_ITEMS: Item[] = [
   },
   {
     key: 'canker_spots',
-    kinds: ['lemon', 'mandarin', 'sweet_orange'],
+    kinds: ['lemon', 'mandarin', 'sweet_orange', 'pomelo'],
     title: 'Cut out canker spots',
     category: 'PROTECTION',
     stages: ['YOUNG', 'BEARING'],
@@ -436,6 +528,52 @@ const NORTH_ITEMS: Item[] = [
     conditional: 'A young tree, up to 3–4 years old',
     organic: 'Water every week into a ring basin, off the trunk',
     why: 'Young roots dry out fast',
+    windows: { NORTH: ALL_YEAR },
+  },
+  {
+    key: 'fruit_fly_trap',
+    kinds: ['pomelo'],
+    title: 'Hang a fruit fly trap',
+    category: 'PROTECTION',
+    stages: ['BEARING'],
+    conditional: 'Fruit with sting marks, rotting at colour break',
+    organic:
+      'Hang a PAU fruit fly trap 1–1.5 m up in shade until picking; recharge it if fresh damage appears. PAU says traps work less well in home gardens than in orchards',
+    why: 'Flies sting fruit at colour break; the fruit rots and drops',
+    // Second week of August until picking (pomelo, by November)
+    windows: {
+      NORTH: [
+        [8, 8],
+        [11, 30],
+      ],
+    },
+  },
+  {
+    key: 'fruit_split',
+    kinds: ['pomelo'],
+    title: 'Water evenly to stop pomelo fruit splitting',
+    category: 'WATERING',
+    stages: ['BEARING'],
+    conditional:
+      'Fruit cracking lengthwise near the bottom end, juice sacs showing',
+    organic:
+      'Water evenly from flowering to harvest; never let the basin dry hard and then flood it. Mulch the basin',
+    chemical:
+      'Boric acid 1 g per litre (0.1%) on the leaves; a fertiliser, so no waiting days; wear gloves',
+    why: 'Uneven water splits the rind as the fruit swells',
+    windows: { NORTH: ALL_YEAR },
+  },
+  {
+    key: 'greening',
+    kinds: ['pomelo'],
+    title: 'Remove a tree with citrus greening',
+    category: 'PROTECTION',
+    stages: ['YOUNG', 'BEARING'],
+    conditional:
+      'New leaves yellow and blotchy, fruit small, lopsided and staying green, with insipid juice',
+    organic:
+      'Remove and destroy the infected tree. Replant only with disease-free nursery plants, and keep psylla down',
+    why: 'No spray cures greening; a sick tree spreads it',
     windows: { NORTH: ALL_YEAR },
   },
 ];
@@ -629,6 +767,42 @@ const PHASES = (kind: Kind): PhaseSpec<Group>[] => {
   ];
 };
 
+/** Pomelo, North India: flowers Mar–Apr, picked Oct–Nov (IH 2026 p.19). */
+const POMELO_PHASES: PhaseSpec<Group>[] = [
+  {
+    phase: 'winter_rest',
+    months: { NORTH: [12, 2] },
+    avoid: [
+      'Heavy watering; a bearing tree needs water only every 30–40 days in winter',
+    ],
+    watch: ['Bark-eating caterpillar'],
+  },
+  {
+    phase: 'spring_flush_and_flowering',
+    months: { NORTH: [3, 4] },
+    avoid: [
+      'Water stress once flowering starts',
+      'Insecticide on open flowers',
+    ],
+    watch: ['Psylla', 'Thrips', 'Leaf miner'],
+  },
+  {
+    phase: 'fruit_growth',
+    months: { NORTH: [5, 9] },
+    avoid: [
+      'Letting the basin dry out, then flooding it (splitting)',
+      'Water standing at the trunk',
+    ],
+    watch: ['Mites', 'Gummosis', 'Mealybug', 'Fruit fly'],
+  },
+  {
+    phase: 'harvest',
+    months: { NORTH: [10, 11] },
+    avoid: ['Leaving ripe fruit on the tree (dry, grainy segments)'],
+    watch: ['Fruit fly'],
+  },
+];
+
 const SOUTH_LIME_PHASES: PhaseSpec<Group>[] = [
   {
     phase: 'year_round_bearing',
@@ -647,7 +821,7 @@ const north = (kind: Kind): RegionCare =>
     NORTH_ITEMS.filter((i) => !i.kinds || i.kinds.includes(kind)).map(
       ({ kinds: _k, ...item }) => item,
     ),
-    PHASES(kind),
+    kind === 'pomelo' ? POMELO_PHASES : PHASES(kind),
   );
 const south = (items: Item[], phases: PhaseSpec<Group>[]): RegionCare =>
   groupCare('SOUTH', items, phases);
@@ -789,12 +963,37 @@ const KINDS: CareKind[] = [
       'HILLS_COOL',
     ],
   },
+  {
+    key: 'pomelo',
+    // "batabi lebu" matches through "batabi"; grapefruit (C. paradisi) is a different fruit.
+    words: [
+      'pomelo',
+      'pummelo',
+      'shaddock',
+      'chakotra',
+      'chakotara',
+      'chakotha',
+      'batabi',
+      'चकोतरा',
+    ],
+    grownIn: ['NORTH_INDIA', 'EAST_INDIA'],
+    regions: { NORTH_INDIA: north('pomelo') },
+    pendingRegions: [
+      'EAST_INDIA',
+      'WEST_INDIA',
+      'CENTRAL_INDIA',
+      'SOUTH_DECCAN',
+      'COASTAL_HUMID',
+      'HILLS_COOL',
+    ],
+  },
 ];
 
 export const CITRUS_CARE: FamilyCare = {
   family: 'citrus',
   sources: [
     'PAU Package of Practices for Cultivation of Fruit Crops (citrus pp.13–34), pau.edu',
+    'Shivam et al., "Pummelo: A future fruit for human health and wellness", Indian Horticulture (ICAR), Mar–Apr 2026, epubs.icar.org.in',
     'TNAU Crop Production Guide, Horticulture Crops 2020 (acid lime, sweet orange), agritech.tnau.ac.in',
     'NIPHM AESA based IPM package, Citrus, niphm.gov.in',
     'CIB&RC Major Uses of Pesticides (30.09.2026), ppqs.gov.in',

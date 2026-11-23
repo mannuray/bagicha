@@ -1,6 +1,7 @@
 import type { FamilyCare, TreeCareSeed } from '../../domain/tree-care';
 import { AMLA_CARE } from './amla.seed';
 import { APPLE_CARE } from './apple.seed';
+import { BER_CARE } from './ber.seed';
 import { CITRUS_CARE } from './citrus.seed';
 import { GUAVA_CARE } from './guava.seed';
 import { JACKFRUIT_CARE } from './jackfruit.seed';
@@ -32,6 +33,7 @@ export const TREE_CARE_SEED: TreeCareSeed[] = [
   PEACH_CARE,
   PLUM_CARE,
   APPLE_CARE,
+  BER_CARE,
 ].map(approved);
 
 /**
@@ -45,7 +47,6 @@ export const CARE_PENDING: readonly string[] = [
   'custard_apple',
   'moringa',
   'jamun',
-  'ber',
   'bael',
   'fig',
   'mulberry',

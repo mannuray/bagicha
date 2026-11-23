@@ -31,7 +31,7 @@ describe('citrus care by kind (owner-approved 2026-11-18)', () => {
       'citrus:mosambi': 'sweet_orange',
       'citrus:Malta': 'sweet_orange',
       'citrus:Sathgudi': 'sweet_orange',
-      'citrus:Chakotra': null,
+      'citrus:Chakotra': 'pomelo',
     };
     expect(
       Object.fromEntries(entries.map((e) => [e.key, kindOf(e.key)])),
@@ -143,6 +143,7 @@ describe('citrus care by kind (owner-approved 2026-11-18)', () => {
       lemon: ['NORTH_INDIA'],
       mandarin: ['NORTH_INDIA'],
       sweet_orange: ['NORTH_INDIA', 'SOUTH_DECCAN'],
+      pomelo: ['NORTH_INDIA'],
     });
   });
 });

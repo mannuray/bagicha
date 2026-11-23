@@ -274,4 +274,4 @@ Phases: 12 rows (NORTH 4, WEST 5, SOUTH 2, EAST 1), all sourced.
 - **Q10. Mulch amount.** PAU gives paddy straw at 5 t per acre (about 1.2 kg per square metre), with no depth. The draft says "a thick layer". Recommendation: **keep "a thick layer"** and the PAU figure; don't add a depth no guide gives.
 - **Q11. Methyl eugenol traps for fruit fly** (TNAU 25 per ha, AAU 20 per ha, NIPHM). Methyl eugenol draws males of *Bactrocera* fruit flies. No source read shows it draws the ber fly *Carpomyia vesuviana*, and the trap recipes add malathion or dichlorvos (no claim, or banned). Recommendation: **leave the traps out.**
 
-Status: Draft + source check, awaiting owner review — nothing written to data.
+Status: **approved by the owner on 2026-11-24 with every recommendation** (review doc "Ber, pomelo and shahtoot care — owner review"). Transcribed into `backend/src/modules/catalogue/seed/tree-care/ber.seed.ts`; held rows (W5, W7, S3) left out.

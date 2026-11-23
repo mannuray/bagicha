@@ -149,4 +149,4 @@ That is **7 held conditionals** (H1–H7). H3–H6 are from a leaf-bush guide fo
 - **Q5. Pruning advice in the meantime?** Foreign guides say mulberry needs only light winter pruning of dead and crossing wood. Recommendation: **leave it out** until an Indian fruit source says so.
 - **Q6. EAST_INDIA lead:** an untraced snippet says fruit mulberry is pruned after fruit harvest in June–July in Eastern India. Recommendation: **ask BAU Sabour or a Bihar/West Bengal KVK** whether they have a fruit-mulberry advisory; use nothing until one is found.
 
-Status: Draft + source check, awaiting owner review — nothing written to data.
+Status: **reviewed 2026-11-24: the owner kept mulberry pending** (no Indian fruit-mulberry source). Nothing written to data; mulberry stays in `CARE_PENDING`.

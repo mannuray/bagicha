@@ -328,4 +328,4 @@ One existing row is narrowed (X: `summer_water`).
 - **Q9. EAST_INDIA.** Recommendation: **keep it pending.** Ask BCKV Mondouri, BAU Sabour or AAU Tinsukia (citrus station) for a pomelo schedule. Until then, East pomelo trees keep the season pack.
 - **Q10. Narrowing `summer_water`** to the four existing kinds, so pomelo gets only its 7–10-day row. Recommendation: **yes.** It changes no existing kind's care.
 
-Status: Draft + source check, awaiting owner review — nothing written to data.
+Status: **approved by the owner on 2026-11-24 with every recommendation** (review doc "Ber, pomelo and shahtoot care — owner review"). Transcribed into `backend/src/modules/catalogue/seed/tree-care/citrus.seed.ts` as the `pomelo` kind; aliases pummelo, shaddock and batabi added to the citrus fruit type.
