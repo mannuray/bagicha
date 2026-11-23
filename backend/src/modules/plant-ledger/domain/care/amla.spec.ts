@@ -15,6 +15,7 @@ describe('amla care (approved table)', () => {
       region: 'NORTH_INDIA',
       stage: bearing,
       plantedAt: ist('2020-01-01'),
+      plantingPrecision: 'EXACT_DATE',
       now: ist('2026-01-02'),
     });
     expect(reminders.find((r) => r.key === 'main_feed')).toMatchObject({
@@ -31,6 +32,7 @@ describe('amla care (approved table)', () => {
       region: 'NORTH_INDIA',
       stage: bearing,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: ist('2026-09-02'),
     });
     const spray = reminders.find((r) => r.key === 'borax_spray');
@@ -46,6 +48,7 @@ describe('amla care (approved table)', () => {
       region: 'NORTH_INDIA',
       stage: LifecycleStage.SAPLING,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: ist('2026-01-10'),
     });
     expect(reminders.find((r) => r.key === 'frost_cover')).toMatchObject({

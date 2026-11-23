@@ -1,4 +1,8 @@
-import { LifecycleStage, RegionCluster } from '@prisma/client';
+import {
+  LifecycleStage,
+  PlantingDatePrecision,
+  RegionCluster,
+} from '@prisma/client';
 import { resolveRegionCare, stageOf } from './region-care';
 
 /** Callers check careApplies() first; a pending region never reaches the engine. */
@@ -63,6 +67,8 @@ export interface TreeCareInput {
   region: RegionCluster;
   stage: LifecycleStage;
   plantedAt: Date | null;
+  /** How exact plantedAt is: planting-timed care needs at least the month. */
+  plantingPrecision: PlantingDatePrecision;
   now: Date;
   /** Source keys of this tree's care reminders still pending: they count toward the cap. */
   openKeys?: string[];
@@ -104,13 +110,57 @@ export function occurrenceOf(
   throw new Error('unreachable');
 }
 
+/** A month-only planting date is stored as the 1st; count from mid-month. */
+const MID_MONTH_DAYS = 14;
+
+/**
+ * Midnight IST of the day planting-timed care counts from: the planting date,
+ * the 15th for a month-only date, null when only the year or nothing is known.
+ */
+export function plantingDay(
+  plantedAt: Date | null,
+  precision: PlantingDatePrecision,
+): Date | null {
+  if (!plantedAt) return null;
+  const stored = (extraDays: number) =>
+    istMidnight(plantedAt.getUTCFullYear(), [
+      plantedAt.getUTCMonth() + 1,
+      plantedAt.getUTCDate() + extraDays,
+    ]);
+  if (precision === PlantingDatePrecision.EXACT_DATE) return stored(0);
+  if (precision === PlantingDatePrecision.MONTH_YEAR)
+    return stored(MID_MONTH_DAYS);
+  return null;
+}
+
+const addDays = (date: Date, days: number) =>
+  new Date(date.getTime() + days * DAY_MS);
+
+/** The window of an item now: a calendar occurrence, or days after planting. */
+function spanOf(
+  when: CareItem['when'],
+  now: Date,
+  plantedOn: Date | null,
+): { start: Date; end: Date } | null {
+  if (when.kind === 'CALENDAR') return occurrenceOf(when.from, when.to, now);
+  if (when.kind === 'FROM_PLANTING' && plantedOn)
+    return {
+      start: addDays(plantedOn, when.fromDays),
+      end: addDays(plantedOn, when.toDays),
+    };
+  return null;
+}
+
 /** Whether an item's window is open now, or the start of one opening soon. */
 export function windowOf(
   item: { when: CareItem['when'] },
   now: Date,
+  plantedOn: Date | null = null,
 ): { start: Date; end: Date; openNow: boolean } | null {
-  if (item.when.kind !== 'CALENDAR') return null;
-  const { start, end } = occurrenceOf(item.when.from, item.when.to, now);
+  const span = spanOf(item.when, now, plantedOn);
+  // A window counts through its last day.
+  if (!span || now.getTime() >= span.end.getTime() + DAY_MS) return null;
+  const { start, end } = span;
   const openNow = start.getTime() <= now.getTime();
   if (!openNow && start.getTime() - now.getTime() > LOOKAHEAD_DAYS * DAY_MS)
     return null;
@@ -166,10 +216,13 @@ export function treeCareDue(
   /** Everything for the plant page: all current items by priority, then the "if you see it" ones. */
   thisMonth: CareLine[];
   note: string | null;
+  /** The tree has planting-timed care it can't get until its planting month is known. */
+  needsPlantingMonth: boolean;
 } {
   const { care, grownHere } = verifiedCare(family, input.region);
   const stage = stageOf(input.stage);
   const age = ageYears(input.plantedAt, input.now);
+  const plantedOn = plantingDay(input.plantedAt, input.plantingPrecision);
   const open = new Set(input.openKeys ?? []);
   const keyOf = (item: CareItem, start: Date) =>
     `${family.family}:${item.key}:${ymd(start)}`;
@@ -183,11 +236,16 @@ export function treeCareDue(
   const onPage: CareItem[] = [];
   for (const item of care.items) {
     if (!item.stages.includes(stage)) continue;
-    if (item.when.kind !== 'CALENDAR') {
-      onPage.push(item);
+    const untimed =
+      item.when.kind === 'FROM_CHOICE' ||
+      (item.when.kind === 'FROM_PLANTING' && !plantedOn);
+    if (untimed) {
+      // A sign the gardener sees needs no date; a dated step waits for one.
+      if (item.when.kind === 'FROM_CHOICE' || item.conditional)
+        onPage.push(item);
       continue;
     }
-    const window = windowOf(item, input.now);
+    const window = windowOf(item, input.now, plantedOn);
     if (!window) continue;
     if (item.conditional) onPage.push(item);
     else
@@ -233,7 +291,7 @@ export function treeCareDue(
   const thisMonth = [
     ...[...candidates].sort(byPriority).map((c) => line(c.item)),
     ...onPage
-      .filter((i) => i.conditional || i.when.kind !== 'CALENDAR')
+      .filter((i) => i.conditional || i.when.kind === 'FROM_CHOICE')
       .map(line),
   ];
   return {
@@ -242,7 +300,34 @@ export function treeCareDue(
     current: candidates.map((c) => c.sourceKey),
     thisMonth,
     note: grownHere ? null : NOT_GROWN_NOTE,
+    needsPlantingMonth:
+      !plantedOn &&
+      care.items.some(
+        (i) =>
+          i.stages.includes(stage) &&
+          !i.conditional &&
+          i.when.kind === 'FROM_PLANTING' &&
+          couldStillBeAhead(i, input),
+      ),
   };
+}
+
+/**
+ * Whether a planting-timed item could still be ahead of this tree. With only
+ * the year known, it counts from 31 Dec of that year, the latest it could be.
+ */
+function couldStillBeAhead(
+  item: CareItem,
+  input: Pick<TreeCareInput, 'plantedAt' | 'plantingPrecision' | 'now'>,
+): boolean {
+  if (
+    input.plantingPrecision !== PlantingDatePrecision.YEAR ||
+    !input.plantedAt
+  )
+    return true;
+  const latest = istMidnight(input.plantedAt.getUTCFullYear(), [12, 31]);
+  const span = spanOf(item.when, input.now, latest);
+  return !!span && input.now.getTime() < span.end.getTime() + DAY_MS;
 }
 
 export interface CarePhase {
@@ -264,16 +349,16 @@ const CONDITIONAL_PREFIX = 'If you see it: ';
  */
 export function carePhaseView(
   family: FamilyCare,
-  input: Omit<TreeCareInput, 'plantedAt'>,
+  input: Omit<TreeCareInput, 'plantedAt' | 'plantingPrecision'>,
 ): CarePhase {
   const { care, grownHere } = verifiedCare(family, input.region);
   const stage = stageOf(input.stage);
   const windows = care.phases
-    .filter((p) => p.stages.includes(stage) && p.when.kind === 'CALENDAR')
-    .map((p) => {
-      const when = p.when as Extract<CareItem['when'], { kind: 'CALENDAR' }>;
-      return { phase: p, ...occurrenceOf(when.from, when.to, input.now) };
-    });
+    .filter((p) => p.stages.includes(stage))
+    .map((p) => ({
+      phase: p,
+      ...occurrenceOf(p.when.from, p.when.to, input.now),
+    }));
   const now = input.now.getTime();
   const current = windows.find((w) => w.start.getTime() <= now);
   const upcoming = windows
