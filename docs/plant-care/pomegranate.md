@@ -1,4 +1,4 @@
-# Pomegranate care: draft + source check (2026-11-23)
+# Pomegranate care: draft + source check (2026-11-23, approved)
 
 The owner decided on 2026-11-23 that there is **no bahar choice**. A home gardener lets the tree flower naturally, season after season. This draft therefore has:
 - no bahar steps: no withholding water, no defoliation, no ethrel;
@@ -224,4 +224,4 @@ Phases: 7 rows (NORTH 3, SOUTH 3, WEST 1), all sourced.
 - **Q8. SOUTH = Tamil Nadu:** Karnataka's Bagalkot and Vijayapura are the main pomegranate districts in this region, and UHS Bagalkot was not reached. Recommendation: accept TNAU for now (citrus and papaya precedent) and re-check when a UHS source is found.
 - **Q9. Broflanilide instead of cyantraniliprole** for borer and thrips (1-day wait against 5)? Recommendation: keep cyantraniliprole. One product covers borer, thrips, aphids and whitefly, which is simpler for a home gardener.
 
-Status: Draft + source check, awaiting owner review — nothing written to data.
+Status: **approved by the owner on 2026-11-23 with every recommendation** (review doc "Pomegranate care — owner review"). Transcribed into `backend/src/modules/catalogue/seed/tree-care/pomegranate.seed.ts` without the held rows (N6 deblossoming, S2 feed). Feb and winter windows end on the 29th (house leap-day rule).
