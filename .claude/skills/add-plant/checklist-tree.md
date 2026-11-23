@@ -17,22 +17,26 @@ New family or improving an existing one — do each that applies, in order.
 4. **Cycle start month** (only if the fruiting year isn't Jan) —
    `backend/src/modules/plant-ledger/domain/species-config.ts`.
 5. **Care** — after the owner's yes on the review table:
-   - `backend/src/modules/plant-ledger/domain/care/<family>.ts` exporting a
-     `FamilyCare` (types in `care/types.ts`): `grownIn` = the catalogue's
-     regions (upper-case), one `RegionCare` per grown region or an explicit
-     `{ sameAs }` with a comment why; `items` (reminders) and `phases`
-     (Now/Next, avoid, watch) for YOUNG and BEARING.
-   - Register it in `TREE_CARE` and remove it from `CARE_PENDING`
-     (`care/index.ts`).
+   - `backend/src/modules/catalogue/seed/tree-care/<family>.seed.ts` exporting a
+     `FamilyCare` (types in `catalogue/domain/tree-care.ts`): `grownIn` = the
+     catalogue's regions (upper-case), one `RegionCare` per grown region or an
+     explicit `{ sameAs }` with a comment why (unchecked regions go in
+     `pendingRegions`); `items` (reminders) and `phases` (Now/Next, avoid,
+     watch) for YOUNG and BEARING. A family split by kind (citrus) uses `kinds`.
+   - Add it to `TREE_CARE_SEED` and remove it from `CARE_PENDING`
+     (`seed/tree-care/index.ts`), then push the catalogue (docs/deploy.md).
    - If the family still has a hand-written case in
      `backend/src/modules/plant-ledger/services/seasonal-intelligence.service.ts`,
      delete it.
-   - Timing other than calendar dates (bahar, planting, pruning) needs the
-     per-tree timing work first — until then those items show on the plant
-     page only.
+   - Timing: `CALENDAR` for dated steps; `FROM_PLANTING` (days after planting,
+     e.g. papaya, banana) becomes reminders for trees with a known planting
+     month: write the amount per plant in the text, never a `dose` (it scales
+     by whole years). Phases are calendar only. Steps tied to a sign
+     ("once flowers appear") are `conditional`. Bahar and pruning choices
+     (`FROM_CHOICE`) are not evaluated yet and show on the plant page only.
 6. **Keep the verified table** in `docs/plant-care/<family>.md` (sources per
    row, what the check changed); the care file cites it.
-7. **Spot-check spec** — `care/<family>.spec.ts`: 3 checks copied from the
+7. **Spot-check spec** — `seed/tree-care/<family>.seed.spec.ts`: 3 checks copied from the
    approved table (one reminder per timing group: exact title and window).
 8. **Prove**:
    - `cd backend && npx jest src/modules/plant-ledger src/modules/plants src/modules/seasonal`
