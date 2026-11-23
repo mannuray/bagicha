@@ -44,7 +44,11 @@ export interface CareReminder {
   category: CareCategory;
   due: Date;
   windowEnd: Date;
-  /** `${family}:${key}:${window start as YYYY-MM-DD}`: one task per occurrence. */
+  /**
+   * One task per occurrence: `${family}:${key}:${window start YYYY-MM-DD}` for
+   * calendar care; `${family}:${key}:d${fromDays}` for planting-timed care, which
+   * happens once per tree, so a corrected planting date never repeats a done step.
+   */
   sourceKey: string;
   organic: string;
   chemical: string | null;
@@ -225,7 +229,9 @@ export function treeCareDue(
   const plantedOn = plantingDay(input.plantedAt, input.plantingPrecision);
   const open = new Set(input.openKeys ?? []);
   const keyOf = (item: CareItem, start: Date) =>
-    `${family.family}:${item.key}:${ymd(start)}`;
+    `${family.family}:${item.key}:${
+      item.when.kind === 'FROM_PLANTING' ? `d${item.when.fromDays}` : ymd(start)
+    }`;
   const candidates: Array<{
     item: CareItem;
     start: Date;

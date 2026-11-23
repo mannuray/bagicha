@@ -332,14 +332,14 @@ describe('planting-timed care', () => {
   });
   const istMidnightOf = (date: string) => new Date(`${date}T00:00:00+05:30`);
 
-  it('exact date: a window open now is a reminder keyed by its start', () => {
+  it('exact date: a window open now is a reminder keyed by its days after planting', () => {
     const { reminders } = due(
       [planted('feed', 90, 120)],
       '2026-09-05',
       exact('2026-06-01'),
     );
     expect(reminders).toHaveLength(1);
-    expect(reminders[0].sourceKey).toBe('fixture:feed:2026-08-30');
+    expect(reminders[0].sourceKey).toBe('fixture:feed:d90');
     expect(reminders[0].windowEnd).toEqual(istMidnightOf('2026-09-29'));
   });
 
@@ -348,9 +348,10 @@ describe('planting-timed care', () => {
       plantedAt: new Date('2026-06-01T00:00:00.000Z'),
       plantingPrecision: 'MONTH_YEAR',
     });
-    expect(reminders.map((r) => r.sourceKey)).toEqual([
-      'fixture:feed:2026-09-13',
+    expect(reminders.map((r) => r.due)).toEqual([
+      new Date('2026-09-14T06:00:00+05:30'),
     ]);
+    expect(reminders[0].windowEnd).toEqual(istMidnightOf('2026-10-13'));
   });
 
   it('a window 20 days ahead is a reminder due at its start', () => {
@@ -437,11 +438,31 @@ describe('planting-timed care', () => {
     expect(result.onPage.map((i) => i.key)).toEqual(['d']);
   });
 
-  it('a changed planting date changes the key', () => {
+  it('a corrected planting date keeps the key, so a done step stays done', () => {
     const key = (date: string) =>
       due([planted('feed', 90, 120)], '2026-09-12', exact(date)).reminders[0]
         .sourceKey;
-    expect(key('2026-06-01')).not.toBe(key('2026-06-10'));
+    expect(key('2026-06-01')).toBe(key('2026-06-03'));
+  });
+
+  it('one key with two windows gives two task keys', () => {
+    const { reminders } = due(
+      [planted('feed', 90, 120), planted('feed', 100, 130)],
+      '2026-09-12',
+      exact('2026-06-01'),
+    );
+    expect(reminders.map((r) => r.sourceKey)).toEqual([
+      'fixture:feed:d90',
+      'fixture:feed:d100',
+    ]);
+  });
+
+  it('with a date, a conditional planting item shows only in its window', () => {
+    const males = planted('males', 120, 240, { conditional: 'flowers appear' });
+    const signs = (now: string) =>
+      due([males], now, exact('2026-01-01')).thisMonth.map((l) => l.if_you_see);
+    expect(signs('2026-06-01')).toEqual(['flowers appear']);
+    expect(signs('2027-06-01')).toEqual([]);
   });
 
   it('a planting date in the future gives windows ahead, no crash', () => {

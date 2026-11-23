@@ -224,7 +224,8 @@ describe('SeasonalService planting-timed care', () => {
       now: new Date('2026-09-14T06:00:00+05:30'),
     });
     await service.materializeTasksForTree('u1', 'p1');
-    expect(drafts.map((d) => d.sourceKey)).toEqual(['mango:feed:2026-09-13']);
+    expect(drafts.map((d) => d.sourceKey)).toEqual(['mango:feed:d90']);
+    expect(drafts[0].dueDate).toEqual(new Date('2026-09-14T06:00:00+05:30'));
   });
 
   it('no reviewed care: flag false', async () => {

@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
@@ -6,6 +6,7 @@ import { ok, pageOf, plantRecord, taskRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { taskSchema } from '../tasks';
+import { useMyTasks } from '../tasks/api';
 import { useCreatePlant, useEndPlant, usePlant, usePlants, useRestorePlant, useUpdatePlant } from '.';
 
 function PastTrees() {
@@ -128,6 +129,32 @@ describe('editing a plant', () => {
     await userEvent.click(screen.getByRole('button', { name: 'save' }));
     expect(await screen.findByText('saved')).toBeInTheDocument();
     expect(refreshed()).toBe(1);
+  });
+
+  it('reloads the garden task list after the planting date changes', async () => {
+    watch();
+    let taskLoads = 0;
+    server.use(
+      http.get(`${API}/ledger/tasks`, () => {
+        taskLoads += 1;
+        return HttpResponse.json(pageOf([]));
+      }),
+    );
+    function WithTasks() {
+      const tasks = useMyTasks();
+      return <p>{tasks.data ? 'tasks loaded' : 'tasks loading'}</p>;
+    }
+    renderWithApp(
+      <>
+        <WithTasks />
+        <EditIt changes={{ planting_date: '2026-06', planting_date_precision: 'MONTH_YEAR' }} />
+      </>,
+    );
+    expect(await screen.findByText('tasks loaded')).toBeInTheDocument();
+    const before = taskLoads;
+    await userEvent.click(screen.getByRole('button', { name: 'save' }));
+    expect(await screen.findByText('saved')).toBeInTheDocument();
+    await waitFor(() => expect(taskLoads).toBeGreaterThan(before));
   });
 
   it('does not refresh reminders for other edits', async () => {

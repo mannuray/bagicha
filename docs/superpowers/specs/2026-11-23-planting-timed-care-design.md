@@ -48,9 +48,13 @@ guessed date would make reminders wrong. The owner approved:
   like a calendar window from there: open now, or opening within the same 30-day lookahead,
   becomes a candidate; a window whose end has passed is skipped (decision 4); `conditional`
   items go to the page; the 3-reminder cap and priority order are shared with calendar items.
-- The task key stays `${family}:${key}:${YYYY-MM-DD of start}`. If the gardener corrects the
-  planting date, the starts move, the old pending reminders fall out of `current` and the
-  existing `retireCareTasksExcept` cancels them; the new ones are created. No migration.
+- The task key for a planting-timed item is `${family}:${key}:d${fromDays}` (calendar care
+  keeps `${family}:${key}:${YYYY-MM-DD of start}`). A planting-timed step happens once per
+  tree, so a corrected planting date keeps the key: a done step is never asked again, and a
+  pending one isn't duplicated. If the correction moves the window out of the current range,
+  the pending reminder falls out of `current`, the existing `retireCareTasksExcept` cancels it,
+  and it comes back with the right date when its window nears. No migration. *(Changed after
+  the final code review, 2026-11-23: the date-based key re-created a step already done.)*
 - With no usable planting start, `FROM_PLANTING` items are left out entirely (not shown
   undated on the page as today), and `treeCareDue` returns `needsPlantingMonth: true` when the
   tree's stage has at least one non-conditional `FROM_PLANTING` item that could still be ahead.

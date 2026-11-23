@@ -15,7 +15,7 @@
 - Code meets `docs/coding-principles.md`; review against its §8 checklist.
 - Month-only planting date counts from the **15th** (stored as the 1st: add 14 days).
 - `YEAR` / `UNKNOWN` precision: **no planting-timed reminders, no guessing**.
-- Task key format unchanged: `${family}:${key}:${YYYY-MM-DD of window start}` (IST).
+- Task key format unchanged for calendar care: `${family}:${key}:${YYYY-MM-DD of window start}` (IST). Planting-timed: `${family}:${key}:d${fromDays}` (final-review fix).
 - Lookahead stays 30 days; cap stays 3 reminders per tree, shared with calendar items.
 - Phases stay calendar-only; `FROM_CHOICE` behaviour unchanged (on page, undated).
 - No Prisma migration. No catalogue data change in release 1.
