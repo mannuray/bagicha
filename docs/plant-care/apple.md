@@ -264,4 +264,4 @@ Every H row has a source. Doses carry Q3, and every month carries the elevation 
 - **Q9. Growth regulators.** Hydrogen cyanamide (2%, four weeks before bloom, 188-day wait), GA₃ and paclobutrazol carry apple claims. CITH and SKUAST-J recommend 3% Dormex, which is above the label. Recommendation: **leave all out**. They are commercial yield tools and hazardous to handle; a home tree in the hills gets its chill naturally.
 - **Q10. Scab and mildew products.** Kresoxim-methyl (7 days) is used for scab and bupirimate (15 days) for mildew; both are newer and may be harder to find in small packs. Recommendation: keep them. If the owner prefers an older product, dodine 65 WP (0.75 g/L, 21 days) also covers scab, and it is the same family as C3's leaf-fall product.
 
-Status: Draft + source check, awaiting owner review — nothing written to data.
+Status: **approved by the owner on 2026-11-23 with every recommendation** (review doc "Peach, plum, apple and cherry care — owner review"). Transcribed into `backend/src/modules/catalogue/seed/tree-care/apple.seed.ts`; held rows left out.

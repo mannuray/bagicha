@@ -1,11 +1,14 @@
 import type { FamilyCare, TreeCareSeed } from '../../domain/tree-care';
 import { AMLA_CARE } from './amla.seed';
+import { APPLE_CARE } from './apple.seed';
 import { CITRUS_CARE } from './citrus.seed';
 import { GUAVA_CARE } from './guava.seed';
 import { JACKFRUIT_CARE } from './jackfruit.seed';
 import { LITCHI_CARE } from './litchi.seed';
 import { MANGO_CARE } from './mango.seed';
 import { PAPAYA_CARE } from './papaya.seed';
+import { PEACH_CARE } from './peach.seed';
+import { PLUM_CARE } from './plum.seed';
 import { POMEGRANATE_CARE } from './pomegranate.seed';
 import { SAPOTA_CARE } from './sapota.seed';
 
@@ -26,6 +29,9 @@ export const TREE_CARE_SEED: TreeCareSeed[] = [
   CITRUS_CARE,
   PAPAYA_CARE,
   POMEGRANATE_CARE,
+  PEACH_CARE,
+  PLUM_CARE,
+  APPLE_CARE,
 ].map(approved);
 
 /**
@@ -51,10 +57,7 @@ export const CARE_PENDING: readonly string[] = [
   'kokum',
   'dragon_fruit',
   // Phase 3: hill and cool-climate fruit
-  'apple',
   'pear',
-  'peach',
-  'plum',
   'apricot',
   'cherry',
   'walnut',

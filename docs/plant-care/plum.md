@@ -229,4 +229,4 @@ Phases: 6 rows (NORTH 3, HILLS 3), all sourced.
 - **Q7. HILLS pruning window (H2, Dec 1–Feb 29).** UHF describes "first winter" and "dormant" pruning but gives no month. The window borrows UHF's dormant planting season ("December to February", p.42). PAU (Jan) and SKUAST (peach, early Jan) are not hills-plum sources.
   - Recommendation: **accept the dormant-season window**. It names no new month, only the months UHF calls dormant, and it runs while the tree is bare.
 
-Status: Draft + source check, awaiting owner review — nothing written to data.
+Status: **approved by the owner on 2026-11-23 with every recommendation** (review doc "Peach, plum, apple and cherry care — owner review"). Transcribed into `backend/src/modules/catalogue/seed/tree-care/plum.seed.ts`; held rows left out.

@@ -238,4 +238,4 @@ Phases: 6 rows (NORTH 3, HILLS 3), all sourced.
 - **Q7. Bordeaux paint** (PAU) needs copper sulphate heated on a tawa.
   - Recommendation: **keep it as the optional second coat** in N2 and for collar rot (C11), with the recipe and gloves. Paste alone is acceptable if the owner prefers a simpler step.
 
-Status: Draft + source check, awaiting owner review — nothing written to data.
+Status: **approved by the owner on 2026-11-23 with every recommendation** (review doc "Peach, plum, apple and cherry care — owner review"). Transcribed into `backend/src/modules/catalogue/seed/tree-care/peach.seed.ts`; held rows left out.

@@ -177,4 +177,4 @@ Phases: 1 row (`winter_bare`), sourced.
 - **Q7. Fruit fly:** the brief lists it, but NIPHM's cherry pest list does not, and the only Indian line (SKUAST-J, apricot section) uses banned or unlabelled chemicals. Recommendation: **leave it out.** C1's "pick ripe fruit promptly and remove split fruit" covers the sanitation.
 - **Q8. Kinds:** Stella and Mishri share one care set; no source gives either its own calendar. Mishri is the most cracking-prone (SKUAST-K survey). Recommendation: no kinds. Mention Mishri's cracking in C1, as drafted.
 
-Status: Draft + source check, awaiting owner review — nothing written to data.
+Status: **reviewed 2026-11-23: the owner kept cherry pending** (no regional source reached). Nothing written to data; cherry stays in `CARE_PENDING`.
