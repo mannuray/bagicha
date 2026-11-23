@@ -14,6 +14,7 @@ describe('mango care (verified table)', () => {
       region: 'EAST_INDIA',
       stage: bearing,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: ist('2026-02-12'),
     });
     const hopper = reminders.find((r) => r.key === 'hopper_spray');
@@ -29,6 +30,7 @@ describe('mango care (verified table)', () => {
       region: 'COASTAL_HUMID',
       stage: bearing,
       plantedAt: ist('2020-01-01'),
+      plantingPrecision: 'EXACT_DATE',
       now: ist('2026-08-20'),
     });
     const feed = reminders.find((r) => r.key === 'second_feed');
@@ -43,6 +45,7 @@ describe('mango care (verified table)', () => {
       region: 'SOUTH_DECCAN',
       stage: bearing,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: ist('2026-10-05'),
     });
     expect(oct.reminders.map((r) => r.key)).toContain('copper_spray');
@@ -50,6 +53,7 @@ describe('mango care (verified table)', () => {
       region: 'CENTRAL_INDIA',
       stage: bearing,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: ist('2026-11-20'),
     });
     expect([...nov.reminders, ...nov.onPage].map((r) => r.key)).not.toContain(
@@ -65,6 +69,7 @@ describe('mango care (verified table)', () => {
         region: 'CENTRAL_INDIA',
         stage: young,
         plantedAt: null,
+        plantingPrecision: 'UNKNOWN',
         now: at,
       }).reminders.map((r) => r.key),
     ).toContain('frost_cover');
@@ -73,6 +78,7 @@ describe('mango care (verified table)', () => {
         region: 'WEST_INDIA',
         stage: young,
         plantedAt: null,
+        plantingPrecision: 'UNKNOWN',
         now: at,
       }).reminders.map((r) => r.key),
     ).not.toContain('frost_cover');
@@ -123,6 +129,7 @@ describe('mango care (verified table)', () => {
       region: 'NORTH_INDIA',
       stage: bearing,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: ist('2026-07-15'),
     });
     expect(july.onPage.map((i) => i.key)).not.toContain('malformation');
@@ -131,6 +138,7 @@ describe('mango care (verified table)', () => {
       region: 'NORTH_INDIA',
       stage: bearing,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: ist('2026-02-20'),
     });
     expect(feb.onPage.map((i) => i.key)).toContain('malformation');

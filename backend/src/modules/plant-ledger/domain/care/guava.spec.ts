@@ -15,6 +15,7 @@ describe('guava care (approved table)', () => {
       region: 'NORTH_INDIA',
       stage: bearing,
       plantedAt: ist('2022-01-01'),
+      plantingPrecision: 'EXACT_DATE',
       now: ist('2026-05-16'),
     });
     const feed = reminders.find((r) => r.key === 'feed_manure');
@@ -31,6 +32,7 @@ describe('guava care (approved table)', () => {
       region: 'NORTH_INDIA',
       stage: bearing,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: ist('2026-05-02'),
     });
     expect(reminders.find((r) => r.key === 'bordeaux_spray')).toMatchObject({
@@ -44,6 +46,7 @@ describe('guava care (approved table)', () => {
       region: 'SOUTH_DECCAN',
       stage: bearing,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: ist('2026-10-02'),
     });
     const spray = reminders.find((r) => r.key === 'nutrient_spray');
@@ -60,6 +63,7 @@ describe('guava care (approved table)', () => {
         region,
         stage: LifecycleStage.SAPLING,
         plantedAt: ist('2024-06-01'),
+        plantingPrecision: 'EXACT_DATE',
         now: ist('2026-02-03'),
       });
       expect(reminders.find((r) => r.key === 'feed_young_third')).toMatchObject(

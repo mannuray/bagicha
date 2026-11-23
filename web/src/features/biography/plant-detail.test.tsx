@@ -99,6 +99,33 @@ describe('tree biography', () => {
     expect(signs.textContent).toMatch(/when:\s*holes with sawdust on the trunk/i);
   });
 
+  it('asks for the planting month when the server says so', async () => {
+    handlers();
+    server.use(
+      http.get(`${API}/seasonal/plant/p1/intelligence`, () =>
+        HttpResponse.json(
+          ok({
+            ...intelligence,
+            seasonal_pack: { ...intelligence.seasonal_pack, avoid_now: [], watch_for: [] },
+            care_note: null,
+            care_this_month: [],
+            care_needs_planting_month: true,
+          }),
+        ),
+      ),
+    );
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByText(/when did you plant it\?/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Add planting month' })).toHaveAttribute('href', '/plants/p1/edit');
+  });
+
+  it('no planting-month prompt when the field is missing', async () => {
+    handlers();
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByText(/hoppers on panicles/i)).toBeInTheDocument();
+    expect(screen.queryByText(/when did you plant it\?/i)).toBeNull();
+  });
+
   it('shows only the collapsed signs when nothing is due this month', async () => {
     handlers();
     server.use(

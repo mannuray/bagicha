@@ -15,6 +15,7 @@ describe('jackfruit care (approved table)', () => {
       region: 'EAST_INDIA',
       stage: bearing,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: ist('2026-12-02'),
     });
     expect(reminders.find((r) => r.key === 'mealybug_band')).toMatchObject({
@@ -28,6 +29,7 @@ describe('jackfruit care (approved table)', () => {
       region: 'SOUTH_DECCAN',
       stage: bearing,
       plantedAt: ist('2023-01-01'),
+      plantingPrecision: 'EXACT_DATE',
       now: ist('2026-05-02'),
     });
     expect(reminders.find((r) => r.key === 'pre_monsoon_feed')).toMatchObject({
@@ -44,6 +46,7 @@ describe('jackfruit care (approved table)', () => {
       region: 'COASTAL_HUMID',
       stage: bearing,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: ist('2026-06-02'),
     });
     expect(reminders.find((r) => r.key === 'cut_ripe_fruit')).toMatchObject({
@@ -61,6 +64,7 @@ describe('jackfruit care (approved table)', () => {
         region: 'NORTH_INDIA',
         stage: bearing,
         plantedAt: null,
+        plantingPrecision: 'UNKNOWN',
         now: ist('2026-06-02'),
       }).note,
     ).toBe(NOT_GROWN_NOTE);

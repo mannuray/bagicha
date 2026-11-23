@@ -15,6 +15,7 @@ describe('litchi care (approved table)', () => {
       region: 'EAST_INDIA',
       stage: bearing,
       plantedAt: ist('2018-01-01'),
+      plantingPrecision: 'EXACT_DATE',
       now: ist('2026-06-16'),
     });
     expect(reminders.find((r) => r.key === 'main_feed')).toMatchObject({
@@ -29,6 +30,7 @@ describe('litchi care (approved table)', () => {
       region: 'NORTH_INDIA',
       stage: bearing,
       plantedAt: ist('2018-01-01'),
+      plantingPrecision: 'EXACT_DATE',
       now: ist('2026-12-02'),
     });
     const manure = reminders.find((r) => r.key === 'manure');
@@ -49,6 +51,7 @@ describe('litchi care (approved table)', () => {
       region: 'EAST_INDIA',
       stage: bearing,
       plantedAt: ist('2018-01-01'),
+      plantingPrecision: 'EXACT_DATE',
       now: ist('2026-09-02'),
     });
     expect(reminders.find((r) => r.key === 'manure')).toMatchObject({
@@ -64,6 +67,7 @@ describe('litchi care (approved table)', () => {
       region: 'NORTH_INDIA',
       stage: young,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: at,
     });
     expect(north.reminders.find((r) => r.key === 'dhaincha')).toMatchObject({
@@ -74,6 +78,7 @@ describe('litchi care (approved table)', () => {
       region: 'EAST_INDIA',
       stage: young,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: at,
     });
     expect([...east.reminders, ...east.onPage].map((r) => r.key)).not.toContain(
@@ -114,6 +119,7 @@ describe('litchi care (approved table)', () => {
         region: 'CENTRAL_INDIA',
         stage: bearing,
         plantedAt: null,
+        plantingPrecision: 'UNKNOWN',
         now: ist('2026-06-16'),
       }).note,
     ).toBe(NOT_GROWN_NOTE);

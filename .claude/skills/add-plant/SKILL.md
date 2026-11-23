@@ -15,7 +15,7 @@ doses are wrong advice to real gardeners. Design: `docs/superpowers/specs/2026-1
    [tree](checklist-tree.md) · [vegetable](checklist-crop.md) ·
    [seasonal flower](checklist-seasonal-flower.md) ·
    [perennial flower](checklist-perennial-flower.md).
-   For trees, `CARE_PENDING` in `backend/src/modules/plant-ledger/domain/care/index.ts`
+   For trees, `CARE_PENDING` in `backend/src/modules/catalogue/seed/tree-care/index.ts`
    lists families without reviewed care.
 2. **Draft the content** from the sources in [sources.md](sources.md), to the
    rules in [content-standard.md](content-standard.md). Mark anything you are

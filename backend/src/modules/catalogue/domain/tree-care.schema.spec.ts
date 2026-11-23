@@ -152,6 +152,60 @@ describe('tree care records in the seed', () => {
     expect(issuesOf(withItems(planted(0), planted(0)))).toMatch(/feed/);
   });
 
+  it('rejects a phase timed from planting', () => {
+    const phase = {
+      when: { kind: 'FROM_PLANTING', fromDays: 0, toDays: 30 },
+      stages: ['BEARING'],
+      phase: 'establishing',
+      avoid: [],
+      watch: [],
+    };
+    expect(
+      check({
+        ...family(),
+        regions: { NORTH_INDIA: { items: [], phases: [phase] } },
+      }),
+    ).toThrow();
+  });
+
+  it('rejects a planting window that ends before it starts', () => {
+    expect(
+      check(
+        withItems(
+          item({ when: { kind: 'FROM_PLANTING', fromDays: 90, toDays: 60 } }),
+        ),
+      ),
+    ).toThrow();
+  });
+
+  it('rejects a dose on a planting-timed item', () => {
+    const dose = {
+      organic: [{ what: 'FYM', grams: 5000 }],
+      chemical: [],
+      maxAgeYears: 5,
+    };
+    expect(
+      check(
+        withItems(
+          item({
+            when: { kind: 'FROM_PLANTING', fromDays: 90, toDays: 120 },
+            dose,
+          }),
+        ),
+      ),
+    ).toThrow();
+  });
+
+  it('accepts a planting-timed item without a dose', () => {
+    expect(
+      check(
+        withItems(
+          item({ when: { kind: 'FROM_PLANTING', fromDays: 90, toDays: 120 } }),
+        ),
+      ),
+    ).not.toThrow();
+  });
+
   it('accepts the same key with different starts', () => {
     expect(
       check(

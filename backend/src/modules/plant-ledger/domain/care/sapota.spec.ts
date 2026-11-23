@@ -15,6 +15,7 @@ describe('sapota care (approved table)', () => {
       region: 'WEST_INDIA',
       stage: bearing,
       plantedAt: ist('2023-01-01'),
+      plantingPrecision: 'EXACT_DATE',
       now: ist('2026-06-16'),
     });
     const feed = reminders.find((r) => r.key === 'monsoon_feed');
@@ -32,6 +33,7 @@ describe('sapota care (approved table)', () => {
       region: 'SOUTH_DECCAN',
       stage: bearing,
       plantedAt: ist('2023-01-01'),
+      plantingPrecision: 'EXACT_DATE',
       now: ist('2026-09-02'),
     });
     const feed = reminders.find((r) => r.key === 'post_monsoon_feed');
@@ -50,6 +52,7 @@ describe('sapota care (approved table)', () => {
       region: 'COASTAL_HUMID',
       stage: bearing,
       plantedAt: null,
+      plantingPrecision: 'UNKNOWN',
       now: ist('2026-03-02'),
     });
     expect(reminders.find((r) => r.key === 'fruit_fly_trap')).toMatchObject({
@@ -70,6 +73,7 @@ describe('sapota care (approved table)', () => {
         region: 'NORTH_INDIA',
         stage: bearing,
         plantedAt: null,
+        plantingPrecision: 'UNKNOWN',
         now: ist('2026-06-16'),
       }).note,
     ).toBe(NOT_GROWN_NOTE);

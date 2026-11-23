@@ -1,5 +1,10 @@
 import { LifecycleStage } from '@prisma/client';
-import { carePhaseView, NOT_GROWN_NOTE, treeCareDue } from './engine';
+import {
+  carePhaseView,
+  NOT_GROWN_NOTE,
+  plantingDay,
+  treeCareDue,
+} from './engine';
 import type { CareItem, FamilyCare, MonthDay, PhaseWindow } from './types';
 
 const ist = (s: string) => new Date(`${s}T06:00:00+05:30`);
@@ -33,6 +38,7 @@ const due = (
     region: 'NORTH_INDIA',
     stage: LifecycleStage.MATURE_BEARING,
     plantedAt: null,
+    plantingPrecision: 'UNKNOWN',
     now: ist(now),
     ...over,
   });
@@ -301,5 +307,192 @@ describe('carePhaseView', () => {
       avoid_now: [],
       watch_for: [],
     });
+  });
+});
+
+describe('planting-timed care', () => {
+  const planted = (
+    key: string,
+    fromDays: number,
+    toDays: number,
+    over: Partial<CareItem> = {},
+  ): CareItem => ({
+    key,
+    title: `Do ${key}`,
+    category: 'FEEDING',
+    stages: ['YOUNG', 'BEARING'],
+    when: { kind: 'FROM_PLANTING', fromDays, toDays },
+    organic: `organic ${key}`,
+    why: `why ${key}`,
+    ...over,
+  });
+  const exact = (date: string) => ({
+    plantedAt: new Date(`${date}T00:00:00.000Z`),
+    plantingPrecision: 'EXACT_DATE' as const,
+  });
+  const istMidnightOf = (date: string) => new Date(`${date}T00:00:00+05:30`);
+
+  it('exact date: a window open now is a reminder keyed by its days after planting', () => {
+    const { reminders } = due(
+      [planted('feed', 90, 120)],
+      '2026-09-05',
+      exact('2026-06-01'),
+    );
+    expect(reminders).toHaveLength(1);
+    expect(reminders[0].sourceKey).toBe('fixture:feed:d90');
+    expect(reminders[0].windowEnd).toEqual(istMidnightOf('2026-09-29'));
+  });
+
+  it('month only: counts from the 15th', () => {
+    const { reminders } = due([planted('feed', 90, 120)], '2026-09-14', {
+      plantedAt: new Date('2026-06-01T00:00:00.000Z'),
+      plantingPrecision: 'MONTH_YEAR',
+    });
+    expect(reminders.map((r) => r.due)).toEqual([
+      new Date('2026-09-14T06:00:00+05:30'),
+    ]);
+    expect(reminders[0].windowEnd).toEqual(istMidnightOf('2026-10-13'));
+  });
+
+  it('a window 20 days ahead is a reminder due at its start', () => {
+    const { reminders } = due(
+      [planted('feed', 90, 120)],
+      '2026-08-10',
+      exact('2026-06-01'),
+    );
+    expect(reminders[0].due).toEqual(istMidnightOf('2026-08-30'));
+  });
+
+  it('a window already over is skipped', () => {
+    const result = due(
+      [planted('feed', 0, 30)],
+      '2026-09-05',
+      exact('2024-01-10'),
+    );
+    expect(result.reminders).toEqual([]);
+    expect(result.thisMonth).toEqual([]);
+  });
+
+  it('year or unknown date: no planting reminders, flag set', () => {
+    const unknown = due([planted('feed', 90, 120)], '2026-09-05');
+    expect(unknown.reminders).toEqual([]);
+    expect(unknown.thisMonth).toEqual([]);
+    expect(unknown.needsPlantingMonth).toBe(true);
+    const yearOnly = due([planted('feed', 90, 120)], '2026-03-01', {
+      plantedAt: new Date('2026-01-01T00:00:00.000Z'),
+      plantingPrecision: 'YEAR',
+    });
+    expect(yearOnly.reminders).toEqual([]);
+    expect(yearOnly.needsPlantingMonth).toBe(true);
+  });
+
+  it('year-only tree whose steps are all over: no flag', () => {
+    const { needsPlantingMonth } = due(
+      [planted('feed', 0, 540)],
+      '2026-09-05',
+      {
+        plantedAt: new Date('2020-01-01T00:00:00.000Z'),
+        plantingPrecision: 'YEAR',
+      },
+    );
+    expect(needsPlantingMonth).toBe(false);
+  });
+
+  it('exact date: no flag', () => {
+    expect(
+      due([planted('feed', 90, 120)], '2026-09-05', exact('2026-06-01'))
+        .needsPlantingMonth,
+    ).toBe(false);
+  });
+
+  it('conditional planting item shows on the page without a date', () => {
+    const result = due(
+      [planted('males', 120, 240, { conditional: 'flowers appear' })],
+      '2026-09-05',
+    );
+    expect(result.thisMonth.map((l) => l.if_you_see)).toEqual([
+      'flowers appear',
+    ]);
+    expect(result.reminders).toEqual([]);
+    expect(result.needsPlantingMonth).toBe(false);
+  });
+
+  it('planting and calendar items share the cap of 3', () => {
+    const result = due(
+      [
+        item('a', [9, 1], [9, 30], {
+          category: 'PROTECTION',
+          stages: ['YOUNG', 'BEARING'],
+        }),
+        item('b', [9, 1], [9, 30], {
+          category: 'WATERING',
+          stages: ['YOUNG', 'BEARING'],
+        }),
+        planted('c', 90, 120),
+        planted('d', 90, 120, { category: 'GENERAL' }),
+      ],
+      '2026-09-05',
+      exact('2026-06-01'),
+    );
+    expect(result.reminders.map((r) => r.key)).toEqual(['a', 'c', 'b']);
+    expect(result.onPage.map((i) => i.key)).toEqual(['d']);
+  });
+
+  it('a corrected planting date keeps the key, so a done step stays done', () => {
+    const key = (date: string) =>
+      due([planted('feed', 90, 120)], '2026-09-12', exact(date)).reminders[0]
+        .sourceKey;
+    expect(key('2026-06-01')).toBe(key('2026-06-03'));
+  });
+
+  it('one key with two windows gives two task keys', () => {
+    const { reminders } = due(
+      [planted('feed', 90, 120), planted('feed', 100, 130)],
+      '2026-09-12',
+      exact('2026-06-01'),
+    );
+    expect(reminders.map((r) => r.sourceKey)).toEqual([
+      'fixture:feed:d90',
+      'fixture:feed:d100',
+    ]);
+  });
+
+  it('with a date, a conditional planting item shows only in its window', () => {
+    const males = planted('males', 120, 240, { conditional: 'flowers appear' });
+    const signs = (now: string) =>
+      due([males], now, exact('2026-01-01')).thisMonth.map((l) => l.if_you_see);
+    expect(signs('2026-06-01')).toEqual(['flowers appear']);
+    expect(signs('2027-06-01')).toEqual([]);
+  });
+
+  it('a planting date in the future gives windows ahead, no crash', () => {
+    const { reminders } = due(
+      [planted('feed', 0, 30)],
+      '2026-09-20',
+      exact('2026-10-01'),
+    );
+    expect(reminders[0].due).toEqual(istMidnightOf('2026-10-01'));
+  });
+
+  it('items for the other stage: no flag, no reminder', () => {
+    const result = due(
+      [planted('feed', 90, 120, { stages: ['BEARING'] })],
+      '2026-09-05',
+      { stage: LifecycleStage.SAPLING },
+    );
+    expect(result.reminders).toEqual([]);
+    expect(result.needsPlantingMonth).toBe(false);
+  });
+
+  it('plantingDay: the day to count from, by precision', () => {
+    const stored = new Date('2026-06-01T00:00:00.000Z');
+    expect(plantingDay(stored, 'EXACT_DATE')).toEqual(
+      istMidnightOf('2026-06-01'),
+    );
+    expect(plantingDay(stored, 'MONTH_YEAR')).toEqual(
+      istMidnightOf('2026-06-15'),
+    );
+    expect(plantingDay(stored, 'YEAR')).toBeNull();
+    expect(plantingDay(null, 'EXACT_DATE')).toBeNull();
   });
 });

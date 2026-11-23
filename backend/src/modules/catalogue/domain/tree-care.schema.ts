@@ -22,13 +22,15 @@ const monthDay = z
   .refine(([m, d]) => d <= DAYS[m - 1], 'no such day in that month');
 
 const days = z.number().int().min(0);
+const calendar = z
+  .object({ kind: z.literal('CALENDAR'), from: monthDay, to: monthDay })
+  .strict();
 const anchor = z.discriminatedUnion('kind', [
-  z
-    .object({ kind: z.literal('CALENDAR'), from: monthDay, to: monthDay })
-    .strict(),
+  calendar,
   z
     .object({ kind: z.literal('FROM_PLANTING'), fromDays: days, toDays: days })
-    .strict(),
+    .strict()
+    .refine((w) => w.fromDays <= w.toDays, 'the window ends before it starts'),
   z
     .object({
       kind: z.literal('FROM_CHOICE'),
@@ -71,11 +73,17 @@ const careItem = z
     conditional: text.optional(),
     why: text,
   })
-  .strict();
+  .strict()
+  .refine(
+    (i) => !(i.when.kind === 'FROM_PLANTING' && i.dose),
+    // doseFor scales by whole years, wrong for a plant a few months old.
+    'a dose scales by whole years of age; write a planting-timed amount in the text',
+  );
 
 const phaseWindow = z
   .object({
-    when: anchor,
+    // The engine places phases by the calendar only.
+    when: calendar,
     stages,
     phase: z.string().regex(/^[a-z][a-z0-9_]*$/),
     avoid: z.array(text),

@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
@@ -6,7 +6,8 @@ import { ok, pageOf, plantRecord, taskRecord } from '../../test/fixtures';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp } from '../../test/render';
 import { taskSchema } from '../tasks';
-import { useCreatePlant, useEndPlant, usePlant, usePlants, useRestorePlant } from '.';
+import { useMyTasks } from '../tasks/api';
+import { useCreatePlant, useEndPlant, usePlant, usePlants, useRestorePlant, useUpdatePlant } from '.';
 
 function PastTrees() {
   const plants = usePlants(1, 'ended');
@@ -96,5 +97,71 @@ describe('plant end-of-life data', () => {
 
   it('parses a cancelled task', () => {
     expect(taskSchema.parse(taskRecord({ status: 'CANCELLED' })).status).toBe('CANCELLED');
+  });
+});
+
+function EditIt({ changes }: { changes: Parameters<ReturnType<typeof useUpdatePlant>['mutate']>[0] }) {
+  const update = useUpdatePlant('p1');
+  return (
+    <div>
+      <button onClick={() => update.mutate(changes)}>save</button>
+      <p>{update.isSuccess ? 'saved' : 'editing'}</p>
+    </div>
+  );
+}
+
+describe('editing a plant', () => {
+  const watch = () => {
+    let refreshed = 0;
+    server.use(
+      http.put(`${API}/ledger/plants/p1`, () => HttpResponse.json(ok(plantRecord()))),
+      http.post(`${API}/seasonal/plant/p1/materialize-tasks`, () => {
+        refreshed += 1;
+        return HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 });
+      }),
+    );
+    return () => refreshed;
+  };
+
+  it('refreshes reminders after the planting date changes', async () => {
+    const refreshed = watch();
+    renderWithApp(<EditIt changes={{ planting_date: '2026-06', planting_date_precision: 'MONTH_YEAR' }} />);
+    await userEvent.click(screen.getByRole('button', { name: 'save' }));
+    expect(await screen.findByText('saved')).toBeInTheDocument();
+    expect(refreshed()).toBe(1);
+  });
+
+  it('reloads the garden task list after the planting date changes', async () => {
+    watch();
+    let taskLoads = 0;
+    server.use(
+      http.get(`${API}/ledger/tasks`, () => {
+        taskLoads += 1;
+        return HttpResponse.json(pageOf([]));
+      }),
+    );
+    function WithTasks() {
+      const tasks = useMyTasks();
+      return <p>{tasks.data ? 'tasks loaded' : 'tasks loading'}</p>;
+    }
+    renderWithApp(
+      <>
+        <WithTasks />
+        <EditIt changes={{ planting_date: '2026-06', planting_date_precision: 'MONTH_YEAR' }} />
+      </>,
+    );
+    expect(await screen.findByText('tasks loaded')).toBeInTheDocument();
+    const before = taskLoads;
+    await userEvent.click(screen.getByRole('button', { name: 'save' }));
+    expect(await screen.findByText('saved')).toBeInTheDocument();
+    await waitFor(() => expect(taskLoads).toBeGreaterThan(before));
+  });
+
+  it('does not refresh reminders for other edits', async () => {
+    const refreshed = watch();
+    renderWithApp(<EditIt changes={{ name: 'Papita' }} />);
+    await userEvent.click(screen.getByRole('button', { name: 'save' }));
+    expect(await screen.findByText('saved')).toBeInTheDocument();
+    expect(refreshed()).toBe(0);
   });
 });

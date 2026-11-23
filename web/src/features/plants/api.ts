@@ -98,12 +98,20 @@ export function useRestorePlant(id: string) {
   });
 }
 
+const movesPlanting = (changes: Partial<PlantInput>) => 'planting_date' in changes || 'planting_date_precision' in changes;
+
 export function useUpdatePlant(id: string) {
   const api = useApi();
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: (changes: Partial<PlantInput>) => api.send('PUT', `/ledger/plants/${id}`, changes, plantSchema),
-    onSuccess: () => invalidate(staleAfter.plantEdit()),
+    mutationFn: async (changes: Partial<PlantInput>) => {
+      const plant = await api.send('PUT', `/ledger/plants/${id}`, changes, plantSchema);
+      // A new planting date moves planting-timed reminders: refresh them now, best effort.
+      if (movesPlanting(changes)) await materializeTasks(api, id).catch(() => undefined);
+      return plant;
+    },
+    // Refreshed reminders change the garden's task list too, not only the plant.
+    onSuccess: (_plant, changes) => invalidate(movesPlanting(changes) ? staleAfter.gardenChange() : staleAfter.plantEdit()),
   });
 }
 

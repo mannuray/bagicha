@@ -5,6 +5,7 @@ import { GUAVA_CARE } from './guava.seed';
 import { JACKFRUIT_CARE } from './jackfruit.seed';
 import { LITCHI_CARE } from './litchi.seed';
 import { MANGO_CARE } from './mango.seed';
+import { PAPAYA_CARE } from './papaya.seed';
 import { SAPOTA_CARE } from './sapota.seed';
 
 const approved = (care: FamilyCare): TreeCareSeed => ({
@@ -22,6 +23,7 @@ export const TREE_CARE_SEED: TreeCareSeed[] = [
   JACKFRUIT_CARE,
   AMLA_CARE,
   CITRUS_CARE,
+  PAPAYA_CARE,
 ].map(approved);
 
 /**
@@ -31,7 +33,6 @@ export const TREE_CARE_SEED: TreeCareSeed[] = [
 export const CARE_PENDING: readonly string[] = [
   'pomegranate',
   'banana',
-  'papaya',
   'grape',
   'coconut',
   'custard_apple',
