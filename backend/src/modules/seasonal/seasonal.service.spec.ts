@@ -1,4 +1,4 @@
-import { CATALOGUE_SEED } from '../catalogue';
+import { CATALOGUE_SEED, type TreeCareSeed } from '../catalogue';
 import { seededCatalogueStore } from '../catalogue/testing';
 import { SubscriptionTier, TaskSource } from '@prisma/client';
 import { FixedClock } from '../../common/time';
@@ -20,7 +20,12 @@ const NOW = new Date('2026-05-01T00:00:00Z');
 function build(opts: {
   premium: boolean;
   entries?: Array<{ content: string }>;
+  /** Mango care to use; by default this catalogue has none (season-pack behaviour). */
+  mangoCare?: TreeCareSeed;
+  plant?: object;
+  now?: Date;
 }) {
+  const now = opts.now ?? NOW;
   const pending = new Set<string>();
   const drafts: TaskDraft[] = [];
   const plant = {
@@ -28,6 +33,9 @@ function build(opts: {
     name: 'Aam',
     lifecycle_stage: 'MATURE_BEARING',
     species: 'Mango',
+    planting_date: null,
+    planting_date_precision: 'UNKNOWN',
+    ...opts.plant,
   };
   const user = {
     id: 'u1',
@@ -79,6 +87,7 @@ function build(opts: {
     {
       retireSeasonTasksExcept: jest.fn(() => Promise.resolve(0)),
       retireCareTasksExcept: retireCare,
+      pendingCareKeys: jest.fn(() => Promise.resolve([])),
       createTasks: jest.fn((_u: string, _p: string, d: TaskDraft[]) => {
         drafts.push(...d);
         return Promise.resolve(
@@ -106,13 +115,16 @@ function build(opts: {
     } as unknown as OverlayRepository,
     {} as unknown as SeasonalIntelligenceService,
     new SpeciesNormalizationService(seededCatalogueStore()),
-    new FixedClock(NOW),
+    new FixedClock(now),
     { registerQueueDepth: jest.fn() } as any,
     { warn: jest.fn() } as any,
     // Season-pack behaviour: this catalogue has no mango care.
     seededCatalogueStore({
       ...CATALOGUE_SEED,
-      treeCare: CATALOGUE_SEED.treeCare.filter((c) => c.family !== 'mango'),
+      treeCare: [
+        ...CATALOGUE_SEED.treeCare.filter((c) => c.family !== 'mango'),
+        ...(opts.mangoCare ? [opts.mangoCare] : []),
+      ],
     }),
   );
   return { service, drafts, packs, pack, weatherQueue, retireCare };
@@ -166,6 +178,59 @@ describe('SeasonalService.materializeTasksForTree', () => {
     expect(
       drafts.filter((d) => d.source === TaskSource.PERSONALIZED_OVERLAY),
     ).toHaveLength(2);
+  });
+});
+
+describe('SeasonalService planting-timed care', () => {
+  // Patna is in EAST_INDIA; one feed 90–120 days after planting.
+  const mangoCare: TreeCareSeed = {
+    family: 'mango',
+    sources: ['test'],
+    grownIn: ['EAST_INDIA'],
+    regions: {
+      EAST_INDIA: {
+        items: [
+          {
+            key: 'feed',
+            title: 'First feed',
+            category: 'FEEDING',
+            stages: ['YOUNG', 'BEARING'],
+            when: { kind: 'FROM_PLANTING', fromDays: 90, toDays: 120 },
+            organic: '2 kg compost',
+            why: 'Young plants need food',
+          },
+        ],
+        phases: [],
+      },
+    },
+    status: 'APPROVED',
+    notes: null,
+  };
+
+  it('reports that a planting month is needed', async () => {
+    const { service } = build({ premium: false, mangoCare });
+    const intel = await service.getTreeIntelligence('u1', 'p1');
+    expect(intel.care_needs_planting_month).toBe(true);
+  });
+
+  it('passes the planting precision to the engine', async () => {
+    const { service, drafts } = build({
+      premium: false,
+      mangoCare,
+      plant: {
+        planting_date: new Date('2026-06-01T00:00:00Z'),
+        planting_date_precision: 'MONTH_YEAR',
+      },
+      now: new Date('2026-09-14T06:00:00+05:30'),
+    });
+    await service.materializeTasksForTree('u1', 'p1');
+    expect(drafts.map((d) => d.sourceKey)).toEqual(['mango:feed:2026-09-13']);
+  });
+
+  it('no reviewed care: flag false', async () => {
+    const { service } = build({ premium: false });
+    const intel = await service.getTreeIntelligence('u1', 'p1');
+    expect(intel.care_needs_planting_month).toBe(false);
   });
 });
 

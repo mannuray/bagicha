@@ -25,7 +25,11 @@ export type Anchor =
   | { kind: 'FROM_CHOICE'; choice: string; fromDays: number; toDays: number };
 
 export type TreeCareCategory =
-  'FEEDING' | 'PRUNING' | 'PROTECTION' | 'WATERING' | 'GENERAL';
+  | 'FEEDING'
+  | 'PRUNING'
+  | 'PROTECTION'
+  | 'WATERING'
+  | 'GENERAL';
 
 export interface TreeCareItem {
   /** Stable within the family: part of the task key. */
