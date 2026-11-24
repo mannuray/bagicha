@@ -66,6 +66,21 @@ describe('when a tree ends', () => {
     };
   }
 
+  /**
+   * Makes the owner premium and logs dryness, so materialize creates the two
+   * personal watering reminders (stage 4: no season-pack tasks any more).
+   */
+  async function withDryness(id: string, user = alice) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { subscription_tier: 'PREMIUM', premium_expires_at: null },
+    });
+    await as(user).post(`/api/v1/ledger/plants/${id}/journal`, {
+      type: 'NOTE',
+      content: 'Soil dry, leaves wilting',
+    });
+  }
+
   it('ends a plant: fields set, a PLANT_ENDED entry, pending tasks cancelled', async () => {
     const { a, id, entryId, base } = await plantWithTask();
     const res = await a.post(`${base}/end`, {
@@ -179,13 +194,15 @@ describe('when a tree ends', () => {
       (await a.get(`${base}/tasks`)).body.data as Array<{ status: string }>
     ).map((t) => t.status);
     expect(statuses).not.toContain('PENDING');
+    await withDryness(id);
     const made = await a.post(`/api/v1/seasonal/plant/${id}/materialize-tasks`);
     expect(made.status).toBe(201);
     expect(made.body.data.created_count).toBeGreaterThan(0);
   });
 
-  it('a seasonal task the gardener finished or skipped does not come back', async () => {
+  it('a personal task the gardener finished or skipped does not come back', async () => {
     const { a, id, base } = await plantWithTask();
+    await withDryness(id);
     const materialize = () =>
       a.post(`/api/v1/seasonal/plant/${id}/materialize-tasks`);
     await materialize();
@@ -195,7 +212,9 @@ describe('when a tree ends', () => {
         source: string;
         status: string;
       }>
-    ).filter((t) => t.source === 'SEASONAL_PACK' && t.status === 'PENDING');
+    ).filter(
+      (t) => t.source === 'PERSONALIZED_OVERLAY' && t.status === 'PENDING',
+    );
     expect(seasonal.length).toBeGreaterThanOrEqual(2);
     const [done, skipped] = seasonal;
     await a.put(`${base}/tasks/${done.id}`, { status: 'COMPLETED' });
@@ -208,33 +227,33 @@ describe('when a tree ends', () => {
         source: string;
         status: string;
       }>
-    ).filter((t) => t.source === 'SEASONAL_PACK' && t.status === 'PENDING');
+    ).filter(
+      (t) => t.source === 'PERSONALIZED_OVERLAY' && t.status === 'PENDING',
+    );
     expect(pending.length).toBe(seasonal.length - 2);
   });
 
-  it('a new season pack replaces the old pending set instead of adding a second one', async () => {
+  it('pending season-pack tasks from before stage 4 are cancelled on the next refresh', async () => {
     const { a, id, base } = await plantWithTask();
-    const materialize = () =>
-      a.post(`/api/v1/seasonal/plant/${id}/materialize-tasks`);
-    const seasonal = async (status: string) =>
-      (
-        (await a.get(`${base}/tasks`)).body.data as Array<{
-          source: string;
-          status: string;
-        }>
-      ).filter((t) => t.source === 'SEASONAL_PACK' && t.status === status)
-        .length;
-    await materialize();
-    const before = await seasonal('PENDING');
-    expect(before).toBeGreaterThan(0);
-    // Moving to another region means another cohort, so another pack.
-    await a.put('/api/v1/user/profile/update', {
-      region_cluster: 'SOUTH_DECCAN',
-      district: 'Mysuru',
+    await prisma.task.create({
+      data: {
+        plant_id: id,
+        type: 'INSPECT',
+        priority: 'HIGH',
+        source: 'SEASONAL_PACK',
+        source_key: 'old-pack:seasonal_primary_action',
+        title: 'Inspect new growth and branch health',
+        due_date: new Date(),
+      },
     });
-    await materialize();
-    expect(await seasonal('PENDING')).toBe(before);
-    expect(await seasonal('CANCELLED')).toBe(before);
+    await a.post(`/api/v1/seasonal/plant/${id}/materialize-tasks`);
+    const pack = (
+      (await a.get(`${base}/tasks`)).body.data as Array<{
+        source: string;
+        status: string;
+      }>
+    ).filter((t) => t.source === 'SEASONAL_PACK');
+    expect(pack.map((t) => t.status)).toEqual(['CANCELLED']);
   });
 
   it('restoring an active plant is 409 PLANT_NOT_ENDED', async () => {

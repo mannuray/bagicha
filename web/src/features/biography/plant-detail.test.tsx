@@ -126,6 +126,61 @@ describe('tree biography', () => {
     expect(screen.queryByText(/when did you plant it\?/i)).toBeNull();
   });
 
+  const coming = (over: object = {}) =>
+    http.get(`${API}/seasonal/plant/p1/intelligence`, () =>
+      HttpResponse.json(
+        ok({
+          ...intelligence,
+          seasonal_pack: {
+            ...intelligence.seasonal_pack,
+            current_phase: 'care_coming',
+            upcoming_phase: 'care_coming',
+            do_now: [],
+            avoid_now: [],
+            watch_for: [],
+          },
+          care_note: null,
+          care_this_month: [],
+          care_status: 'coming',
+          ...over,
+        }),
+      ),
+    );
+
+  it('shows care coming for a tree without reviewed care', async () => {
+    handlers();
+    server.use(coming());
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByText(/care for aam is coming/i)).toBeInTheDocument();
+    expect(screen.queryByText(/hoppers on panicles/i)).toBeNull();
+  });
+
+  it('hides the season line in At a glance for care coming', async () => {
+    handlers();
+    server.use(coming());
+    renderWithApp(routes, { route: '/plants/p1' });
+    await screen.findByText(/care for aam is coming/i);
+    expect(screen.queryByText(/^Now:/)).toBeNull();
+    expect(screen.queryByText(/Next:/)).toBeNull();
+  });
+
+  it('with a personal adjustment it shows only Now', async () => {
+    handlers();
+    server.use(
+      coming({
+        personalized_overlay: {
+          adjusted_phase: 'dryness_attention',
+          priority_actions: ['Water the plant today'],
+          reasoning_summary: 'Dry',
+        },
+        is_paid_user: true,
+      }),
+    );
+    renderWithApp(routes, { route: '/plants/p1' });
+    expect(await screen.findByText(/Now: Dryness attention/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Next:/)).toBeNull();
+  });
+
   it('shows only the collapsed signs when nothing is due this month', async () => {
     handlers();
     server.use(

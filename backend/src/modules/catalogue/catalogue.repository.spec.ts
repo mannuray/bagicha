@@ -22,6 +22,7 @@ describe('CatalogueRepository.applyPush', () => {
       fruitPlants: [],
       perennialFlowers: [],
       treeCare: [],
+      seasonGuide: [],
     });
     // Prisma's default is 5 s: ~65 upserts from a laptop to Neon can take longer.
     expect(options[0]).toEqual({ timeout: 60_000, maxWait: 10_000 });
@@ -44,6 +45,7 @@ describe('CatalogueRepository.applyPush', () => {
       catalogueFruitPlant: table(['mango'], 'key'),
       cataloguePerennialFlower: table([], 'family'),
       catalogueTreeCare: table([], 'family'),
+      catalogueSeasonGuide: table([], 'region'),
       catalogueMeta: { upsert: jest.fn(() => Promise.resolve({ version: 2 })) },
     };
     const prisma = {
@@ -81,6 +83,7 @@ describe('CatalogueRepository.applyPush', () => {
       ],
       perennialFlowers: [],
       treeCare: [],
+      seasonGuide: [],
     });
     const plants = tx.catalogueFruitPlant;
     expect(plants.createMany).toHaveBeenCalledTimes(1);

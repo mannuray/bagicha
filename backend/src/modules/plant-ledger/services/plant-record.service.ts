@@ -32,10 +32,12 @@ import {
 } from '../processors/task.processor';
 import { PlantDetail, PlantRepository } from '../repositories/plant.repository';
 import { laterStage, LifecycleService } from './lifecycle.service';
+import { regionFor } from '../../regions';
+import { careFor } from '../domain/care/care-for';
 import {
-  SeasonalIntelligenceService,
-  TreeSeasonalState,
-} from './seasonal-intelligence.service';
+  treeSeasonView,
+  type TreeSeasonView,
+} from '../domain/care/season-view';
 import { SpeciesNormalizationService } from './species-normalization.service';
 import { firstsToClear, resolveBearing } from '../domain/bearing';
 
@@ -48,7 +50,6 @@ export class PlantRecordService implements OnModuleInit {
   constructor(
     private readonly plants: PlantRepository,
     private readonly lifecycle: LifecycleService,
-    private readonly seasonalIntelligence: SeasonalIntelligenceService,
     private readonly species: SpeciesNormalizationService,
     private readonly clock: Clock,
     @InjectQueue(TASK_GENERATION_QUEUE) private readonly taskQueue: Queue,
@@ -318,15 +319,29 @@ export class PlantRecordService implements OnModuleInit {
   async getSeasonalState(
     userId: string,
     plantId: string,
-  ): Promise<TreeSeasonalState> {
+  ): Promise<TreeSeasonView> {
     await this.getDetail(userId, plantId);
     const plant = await this.plants.findOwnedWithOwnerLocation(userId, plantId);
     if (!plant) throw plantNotFound();
-    const { user, ...fields } = plant;
-    return this.seasonalIntelligence.inferTreeSeasonalState(
-      fields,
-      user,
-      await this.species.resolver(),
+    return this.seasonViewOf(plant, plant.user, await this.species.resolver());
+  }
+
+  /** A tree's reviewed care for this season, or "care coming" (never generic advice). */
+  private seasonViewOf(
+    plant: Plant,
+    user: Pick<User, 'district' | 'region_cluster'>,
+    species: SpeciesResolver,
+  ): TreeSeasonView {
+    const region = regionFor(user);
+    return treeSeasonView(
+      careFor(species.catalogue, species.family(plant), plant, region),
+      {
+        region,
+        stage: plant.lifecycle_stage,
+        plantedAt: plant.planting_date,
+        plantingPrecision: plant.planting_date_precision,
+        now: this.clock.now(),
+      },
     );
   }
 
@@ -363,9 +378,11 @@ export class PlantRecordService implements OnModuleInit {
         latitude: plant.user.latitude,
         longitude: plant.user.longitude,
       },
-      // A perennial flower gets its bloom season, never the fruit-tree phases.
-      seasonal_state:
-        plant.record_kind === RecordKind.FLOWER && !plant.crop_id
+      // A perennial flower gets its bloom season, a tree its reviewed care (or
+      // "coming"); a crop or seasonal flower gets none: "care coming" would mislead.
+      seasonal_state: plant.crop_id
+        ? undefined
+        : plant.record_kind === RecordKind.FLOWER
           ? {
               kind: 'perennial_flower' as const,
               bloom: this.bloomFor(
@@ -375,11 +392,9 @@ export class PlantRecordService implements OnModuleInit {
                 'en',
               ),
             }
-          : this.seasonalIntelligence.inferTreeSeasonalState(
-              plant,
-              plant.user,
-              species,
-            ),
+          : plant.record_kind === RecordKind.TREE
+            ? this.seasonViewOf(plant, plant.user, species)
+            : undefined,
       recent_cycles: plant.cycles.map((cycle) => ({
         cycle_year: cycle.cycle_year,
         yield_quantity: cycle.yield_quantity,

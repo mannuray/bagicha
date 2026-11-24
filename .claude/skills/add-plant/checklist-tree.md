@@ -25,9 +25,9 @@ New family or improving an existing one — do each that applies, in order.
      watch) for YOUNG and BEARING. A family split by kind (citrus) uses `kinds`.
    - Add it to `TREE_CARE_SEED` and remove it from `CARE_PENDING`
      (`seed/tree-care/index.ts`), then push the catalogue (docs/deploy.md).
-   - If the family still has a hand-written case in
-     `backend/src/modules/plant-ledger/services/seasonal-intelligence.service.ts`,
-     delete it.
+   - Until its care ships (and in any region still pending) a tree shows
+     "care is coming" on its page and gets no season reminders; there is no
+     generic fallback to delete.
    - Timing: `CALENDAR` for dated steps; `FROM_PLANTING` (days after planting,
      e.g. papaya, banana) becomes reminders for trees with a known planting
      month: write the amount per plant in the text, never a `dose` (it scales

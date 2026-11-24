@@ -20,6 +20,7 @@ const small: CatalogueSeed = {
   fruitPlants: [],
   perennialFlowers: [],
   treeCare: [],
+  seasonGuide: [],
 };
 const inOrder = <T>(items: T[]) =>
   items.map((item, sort_order) => ({ ...item, sort_order }));
@@ -33,12 +34,14 @@ const writeOf = (seed: CatalogueSeed) => ({
   fruitPlants: inOrder(seed.fruitPlants),
   perennialFlowers: inOrder(seed.perennialFlowers),
   treeCare: seed.treeCare,
+  seasonGuide: seed.seasonGuide,
 });
 const none = {
   fruitTypes: [],
   fruitPlants: [],
   perennialFlowers: [],
   treeCare: [],
+  seasonGuide: [],
 };
 
 describe('catalogue repository', () => {
@@ -54,7 +57,7 @@ describe('catalogue repository', () => {
 
   beforeEach(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care, catalogue_season_guide',
     );
     await prisma.catalogueMeta.update({
       where: { id: 1 },
@@ -64,7 +67,7 @@ describe('catalogue repository', () => {
 
   afterAll(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care, catalogue_season_guide',
     );
     await repo.applyPush(writeOf(CATALOGUE_SEED));
     await app.close();
@@ -81,6 +84,12 @@ describe('catalogue repository', () => {
     const care = treeCareFixture();
     await repo.applyPush({ ...writeOf(small), treeCare: [care] });
     expect((await repo.loadSeed(['APPROVED'])).treeCare).toEqual([care]);
+  });
+
+  it('round-trips a season guide record', async () => {
+    const [guide] = CATALOGUE_SEED.seasonGuide;
+    await repo.applyPush({ ...writeOf(small), seasonGuide: [guide] });
+    expect((await repo.loadSeed(['APPROVED'])).seasonGuide).toEqual([guide]);
   });
 
   it('round-trips Hindi texts', async () => {

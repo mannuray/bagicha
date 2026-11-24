@@ -4,7 +4,7 @@ import { ErrorState, Icon, LoadingState, Surface } from '../../../ui';
 import { usePlantIntelligence, type PlantIntelligence } from '../../seasonal';
 
 /** What to avoid and watch for. "Do now" is gone: those same templates become the tasks below. */
-export function ThisSeason({ plantId }: { plantId: string }) {
+export function ThisSeason({ plantId, name }: { plantId: string; name: string }) {
   const { t } = useTranslation();
   const intel = usePlantIntelligence(plantId);
   const pack = intel.data?.seasonal_pack;
@@ -13,6 +13,7 @@ export function ThisSeason({ plantId }: { plantId: string }) {
   const note = intel.data?.care_note ?? null;
   const month = intel.data?.care_this_month ?? [];
   const askMonth = intel.data?.care_needs_planting_month ?? false;
+  if (intel.data?.care_status === 'coming') return <CareComing plantId={plantId} name={name} />;
   if (pack.avoid_now.length === 0 && pack.watch_for.length === 0 && !note && month.length === 0 && !askMonth) return null;
   return (
     <section className="space-y-3">
@@ -23,6 +24,20 @@ export function ThisSeason({ plantId }: { plantId: string }) {
       {note && <p className="font-body text-sm text-on-surface-variant">{note}</p>}
       <AdviceList title={t('biography.avoid')} icon="block" items={pack.avoid_now} />
       <AdviceList title={t('biography.watchFor')} icon="visibility" items={pack.watch_for} />
+    </section>
+  );
+}
+
+/** No reviewed care yet: say so honestly instead of generic advice, and invite a log. */
+function CareComing({ plantId, name }: { plantId: string; name: string }) {
+  const { t } = useTranslation();
+  return (
+    <section className="space-y-2 rounded-xl bg-surface-container-low p-4">
+      <h2 className="font-headline text-xl text-primary">{t('biography.thisSeason')}</h2>
+      <p className="font-body text-sm text-on-surface-variant">{t('biography.careComing', { name })}</p>
+      <Link to={`/plants/${plantId}/log`} className="inline-flex min-h-11 items-center font-label text-sm font-bold text-secondary">
+        {t('biography.logMoment')}
+      </Link>
     </section>
   );
 }

@@ -9,7 +9,13 @@ import { SpeciesNormalizationService } from '../services/species-normalization.s
 import { TaskProcessor } from './task.processor';
 
 /** A processor over a catalogue whose tree care is exactly `treeCare`. */
-function build(treeCare: TreeCareSeed[] = []) {
+function build(
+  treeCare: TreeCareSeed[] = [],
+  owner: { region_cluster: string | null; district: string | null } = {
+    region_cluster: 'EAST_INDIA',
+    district: null,
+  },
+) {
   const pending = new Set<string>();
   const calls: TaskDraft[][] = [];
   const tasks = {
@@ -28,12 +34,18 @@ function build(treeCare: TreeCareSeed[] = []) {
     }),
   };
   const logger = { info: jest.fn(), warn: jest.fn() };
+  const plants = {
+    findOwnedWithOwnerLocation: jest.fn((_u: string, _p: string) =>
+      Promise.resolve({ variety: null, name: 'Tree', user: owner }),
+    ),
+  };
   const processor = new TaskProcessor(
     tasks as unknown as TaskService,
     new FixedClock(new Date('2026-01-15T00:00:00Z')),
     logger as unknown as PinoLogger,
     new SpeciesNormalizationService(seededCatalogueStore()),
     seededCatalogueStore({ ...CATALOGUE_SEED, treeCare }),
+    plants as never,
   );
   return { processor, calls, logger, tasks };
 }
@@ -41,6 +53,44 @@ function build(treeCare: TreeCareSeed[] = []) {
 const job = (data: Record<string, unknown>) => ({ data }) as Job;
 
 describe('TaskProcessor', () => {
+  it('waters a new pomegranate in West India, where its care is still pending', async () => {
+    const pomegranate = CATALOGUE_SEED.treeCare.filter(
+      (c) => c.family === 'pomegranate',
+    );
+    const { processor, calls } = build(pomegranate, {
+      region_cluster: 'WEST_INDIA',
+      district: null,
+    });
+    await processor.process(
+      job({
+        user_id: 'u1',
+        plant_id: 'p1',
+        lifecycle_stage: 'SAPLING',
+        species: 'Pomegranate',
+      }),
+    );
+    expect(calls.flat().map((d) => d.type)).toEqual([TaskType.WATER]);
+  });
+
+  it('gives a new pomegranate in North India no watering check (its care gives the first tasks)', async () => {
+    const pomegranate = CATALOGUE_SEED.treeCare.filter(
+      (c) => c.family === 'pomegranate',
+    );
+    const { processor, tasks } = build(pomegranate, {
+      region_cluster: 'NORTH_INDIA',
+      district: null,
+    });
+    await processor.process(
+      job({
+        user_id: 'u1',
+        plant_id: 'p1',
+        lifecycle_stage: 'SAPLING',
+        species: 'Pomegranate',
+      }),
+    );
+    expect(tasks.createTasks).not.toHaveBeenCalled();
+  });
+
   it('creates nothing for a family with care data (its care calendar gives the first tasks)', async () => {
     const { processor, tasks } = build([treeCareFixture()]);
     const result = await processor.process(
@@ -98,7 +148,11 @@ describe('TaskProcessor', () => {
       }),
     );
     expect(nimbu.calls[0].map((d) => d.type)).toEqual([TaskType.WATER]);
-    const kinnow = build(citrus);
+    // Kinnow (mandarin) care is checked for North India.
+    const kinnow = build(citrus, {
+      region_cluster: 'NORTH_INDIA',
+      district: null,
+    });
     await kinnow.processor.process(
       job({
         user_id: 'u1',

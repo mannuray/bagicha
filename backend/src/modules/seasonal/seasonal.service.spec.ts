@@ -5,7 +5,6 @@ import { FixedClock } from '../../common/time';
 import {
   JournalService,
   PlantRecordService,
-  SeasonalIntelligenceService,
   SpeciesNormalizationService,
   TaskDraft,
   TaskService,
@@ -24,6 +23,7 @@ function build(opts: {
   mangoCare?: TreeCareSeed;
   plant?: object;
   now?: Date;
+  seasonGuide?: typeof CATALOGUE_SEED.seasonGuide;
 }) {
   const now = opts.now ?? NOW;
   const pending = new Set<string>();
@@ -65,6 +65,9 @@ function build(opts: {
   };
   const weatherQueue = { add: jest.fn(() => Promise.resolve()) };
   const retireCare = jest.fn(() => Promise.resolve(0));
+  const retireSeason = jest.fn((_u: string, _p: string, _keys: string[]) =>
+    Promise.resolve(0),
+  );
   const service = new SeasonalService(
     weatherQueue as any,
     { getWeather: jest.fn(() => Promise.resolve({ temp: 30 })) } as any,
@@ -85,7 +88,7 @@ function build(opts: {
       ),
     } as unknown as JournalService,
     {
-      retireSeasonTasksExcept: jest.fn(() => Promise.resolve(0)),
+      retireSeasonTasksExcept: retireSeason,
       retireCareTasksExcept: retireCare,
       pendingCareKeys: jest.fn(() => Promise.resolve([])),
       createTasks: jest.fn((_u: string, _p: string, d: TaskDraft[]) => {
@@ -113,7 +116,6 @@ function build(opts: {
       ),
       update: jest.fn(),
     } as unknown as OverlayRepository,
-    {} as unknown as SeasonalIntelligenceService,
     new SpeciesNormalizationService(seededCatalogueStore()),
     new FixedClock(now),
     { registerQueueDepth: jest.fn() } as any,
@@ -125,20 +127,52 @@ function build(opts: {
         ...CATALOGUE_SEED.treeCare.filter((c) => c.family !== 'mango'),
         ...(opts.mangoCare ? [opts.mangoCare] : []),
       ],
+      seasonGuide: opts.seasonGuide ?? CATALOGUE_SEED.seasonGuide,
     }),
   );
-  return { service, drafts, packs, pack, weatherQueue, retireCare };
+  return {
+    service,
+    drafts,
+    packs,
+    pack,
+    weatherQueue,
+    retireCare,
+    retireSeason,
+  };
 }
 
 describe('SeasonalService.materializeTasksForTree', () => {
   it('creates on the first run and skips everything on the second', async () => {
-    const { service } = build({ premium: false });
+    const { service } = build({
+      premium: true,
+      entries: [{ content: 'soil dry' }],
+    });
     const first = await service.materializeTasksForTree('u1', 'p1');
     const second = await service.materializeTasksForTree('u1', 'p1');
-    expect(first.results.map((r) => r.status)).toEqual(['created']);
-    expect(first.created_count).toBe(1);
-    expect(second.results.map((r) => r.status)).toEqual(['skipped']);
+    expect(first.results.map((r) => r.status)).toEqual(['created', 'created']);
     expect(second.created_count).toBe(0);
+  });
+
+  it('a tree without reviewed care gets no season-pack task, even from an old filler row', async () => {
+    // The fixture row is a version-1 pack with filler lists and a task template.
+    const { service, drafts, retireSeason } = build({ premium: false });
+    await service.materializeTasksForTree('u1', 'p1');
+    expect(drafts).toEqual([]);
+    expect(retireSeason).toHaveBeenCalledWith('u1', 'p1', []);
+  });
+
+  it('a premium tree without care keeps its dryness tasks through the retire step', async () => {
+    const { service, drafts, retireSeason } = build({
+      premium: true,
+      entries: [{ content: 'soil dry' }],
+    });
+    await service.materializeTasksForTree('u1', 'p1');
+    const keys = drafts.map((d) => d.sourceKey);
+    expect(drafts.map((d) => d.source)).toEqual([
+      TaskSource.PERSONALIZED_OVERLAY,
+      TaskSource.PERSONALIZED_OVERLAY,
+    ]);
+    expect(retireSeason).toHaveBeenCalledWith('u1', 'p1', keys);
   });
 
   it('cancels any care reminders left on a tree whose care went away', async () => {
@@ -148,14 +182,15 @@ describe('SeasonalService.materializeTasksForTree', () => {
   });
 
   it('due dates come from the injected clock', async () => {
-    const { service, drafts } = build({ premium: false });
-    await service.materializeTasksForTree('u1', 'p1');
-    expect(drafts[0]).toMatchObject({
-      source: TaskSource.SEASONAL_PACK,
-      sourceKey: 'pack1:seasonal_primary_action',
-      seasonalPackId: 'pack1',
+    const { service, drafts } = build({
+      premium: true,
+      entries: [{ content: 'soil dry' }],
     });
-    expect(drafts[0].dueDate.toISOString()).toBe('2026-05-04T00:00:00.000Z');
+    await service.materializeTasksForTree('u1', 'p1');
+    expect(drafts.map((d) => d.dueDate.toISOString())).toEqual([
+      '2026-05-01T00:00:00.000Z',
+      '2026-05-03T00:00:00.000Z',
+    ]);
   });
 
   it('gives free users no personalized overlay tasks', async () => {
@@ -178,6 +213,31 @@ describe('SeasonalService.materializeTasksForTree', () => {
     expect(
       drafts.filter((d) => d.source === TaskSource.PERSONALIZED_OVERLAY),
     ).toHaveLength(2);
+  });
+});
+
+describe('SeasonalService.getSeasonalGuide', () => {
+  it("reads the region's month from the catalogue", async () => {
+    const seasonGuide = CATALOGUE_SEED.seasonGuide.map((g) =>
+      g.region === 'NORTH_INDIA'
+        ? {
+            ...g,
+            months: g.months.map((m, i) =>
+              i === 0 ? { ...m, headline: 'Test headline' } : m,
+            ),
+          }
+        : g,
+    );
+    const { service } = build({
+      premium: false,
+      seasonGuide,
+      now: new Date('2026-01-15T06:00:00+05:30'),
+    });
+    const guide = await service.getSeasonalGuide({
+      district: null,
+      region_cluster: 'NORTH_INDIA',
+    });
+    expect(guide.advice).toBe('Test headline');
   });
 });
 
@@ -235,24 +295,66 @@ describe('SeasonalService planting-timed care', () => {
   });
 });
 
-describe('SeasonalService season pack', () => {
-  it("two first visits at once: the loser of the create race uses the winner's pack", async () => {
+describe('SeasonalService care status', () => {
+  it("a tree without reviewed care is 'coming' with an empty pack", async () => {
+    const { service } = build({ premium: false });
+    const intel = await service.getTreeIntelligence('u1', 'p1');
+    expect(intel.care_status).toBe('coming');
+    expect(intel.seasonal_pack).toMatchObject({
+      current_phase: 'care_coming',
+      upcoming_phase: 'care_coming',
+      do_now: [],
+      avoid_now: [],
+      watch_for: [],
+    });
+  });
+
+  it("a reviewed tree is 'reviewed' with its care phase", async () => {
+    const { service } = build({
+      premium: false,
+      mangoCare: CATALOGUE_SEED.treeCare.find((c) => c.family === 'mango')!,
+    });
+    const intel = await service.getTreeIntelligence('u1', 'p1');
+    expect(intel.care_status).toBe('reviewed');
+  });
+
+  it('a premium tree without care shows the dryness adjustment with no season phase', async () => {
+    const { service } = build({
+      premium: true,
+      entries: [{ content: 'soil dry' }],
+    });
+    const intel = await service.getTreeIntelligence('u1', 'p1');
+    expect(intel.personalized_overlay?.adjusted_phase).toBe(
+      'dryness_attention',
+    );
+  });
+
+  it('new anchor rows are version 2 with no content', async () => {
+    const { service, packs } = build({ premium: false });
+    packs.findCohort.mockResolvedValueOnce(null);
+    packs.create.mockImplementationOnce((data: object) =>
+      Promise.resolve({ id: 'pack2', ...data }),
+    );
+    await service.getTreeIntelligence('u1', 'p1');
+    expect(packs.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pack_version: 2,
+        basis: 'anchor_only',
+        current_phase: 'care_coming',
+        do_now: [],
+        avoid_now: [],
+        watch_for: [],
+        task_templates: [],
+      }),
+    );
+  });
+
+  it("two first visits at once: the loser of the create race uses the winner's anchor", async () => {
     const { service, packs, pack } = build({ premium: false });
     packs.findCohort.mockResolvedValueOnce(null).mockResolvedValueOnce(pack);
     packs.create.mockRejectedValueOnce(
       Object.assign(new Error('unique'), { code: 'P2002' }),
     );
-    (service as any).seasonalIntelligence = {
-      inferTreeSeasonalState: () => ({
-        current_phase: 'x',
-        upcoming_phase: 'y',
-        confidence: 0.5,
-        do_now: [],
-        avoid_now: [],
-        watch_for: [],
-        basis: [],
-      }),
-    };
     const res = await service.getTreeIntelligence('u1', 'p1');
     expect(res.seasonal_pack).toMatchObject({ id: 'pack1' });
   });

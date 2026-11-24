@@ -12,6 +12,7 @@ function build(plant: Record<string, unknown>) {
   const repo = {
     findOwnedDetail: jest.fn(() => Promise.resolve({ ...plant })),
     findOwnedWithContext: jest.fn(() => Promise.resolve({ ...plant })),
+    findOwnedWithOwnerLocation: jest.fn(() => Promise.resolve({ ...plant })),
     updateOwned: jest.fn(() => Promise.resolve(plant)),
   };
   const queue = {
@@ -23,7 +24,6 @@ function build(plant: Record<string, unknown>) {
   const service = new PlantRecordService(
     repo as unknown as PlantRepository,
     new LifecycleService(clock),
-    {} as never,
     species,
     clock,
     queue as never,
@@ -123,5 +123,60 @@ describe('PlantRecordService.getContextForAi for a flower', () => {
       kind: 'perennial_flower',
       bloom: { status: 'in_season', window_label: 'Nov–Mar' },
     });
+  });
+});
+
+describe('PlantRecordService.getContextForAi for trees and crops', () => {
+  const plant = (over: Record<string, unknown>) => ({
+    id: 'p1',
+    name: 'Tree',
+    variety: null,
+    record_kind: 'TREE',
+    crop_id: null,
+    lifecycle_stage: LifecycleStage.MATURE_BEARING,
+    health_status: 'HEALTHY',
+    planting_date: null,
+    planting_date_precision: 'UNKNOWN',
+    user: {
+      district: null,
+      latitude: null,
+      longitude: null,
+      region_cluster: 'NORTH_INDIA',
+    },
+    cycles: [],
+    journal_entries: [],
+    diagnosis_outcomes: [],
+    tasks: [],
+    ...over,
+  });
+
+  it('a North India mango gets its reviewed care phase', async () => {
+    const { service } = build(plant({ species: 'Mango' }));
+    const context = await service.getContextForAi('u1', 'p1');
+    expect(context.seasonal_state).toMatchObject({ care_status: 'reviewed' });
+    expect(
+      (context.seasonal_state as { current_phase: string }).current_phase,
+    ).toEqual(expect.any(String));
+  });
+
+  it("a jamun gets 'coming' with no seasonal advice", async () => {
+    const { service } = build(plant({ species: 'Jamun' }));
+    const context = await service.getContextForAi('u1', 'p1');
+    expect(context.seasonal_state).toEqual({ care_status: 'coming' });
+  });
+
+  it('the seasonal-state endpoint gives a tree the same view', async () => {
+    const { service } = build(plant({ species: 'Jamun' }));
+    expect(await service.getSeasonalState('u1', 'p1')).toEqual({
+      care_status: 'coming',
+    });
+  });
+
+  it('a crop gets no seasonal state', async () => {
+    const { service } = build(
+      plant({ species: 'Tomato', record_kind: 'CROP', crop_id: 'tomato' }),
+    );
+    const context = await service.getContextForAi('u1', 'p1');
+    expect(context.seasonal_state).toBeUndefined();
   });
 });

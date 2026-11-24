@@ -12,6 +12,7 @@ import type {
   PerennialFlowerSeed,
 } from './domain/types';
 import type { TreeCareSeed } from './domain/tree-care';
+import type { SeasonGuideSeed } from './domain/season-guide';
 
 /** A record as the push writes it: its seed record and its place in the catalogue. */
 export type Ordered<T> = T & { sort_order: number };
@@ -25,6 +26,7 @@ export interface CatalogueWrite {
   fruitPlants: Ordered<FruitPlantSeed>[];
   perennialFlowers: Ordered<PerennialFlowerSeed>[];
   treeCare: TreeCareSeed[];
+  seasonGuide: SeasonGuideSeed[];
 }
 
 /**
@@ -45,25 +47,37 @@ export class CatalogueRepository {
   async loadSeed(statuses: CatalogueStatus[]): Promise<CatalogueSeed> {
     const where = { status: { in: statuses } };
     const inOrder = { where, orderBy: { sort_order: 'asc' as const } };
-    const [crops, methods, careSteps, fruitTypes, fruitPlants, flowers, care] =
-      await Promise.all([
-        this.prisma.catalogueCrop.findMany(inOrder),
-        this.prisma.catalogueMethod.findMany({
-          where,
-          orderBy: { key: 'asc' },
-        }),
-        this.prisma.catalogueCareStep.findMany({
-          where,
-          orderBy: { key: 'asc' },
-        }),
-        this.prisma.catalogueFruitType.findMany(inOrder),
-        this.prisma.catalogueFruitPlant.findMany(inOrder),
-        this.prisma.cataloguePerennialFlower.findMany(inOrder),
-        this.prisma.catalogueTreeCare.findMany({
-          where,
-          orderBy: { family: 'asc' },
-        }),
-      ]);
+    const [
+      crops,
+      methods,
+      careSteps,
+      fruitTypes,
+      fruitPlants,
+      flowers,
+      care,
+      guides,
+    ] = await Promise.all([
+      this.prisma.catalogueCrop.findMany(inOrder),
+      this.prisma.catalogueMethod.findMany({
+        where,
+        orderBy: { key: 'asc' },
+      }),
+      this.prisma.catalogueCareStep.findMany({
+        where,
+        orderBy: { key: 'asc' },
+      }),
+      this.prisma.catalogueFruitType.findMany(inOrder),
+      this.prisma.catalogueFruitPlant.findMany(inOrder),
+      this.prisma.cataloguePerennialFlower.findMany(inOrder),
+      this.prisma.catalogueTreeCare.findMany({
+        where,
+        orderBy: { family: 'asc' },
+      }),
+      this.prisma.catalogueSeasonGuide.findMany({
+        where,
+        orderBy: { region: 'asc' },
+      }),
+    ]);
     return {
       crops: crops.map(
         (row) =>
@@ -131,6 +145,15 @@ export class CatalogueRepository {
             status: row.status,
             notes: row.notes,
           }) as TreeCareSeed,
+      ),
+      seasonGuide: guides.map(
+        (row) =>
+          ({
+            ...(row.data as object),
+            region: row.region,
+            status: row.status,
+            notes: row.notes,
+          }) as SeasonGuideSeed,
       ),
     };
   }
@@ -222,6 +245,16 @@ export class CatalogueRepository {
         'family',
         write.treeCare.map(({ family, status, notes, ...data }) => ({
           family,
+          status,
+          notes,
+          data: json(data),
+        })),
+      );
+      await writeRows(
+        tx.catalogueSeasonGuide as unknown as Table,
+        'region',
+        write.seasonGuide.map(({ region, status, notes, ...data }) => ({
+          region,
           status,
           notes,
           data: json(data),

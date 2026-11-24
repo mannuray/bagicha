@@ -92,7 +92,7 @@ function Biography({ plant }: { plant: PlantDetail }) {
           <>
             <MemoryCard plant={plant} now={now} />
             <AtAGlance plant={plant} now={now} />
-            <ThisSeason plantId={plant.id} />
+            <ThisSeason plantId={plant.id} name={plantName(plant)} />
             <UpcomingCare plantId={plant.id} now={now} />
           </>
         )}
