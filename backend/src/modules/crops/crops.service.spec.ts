@@ -44,3 +44,26 @@ describe('crops in the request language', () => {
     expect(plain.windows[0].label).toMatch(/^[A-Z][a-z]{2}–[A-Z][a-z]{2}$/);
   });
 });
+
+describe('crop rotation dates', () => {
+  it('dates an undated last season by the injected clock, never the machine clock', async () => {
+    const places = {
+      findOwned: () => Promise.resolve({ id: 'bed' }),
+      lastClosedSeason: () =>
+        Promise.resolve({
+          started_at: null,
+          closed_at: null,
+          plant: { crop_id: 'tomato' },
+        }),
+    } as unknown as GardenPlaceRepository;
+    const svc = new CropsService(
+      new FixedClock(new Date('2026-10-05T06:00:00Z')),
+      places,
+      {} as CropPlanService,
+      seededCatalogueStore(hindiSeed()),
+    );
+    const r = await svc.rotation('u', 'bed', 'brinjal');
+    // The machine clock says November 2026; the injected clock says October.
+    expect(r.last?.season_label).toMatch(/Oct/);
+  });
+});

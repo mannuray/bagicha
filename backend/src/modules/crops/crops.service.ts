@@ -71,7 +71,7 @@ export class CropsService {
     // Rotation is about vegetable family pests in the soil; a flower season doesn't count.
     if (!season || !previous || previous.kind === 'FLOWER')
       return { conflict: false, last: null };
-    const started = season.started_at ?? season.closed_at ?? new Date();
+    const started = season.started_at ?? season.closed_at ?? this.clock.now();
     return {
       conflict: previous.family === crop.family,
       last: {

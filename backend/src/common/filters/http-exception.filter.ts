@@ -1,3 +1,4 @@
+import { Clock, SystemClock } from '../time';
 import {
   ArgumentsHost,
   Catch,
@@ -73,7 +74,10 @@ function fromPrismaError(
   return null;
 }
 
-/** The shared error envelope, for handlers that run outside Nest's filters. */
+/**
+ * The shared error envelope, for handlers that run outside Nest's filters
+ * (raw Express middleware, before DI): the machine clock is the only one there.
+ */
 export function errorEnvelope(
   request: Request,
   code: string,
@@ -103,7 +107,10 @@ type NestErrorResponse = {
 /** Turns every thrown value into the shared error envelope. */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  constructor(private readonly logger: Logger) {}
+  constructor(
+    private readonly logger: Logger,
+    private readonly clock: Clock = new SystemClock(),
+  ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -112,7 +119,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const header = request.headers['x-request-id'];
     const base = {
       request_id: (Array.isArray(header) ? header[0] : header) ?? randomUUID(),
-      timestamp: new Date().toISOString(),
+      timestamp: this.clock.now().toISOString(),
       // The route pattern, never the real URL (ids, query strings).
       path: routePattern(request),
     };

@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Logger } from 'nestjs-pino';
 import { InvariantError, NotFoundError } from '../errors';
+import { FixedClock } from '../time';
 import { HttpExceptionFilter } from './http-exception.filter';
 
 function run(exception: unknown) {
@@ -81,5 +82,29 @@ describe('HttpExceptionFilter', () => {
     expect(body.error.validation_errors).toEqual([
       { field: 'name', message: 'name must be a string' },
     ]);
+  });
+});
+
+describe('HttpExceptionFilter time', () => {
+  it('stamps errors with the injected clock', () => {
+    const logger = { warn: jest.fn(), error: jest.fn() };
+    const at = new Date('2026-11-24T10:00:00Z');
+    let body: any;
+    const response = {
+      status: () => response,
+      json: (b: unknown) => {
+        body = b;
+      },
+    };
+    new HttpExceptionFilter(
+      logger as unknown as Logger,
+      new FixedClock(at),
+    ).catch(new NotFoundError('PLANT_NOT_FOUND', 'Plant not found'), {
+      switchToHttp: () => ({
+        getResponse: () => response,
+        getRequest: () => ({ headers: {}, url: '/api/v1/x' }),
+      }),
+    } as unknown as ArgumentsHost);
+    expect(body.error.timestamp).toBe(at.toISOString());
   });
 });

@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { Clock } from './common/time';
 import { MonitorService, MonitorValidationPipe } from './common/monitor';
 import { Logger } from 'nestjs-pino';
 import { applyBodyLimits } from './common/http/body-limits';
@@ -33,7 +34,7 @@ export function configureApp(app: INestApplication): INestApplication {
   const logger = app.get(Logger);
   app.useLogger(logger);
   app.useGlobalInterceptors(new TransformInterceptor());
-  app.useGlobalFilters(new HttpExceptionFilter(logger));
+  app.useGlobalFilters(new HttpExceptionFilter(logger, app.get(Clock)));
 
   app.useGlobalPipes(
     new MonitorValidationPipe(app.get(MonitorService), {
