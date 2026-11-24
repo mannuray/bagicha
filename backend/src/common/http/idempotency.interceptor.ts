@@ -9,7 +9,6 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { catchError, from, Observable, of, switchMap, tap } from 'rxjs';
 import { ConflictError, ValidationError } from '../errors';
 import { RedisService } from '../redis/redis.service';
-import { routePattern } from './route-pattern';
 
 const KEY_PATTERN = /^[A-Za-z0-9_-]{8,128}$/;
 /** Long enough for a phone to retry after a dropped connection, short enough to forget. */
@@ -17,6 +16,11 @@ const DONE_TTL_SECONDS = 24 * 60 * 60;
 /** A request still running after this is treated as lost; a retry may run again. */
 const PENDING_TTL_SECONDS = 60;
 const PENDING = 'pending';
+/**
+ * The shared Redis client queues commands while disconnected (BullMQ needs
+ * that), so a Redis outage would hang the request; give up quickly instead.
+ */
+const REDIS_WAIT_MS = 500;
 const DONE = 'done:';
 
 /**
@@ -45,7 +49,8 @@ export class IdempotencyInterceptor implements NestInterceptor {
         'IDEMPOTENCY_KEY_INVALID',
         'Idempotency-Key must be 8–128 letters, digits, - or _',
       );
-    const slot = `idem:${req.user?.id ?? 'anon'}:${routePattern(req)}:${key}`;
+    // The real path, not the route pattern: one key reused on another plant is a new request.
+    const slot = `idem:${req.user?.id ?? 'anon'}:${req.path}:${key}`;
     return from(this.claim(slot)).pipe(
       switchMap((claim) => {
         if (claim.kind === 'replay') return of(claim.body);
@@ -75,9 +80,13 @@ export class IdempotencyInterceptor implements NestInterceptor {
     | { kind: 'unavailable' }
   > {
     try {
-      if (await this.redis.setIfAbsent(slot, PENDING, PENDING_TTL_SECONDS))
+      if (
+        await withinWait(
+          this.redis.setIfAbsent(slot, PENDING, PENDING_TTL_SECONDS),
+        )
+      )
         return { kind: 'claimed' };
-      const stored = await this.redis.get(slot);
+      const stored = await withinWait(this.redis.get(slot));
       if (stored?.startsWith(DONE))
         return { kind: 'replay', body: JSON.parse(stored.slice(DONE.length)) };
       // Pending, or expired between the two calls: either way not ours to run now.
@@ -105,9 +114,21 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
   private async forget(slot: string): Promise<void> {
     try {
-      await this.redis.del(slot);
+      await withinWait(this.redis.del(slot));
     } catch (err: unknown) {
       this.logger.warn({ err }, 'Idempotency key not released');
     }
   }
+}
+
+/** The Redis call's result, or a rejection once REDIS_WAIT_MS has passed. */
+function withinWait<T>(call: Promise<T>): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error('Redis did not answer in time')),
+      REDIS_WAIT_MS,
+    );
+  });
+  return Promise.race([call, timeout]).finally(() => clearTimeout(timer));
 }

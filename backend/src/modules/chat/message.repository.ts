@@ -67,12 +67,12 @@ export class MessageRepository {
         last_message_id: message.id,
         last_at: message.created_at,
       };
-      await tx.conversation.upsert({
-        where: { user_a_user_b: { user_a, user_b } },
-        create: { user_a, user_b, ...latest },
-        // A message dated earlier (imports, tests) never replaces a newer one.
-        update: {},
+      // ON CONFLICT DO NOTHING: two first messages at once both get through.
+      await tx.conversation.createMany({
+        data: [{ user_a, user_b, ...latest }],
+        skipDuplicates: true,
       });
+      // A message dated earlier (imports, tests) never replaces a newer one.
       await tx.conversation.updateMany({
         where: { user_a, user_b, last_at: { lte: message.created_at } },
         data: latest,

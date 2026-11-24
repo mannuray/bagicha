@@ -105,6 +105,19 @@ curl -s -o /dev/null -D - -X OPTIONS https://bagicha-api.onrender.com/api/v1/aut
 
 Then sign in on the web app (the code is shown on screen), add a tree, and log a moment with a photo.
 
+- **Backend review release 2** (migration `20261125120000_chat_conversations`): migration → API deploy (no push, no web change). The migration fills the new `conversations` table from existing messages, but messages sent between the migration and the deploy go through the old API, which doesn't update it. Right after the API is live, run this catch-up once against Neon (safe to repeat; it only adds missing pairs and moves a pair's latest message forward):
+
+  ```sql
+  INSERT INTO "conversations" ("user_a", "user_b", "last_message_id", "last_at")
+  SELECT DISTINCT ON (LEAST("sender_id", "receiver_id"), GREATEST("sender_id", "receiver_id"))
+      LEAST("sender_id", "receiver_id"), GREATEST("sender_id", "receiver_id"), "id", "created_at"
+  FROM "messages"
+  ORDER BY LEAST("sender_id", "receiver_id"), GREATEST("sender_id", "receiver_id"), "created_at" DESC, "id" DESC
+  ON CONFLICT ("user_a", "user_b") DO UPDATE
+  SET "last_message_id" = EXCLUDED."last_message_id", "last_at" = EXCLUDED."last_at"
+  WHERE "conversations"."last_at" <= EXCLUDED."last_at";
+  ```
+
 ## When something goes wrong
 
 | What you see | Why | What to do |

@@ -91,6 +91,25 @@ describe('chat pagination', () => {
     ]);
   });
 
+  it('two people writing to each other for the first time at once both get through', async () => {
+    const [x, y] = [await seedUser(prisma), await seedUser(prisma)];
+    const send = (from: User, to: User) =>
+      request(app.getHttpServer())
+        .post('/api/v1/chat/messages')
+        .set('Authorization', `Bearer ${tokenFor(app, from)}`)
+        .send({ receiver_id: to.id, content: 'hello' });
+    for (let i = 0; i < 5; i++) {
+      await prisma.conversation.deleteMany({});
+      const [a, b] = await Promise.all([send(x, y), send(y, x)]);
+      expect([a.status, b.status]).toEqual([201, 201]);
+    }
+    expect(
+      await prisma.conversation.count({
+        where: { OR: [{ user_a: x.id }, { user_b: x.id }] },
+      }),
+    ).toBe(1);
+  });
+
   it('rejects an oversized page', async () => {
     expect((await get('/api/v1/chat/inbox?page_size=10000')).status).toBe(422);
   });
