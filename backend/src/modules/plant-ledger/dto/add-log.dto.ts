@@ -24,6 +24,6 @@ export class AddLogDto {
   metadata?: any;
 
   @IsOptional()
-  @IsISO8601()
+  @IsISO8601({ strict: true })
   event_at?: string;
 }

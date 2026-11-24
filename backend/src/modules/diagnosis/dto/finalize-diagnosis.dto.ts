@@ -33,7 +33,7 @@ export class FinalizeDiagnosisDto implements FinalizeDiagnosisInput {
   session_id?: string;
 
   @IsOptional()
-  @IsISO8601()
+  @IsISO8601({ strict: true })
   event_at?: string;
 
   @IsEnum(DiagnosisIssueType)

@@ -6,7 +6,9 @@ import {
   IsOptional,
   IsString,
   IsEnum,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
 
 export class UpdateProfileDto {
@@ -17,10 +19,14 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsNumber()
+  @Min(-90)
+  @Max(90)
   latitude?: number | null;
 
   @IsOptional()
   @IsNumber()
+  @Min(-180)
+  @Max(180)
   longitude?: number | null;
 
   @IsOptional()
