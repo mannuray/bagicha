@@ -35,12 +35,15 @@ function logSuggestsDryness(entry: EntrySignal): boolean {
 export function buildPersonalizedOverlay(
   plant: { name: string },
   entries: EntrySignal[],
-  pack: { current_phase: string },
+  /** The reviewed-care phase, or null for a tree whose care hasn't shipped. */
+  phase: string | null,
   now: Date,
 ) {
   if (!entries.some(logSuggestsDryness)) return null;
   return {
-    adjusted_phase: `${pack.current_phase}_with_dryness_attention`,
+    adjusted_phase: phase
+      ? `${phase}_with_dryness_attention`
+      : 'dryness_attention',
     priority_actions: [
       'Water the plant today',
       'Recheck leaf stress after watering',
@@ -71,36 +74,6 @@ export function buildPersonalizedOverlay(
     expires_at: addDays(now, 2),
     refreshed_at: now,
   };
-}
-
-/** Cohort task templates from inferred seasonal guidance. */
-export function buildTaskTemplates(inferred: {
-  do_now: string[];
-  watch_for: string[];
-  next_checkpoint_days: number;
-}): TaskTemplateInput[] {
-  const templates: TaskTemplateInput[] = [];
-  if (inferred.do_now[0]) {
-    templates.push({
-      key: 'seasonal_primary_action',
-      title: inferred.do_now[0],
-      category: 'inspection',
-      priority: 'high',
-      due_in_days: inferred.next_checkpoint_days,
-      reason: 'Primary seasonal action from cohort guidance',
-    });
-  }
-  if (inferred.watch_for[0]) {
-    templates.push({
-      key: 'seasonal_watch_risk',
-      title: `Watch for ${inferred.watch_for[0]}`,
-      category: 'observation',
-      priority: 'medium',
-      due_in_days: inferred.next_checkpoint_days,
-      reason: 'Risk monitoring from cohort guidance',
-    });
-  }
-  return templates;
 }
 
 /** Reads templates back from stored JSON, dropping malformed items. */

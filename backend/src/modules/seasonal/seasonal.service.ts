@@ -21,7 +21,6 @@ import { addDays, Clock } from '../../common/time';
 import {
   JournalService,
   PlantRecordService,
-  SeasonalIntelligenceService,
   SpeciesNormalizationService,
   TaskCreationResult,
   TaskDraft,
@@ -33,26 +32,17 @@ import {
   taskPriorityFrom,
   taskTypeFromCategory,
   carePhaseView,
-  careApplies,
+  careFor,
   treeCareDue,
 } from '../plant-ledger';
-import type {
-  CareReminder,
-  FamilyCare,
-  SpeciesResolver,
-} from '../plant-ledger';
+import type { CareReminder, SpeciesResolver } from '../plant-ledger';
 import { isPremium, UserRepository } from '../user';
 import {
   asTaskTemplates,
   buildPersonalizedOverlay,
-  buildTaskTemplates,
   TaskTemplateInput,
 } from './domain/overlay-rules';
-import {
-  CatalogueStore,
-  CatalogueUnavailableError,
-  type Catalogue,
-} from '../catalogue';
+import { CatalogueStore, CatalogueUnavailableError } from '../catalogue';
 import { regionFor } from '../regions';
 import { monthOf } from './domain/season-guide';
 import { resolveSeasonWindow } from './domain/season-window';
@@ -63,7 +53,14 @@ import { isUniqueViolation } from '../../common/prisma/unique-violation';
 import { toOverlayView, toPackView } from './intelligence-view';
 
 export const WEATHER_QUEUE = 'weather-checks';
-const PACK_VERSION = 1;
+/**
+ * Pack rows are only the personal adjustment's database anchor now (stage 4):
+ * version 2 rows carry no guidance, and a rolled-back API (version 1) never
+ * reuses them.
+ */
+const PACK_VERSION = 2;
+/** The phase shown for a tree whose reviewed care hasn't shipped (reads "Care coming"). */
+const CARE_COMING = 'care_coming';
 const RECENT_ENTRIES_FOR_OVERLAY = 10;
 
 @Injectable()
@@ -78,7 +75,6 @@ export class SeasonalService implements OnModuleInit {
     private readonly users: UserRepository,
     private readonly packs: SeasonalPackRepository,
     private readonly overlays: OverlayRepository,
-    private readonly seasonalIntelligence: SeasonalIntelligenceService,
     private readonly species: SpeciesNormalizationService,
     private readonly clock: Clock,
     private readonly metrics: Metrics,
@@ -151,6 +147,7 @@ export class SeasonalService implements OnModuleInit {
       care_note: careNote,
       care_this_month: careDue?.thisMonth ?? [],
       care_needs_planting_month: careDue?.needsPlantingMonth ?? false,
+      care_status: care ? ('reviewed' as const) : ('coming' as const),
     };
   }
 
@@ -165,7 +162,7 @@ export class SeasonalService implements OnModuleInit {
     // Perennial flowers follow their own care calendar, never the fruit pack.
     if (growing.record_kind === RecordKind.FLOWER)
       return this.materializeFlowerCare(userId, growing);
-    const { pack, overlay, care, user } = await this.loadIntelligence(
+    const { overlay, care, user } = await this.loadIntelligence(
       userId,
       plantId,
     );
@@ -173,8 +170,8 @@ export class SeasonalService implements OnModuleInit {
     const toDraft = (
       template: TaskTemplateInput,
       source: TaskSource,
-      refs: Pick<TaskDraft, 'seasonalPackId' | 'personalizedOverlayId'>,
-      // A template key repeats every season; the pack (or overlay) id makes it one occurrence.
+      refs: Pick<TaskDraft, 'personalizedOverlayId'>,
+      // A template key repeats; the overlay id makes it one occurrence.
       owner: string,
     ): TaskDraft => ({
       type: taskTypeFromCategory(template.category),
@@ -189,8 +186,8 @@ export class SeasonalService implements OnModuleInit {
       ...refs,
     });
 
-    // A family with reviewed care gets dated care reminders instead of pack tasks;
-    // the retire step below then cancels any pack tasks it still has.
+    // Reviewed care gives dated reminders; a tree without it gets none (no
+    // season-pack filler) and the retire step cancels pack tasks left from before.
     const careDue = care
       ? treeCareDue(care, {
           region: regionFor(user),
@@ -201,17 +198,8 @@ export class SeasonalService implements OnModuleInit {
           openKeys: await this.tasks.pendingCareKeys(userId, plantId),
         })
       : null;
-    const careDrafts = careDue ? careDue.reminders.map(careDraft) : null;
     const drafts = [
-      ...(careDrafts ?? []),
-      ...(careDrafts ? [] : asTaskTemplates(pack.task_templates)).map((t) =>
-        toDraft(
-          t,
-          TaskSource.SEASONAL_PACK,
-          { seasonalPackId: pack.id },
-          pack.id,
-        ),
-      ),
+      ...(careDue?.reminders.map(careDraft) ?? []),
       ...(overlay
         ? asTaskTemplates(overlay.personalized_tasks).map((t) =>
             toDraft(
@@ -284,39 +272,40 @@ export class SeasonalService implements OnModuleInit {
     const now = this.clock.now();
     const premium = isPremium(user, now);
     const species = await this.species.resolver();
-    // A region still pending verification keeps the season pack.
-    const familyCare = this.careOf(
-      plant,
-      species,
-      await this.catalogue.snapshot(),
-    );
+    const region = regionFor(user);
+    // Perennial flowers have their own care; a pending family or region gets none.
     const care =
-      familyCare && careApplies(familyCare, regionFor(user))
-        ? familyCare
-        : null;
-    // The pack row stays the overlay's anchor; for a care family its guidance comes from care data.
-    const anchor = await this.getOrCreatePack(plant, user, species);
+      plant.record_kind === RecordKind.FLOWER
+        ? null
+        : careFor(
+            await this.catalogue.snapshot(),
+            species.family(plant),
+            plant,
+            region,
+          );
+    const anchor = await this.getOrCreateAnchor(plant, user, species);
     const phase = care
-      ? carePhaseView(care, {
-          region: regionFor(user),
-          stage: plant.lifecycle_stage,
-          now,
-        })
+      ? carePhaseView(care, { region, stage: plant.lifecycle_stage, now })
       : null;
-    const pack: SeasonalPack = phase
-      ? {
-          ...anchor,
-          current_phase: phase.current_phase,
-          upcoming_phase: phase.upcoming_phase,
-          do_now: phase.do_now,
-          avoid_now: phase.avoid_now,
-          watch_for: phase.watch_for,
-          confidence: 'high',
-          task_templates: [],
-        }
-      : anchor;
+    // Guidance comes from reviewed care only, never from the anchor row (old
+    // version-1 rows still hold the retired filler).
+    const pack: SeasonalPack = {
+      ...anchor,
+      current_phase: phase?.current_phase ?? CARE_COMING,
+      upcoming_phase: phase?.upcoming_phase ?? CARE_COMING,
+      do_now: phase?.do_now ?? [],
+      avoid_now: phase?.avoid_now ?? [],
+      watch_for: phase?.watch_for ?? [],
+      confidence: phase ? 'high' : 'low',
+      task_templates: [],
+    };
     const overlay = premium
-      ? await this.getOrRefreshOverlay(userId, plant, pack)
+      ? await this.getOrRefreshOverlay(
+          userId,
+          plant,
+          anchor,
+          phase?.current_phase ?? null,
+        )
       : null;
     return {
       pack,
@@ -329,17 +318,8 @@ export class SeasonalService implements OnModuleInit {
     };
   }
 
-  /** Reviewed care for this tree's family, if its batch has shipped (flowers have their own care). */
-  private careOf(
-    plant: Plant,
-    species: SpeciesResolver,
-    catalogue: Catalogue,
-  ): FamilyCare | null {
-    if (plant.record_kind === RecordKind.FLOWER) return null;
-    return catalogue.treeCareFor(species.family(plant), plant);
-  }
-
-  private async getOrCreatePack(
+  /** The cohort row the personal adjustment hangs on; it carries no guidance. */
+  private async getOrCreateAnchor(
     plant: Plant,
     user: User,
     species: SpeciesResolver,
@@ -353,25 +333,17 @@ export class SeasonalService implements OnModuleInit {
     };
     const existing = await this.packs.findCohort(cohort);
     if (existing) return existing;
-
-    const inferred = this.seasonalIntelligence.inferTreeSeasonalState(
-      plant,
-      user,
-      species,
-    );
     const data = {
       ...cohort,
-      model_version: 'bootstrap_rules_v1',
-      current_phase: inferred.current_phase,
-      upcoming_phase: inferred.upcoming_phase,
-      confidence: inferred.confidence,
-      do_now: inferred.do_now,
-      avoid_now: inferred.avoid_now,
-      watch_for: inferred.watch_for,
-      task_templates: buildTaskTemplates(
-        inferred,
-      ) as unknown as Prisma.InputJsonValue,
-      basis: inferred.basis,
+      model_version: 'anchor_only',
+      current_phase: CARE_COMING,
+      upcoming_phase: CARE_COMING,
+      confidence: 'low',
+      do_now: [],
+      avoid_now: [],
+      watch_for: [],
+      task_templates: [],
+      basis: 'anchor_only',
     };
     try {
       return await this.packs.create(data);
@@ -388,6 +360,7 @@ export class SeasonalService implements OnModuleInit {
     userId: string,
     plant: Plant,
     pack: SeasonalPack,
+    phase: string | null,
   ): Promise<PersonalizedOverlay | null> {
     const now = this.clock.now();
     const existing = await this.overlays.findActive(
@@ -401,7 +374,7 @@ export class SeasonalService implements OnModuleInit {
       plant.id,
       RECENT_ENTRIES_FOR_OVERLAY,
     );
-    const payload = buildPersonalizedOverlay(plant, entries, pack, now);
+    const payload = buildPersonalizedOverlay(plant, entries, phase, now);
     if (!payload) return existing;
     return existing
       ? this.overlays.update(userId, existing.id, payload)

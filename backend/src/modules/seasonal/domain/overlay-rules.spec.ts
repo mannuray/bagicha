@@ -1,14 +1,14 @@
 import { buildPersonalizedOverlay } from './overlay-rules';
 
 const NOW = new Date('2026-05-01T00:00:00Z');
-const pack = { current_phase: 'fruit_development' };
+const phase = 'fruit_development';
 
 describe('buildPersonalizedOverlay', () => {
   it('adds watering tasks when recent entries mention dryness', () => {
     const overlay = buildPersonalizedOverlay(
       { name: 'Aam' },
       [{ content: 'leaves wilting, soil dry', metadata: null, timestamp: NOW }],
-      pack,
+      phase,
       NOW,
     );
     expect(overlay?.adjusted_phase).toBe(
@@ -19,12 +19,22 @@ describe('buildPersonalizedOverlay', () => {
     expect(overlay?.refreshed_at).toEqual(NOW);
   });
 
+  it('names no season phase for a tree whose care is coming', () => {
+    const overlay = buildPersonalizedOverlay(
+      { name: 'Jamun' },
+      [{ content: 'soil dry', metadata: null, timestamp: NOW }],
+      null,
+      NOW,
+    );
+    expect(overlay?.adjusted_phase).toBe('dryness_attention');
+  });
+
   it('returns null without a dryness signal', () => {
     expect(
       buildPersonalizedOverlay(
         { name: 'Aam' },
         [{ content: 'flowering well', metadata: null, timestamp: NOW }],
-        pack,
+        phase,
         NOW,
       ),
     ).toBeNull();
