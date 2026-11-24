@@ -94,4 +94,56 @@ export class CycleRepository {
     });
     return count > 0;
   }
+
+  // Plant-scoped reads and writes for an owner-checked transaction.
+
+  /** The season currently open (started, not closed), newest first. */
+  openFor(plantId: string, tx?: Tx): Promise<PlantCycle | null> {
+    return this.db(tx).plantCycle.findFirst({
+      where: { plant_id: plantId, started_at: { not: null }, closed_at: null },
+      orderBy: { started_at: 'desc' },
+    });
+  }
+
+  lastOfYear(
+    plantId: string,
+    year: number,
+    tx?: Tx,
+  ): Promise<PlantCycle | null> {
+    return this.db(tx).plantCycle.findFirst({
+      where: { plant_id: plantId, cycle_year: year },
+      orderBy: { season_no: 'desc' },
+    });
+  }
+
+  createSeason(
+    data: {
+      plant_id: string;
+      cycle_year: number;
+      season_no: number;
+      started_at: Date;
+      place_id: string | null;
+    },
+    tx?: Tx,
+  ): Promise<PlantCycle> {
+    return this.db(tx).plantCycle.create({ data });
+  }
+
+  async setPlace(cycleId: string, placeId: string, tx?: Tx): Promise<void> {
+    await this.db(tx).plantCycle.update({
+      where: { id: cycleId },
+      data: { place_id: placeId },
+    });
+  }
+
+  async close(cycleId: string, at: Date, tx?: Tx): Promise<void> {
+    await this.db(tx).plantCycle.update({
+      where: { id: cycleId },
+      data: { closed_at: at },
+    });
+  }
+
+  countFor(plantId: string, tx?: Tx): Promise<number> {
+    return this.db(tx).plantCycle.count({ where: { plant_id: plantId } });
+  }
 }

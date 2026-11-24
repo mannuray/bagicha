@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PlantAccess } from './plant-access.service';
 import { LogType } from '@prisma/client';
 import {
   MitigationPlan,
@@ -24,10 +25,11 @@ export class MitigationService {
     private readonly cycles: CycleRepository,
     private readonly journal: JournalRepository,
     private readonly tasks: TaskRepository,
+    private readonly access: PlantAccess,
   ) {}
 
-  /** Caller has already checked the user owns the plant. */
   async plan(userId: string, plantId: string): Promise<MitigationPlan> {
+    await this.access.owned(userId, plantId);
     const [latest = null, previous = null] = await this.cycles.latestTwo(
       userId,
       plantId,

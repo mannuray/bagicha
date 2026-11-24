@@ -1,5 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { CropStage, LogType, Plant, Prisma, RecordKind } from '@prisma/client';
+import {
+  CropStage,
+  LogType,
+  Plant,
+  PlantEndReason,
+  Prisma,
+  RecordKind,
+} from '@prisma/client';
 import { Tx } from '../../../common/prisma/transaction';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Rows, SkipTake } from './types';
@@ -205,12 +212,68 @@ export class PlantRepository {
     });
   }
 
-  /** When each of the plant's seasons started. */
-  async seasonStarts(plantId: string): Promise<Date[]> {
+  /** When each plant's seasons started, for many plants in one query. */
+  async seasonStartsFor(plantIds: string[]): Promise<Map<string, Date[]>> {
+    const starts = new Map<string, Date[]>(plantIds.map((id) => [id, []]));
+    if (plantIds.length === 0) return starts;
     const rows = await this.prisma.plantCycle.findMany({
-      where: { plant_id: plantId, started_at: { not: null } },
-      select: { started_at: true },
+      where: { plant_id: { in: plantIds }, started_at: { not: null } },
+      select: { plant_id: true, started_at: true },
     });
-    return rows.map((r) => r.started_at as Date);
+    for (const r of rows) starts.get(r.plant_id)?.push(r.started_at as Date);
+    return starts;
+  }
+
+  // Plant-scoped writes for an owner-checked transaction.
+
+  async setCropStage(
+    plantId: string,
+    stage: CropStage,
+    tx?: Tx,
+  ): Promise<void> {
+    await this.db(tx).plant.update({
+      where: { id: plantId },
+      data: { crop_stage: stage },
+    });
+  }
+
+  markEnded(
+    plantId: string,
+    data: {
+      ended_at: Date;
+      end_reason: PlantEndReason;
+      end_note: string | null;
+      end_entry_id: string | null;
+    },
+    tx?: Tx,
+  ): Promise<Plant> {
+    return this.db(tx).plant.update({ where: { id: plantId }, data });
+  }
+
+  clearEnded(plantId: string, tx?: Tx): Promise<Plant> {
+    return this.db(tx).plant.update({
+      where: { id: plantId },
+      data: {
+        ended_at: null,
+        end_reason: null,
+        end_note: null,
+        end_entry_id: null,
+      },
+    });
+  }
+
+  /** The user's crop (a plant with a catalogue crop), or null. */
+  findOwnedCrop(
+    userId: string,
+    plantId: string,
+    tx?: Tx,
+  ): Promise<Plant | null> {
+    return this.db(tx).plant.findFirst({
+      where: { id: plantId, user_id: userId, crop_id: { not: null } },
+    });
+  }
+
+  async delete(plantId: string, tx?: Tx): Promise<void> {
+    await this.db(tx).plant.delete({ where: { id: plantId } });
   }
 }

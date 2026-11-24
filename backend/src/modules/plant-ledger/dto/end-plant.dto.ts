@@ -13,7 +13,7 @@ export class EndPlantDto {
   reason: PlantEndReason;
 
   @IsOptional()
-  @IsISO8601()
+  @IsISO8601({ strict: true })
   ended_at?: string;
 
   @IsOptional()

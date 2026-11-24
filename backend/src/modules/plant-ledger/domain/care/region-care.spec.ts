@@ -1,4 +1,5 @@
 import { LifecycleStage, RegionCluster } from '@prisma/client';
+import { InvariantError } from '../../../../common/errors';
 import { resolveRegionCare, stageOf } from './region-care';
 import type { FamilyCare, RegionCare } from './types';
 
@@ -88,5 +89,30 @@ describe('resolveRegionCare', () => {
       from: 'SOUTH_DECCAN',
       grownHere: false,
     });
+  });
+});
+
+describe('resolveRegionCare on broken care data', () => {
+  it('throws an InvariantError naming the family and region', () => {
+    const f = family({ EAST_INDIA: { sameAs: 'NORTH_INDIA' } }, [
+      'NORTH_INDIA',
+      'EAST_INDIA',
+    ]);
+    let thrown: unknown;
+    try {
+      resolveRegionCare(f, 'EAST_INDIA');
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeInstanceOf(InvariantError);
+    expect(thrown).toMatchObject({
+      reason: 'INTERNAL_INVARIANT',
+      details: { family: 'fixture', region: 'EAST_INDIA' },
+    });
+  });
+
+  it('throws an InvariantError when no grown region exists to fall back to', () => {
+    const f = family({}, []);
+    expect(() => resolveRegionCare(f, 'HILLS_COOL')).toThrow(InvariantError);
   });
 });

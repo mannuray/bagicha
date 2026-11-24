@@ -1,3 +1,4 @@
+import { RateLimit } from '../../common/rate-limit';
 import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
   Body,
@@ -26,6 +27,7 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Post('messages')
+  @RateLimit('write')
   async sendMessage(
     @Request() req: AuthedRequest,
     @Body() dto: SendMessageDto,
@@ -35,6 +37,7 @@ export class ChatController {
 
   /** Blocks a user: they can't message you, and their messages are hidden from you. */
   @Post('blocks/:userId')
+  @RateLimit('write')
   @HttpCode(HttpStatus.NO_CONTENT)
   async block(
     @Request() req: AuthedRequest,

@@ -1,3 +1,4 @@
+import { PlantAccess } from './plant-access.service';
 import { LifecycleStage } from '@prisma/client';
 import { FixedClock } from '../../../common/time';
 import { PlantRepository } from '../repositories/plant.repository';
@@ -22,6 +23,7 @@ function build(plant: Record<string, unknown>) {
   const clock = new FixedClock(NOW);
   const species = new SpeciesNormalizationService(seededCatalogueStore());
   const service = new PlantRecordService(
+    new PlantAccess(repo as unknown as PlantRepository),
     repo as unknown as PlantRepository,
     new LifecycleService(clock),
     species,

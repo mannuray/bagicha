@@ -1,3 +1,4 @@
+import { InvariantError } from '../../../../common/errors';
 import {
   LifecycleStage,
   PlantingDatePrecision,
@@ -9,7 +10,10 @@ import { resolveRegionCare, stageOf } from './region-care';
 function verifiedCare(family: FamilyCare, region: RegionCluster) {
   const resolved = resolveRegionCare(family, region);
   if (!resolved)
-    throw new Error(`${family.family}: ${region} is pending verification`);
+    throw new InvariantError(
+      `${family.family}: ${region} is pending verification`,
+      { family: family.family, region },
+    );
   return resolved;
 }
 import type {
@@ -130,7 +134,7 @@ export function occurrenceOf(
     if (now.getTime() < end.getTime() + DAY_MS) return { start, end };
   }
   /* istanbul ignore next: startYear year+1 always ends in the future */
-  throw new Error('unreachable');
+  throw new InvariantError('calendar window: no year ends in the future');
 }
 
 /** A month-only planting date is stored as the 1st; count from mid-month. */

@@ -10,6 +10,8 @@ import {
   Request,
 } from '@nestjs/common';
 import { CommunityService } from './community.service';
+import { AskAiService } from './services/ask-ai.service';
+import { ReportService } from './services/report.service';
 import { FeedQueryDto } from './dto/feed-query.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -23,7 +25,11 @@ import { toCommentView, toPostView } from './community-view';
 @Controller('community')
 @UseGuards(AuthGuard('jwt'))
 export class CommunityController {
-  constructor(private readonly communityService: CommunityService) {}
+  constructor(
+    private readonly communityService: CommunityService,
+    private readonly askAiService: AskAiService,
+    private readonly reportService: ReportService,
+  ) {}
 
   @Get('feed')
   async getFeed(@Request() req: AuthedRequest, @Query() q: FeedQueryDto) {
@@ -34,11 +40,13 @@ export class CommunityController {
   }
 
   @Post('posts')
+  @RateLimit('write')
   async createPost(@Request() req: AuthedRequest, @Body() dto: CreatePostDto) {
     return toPostView(await this.communityService.createPost(req.user.id, dto));
   }
 
   @Post('posts/:id/comments')
+  @RateLimit('write')
   async addComment(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
@@ -52,24 +60,26 @@ export class CommunityController {
   @Post('ask-ai')
   @RateLimit('ai')
   async askAi(@Request() req: AuthedRequest, @Body() dto: AskAiDto) {
-    return this.communityService.askAi(req.user.id, dto);
+    return this.askAiService.ask(req.user.id, dto);
   }
 
   @Post('posts/:id/report')
+  @RateLimit('write')
   async reportPost(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Body() dto: ReportTargetDto,
   ) {
-    return this.communityService.reportPost(req.user.id, id, dto);
+    return this.reportService.reportPost(req.user.id, id, dto);
   }
 
   @Post('comments/:id/report')
+  @RateLimit('write')
   async reportComment(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Body() dto: ReportTargetDto,
   ) {
-    return this.communityService.reportComment(req.user.id, id, dto);
+    return this.reportService.reportComment(req.user.id, id, dto);
   }
 }

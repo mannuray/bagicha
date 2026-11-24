@@ -42,6 +42,21 @@ describe('profile region', () => {
     });
   });
 
+  it.each([
+    { latitude: 91 },
+    { latitude: -90.5 },
+    { longitude: 180.1 },
+    { longitude: -181 },
+  ])('rejects coordinates off the globe: %o', async (body) => {
+    expect((await update(body)).status).toBe(422);
+  });
+
+  it('accepts coordinates on the globe', async () => {
+    expect((await update({ latitude: 28.6, longitude: 77.2 })).status).toBe(
+      200,
+    );
+  });
+
   it('rejects an unknown region', async () => {
     expect((await update({ region_cluster: 'MARS' })).status).toBe(422);
   });

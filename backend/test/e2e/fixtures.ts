@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import Redis from 'ioredis';
 import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -86,4 +87,21 @@ export async function clearRateLimitKeys(): Promise<void> {
   ];
   if (keys.length) await redis.del(...keys);
   redis.disconnect();
+}
+
+/** A real 2×2 JPEG, base64: vision decodes photos before the AI sees them. */
+export const TINY_JPEG_B64 =
+  '/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAACAAIDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAB//EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AJoAfi5//9k=';
+
+/** A real PNG of random noise, about `bytes` long once encoded (noise doesn't compress). */
+export async function noisePngBase64(bytes: number): Promise<string> {
+  const side = Math.ceil(Math.sqrt(bytes / 3));
+  const raw = Buffer.alloc(side * side * 3);
+  for (let i = 0; i < raw.length; i++) raw[i] = Math.floor(Math.random() * 256);
+  const png = await sharp(raw, {
+    raw: { width: side, height: side, channels: 3 },
+  })
+    .png()
+    .toBuffer();
+  return png.toString('base64');
 }

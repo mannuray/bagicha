@@ -4,9 +4,13 @@ import request from 'supertest';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
 import { withFakeAi } from './fakes';
-import { resetDb, seedPlant, seedUser, tokenFor } from './fixtures';
-
-const TINY_JPEG_B64 = Buffer.from('fake-image').toString('base64');
+import {
+  resetDb,
+  seedPlant,
+  seedUser,
+  tokenFor,
+  TINY_JPEG_B64,
+} from './fixtures';
 
 describe('plant ownership', () => {
   let app: INestApplication;
@@ -87,6 +91,13 @@ describe('plant ownership', () => {
       expect(untouched?.status).toBe('OPEN');
     });
 
+    it('rejects an impossible calendar date in event_at with 422', async () => {
+      const res = await as(alice)
+        .post('/api/v1/diagnosis/finalize')
+        .send(finalizeBody(alicePlant.id, { event_at: '2026-02-30' }));
+      expect(res.status).toBe(422);
+    });
+
     it('rejects a malformed event_at with 422 instead of crashing', async () => {
       const res = await as(alice)
         .post('/api/v1/diagnosis/finalize')
@@ -140,6 +151,41 @@ describe('plant ownership', () => {
         .post('/api/v1/community/ask-ai')
         .send({ question: 'Why are leaves curling?', plant_id: alicePlant.id });
       expect(res.status).toBe(201);
+    });
+  });
+  describe('ledger plant routes', () => {
+    const get = (user: User, url: string) =>
+      request(app.getHttpServer())
+        .get(url)
+        .set('Authorization', `Bearer ${tokenFor(app, user)}`);
+
+    it.each(['timeline', 'cycles', 'tasks', 'mitigation-plan'])(
+      "GET plants/:id/%s returns 404 for another user's plant",
+      async (path) => {
+        const res = await get(
+          bob,
+          `/api/v1/ledger/plants/${alicePlant.id}/${path}`,
+        );
+        expect(res.status).toBe(404);
+        expect(res.body.error.code).toBe('PLANT_NOT_FOUND');
+      },
+    );
+
+    it("POST plants/:id/journal returns 404 for another user's plant and writes nothing", async () => {
+      const before = await counts();
+      const res = await as(bob)
+        .post(`/api/v1/ledger/plants/${alicePlant.id}/journal`)
+        .send({ type: 'NOTE', content: 'x' });
+      expect(res.status).toBe(404);
+      expect(await counts()).toEqual(before);
+    });
+
+    it("PUT plants/:id/tasks/:taskId returns 404 for another user's plant", async () => {
+      const res = await request(app.getHttpServer())
+        .put(`/api/v1/ledger/plants/${alicePlant.id}/tasks/nope`)
+        .set('Authorization', `Bearer ${tokenFor(app, bob)}`)
+        .send({ status: 'COMPLETED' });
+      expect(res.status).toBe(404);
     });
   });
 });

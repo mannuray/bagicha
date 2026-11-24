@@ -5,9 +5,7 @@ import { TaskRepository } from '../../src/modules/plant-ledger/repositories/task
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
 import { withFakeAi } from './fakes';
-import { resetDb, seedUser, tokenFor } from './fixtures';
-
-const TINY_JPEG_B64 = Buffer.from('fake-image').toString('base64');
+import { resetDb, seedUser, tokenFor, TINY_JPEG_B64 } from './fixtures';
 
 describe('when a tree ends', () => {
   let app: INestApplication;

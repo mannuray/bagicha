@@ -1,11 +1,12 @@
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 
-export type RateLimitBucket = 'auth' | 'ai' | 'upload' | 'catalogue';
+export type RateLimitBucket = 'auth' | 'ai' | 'upload' | 'catalogue' | 'write';
 
 /**
  * Per-bucket limits (shared across every route in the bucket). Signed-in
- * callers are tracked per user, anonymous callers per IP.
+ * callers are tracked per user (by the auth guard, or by a verified bearer
+ * token in the global guard), anonymous callers per IP.
  */
 export const RATE_LIMITS: Record<
   RateLimitBucket,
@@ -20,6 +21,8 @@ export const RATE_LIMITS: Record<
   upload: { limit: 30, ttl: HOUR },
   // Public, unauthenticated catalogue used during onboarding.
   catalogue: { limit: 60, ttl: MINUTE },
+  // What other people read: community posts, comments, reports, chat messages.
+  write: { limit: 30, ttl: MINUTE },
 };
 
 /** Everything not in a bucket. */

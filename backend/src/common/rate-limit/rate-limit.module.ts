@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerStorage } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { redisConnection } from '../redis/redis-connection';
+import { BearerIdentity } from './bearer-identity';
 import { DEFAULT_RATE_LIMIT } from './limits';
 import {
   FailOpenThrottlerStorage,
@@ -49,9 +50,15 @@ class RateLimitStorageModule {}
     }),
   ],
   providers: [
+    {
+      provide: BearerIdentity,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) =>
+        new BearerIdentity(config.getOrThrow<string>('JWT_SECRET')),
+    },
     BucketRateLimitGuard,
     { provide: APP_GUARD, useClass: DefaultRateLimitGuard },
   ],
-  exports: [BucketRateLimitGuard],
+  exports: [BucketRateLimitGuard, BearerIdentity],
 })
 export class RateLimitModule {}

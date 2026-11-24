@@ -1,3 +1,4 @@
+import { InvariantError } from '../../../../common/errors';
 import { LifecycleStage, RegionCluster } from '@prisma/client';
 import type { CareStage, FamilyCare, RegionCare } from './types';
 
@@ -84,14 +85,25 @@ export function resolveRegionCare(
   const grownHere = care.grownIn.includes(region);
   const source = grownHere ? region : NEAREST_REGIONS[region].find(verified);
   if (!source)
-    throw new Error(`${care.family}: no grown region to fall back to`);
+    throw new InvariantError(
+      `${care.family}: no grown region to fall back to`,
+      {
+        family: care.family,
+        region,
+      },
+    );
   const entry = care.regions[source];
-  if (!entry) throw new Error(`${care.family}: no care for ${source}`);
+  if (!entry)
+    throw new InvariantError(`${care.family}: no care for ${source}`, {
+      family: care.family,
+      region: source,
+    });
   if ('items' in entry) return { care: entry, from: source, grownHere };
   const shared = care.regions[entry.sameAs];
   if (!shared || !('items' in shared)) {
-    throw new Error(
+    throw new InvariantError(
       `${care.family}: ${source} sameAs ${entry.sameAs} must point at real care`,
+      { family: care.family, region: source },
     );
   }
   return { care: shared, from: entry.sameAs, grownHere };

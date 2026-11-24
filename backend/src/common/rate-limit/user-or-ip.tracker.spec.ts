@@ -18,4 +18,8 @@ describe('trackerFor', () => {
   it('falls back to a fixed bucket when no address is known', () => {
     expect(trackerFor({})).toBe('ip:unknown');
   });
+
+  it('tracks by a verified user id when the auth guard has not run yet', () => {
+    expect(trackerFor({ ip: '10.0.0.1' }, 'u9')).toBe('user:u9');
+  });
 });

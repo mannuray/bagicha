@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PlantAccess } from './plant-access.service';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import {
   Prisma,
@@ -73,6 +74,7 @@ const ONE_OFF_SOURCES: ReadonlySet<TaskSource> = new Set([
 export class TaskService {
   constructor(
     private readonly tasks: TaskRepository,
+    private readonly access: PlantAccess,
     private readonly metrics: Metrics,
     @InjectPinoLogger(TaskService.name)
     private readonly logger: PinoLogger,
@@ -249,6 +251,7 @@ export class TaskService {
     titleOf: TaskTitler = savedTitle,
     careTextOf: CareTexter = savedCareTexts,
   ): Promise<Page<TaskView>> {
+    await this.access.owned(userId, plantId);
     const { rows, total } = await this.tasks.listForPlant(
       userId,
       plantId,
@@ -291,6 +294,7 @@ export class TaskService {
     titleOf: TaskTitler = savedTitle,
     careTextOf: CareTexter = savedCareTexts,
   ): Promise<TaskView> {
+    await this.access.growing(userId, plantId);
     const updated = await this.tasks.updateStatus(
       userId,
       plantId,

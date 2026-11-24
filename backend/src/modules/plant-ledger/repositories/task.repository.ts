@@ -222,4 +222,62 @@ export class TaskRepository {
       include: taskViewInclude,
     });
   }
+
+  // Plant-scoped writes below run inside a transaction whose caller has
+  // already checked the plant belongs to the user.
+
+  /** Cancels the plant's pending tasks (of one source when given). */
+  async cancelPending(
+    plantId: string,
+    opts: { source?: TaskSource },
+    tx?: Tx,
+  ): Promise<number> {
+    const { count } = await this.db(tx).task.updateMany({
+      where: {
+        plant_id: plantId,
+        status: TaskStatus.PENDING,
+        ...(opts.source ? { source: opts.source } : {}),
+      },
+      data: { status: TaskStatus.CANCELLED },
+    });
+    return count;
+  }
+
+  /** Pending tasks of one source for many plants, in one query. */
+  pendingForPlants(plantIds: string[], source: TaskSource): Promise<Task[]> {
+    if (plantIds.length === 0) return Promise.resolve([]);
+    return this.prisma.task.findMany({
+      where: { plant_id: { in: plantIds }, source, status: TaskStatus.PENDING },
+    });
+  }
+
+  pendingForPlant(
+    plantId: string,
+    source: TaskSource,
+    tx?: Tx,
+  ): Promise<Task[]> {
+    return this.db(tx).task.findMany({
+      where: { plant_id: plantId, source, status: TaskStatus.PENDING },
+    });
+  }
+
+  async completeByIds(ids: string[], at: Date, tx?: Tx): Promise<void> {
+    if (ids.length === 0) return;
+    await this.db(tx).task.updateMany({
+      where: { id: { in: ids } },
+      data: { status: TaskStatus.COMPLETED, completed_at: at },
+    });
+  }
+
+  async cancelByIds(ids: string[], tx?: Tx): Promise<void> {
+    if (ids.length === 0) return;
+    await this.db(tx).task.updateMany({
+      where: { id: { in: ids } },
+      data: { status: TaskStatus.CANCELLED },
+    });
+  }
+
+  async deleteForPlant(plantId: string, tx?: Tx): Promise<void> {
+    await this.db(tx).task.deleteMany({ where: { plant_id: plantId } });
+  }
 }

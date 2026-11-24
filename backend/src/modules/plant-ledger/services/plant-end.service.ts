@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { LogType, Plant, TaskStatus } from '@prisma/client';
+import { LogType, Plant } from '@prisma/client';
 import {
   ConflictError,
   NotFoundError,
@@ -8,6 +8,9 @@ import {
 import { TransactionRunner } from '../../../common/prisma/transaction';
 import { Clock } from '../../../common/time';
 import { EndPlantDto } from '../dto/end-plant.dto';
+import { JournalRepository } from '../repositories/journal.repository';
+import { PlantRepository } from '../repositories/plant.repository';
+import { TaskRepository } from '../repositories/task.repository';
 import { PlantRecordService } from './plant-record.service';
 
 /**
@@ -18,6 +21,9 @@ import { PlantRecordService } from './plant-record.service';
 export class PlantEndService {
   constructor(
     private readonly plants: PlantRecordService,
+    private readonly plantRows: PlantRepository,
+    private readonly journal: JournalRepository,
+    private readonly tasks: TaskRepository,
     private readonly transactions: TransactionRunner,
     private readonly clock: Clock,
   ) {}
@@ -43,18 +49,15 @@ export class PlantEndService {
     }
     return this.transactions.run(async (tx) => {
       if (dto.entry_id) {
-        const entry = await tx.journalEntry.findFirst({
-          where: { id: dto.entry_id, plant_id: plantId },
-          select: { id: true },
-        });
+        const entry = await this.journal.findInPlant(dto.entry_id, plantId, tx);
         if (!entry)
           throw new NotFoundError(
             'JOURNAL_ENTRY_NOT_FOUND',
             'That entry is not part of this tree',
           );
       }
-      await tx.journalEntry.create({
-        data: {
+      await this.journal.createEntry(
+        {
           plant_id: plantId,
           type: LogType.PLANT_ENDED,
           content: dto.note ?? null,
@@ -62,20 +65,19 @@ export class PlantEndService {
           timestamp: endedAt,
           recorded_at: now,
         },
-      });
-      await tx.task.updateMany({
-        where: { plant_id: plantId, status: TaskStatus.PENDING },
-        data: { status: TaskStatus.CANCELLED },
-      });
-      return tx.plant.update({
-        where: { id: plantId },
-        data: {
+        tx,
+      );
+      await this.tasks.cancelPending(plantId, {}, tx);
+      return this.plantRows.markEnded(
+        plantId,
+        {
           ended_at: endedAt,
           end_reason: dto.reason,
           end_note: dto.note ?? null,
           end_entry_id: dto.entry_id ?? null,
         },
-      });
+        tx,
+      );
     });
   }
 
@@ -85,24 +87,17 @@ export class PlantEndService {
       throw new ConflictError('PLANT_NOT_ENDED', 'This tree has not ended');
     const now = this.clock.now();
     return this.transactions.run(async (tx) => {
-      await tx.journalEntry.create({
-        data: {
+      await this.journal.createEntry(
+        {
           plant_id: plantId,
           type: LogType.NOTE,
           content: 'Restored',
           timestamp: now,
           recorded_at: now,
         },
-      });
-      return tx.plant.update({
-        where: { id: plantId },
-        data: {
-          ended_at: null,
-          end_reason: null,
-          end_note: null,
-          end_entry_id: null,
-        },
-      });
+        tx,
+      );
+      return this.plantRows.clearEnded(plantId, tx);
     });
   }
 }

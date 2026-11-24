@@ -13,6 +13,8 @@ import { UserRepository } from '../user';
 import { OverlayRepository } from './repositories/overlay.repository';
 import { SeasonalPackRepository } from './repositories/seasonal-pack.repository';
 import { SeasonalService } from './seasonal.service';
+import { TreeIntelligenceService } from './services/tree-intelligence.service';
+import { TreeTaskMaterializer } from './services/tree-task-materializer.service';
 
 const NOW = new Date('2026-05-01T00:00:00Z');
 
@@ -68,59 +70,60 @@ function build(opts: {
   const retireSeason = jest.fn((_u: string, _p: string, _keys: string[]) =>
     Promise.resolve(0),
   );
-  const service = new SeasonalService(
-    weatherQueue as any,
-    { getWeather: jest.fn(() => Promise.resolve({ temp: 30 })) } as any,
-    { get: jest.fn(() => Promise.resolve(null)) } as any,
-    {
-      getOwnedOrThrow: jest.fn(() => Promise.resolve(plant)),
-      assertGrowing: jest.fn(() => Promise.resolve(plant)),
-    } as unknown as PlantRecordService,
-    {
-      recent: jest.fn(() =>
-        Promise.resolve(
-          (opts.entries ?? []).map((e) => ({
-            ...e,
-            metadata: null,
-            timestamp: NOW,
-          })),
-        ),
+  const weatherQueueArg = weatherQueue as any;
+  const weatherService = {
+    getWeather: jest.fn(() => Promise.resolve({ temp: 30 })),
+  } as any;
+  const redis = { get: jest.fn(() => Promise.resolve(null)) } as any;
+  const plants = {
+    getOwnedOrThrow: jest.fn(() => Promise.resolve(plant)),
+    assertGrowing: jest.fn(() => Promise.resolve(plant)),
+  } as unknown as PlantRecordService;
+  const journal = {
+    recent: jest.fn(() =>
+      Promise.resolve(
+        (opts.entries ?? []).map((e) => ({
+          ...e,
+          metadata: null,
+          timestamp: NOW,
+        })),
       ),
-    } as unknown as JournalService,
-    {
-      retireSeasonTasksExcept: retireSeason,
-      retireCareTasksExcept: retireCare,
-      pendingCareKeys: jest.fn(() => Promise.resolve([])),
-      createTasks: jest.fn((_u: string, _p: string, d: TaskDraft[]) => {
-        drafts.push(...d);
-        return Promise.resolve(
-          d.map((x) => {
-            const seen = pending.has(x.sourceKey);
-            pending.add(x.sourceKey);
-            return {
-              sourceKey: x.sourceKey,
-              status: seen ? 'skipped' : 'created',
-            };
-          }),
-        );
-      }),
-    } as unknown as TaskService,
-    {
-      findById: jest.fn(() => Promise.resolve(user)),
-    } as unknown as UserRepository,
-    packs as unknown as SeasonalPackRepository,
-    {
-      findActive: jest.fn(() => Promise.resolve(null)),
-      create: jest.fn((_u: string, _p: string, _k: string, data: object) =>
-        Promise.resolve({ id: 'ov1', ...data }),
-      ),
-      update: jest.fn(),
-    } as unknown as OverlayRepository,
-    new SpeciesNormalizationService(seededCatalogueStore()),
-    new FixedClock(now),
-    { registerQueueDepth: jest.fn() } as any,
-    { warn: jest.fn() } as any,
-    // Season-pack behaviour: this catalogue has no mango care.
+    ),
+  } as unknown as JournalService;
+  const tasks = {
+    retireSeasonTasksExcept: retireSeason,
+    retireCareTasksExcept: retireCare,
+    pendingCareKeys: jest.fn(() => Promise.resolve([])),
+    createTasks: jest.fn((_u: string, _p: string, d: TaskDraft[]) => {
+      drafts.push(...d);
+      return Promise.resolve(
+        d.map((x) => {
+          const seen = pending.has(x.sourceKey);
+          pending.add(x.sourceKey);
+          return {
+            sourceKey: x.sourceKey,
+            status: seen ? 'skipped' : 'created',
+          };
+        }),
+      );
+    }),
+  } as unknown as TaskService;
+  const users = {
+    findById: jest.fn(() => Promise.resolve(user)),
+  } as unknown as UserRepository;
+  const packsArg = packs as unknown as SeasonalPackRepository;
+  const overlays = {
+    findActive: jest.fn(() => Promise.resolve(null)),
+    create: jest.fn((_u: string, _p: string, _k: string, data: object) =>
+      Promise.resolve({ id: 'ov1', ...data }),
+    ),
+    update: jest.fn(),
+  } as unknown as OverlayRepository;
+  const species = new SpeciesNormalizationService(seededCatalogueStore());
+  const clock = new FixedClock(now);
+  const metrics = { registerQueueDepth: jest.fn() } as any;
+  const logger = { warn: jest.fn() } as any;
+  const catalogue = // Season-pack behaviour: this catalogue has no mango care.
     seededCatalogueStore({
       ...CATALOGUE_SEED,
       treeCare: [
@@ -128,10 +131,45 @@ function build(opts: {
         ...(opts.mangoCare ? [opts.mangoCare] : []),
       ],
       seasonGuide: opts.seasonGuide ?? CATALOGUE_SEED.seasonGuide,
-    }),
+    });
+  const intelligence = new TreeIntelligenceService(
+    plants,
+    journal,
+    users,
+    packsArg,
+    overlays,
+    species,
+    clock,
+    catalogue,
   );
+  const materializer = new TreeTaskMaterializer(
+    intelligence,
+    plants,
+    tasks,
+    users,
+    species,
+    clock,
+  );
+  const seasonal = new SeasonalService(
+    weatherQueueArg,
+    weatherService,
+    redis,
+    clock,
+    metrics,
+    logger,
+    catalogue,
+  );
+  // One handle on the three services the old SeasonalService was split into.
+  const service = {
+    materializeTasksForTree:
+      materializer.materializeTasksForTree.bind(materializer),
+    getTreeIntelligence: intelligence.getTreeIntelligence.bind(intelligence),
+    getSeasonalGuide: seasonal.getSeasonalGuide.bind(seasonal),
+    getLocalizedWeather: seasonal.getLocalizedWeather.bind(seasonal),
+  };
   return {
     service,
+    seasonal,
     drafts,
     packs,
     pack,
@@ -241,8 +279,8 @@ describe('SeasonalService.getSeasonalGuide', () => {
   });
 
   it("names the missing region's guide, not an empty catalogue", async () => {
-    const { service } = build({ premium: false });
-    (service as unknown as { catalogue: unknown }).catalogue = {
+    const { service, seasonal } = build({ premium: false });
+    (seasonal as unknown as { catalogue: unknown }).catalogue = {
       snapshot: () =>
         Promise.resolve({ seasonGuide: () => null, listedCrops: () => [] }),
     };

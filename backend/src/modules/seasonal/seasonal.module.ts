@@ -8,6 +8,8 @@ import { OverlayRepository } from './repositories/overlay.repository';
 import { SeasonalPackRepository } from './repositories/seasonal-pack.repository';
 import { SeasonalController } from './seasonal.controller';
 import { SeasonalService, WEATHER_QUEUE } from './seasonal.service';
+import { TreeIntelligenceService } from './services/tree-intelligence.service';
+import { TreeTaskMaterializer } from './services/tree-task-materializer.service';
 import { WeatherService } from './services/weather.service';
 
 @Module({
@@ -20,6 +22,8 @@ import { WeatherService } from './services/weather.service';
   controllers: [SeasonalController],
   providers: [
     SeasonalService,
+    TreeIntelligenceService,
+    TreeTaskMaterializer,
     WeatherService,
     WeatherProcessor,
     SeasonalPackRepository,
