@@ -172,6 +172,19 @@ describe('PlantRecordService.getContextForAi for trees and crops', () => {
     });
   });
 
+  it('the seasonal-state endpoint gives a crop nothing and a perennial flower its bloom', async () => {
+    const crop = build(
+      plant({ species: 'Tomato', record_kind: 'CROP', crop_id: 'tomato' }),
+    );
+    expect(await crop.service.getSeasonalState('u1', 'p1')).toBeNull();
+    const rose = build(
+      plant({ species: 'Rose', record_kind: 'FLOWER', name: 'Gulab' }),
+    );
+    expect(await rose.service.getSeasonalState('u1', 'p1')).toMatchObject({
+      kind: 'perennial_flower',
+    });
+  });
+
   it('a crop gets no seasonal state', async () => {
     const { service } = build(
       plant({ species: 'Tomato', record_kind: 'CROP', crop_id: 'tomato' }),

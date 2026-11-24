@@ -15,8 +15,11 @@ export class CatalogueUnavailableError extends AppError {
   readonly httpStatus = 503;
   readonly kind = 'programmer' as const;
 
-  constructor() {
-    super('CATALOGUE_EMPTY', 'The plant catalogue is not loaded');
+  constructor(
+    reason = 'CATALOGUE_EMPTY',
+    message = 'The plant catalogue is not loaded',
+  ) {
+    super(reason, message);
   }
 }
 

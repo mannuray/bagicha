@@ -283,7 +283,11 @@ export function treeCareDue(
       (item.when.kind === 'FROM_PLANTING' && !plantedOn);
     if (untimed) {
       // A sign the gardener sees needs no date; a dated step waits for one.
-      if (item.when.kind === 'FROM_CHOICE' || item.conditional)
+      // A year-only date still rules out a sign-tied step that is certainly over.
+      if (
+        item.when.kind === 'FROM_CHOICE' ||
+        (item.conditional && couldStillBeAhead(item, input))
+      )
         onPage.push(item);
       continue;
     }

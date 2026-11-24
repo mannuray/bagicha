@@ -578,3 +578,28 @@ describe('Hindi phase lists and note', () => {
     );
   });
 });
+
+describe('a sign-tied planting step without a usable date', () => {
+  const males: CareItem = {
+    key: 'males',
+    title: 'Pull out extra males',
+    category: 'GENERAL',
+    stages: ['YOUNG', 'BEARING'],
+    when: { kind: 'FROM_PLANTING', fromDays: 90, toDays: 239 },
+    conditional: 'Flowers open',
+    organic: 'Keep one male per ten females',
+    why: 'Males bear no fruit',
+  };
+
+  it('stops showing once it is certainly over for a year-only tree', () => {
+    const { thisMonth } = due([males], '2026-09-05', {
+      plantedAt: new Date('2020-01-01T00:00:00Z'),
+      plantingPrecision: 'YEAR',
+    });
+    expect(thisMonth).toEqual([]);
+  });
+
+  it('keeps showing when nothing about the planting is known', () => {
+    expect(due([males], '2026-09-05').thisMonth).toHaveLength(1);
+  });
+});

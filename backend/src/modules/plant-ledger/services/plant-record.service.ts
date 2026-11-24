@@ -316,14 +316,35 @@ export class PlantRecordService implements OnModuleInit {
     return updated;
   }
 
-  async getSeasonalState(
-    userId: string,
-    plantId: string,
-  ): Promise<TreeSeasonView> {
+  async getSeasonalState(userId: string, plantId: string) {
     await this.getDetail(userId, plantId);
     const plant = await this.plants.findOwnedWithOwnerLocation(userId, plantId);
     if (!plant) throw plantNotFound();
-    return this.seasonViewOf(plant, plant.user, await this.species.resolver());
+    return (
+      this.seasonalStateOf(plant, plant.user, await this.species.resolver()) ??
+      null
+    );
+  }
+
+  /**
+   * A plant's season for readers other than its page: a tree's reviewed care
+   * (or "care coming"), a perennial flower's bloom season; nothing for a crop
+   * or seasonal flower, where "care coming" would mislead.
+   */
+  private seasonalStateOf(
+    plant: Plant,
+    user: Pick<User, 'district' | 'region_cluster'>,
+    species: SpeciesResolver,
+  ) {
+    if (plant.crop_id) return undefined;
+    if (plant.record_kind === RecordKind.FLOWER)
+      return {
+        kind: 'perennial_flower' as const,
+        bloom: this.bloomFor(plant, user.region_cluster, species, 'en'),
+      };
+    return plant.record_kind === RecordKind.TREE
+      ? this.seasonViewOf(plant, user, species)
+      : undefined;
   }
 
   /** A tree's reviewed care for this season, or "care coming" (never generic advice). */
@@ -378,23 +399,7 @@ export class PlantRecordService implements OnModuleInit {
         latitude: plant.user.latitude,
         longitude: plant.user.longitude,
       },
-      // A perennial flower gets its bloom season, a tree its reviewed care (or
-      // "coming"); a crop or seasonal flower gets none: "care coming" would mislead.
-      seasonal_state: plant.crop_id
-        ? undefined
-        : plant.record_kind === RecordKind.FLOWER
-          ? {
-              kind: 'perennial_flower' as const,
-              bloom: this.bloomFor(
-                plant,
-                plant.user.region_cluster,
-                species,
-                'en',
-              ),
-            }
-          : plant.record_kind === RecordKind.TREE
-            ? this.seasonViewOf(plant, plant.user, species)
-            : undefined,
+      seasonal_state: this.seasonalStateOf(plant, plant.user, species),
       recent_cycles: plant.cycles.map((cycle) => ({
         cycle_year: cycle.cycle_year,
         yield_quantity: cycle.yield_quantity,

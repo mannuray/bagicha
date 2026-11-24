@@ -120,7 +120,11 @@ export class SeasonalService implements OnModuleInit {
     const catalogue = await this.catalogue.snapshot();
     // The store refuses a catalogue without every region's guide.
     const months = catalogue.seasonGuide(region);
-    if (!months) throw new CatalogueUnavailableError();
+    if (!months)
+      throw new CatalogueUnavailableError(
+        'CATALOGUE_REGION_MISSING',
+        `No season guide for ${region}`,
+      );
     const { season, headline, points } = monthOf(months, now, lang);
     const listed = catalogue.listedCrops();
     const crops = listed

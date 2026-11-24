@@ -44,10 +44,33 @@ describe('papaya care (owner-approved 2026-11-23)', () => {
     ).toEqual([0, 60, 120, 180, 240, 300, 360, 420, 480, 540]);
   });
 
-  it('west and central India stay pending; north is grown and has care', () => {
-    expect(papaya.pendingRegions).toEqual(['WEST_INDIA', 'CENTRAL_INDIA']);
+  it('central India stays pending; north is grown and has care', () => {
+    expect(papaya.pendingRegions).toEqual(['CENTRAL_INDIA']);
     expect(papaya.grownIn).toContain('NORTH_INDIA');
     expect(region('NORTH_INDIA').items.length).toBeGreaterThan(0);
+  });
+
+  it('West India (NAU 2026): four feeds from day 60 and summer watering Mar–May', () => {
+    const feeds = region('WEST_INDIA').items.filter((i) =>
+      i.key.startsWith('feed_'),
+    );
+    expect(
+      feeds.map((i) =>
+        i.when.kind === 'FROM_PLANTING' ? [i.when.fromDays, i.when.toDays] : [],
+      ),
+    ).toEqual([
+      [60, 89],
+      [120, 149],
+      [180, 209],
+      [240, 269],
+    ]);
+    expect(item('WEST_INDIA', 'summer_water')).toMatchObject({
+      title: 'Water more often as the heat starts',
+      when: { kind: 'CALENDAR', from: [3, 1], to: [5, 31] },
+    });
+    expect(item('WEST_INDIA', 'planting_mix').organic).toMatch(
+      /Arka Microbial Consortium/,
+    );
   });
 
   it('a papaya planted on 1 Jun in Tamil Nadu gets its first feed from 30 Aug', () => {

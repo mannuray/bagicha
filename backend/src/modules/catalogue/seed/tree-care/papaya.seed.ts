@@ -14,8 +14,9 @@ import type {
  * Most care counts from the planting date (FROM_PLANTING: "from the Nth month"
  * opens at day 30×N for 30 days); amounts are per plant per feed, in the text.
  * Regions: SOUTH_DECCAN = TNAU, COASTAL_HUMID = KAU, EAST_INDIA = Assam AU,
- * NORTH_INDIA = PAU (calendar only). WEST_INDIA (one Saurashtra note) and
- * CENTRAL_INDIA (no source) are pending. No region shares another's care: the
+ * NORTH_INDIA = PAU (calendar only), WEST_INDIA = NAU Navsari 2026 (added
+ * 2026-11-24). CENTRAL_INDIA has no regional source and stays pending.
+ * No region shares another's care: the
  * guides differ on the feed start, amount and count.
  */
 
@@ -532,6 +533,105 @@ const EAST_INDIA: RegionCare = {
   ],
 };
 
+/**
+ * WEST_INDIA from NAU Navsari's 2026 papaya recommendation (AICRP Gandevi,
+ * owner-approved 2026-11-24; docs/plant-care/papaya-west-central.md): 75% of
+ * 200:200:250 g N:P₂O₅:K₂O in four feeds with Arka Microbial Consortium, which
+ * is why the feeds are smaller — they ship together.
+ */
+const CONSORTIUM =
+  '5.5 g Arka Microbial Consortium mixed into 0.5 kg FYM (the KVK or IIHR sells it)';
+const CONSORTIUM_HI =
+  '5.5 g Arka Microbial Consortium, 0.5 kg गोबर की खाद में मिलाकर (KVK या IIHR से मिलता है)';
+
+const WEST_INDIA: RegionCare = {
+  items: [
+    {
+      key: 'planting_mix',
+      title: 'Mix manure and microbes in at planting',
+      category: 'FEEDING',
+      stages: BOTH,
+      when: planted(0, 29),
+      organic: `10 kg FYM in the pit. Also put ${CONSORTIUM} around the roots: the first of two halves`,
+      why: 'Feeds the roots, and the microbes make the smaller fertiliser feeds go further',
+      hi: {
+        title: 'रोपाई पर खाद और जीवाणु मिलाएं',
+        organic: `गड्ढे में 10 kg गोबर की खाद। साथ में ${CONSORTIUM_HI} जड़ों के आसपास डालें: दो हिस्सों में से पहला`,
+        why: 'जड़ों को खाद मिलती है, और जीवाणु कम रासायनिक खाद को भी ज़्यादा असरदार बनाते हैं',
+      },
+    },
+    ...feeds(
+      4,
+      60,
+      (n) => `Give feed ${n} of 4: N, P and K`,
+      'Each feed: urea 80 g + SSP 235 g + MOP 80 g (37.5 g N, 37.5 g P₂O₅, 47 g K₂O)',
+      'Small feeds through growth and the first flowering',
+      {
+        title: (n) => `खाद नंबर ${n} (4 में से) दें: N, P और K`,
+        chemical:
+          'हर बार: urea 80 g + SSP 235 g + MOP 80 g (37.5 g N, 37.5 g P₂O₅, 47 g K₂O)',
+        why: 'बढ़वार और पहले फूल तक थोड़ी-थोड़ी खाद',
+      },
+    ),
+    {
+      key: 'microbe_booster',
+      title: 'Add the second half of the microbe mix',
+      category: 'FEEDING',
+      stages: BOTH,
+      when: planted(180, 209),
+      organic: `${CONSORTIUM}, worked into the basin`,
+      why: 'Tops up the soil microbes at six months',
+      hi: {
+        title: 'जीवाणु मिश्रण का दूसरा हिस्सा डालें',
+        organic: `${CONSORTIUM_HI}, थाले की मिट्टी में मिलाएं`,
+        why: 'छह महीने पर मिट्टी के जीवाणु फिर से बढ़ाता है',
+      },
+    },
+    {
+      key: 'summer_water',
+      title: 'Water more often as the heat starts',
+      category: 'WATERING',
+      stages: BOTH,
+      when: { kind: 'CALENDAR', from: [3, 1], to: [5, 31] },
+      organic:
+        'From March, water grown plants every other day, about 30–50 L per plant, in a ring basin and never on the stem. Keep this up until the monsoon rains start',
+      why: 'Dry soil in the heat turns flowers male and drops fruit',
+      hi: {
+        title: 'गर्मी शुरू होते ही पानी ज़्यादा बार दें',
+        organic:
+          'मार्च से बड़े पौधों को एक दिन छोड़कर, हर पौधे को लगभग 30–50 L पानी घेरे वाले थाले में दें, तने पर कभी नहीं। मानसून की बारिश शुरू होने तक ऐसे ही दें',
+        why: 'गर्मी में सूखी मिट्टी से फूल नर बन जाते हैं और फल गिरते हैं',
+      },
+    },
+    males('1 male for every 10 females', 'हर 10 मादा पर 1 नर'),
+    VIRUS,
+    COLLAR_ROT,
+    mealybug(false),
+    POWDERY,
+    ZINC_SIGNS,
+    PICKING,
+  ],
+  phases: [
+    phase(
+      [1, 1],
+      [12, 31],
+      'year_round',
+      [
+        'Water touching the stem or standing in the basin',
+        'Letting the soil dry out from March',
+      ],
+      ['Mottled, curled leaves or ring spots (virus)', 'Whitefly'],
+      {
+        avoid: [
+          'पानी का तने को छूना या थाले में भरा रहना',
+          'मार्च से मिट्टी को सूखने देना',
+        ],
+        watch: ['चितकबरी, मुड़ी पत्तियां या रिंग स्पॉट (वायरस)', 'सफ़ेद मक्खी'],
+      },
+    ),
+  ],
+};
+
 /** PAU's feed: 20 kg FYM and 1.25 kg of urea : SSP : MOP at 1 : 2 : ⅓, at each feed. */
 const PAU_FEED = {
   organic: '20 kg well-rotted FYM in the basin',
@@ -652,6 +752,7 @@ export const PAPAYA_CARE: FamilyCare = {
     'KAU Package of Practices Recommendations: Crops, 15th ed. 2016, papaya pp.221–222',
     'Assam Agricultural University, Package of Practices for Horticultural Crops of Assam 2023, papaya pp.27–29',
     'PAU Package of Practices for Cultivation of Fruits 2021, papaya pp.115–118',
+    'NAU Navsari, papaya recommendation 2026 (AICRP on Fruits, Gandevi), p.8',
     'National Horticulture Board papaya crop sheets pap002–pap007',
     'NIPHM/DPPQS AESA-based IPM package, Papaya',
     'CIB&RC Major Uses of Pesticides (30.09.2026), ppqs.gov.in',
@@ -664,6 +765,6 @@ export const PAPAYA_CARE: FamilyCare = {
     'SOUTH_DECCAN',
     'COASTAL_HUMID',
   ],
-  pendingRegions: ['WEST_INDIA', 'CENTRAL_INDIA'],
-  regions: { SOUTH_DECCAN, COASTAL_HUMID, EAST_INDIA, NORTH_INDIA },
+  pendingRegions: ['CENTRAL_INDIA'],
+  regions: { SOUTH_DECCAN, COASTAL_HUMID, EAST_INDIA, NORTH_INDIA, WEST_INDIA },
 };

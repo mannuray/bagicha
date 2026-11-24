@@ -62,17 +62,10 @@ export function buildTaskSourceSummary(task: {
     return 'Seasonal care for this flower, from its usual care calendar.';
   }
 
-  if (task.source === 'SEASONAL_PACK') {
-    const currentPhase = task.seasonal_pack?.current_phase?.replace(/_/g, ' ');
-    const upcomingPhase = task.seasonal_pack?.upcoming_phase?.replace(
-      /_/g,
-      ' ',
-    );
-    if (currentPhase && upcomingPhase) {
-      return `Seasonal guidance for ${currentPhase}, with ${upcomingPhase} coming next.`;
-    }
-    return 'Seasonal guidance for the current plant phase.';
-  }
+  // Season packs were retired in stage 4; any left are cancelled at the tree's
+  // next refresh, so never repeat their generic phase.
+  if (task.source === 'SEASONAL_PACK')
+    return 'From the old general season tips; it clears at the next refresh.';
 
   return null;
 }
