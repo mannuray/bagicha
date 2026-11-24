@@ -61,6 +61,7 @@ docker run --rm --dns 1.1.1.1 \
 - Locally: `npm run catalogue:push` (uses `DATABASE_URL` from `.env`).
 - Stage 2 (fruit types, add-tree entries, perennial flowers, migration `20261115120000_catalogue_fruit_flowers`): migration → push → API deploy. No web deploy is needed; a search result's `id` is now its catalogue key (`mango:Dasheri`) instead of a row id, and the web uses it only as a list key.
 - Stage 3 (tree care, migration `20261118120000_catalogue_tree_care`): migration → push → API deploy. The push before the deploy is safe: the old API never reads the new table. The API from this release refuses to start until the push has written tree care, so the push must come first. A catalogue push that adds a **new field** to any record goes the other way, code first, because the schemas are strict and an API that meets an unknown field fails on its next restart.
+- Stage 4 ships as two releases. **A — home season tips** (migration `20261124120000_catalogue_season_guide`): migration → push → API deploy. The API from this release refuses to start until every region has an approved season guide, so the push comes first; no web deploy. **B — no season-pack fallback**: API deploy, then the web (no migration, no push). Trees without reviewed care show "care is coming"; their pending season-pack tasks are cancelled the next time their reminders refresh. Rolling B back brings the old season packs back (the old API rebuilds its own version-1 rows).
 
 ## Deploy the API (Render)
 
