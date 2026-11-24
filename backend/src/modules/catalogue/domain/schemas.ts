@@ -1,3 +1,4 @@
+import { adviceIssues, adviceSeedSchema } from './advice';
 import { z } from 'zod';
 import { hindi, hindiText } from './hindi-text';
 import { ValidationError } from '../../../common/errors';
@@ -190,6 +191,7 @@ const seedSchema = z
     perennialFlowers: z.array(perennialFlowerSeedSchema),
     treeCare: z.array(treeCareSeedSchema),
     seasonGuide: z.array(seasonGuideSeedSchema),
+    advice: z.array(adviceSeedSchema),
   })
   .strict();
 
@@ -241,6 +243,7 @@ export function validateSeed(input: unknown): CatalogueSeed {
     ...fruitAndFlowerIssues(seed),
     ...treeCareIssues(seed),
     ...seasonGuideIssues(seed),
+    ...adviceIssues(seed.advice),
   );
   if (issues.length > 0) throw invalid(issues);
   return seed;

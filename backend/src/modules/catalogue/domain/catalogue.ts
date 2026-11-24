@@ -1,3 +1,5 @@
+import { renderAdvice, type AdviceRef, type AdviceSeed } from './advice';
+import type { Lang } from '../../../common/http/lang';
 import { AppError } from '../../../common/errors';
 import type {
   CareStepInfo,
@@ -61,12 +63,14 @@ export class Catalogue {
       treeCare: Map<string, FamilyCare>;
       /** Approved home season tips by region, January first. */
       seasonGuide: Map<RegionCluster, SeasonMonth[]>;
+      advice: Map<string, Pick<AdviceSeed, 'en' | 'hi'>>;
       /** APPROVED fruit types, perennial flowers and tree care: what the catalogue can offer. */
       approved: {
         fruitTypes: number;
         flowers: number;
         treeCare: number;
         seasonGuideRegions: RegionCluster[];
+        advice: number;
       };
     },
   ) {}
@@ -155,6 +159,9 @@ export class Catalogue {
         .filter(approved)
         .map((g) => [g.region, g.months] as const),
     );
+    const advice = new Map(
+      seed.advice.filter(approved).map((a) => [a.key, { en: a.en, hi: a.hi }]),
+    );
     return new Catalogue(version, {
       listed,
       crops,
@@ -168,11 +175,13 @@ export class Catalogue {
       search,
       treeCare,
       seasonGuide,
+      advice,
       approved: {
         fruitTypes: seed.fruitTypes.filter(approved).length,
         flowers: seed.perennialFlowers.filter(approved).length,
         treeCare: treeCare.size,
         seasonGuideRegions: [...seasonGuide.keys()],
+        advice: advice.size,
       },
     });
   }
@@ -289,8 +298,19 @@ export class Catalogue {
     flowers: number;
     treeCare: number;
     seasonGuideRegions: RegionCluster[];
+    advice: number;
   } {
     return this.parts.approved;
+  }
+
+  /** Advice text in the gardener's language (English where no Hindi yet), slots filled. */
+  advice(ref: AdviceRef, lang: Lang): string {
+    return renderAdvice(this.parts.advice, ref, lang);
+  }
+
+  /** Every approved advice key (for checks that rule code only uses known keys). */
+  adviceKeys(): string[] {
+    return [...this.parts.advice.keys()];
   }
 
   /** What add-tree search ranks: APPROVED entries, by weight, then name. */

@@ -813,6 +813,19 @@ model CatalogueSeasonGuide {
   @@map("catalogue_season_guide")
 }
 
+/// Advice text the rules pick by key: English, and Hindi once reviewed.
+model CatalogueAdvice {
+  key        String          @id
+  status     CatalogueStatus @default(DRAFT)
+  /// en, hi; validated on push and load.
+  data       Json
+  notes      String?
+  created_at DateTime        @default(now())
+  updated_at DateTime        @updatedAt
+
+  @@map("catalogue_advice")
+}
+
 /// A fruit type (species family): the words that identify it and its life profile.
 model CatalogueFruitType {
   key        String          @id

@@ -21,6 +21,7 @@ const small: CatalogueSeed = {
   perennialFlowers: [],
   treeCare: [],
   seasonGuide: [],
+  advice: [],
 };
 const inOrder = <T>(items: T[]) =>
   items.map((item, sort_order) => ({ ...item, sort_order }));
@@ -35,6 +36,7 @@ const writeOf = (seed: CatalogueSeed) => ({
   perennialFlowers: inOrder(seed.perennialFlowers),
   treeCare: seed.treeCare,
   seasonGuide: seed.seasonGuide,
+  advice: seed.advice,
 });
 const none = {
   fruitTypes: [],
@@ -42,6 +44,7 @@ const none = {
   perennialFlowers: [],
   treeCare: [],
   seasonGuide: [],
+  advice: [],
 };
 
 describe('catalogue repository', () => {
@@ -90,6 +93,12 @@ describe('catalogue repository', () => {
     const [guide] = CATALOGUE_SEED.seasonGuide;
     await repo.applyPush({ ...writeOf(small), seasonGuide: [guide] });
     expect((await repo.loadSeed(['APPROVED'])).seasonGuide).toEqual([guide]);
+  });
+
+  it('round-trips advice', async () => {
+    const [a] = CATALOGUE_SEED.advice;
+    await repo.applyPush({ ...writeOf(small), advice: [a] });
+    expect((await repo.loadSeed(['APPROVED'])).advice).toEqual([a]);
   });
 
   it('round-trips Hindi texts', async () => {

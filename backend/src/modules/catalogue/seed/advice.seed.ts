@@ -1,0 +1,253 @@
+import type { AdviceSeed } from '../domain/advice';
+
+/**
+ * Advice text the rules pick by key (risk planner, season summaries, dry-weather
+ * reminders). English moved from code word for word on 2026-11-25; Hindi is
+ * added after the owner reviews it.
+ */
+export const ADVICE_SEED: AdviceSeed[] = [
+  {
+    key: 'mitigation.issue.no_fruit_set',
+    en: 'Flowering was recorded but fruit set was not confirmed.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.issue.stress_increased',
+    en: 'Stress pressure increased compared with the previous cycle.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.issue.pests_increased',
+    en: 'Pest pressure increased compared with the previous cycle.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.issue.recent_diagnosis',
+    en: 'Recent diagnosis activity suggests unresolved health stress may still be affecting recovery.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.issue.flower_drop',
+    en: 'Flower drop was {level} and likely reduced conversion to fruit set.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.issue.fruit_drop',
+    en: 'Fruit drop was {level} and likely weakened harvest outcome.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.issue.stress_signals',
+    en: 'Water or weather stress signals were recorded {count} time(s) this cycle.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.issue.pest_signals',
+    en: 'Pest pressure was recorded {count} time(s) this cycle.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.issue.harvest_loss',
+    en: 'Harvest loss was linked to {cause}.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.issue.skipped_tasks',
+    en: '{count} cycle task(s) were skipped, which may have reduced early intervention.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.change.confirm_fruit_set',
+    en: 'Confirm fruit set early next cycle instead of waiting until harvest time to assess outcome.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.change.stabilize_watering',
+    en: 'Stabilize watering and moisture checks before flowering and during early fruit development.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.change.scout_pests',
+    en: 'Start pest scouting earlier and follow diagnosis journal_entries with a same-cycle treatment or inspection.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.change.track_flower_drop',
+    en: 'Track flower drop as soon as bloom starts so intervention is not delayed.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.change.inspect_fruit_retention',
+    en: 'Inspect fruit retention earlier and log drop severity before the harvest window is affected.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.change.benchmark_last_cycle',
+    en: 'Use last cycle as a benchmark and review what changed before flowering this year.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.change.recheck_treatments',
+    en: 'Recheck treatment outcomes consistently so the next cycle starts from a cleaner health baseline.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.change.no_skipping',
+    en: 'Avoid skipping early-cycle tasks next time, especially inspection and treatment follow-ups.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.change.cracking',
+    en: 'Prepare rain and irrigation stability around harvest to reduce cracking losses.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.change.pest_damage',
+    en: 'Protect the harvest earlier with pest checks before fruit quality starts dropping.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.change.rot',
+    en: 'Reduce post-rain disease pressure and inspect fruit quality earlier in the harvest window.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.watch.wilt',
+    en: 'Early leaf wilt, dry soil, and repeated watering stress signals.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.watch.pests',
+    en: 'Recurring pest symptoms before flowering and fruit set.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.watch.flower_drop',
+    en: 'Flower drop in the first bloom window.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.watch.fruit_drop',
+    en: 'Fruit drop shortly after set.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.watch.repeat_diagnosis',
+    en: 'Any repeat of the last diagnosis symptoms before the cycle stabilizes.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.watch.birds',
+    en: 'Early bird damage signs close to harvest maturity.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.watch.weather',
+    en: 'Rain, wind, or heat events close to fruit maturity.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.priority.review_cycle',
+    en: 'Review this cycle before the next flowering window starts.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.priority.moisture_tasks',
+    en: 'Set one moisture-check task before bloom and one during early fruit development.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.priority.pest_inspection',
+    en: 'Schedule an early pest inspection instead of waiting for visible damage.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.priority.log_conversion',
+    en: 'Log flower-to-fruit conversion explicitly next cycle to catch weak set earlier.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.priority.compare_harvest',
+    en: 'Compare the next cycle against the last successful harvest, not just current symptoms.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.priority.close_pending',
+    en: 'Close or review pending cycle tasks before the next flowering window opens.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.priority.log_loss_causes',
+    en: 'Log harvest loss causes with more detail next cycle so mitigation stays specific.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.summary.no_history',
+    en: 'Not enough cycle history yet to generate a mitigation plan.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.summary.no_pattern_vs_previous',
+    en: 'Cycle {year} does not show a clear failure pattern against {previous}, so the next step is to keep logging key milestones more consistently.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.summary.no_pattern_yet',
+    en: 'Cycle {year} does not yet show a strong failure pattern; keep logging flowering, fruit set, stress, and harvest to strengthen the next plan.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.summary.improve_vs_previous',
+    en: 'Cycle {year} shows signals that can be improved before the next cycle, using {previous} as the comparison baseline.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'mitigation.summary.enough_signals',
+    en: 'Cycle {year} already shows enough signals to guide what should change before the next cycle.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  { key: 'drop.level.low', en: 'low', status: 'APPROVED', notes: null },
+  { key: 'drop.level.medium', en: 'medium', status: 'APPROVED', notes: null },
+  { key: 'drop.level.high', en: 'high', status: 'APPROVED', notes: null },
+  { key: 'drop.level.unknown', en: 'unknown', status: 'APPROVED', notes: null },
+];

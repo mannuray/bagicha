@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PlantAccess } from './plant-access.service';
 import { LogType } from '@prisma/client';
+import type { Lang } from '../../../common/http/lang';
+import { CatalogueStore } from '../../catalogue';
 import {
-  MitigationPlan,
   MitigationPlanner,
+  renderPlan,
+  type RenderedMitigationPlan,
 } from '../domain/mitigation-planner';
 import { CycleRepository } from '../repositories/cycle.repository';
 import { JournalRepository } from '../repositories/journal.repository';
@@ -26,9 +29,14 @@ export class MitigationService {
     private readonly journal: JournalRepository,
     private readonly tasks: TaskRepository,
     private readonly access: PlantAccess,
+    private readonly catalogue: CatalogueStore,
   ) {}
 
-  async plan(userId: string, plantId: string): Promise<MitigationPlan> {
+  async plan(
+    userId: string,
+    plantId: string,
+    lang: Lang = 'en',
+  ): Promise<RenderedMitigationPlan> {
     await this.access.owned(userId, plantId);
     const [latest = null, previous = null] = await this.cycles.latestTwo(
       userId,
@@ -42,12 +50,13 @@ export class MitigationService {
           : [],
         latest ? this.tasks.listForCycle(userId, plantId, latest.id) : [],
       ]);
-    return this.planner.plan({
+    const plan = this.planner.plan({
       latest,
       previous,
       recentHealthLogs,
       latestCycleTasks,
       latestCycleLogs,
     });
+    return renderPlan(plan, await this.catalogue.snapshot(), lang);
   }
 }

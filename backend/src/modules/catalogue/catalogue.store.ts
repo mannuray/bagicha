@@ -72,9 +72,15 @@ export class CatalogueStore implements OnApplicationBootstrap {
     );
     const catalogue = Catalogue.from(seed, version);
     const crops = catalogue.listedCrops().length;
-    const { fruitTypes, flowers, treeCare, seasonGuideRegions } =
+    const { fruitTypes, flowers, treeCare, seasonGuideRegions, advice } =
       catalogue.approvedCounts();
-    if (crops === 0 || fruitTypes === 0 || flowers === 0 || treeCare === 0)
+    if (
+      crops === 0 ||
+      fruitTypes === 0 ||
+      flowers === 0 ||
+      treeCare === 0 ||
+      advice === 0
+    )
       throw new CatalogueUnavailableError();
     this.current = catalogue;
     this.checkedAt = now;
@@ -87,6 +93,7 @@ export class CatalogueStore implements OnApplicationBootstrap {
         flowerCount: flowers,
         treeCareCount: treeCare,
         seasonGuideCount: seasonGuideRegions.length,
+        adviceCount: advice,
       },
       'Catalogue loaded',
     );

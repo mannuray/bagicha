@@ -214,8 +214,9 @@ export class PlantLedgerController {
   async getMitigationPlan(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
+    @RequestLang() lang: Lang,
   ) {
-    return this.mitigation.plan(req.user.id, id);
+    return this.mitigation.plan(req.user.id, id, lang);
   }
 
   @Put('plants/:id/tasks/:taskId')

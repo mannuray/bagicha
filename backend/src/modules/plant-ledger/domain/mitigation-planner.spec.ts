@@ -1,13 +1,18 @@
 import golden from './__fixtures__/golden.json';
 import { MITIGATION_FIXTURES } from './__fixtures__/inputs';
-import { MitigationInput, MitigationPlanner } from './mitigation-planner';
+import { seededCatalogue } from '../../catalogue/testing';
+import {
+  MitigationInput,
+  MitigationPlanner,
+  renderPlan,
+} from './mitigation-planner';
 
 describe('MitigationPlanner (golden: identical to the pre-refactor service)', () => {
   const planner = new MitigationPlanner();
 
   it.each(Object.keys(MITIGATION_FIXTURES))('%s history', (name) => {
     const input = MITIGATION_FIXTURES[name] as unknown as MitigationInput;
-    const plan = planner.plan(input);
+    const plan = renderPlan(planner.plan(input), seededCatalogue(), 'en');
     expect(plan).toMatchObject(
       (golden.mitigation as Record<string, object>)[name],
     );
