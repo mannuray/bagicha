@@ -239,6 +239,26 @@ describe('SeasonalService.getSeasonalGuide', () => {
     });
     expect(guide.advice).toBe('Test headline');
   });
+
+  it('answers in Hindi where the month has it', async () => {
+    const seasonGuide = CATALOGUE_SEED.seasonGuide.map((g) => ({
+      ...g,
+      months: g.months.map((m) => ({
+        ...m,
+        hi: { headline: 'हिंदी शीर्षक' },
+      })),
+    }));
+    const { service } = build({
+      premium: false,
+      seasonGuide,
+      now: new Date('2026-01-15T06:00:00+05:30'),
+    });
+    const guide = await service.getSeasonalGuide(
+      { district: null, region_cluster: 'NORTH_INDIA' },
+      'hi',
+    );
+    expect(guide.advice).toBe('हिंदी शीर्षक');
+  });
 });
 
 describe('SeasonalService planting-timed care', () => {

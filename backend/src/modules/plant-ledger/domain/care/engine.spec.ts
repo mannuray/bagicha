@@ -496,3 +496,85 @@ describe('planting-timed care', () => {
     expect(plantingDay(null, 'EXACT_DATE')).toBeNull();
   });
 });
+
+describe('Hindi care texts', () => {
+  const hiItem = item('feed', [9, 1], [9, 30], {
+    category: 'FEEDING',
+    stages: ['BEARING'],
+    hi: { title: 'खाद दें', organic: 'गोबर की खाद' },
+    dose: {
+      organic: [{ what: 'FYM', grams: 5000 }],
+      chemical: [{ what: 'urea', grams: 100 }],
+      maxAgeYears: 5,
+    },
+  });
+  const inHindi = (over: Partial<Parameters<typeof due>[2]> = {}) =>
+    due([hiItem], '2026-09-05', { lang: 'hi', ...over });
+
+  it('a care line uses the Hindi it has and English for the rest', () => {
+    const [line] = inHindi().thisMonth;
+    expect(line.title).toBe('खाद दें');
+    expect(line.organic).toBe('गोबर की खाद');
+    expect(line.why).toBe('why feed');
+  });
+
+  it('English requests are unchanged', () => {
+    expect(due([hiItem], '2026-09-05').thisMonth[0].title).toBe('Do feed');
+  });
+
+  it('the dose line is a Hindi sentence for a known age', () => {
+    const [line] = inHindi({
+      plantedAt: ist('2020-06-01'),
+      plantingPrecision: 'EXACT_DATE',
+    }).thisMonth;
+    expect(line.amount).toBe(
+      '5 साल या उससे पुराने पेड़ के लिए: 25 kg FYM; अगर खाद (फ़र्टिलाइज़र) भी देते हैं तो साथ में: 500 g urea',
+    );
+  });
+
+  it('the dose line is a Hindi sentence when the age is unknown', () => {
+    expect(inHindi().thisMonth[0].amount).toBe(
+      'पेड़ की उम्र के हर साल के लिए (5 साल तक): 5 kg FYM; अगर खाद (फ़र्टिलाइज़र) भी देते हैं तो साथ में: 100 g urea',
+    );
+  });
+
+  it('reminders saved to the database stay English', () => {
+    expect(inHindi().reminders[0].title).toBe('Do feed');
+  });
+});
+
+describe('Hindi phase lists and note', () => {
+  it('avoid and watch use the Hindi lists; the not-grown note is Hindi', () => {
+    const fam: FamilyCare = {
+      family: 'fixture',
+      sources: ['test'],
+      grownIn: ['EAST_INDIA'],
+      regions: {
+        EAST_INDIA: {
+          items: [],
+          phases: [
+            {
+              when: { kind: 'CALENDAR', from: [1, 1], to: [12, 31] },
+              stages: ['BEARING'],
+              phase: 'growing_on',
+              avoid: ['Heavy pruning'],
+              watch: ['Hoppers'],
+              hi: { avoid: ['ज़्यादा छँटाई'], watch: ['हॉपर'] },
+            },
+          ],
+        },
+      },
+    };
+    const view = carePhaseView(fam, {
+      region: 'NORTH_INDIA',
+      stage: LifecycleStage.MATURE_BEARING,
+      now: ist('2026-05-01'),
+      lang: 'hi',
+    });
+    expect(view.avoid_now).toEqual(['ज़्यादा छँटाई']);
+    expect(view.watch_for).toEqual(['हॉपर']);
+    expect(view.note).toBe(
+      'यह आपके इलाके में आम तौर पर नहीं उगाया जाता; समय अलग हो सकता है।',
+    );
+  });
+});
