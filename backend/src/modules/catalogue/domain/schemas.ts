@@ -13,7 +13,6 @@ const month = z.number().int().min(1).max(12);
 const range = z.tuple([z.number().int().min(0), z.number().int().min(0)]);
 const windows = z.array(z.tuple([month, month]));
 const text = z.string().min(1);
-/** A Hindi text: non-empty, with Devanagari in it. */
 
 export const cropSeedSchema = z
   .object({

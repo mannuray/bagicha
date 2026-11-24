@@ -31,10 +31,15 @@ export function parseCareKey(
 }
 
 /** A family's care, or one of its kinds' (`citrus:lime`) as the engine sees it. */
-function careOfFamily(catalogue: Catalogue, family: string): FamilyCare | null {
+function careOfFamily(
+  catalogue: Pick<Catalogue, 'treeCare'>,
+  family: string,
+): FamilyCare | null {
   const [base, kindKey] = family.split(':');
   const care = catalogue.treeCare(base);
-  if (!care || !kindKey) return kindKey ? null : care;
+  if (!care) return null;
+  // A family split by kind has no care of its own: only a kind key finds one.
+  if (!kindKey) return care.kinds ? null : care;
   const kind = care.kinds?.find((k) => k.key === kindKey);
   return kind
     ? {
@@ -52,7 +57,7 @@ function careOfFamily(catalogue: Catalogue, family: string): FamilyCare | null {
  * repeat across regions with different doses). Null when it no longer exists.
  */
 export function careItemForKey(
-  catalogue: Catalogue,
+  catalogue: Pick<Catalogue, 'treeCare'>,
   sourceKey: string,
   region: RegionCluster,
 ): TreeCareItem | null {
@@ -67,8 +72,12 @@ export function careItemForKey(
         item.when.fromDays === parsed.start.days
       : item.when.kind === 'CALENDAR' &&
         item.when.from[0] === parsed.start.month &&
-        // Feb 29 is shown as Feb 28 in a normal year.
-        Math.abs(item.when.from[1] - parsed.start.day) <= 1;
+        (item.when.from[1] === parsed.start.day ||
+          // Feb 29 is shown as Feb 28 in a normal year.
+          (parsed.start.month === 2 &&
+            item.when.from[1] === 29 &&
+            parsed.start.day === 28));
+  // A window edited since the reminder was saved: the item's other window shows.
   const sameKey = resolved.care.items.filter((i) => i.key === parsed.key);
   return sameKey.find(starts) ?? sameKey[0] ?? null;
 }

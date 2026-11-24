@@ -84,11 +84,6 @@ export class PlantNamesService {
   }
 
   /**
-   * How reminders are titled in a response: as saved, or in Hindi where the
-   * sentence is known (crop reminders that saved theirs, perennial flower
-   * care, untitled ones). Tree care and typed reminders stay as saved.
-   */
-  /**
    * Hindi for saved tree-care reminders (title and how-to), from the care item
    * in the gardener's region; the saved English stays in the database.
    */
@@ -102,6 +97,11 @@ export class PlantNamesService {
     };
   }
 
+  /**
+   * How reminders are titled in a response: as saved, or in Hindi where the
+   * sentence is known (crop reminders that saved theirs, perennial flower
+   * care, untitled ones). Typed reminders stay as saved; tree care reads its Hindi through careTexter.
+   */
   async titler(lang: Lang): Promise<TaskTitler> {
     if (lang !== 'hi') return savedTitle;
     const catalogue = await this.catalogue.snapshot();
