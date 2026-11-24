@@ -1,6 +1,10 @@
 import type { FinalizeDiagnosisInput } from '../services/diagnosis-pipeline.service';
 import {
+  ArrayMaxSize,
   IsArray,
+  IsIn,
+  IsNotEmpty,
+  ValidateNested,
   IsBoolean,
   IsEnum,
   IsInt,
@@ -18,6 +22,29 @@ import {
   DiagnosisSubjectType,
   LogType,
 } from '@prisma/client';
+
+/** A photo or file the diagnosis was made from (a description, never the bytes). */
+export class DiagnosisAttachmentDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(20)
+  kind: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  source?: string;
+}
+
+/** One turn of the conversation that led to the diagnosis. */
+export class DiagnosisMessageDto {
+  @IsIn(['user', 'assistant'])
+  role: 'user' | 'assistant';
+
+  @IsString()
+  @MaxLength(2000)
+  content: string;
+}
 
 export class FinalizeDiagnosisDto implements FinalizeDiagnosisInput {
   @IsEnum(DiagnosisSubjectType)
@@ -95,8 +122,15 @@ export class FinalizeDiagnosisDto implements FinalizeDiagnosisInput {
 
   @IsOptional()
   @IsArray()
-  attachments?: Array<Record<string, unknown>>;
+  @ArrayMaxSize(10)
+  @ValidateNested({ each: true })
+  @Type(() => DiagnosisAttachmentDto)
+  attachments?: DiagnosisAttachmentDto[];
 
   @IsOptional()
-  messages?: Array<Record<string, unknown>>;
+  @IsArray()
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => DiagnosisMessageDto)
+  messages?: DiagnosisMessageDto[];
 }

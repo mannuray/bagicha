@@ -33,6 +33,12 @@ export const MAX_TASKS_FROM_DIAGNOSIS = 5;
 const DEFAULT_FOLLOW_UP_DAYS = 5;
 
 /** What a finished diagnosis contains, whether it came from the AI or a human. */
+/** What a diagnosis was made from: a description, never the bytes. */
+export interface DiagnosisAttachment {
+  kind: string;
+  source?: string;
+}
+
 export interface FinalizeDiagnosisInput {
   subject_type: DiagnosisSubjectType;
   subject_id: string;
@@ -50,8 +56,8 @@ export interface FinalizeDiagnosisInput {
   follow_up_days?: number;
   user_note?: string;
   related_event_type?: LogType;
-  attachments?: Array<Record<string, unknown>>;
-  messages?: Array<Record<string, unknown>>;
+  attachments?: DiagnosisAttachment[];
+  messages?: Array<{ role: string; content: string }>;
 }
 
 export interface FinalizeDiagnosisResult {
@@ -266,7 +272,7 @@ export class DiagnosisPipelineService {
     plantId: string,
     input: FinalizeDiagnosisInput,
     recordedAt: Date,
-    attachments: Array<Record<string, unknown>>,
+    attachments: DiagnosisAttachment[],
   ): Promise<string> {
     if (input.session_id) {
       const owned = await this.diagnoses.findOwnedSession(
