@@ -14,7 +14,7 @@ describe('scan photo previews', () => {
       </TestProviders>
     );
     const { result } = renderHook(() => useScanState(), { wrapper });
-    const scanWith = (url: string | null) => ({ mode: 'identify' as const, base64: 'x', previewUrl: url });
+    const scanWith = (url: string | null) => ({ mode: 'identify' as const, base64: 'x', previewUrl: url, retryKey: 'retry-key-1' });
 
     act(() => result.current.setScan(scanWith(result.current.previewOf(new Blob(['a'])))));
     expect(result.current.scan?.previewUrl).toBe('blob:1');
@@ -32,7 +32,7 @@ describe('scan photo previews', () => {
       </TestProviders>
     );
     const { result, unmount } = renderHook(() => useScanState(), { wrapper });
-    act(() => result.current.setScan({ mode: 'identify', base64: 'x', previewUrl: result.current.previewOf(new Blob(['a'])) }));
+    act(() => result.current.setScan({ mode: 'identify', base64: 'x', previewUrl: result.current.previewOf(new Blob(['a'])), retryKey: 'retry-key-1' }));
     unmount();
     expect(previews.revoke).toHaveBeenCalledWith('blob:9');
   });
@@ -47,7 +47,7 @@ describe('scan photo previews', () => {
       </TestProviders>
     );
     const { result } = renderHook(() => useScanState(), { wrapper });
-    act(() => result.current.setScan({ mode: 'identify', base64: 'x', previewUrl: result.current.previewOf(new Blob(['a'])) }));
+    act(() => result.current.setScan({ mode: 'identify', base64: 'x', previewUrl: result.current.previewOf(new Blob(['a'])), retryKey: 'retry-key-1' }));
     act(() => session.expire());
     expect(previews.revoke).toHaveBeenCalledWith('blob:7');
     act(() => session.signIn('t2', user));

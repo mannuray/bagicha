@@ -124,6 +124,32 @@ describe('log a moment', () => {
     expect(keys[1]).toBe(keys[0]);
   });
 
+  it('with a photo, saving again after a failure reuses the upload and the key', async () => {
+    plantHandler();
+    let uploads = 0;
+    const keys: (string | null)[] = [];
+    server.use(
+      http.post(`${API}/media/images`, () => {
+        uploads += 1;
+        return HttpResponse.json(ok({ key: `journal/u1/p${uploads}.jpg`, url: 'u', width: 10, height: 10, is_public: false }), { status: 201 });
+      }),
+      http.post(`${API}/ledger/plants/p1/journal`, ({ request }) => {
+        keys.push(request.headers.get('Idempotency-Key'));
+        return keys.length === 1
+          ? HttpResponse.json(fail('INTERNAL'), { status: 500 })
+          : HttpResponse.json(ok(entry()), { status: 201 });
+      }),
+    );
+    renderWithApp(screenTree, { route: '/plants/p1/log' });
+    await userEvent.upload(await screen.findByLabelText(/add a photo/i), new File(['x'], 'leaf.jpg', { type: 'image/jpeg' }));
+    await userEvent.click(screen.getByRole('button', { name: /save to biography/i }));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /save to biography/i }));
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/plants/p1'));
+    expect(uploads).toBe(1);
+    expect(keys[1]).toBe(keys[0]);
+  });
+
   it('keeps the form and saves nothing when the photo upload fails', async () => {
     plantHandler();
     let posts = 0;

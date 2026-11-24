@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ApiError } from './errors';
+import { randomId } from './random-id';
 import { reportError } from './report-error';
 import type { TokenStore } from './token-store';
 
@@ -87,18 +88,12 @@ const successEnvelope = z.object({
   pagination: pageMetaSchema.optional(),
 });
 
-/** crypto.randomUUID only exists on secure origins; a phone on plain-http LAN has getRandomValues. */
-export function cryptoRequestId(): string {
-  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-}
 
 /** One typed client for the backend: unwraps the envelope, validates with zod, maps errors. */
 export function createApiClient(opts: ApiClientOptions): ApiClient {
   const doFetch = opts.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
   const report = opts.report ?? reportError;
-  const nextRequestId = opts.requestId ?? cryptoRequestId;
+  const nextRequestId = opts.requestId ?? randomId;
   const origin = opts.origin ?? globalThis.location?.origin ?? 'http://localhost';
 
   function contractError(status: number, path: string, cause: unknown): ApiError {

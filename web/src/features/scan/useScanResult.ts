@@ -15,5 +15,5 @@ function useScanResult<T>(mode: ScanMode, send: (vision: ReturnType<typeof useVi
   return { scan: mine, ...request };
 }
 
-export const useDiagnoseResult = () => useScanResult('diagnose', (vision, scan) => vision.diagnose(diagnosePayload(scan)));
+export const useDiagnoseResult = () => useScanResult('diagnose', (vision, scan) => vision.diagnose(diagnosePayload(scan), scan.retryKey));
 export const useIdentifyResult = () => useScanResult('identify', (vision, scan) => vision.identify(identifyPayload(scan)));

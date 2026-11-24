@@ -1,4 +1,4 @@
-import { cryptoRequestId } from './api-client';
+import { randomId } from './random-id';
 
 /**
  * An Idempotency-Key for one thing the gardener is saving: the same key while
@@ -11,7 +11,7 @@ export function createRetryKey() {
   return {
     keyFor(body: unknown): string {
       const sent = JSON.stringify(body);
-      if (last?.body !== sent) last = { body: sent, key: cryptoRequestId() };
+      if (last?.body !== sent) last = { body: sent, key: randomId() };
       return last.key;
     },
     done(): void {

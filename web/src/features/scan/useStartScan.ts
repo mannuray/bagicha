@@ -1,3 +1,4 @@
+import { randomId } from '../../lib/random-id';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useImageCompressor } from '../journal';
@@ -38,6 +39,7 @@ export function useStartScan() {
         mode,
         base64: compressed.base64,
         previewUrl: previewOf(compressed.blob),
+        retryKey: randomId(),
         ...(mode === 'diagnose' ? { plantId, plantName, note: note.trim() || undefined } : {}),
       });
       navigate(mode === 'diagnose' ? '/scan/diagnose' : '/scan/identify');

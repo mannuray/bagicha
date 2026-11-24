@@ -10,6 +10,8 @@ export interface PendingScan {
   plantId?: string;
   plantName?: string;
   note?: string;
+  /** Sent as Idempotency-Key: a retried diagnosis of this scan is saved once, even after a remount. */
+  retryKey: string;
 }
 
 /** One send of a scan; outlives the result screen so going back and forth doesn't re-send. */
