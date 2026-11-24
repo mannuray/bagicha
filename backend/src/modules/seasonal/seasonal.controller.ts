@@ -39,7 +39,8 @@ export class SeasonalController {
     );
   }
 
-  @Get('plant/:id/intelligence')
+  // Plural like ledger/plants; the singular stays until the web has moved.
+  @Get(['plants/:id/intelligence', 'plant/:id/intelligence'])
   async getTreeIntelligence(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
@@ -48,7 +49,7 @@ export class SeasonalController {
     return this.intelligence.getTreeIntelligence(req.user.id, id, lang);
   }
 
-  @Post('plant/:id/materialize-tasks')
+  @Post(['plants/:id/materialize-tasks', 'plant/:id/materialize-tasks'])
   async materializeTasks(
     @Request() req: AuthedRequest,
     @Param('id') id: string,

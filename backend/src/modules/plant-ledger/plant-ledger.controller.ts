@@ -1,3 +1,4 @@
+import { Idempotent } from '../../common/http/idempotent.decorator';
 import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
   Body,
@@ -5,6 +6,7 @@ import {
   Get,
   Param,
   Post,
+  Patch,
   Put,
   Query,
   Request,
@@ -114,6 +116,17 @@ export class PlantLedgerController {
     return this.plants.getSeasonalState(req.user.id, id);
   }
 
+  /** Partial update: PATCH is the name to use; PUT stays until the web has moved. */
+  @Patch('plants/:id')
+  patchPlant(
+    @Request() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body() dto: UpdatePlantDto,
+    @RequestLang() lang: Lang,
+  ) {
+    return this.updatePlant(req, id, dto, lang);
+  }
+
   @Put('plants/:id')
   async updatePlant(
     @Request() req: AuthedRequest,
@@ -128,6 +141,7 @@ export class PlantLedgerController {
   }
 
   @Post('plants/:id/journal')
+  @Idempotent()
   async addLog(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
@@ -222,5 +236,17 @@ export class PlantLedgerController {
       await this.names.titler(lang),
       await this.names.careTexter(lang, regionFor(req.user)),
     );
+  }
+
+  /** PATCH is the name to use; PUT stays until the web has moved. */
+  @Patch('plants/:id/tasks/:taskId')
+  patchTaskStatus(
+    @Request() req: AuthedRequest,
+    @Param('id') id: string,
+    @Param('taskId') taskId: string,
+    @Body() dto: UpdateTaskStatusDto,
+    @RequestLang() lang: Lang,
+  ) {
+    return this.updateTaskStatus(req, id, taskId, dto, lang);
   }
 }

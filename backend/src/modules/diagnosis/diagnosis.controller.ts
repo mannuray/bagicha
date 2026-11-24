@@ -1,3 +1,4 @@
+import { Idempotent } from '../../common/http/idempotent.decorator';
 import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
   Body,
@@ -19,6 +20,7 @@ export class DiagnosisController {
   constructor(private readonly pipeline: DiagnosisPipelineService) {}
 
   @Post('finalize')
+  @Idempotent()
   @RateLimit('ai')
   @HttpCode(HttpStatus.OK)
   async finalize(

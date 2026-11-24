@@ -631,9 +631,27 @@ model Message {
   sender   User @relation("SentMessages", fields: [sender_id], references: [id])
   receiver User @relation("ReceivedMessages", fields: [receiver_id], references: [id])
 
+  latest_of Conversation?
+
   @@index([sender_id, receiver_id, created_at])
   @@index([receiver_id, created_at])
   @@map("messages")
+}
+
+/// One row per pair of people who have messaged (user_a < user_b): the inbox
+/// lists these, newest first, without reading every message.
+model Conversation {
+  user_a          String
+  user_b          String
+  last_message_id String   @unique
+  last_at         DateTime
+
+  last_message Message @relation(fields: [last_message_id], references: [id])
+
+  @@id([user_a, user_b])
+  @@index([user_a, last_at])
+  @@index([user_b, last_at])
+  @@map("conversations")
 }
 
 model ExpertVerification {
