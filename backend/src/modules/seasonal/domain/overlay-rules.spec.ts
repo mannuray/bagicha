@@ -84,7 +84,8 @@ describe('dryness overlay text', () => {
   it('reads a saved overlay in Hindi where the catalogue has it, English otherwise', () => {
     const hindi = seededCatalogue({
       ...CATALOGUE_SEED,
-      advice: CATALOGUE_SEED.advice.map((a) =>
+      // Only one line in Hindi, to show the rest falls back to English.
+      advice: CATALOGUE_SEED.advice.map(({ hi: _hi, ...a }) =>
         a.key === 'overlay.dryness.water_today'
           ? { ...a, hi: 'आज पानी दें' }
           : a,
