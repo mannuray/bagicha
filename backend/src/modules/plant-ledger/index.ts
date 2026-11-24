@@ -10,8 +10,7 @@ export type {
 export { CycleService } from './services/cycle.service';
 export { TaskService } from './services/task.service';
 export type { TaskCreationResult, TaskDraft } from './services/task.service';
-export { SeasonalIntelligenceService } from './services/seasonal-intelligence.service';
-export type { TreeSeasonalState } from './services/seasonal-intelligence.service';
+export type { TreeSeasonView } from './domain/care/season-view';
 export { SpeciesNormalizationService } from './services/species-normalization.service';
 export type { SpeciesResolver } from './domain/species-resolver';
 export {

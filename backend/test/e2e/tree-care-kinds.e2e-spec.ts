@@ -123,7 +123,7 @@ describe('tree care by kind (citrus)', () => {
     ]);
   });
 
-  it('clearing the variety cancels them and the tree gets season-pack tasks', async () => {
+  it('clearing the variety cancels them, with no season-pack filler in their place', async () => {
     const plant = await citrus('Kagzi');
     await materialize(plant.id);
     await setVariety(plant.id, null);
@@ -131,6 +131,6 @@ describe('tree care by kind (citrus)', () => {
     expect(await pendingCare(plant.id)).toEqual([]);
     const all = (await as().get(`/api/v1/ledger/plants/${plant.id}/tasks`)).body
       .data as Array<{ source: string }>;
-    expect(all.some((t) => t.source === 'SEASONAL_PACK')).toBe(true);
+    expect(all.some((t) => t.source === 'SEASONAL_PACK')).toBe(false);
   });
 });

@@ -42,12 +42,13 @@ describe('data integrity', () => {
     expect(await prisma.auditEvent.count()).toBe(1);
   });
 
-  it('materializing twice at once makes one copy of each seasonal task', async () => {
-    // Custard apple is still on season packs (guava, litchi and others now have dated care).
+  it('materializing twice at once makes one copy of each care reminder', async () => {
+    // Mango has reviewed care in the test gardener's region; pending families get no tasks now.
     const plant = await seedPlant(prisma, alice.id, {
       planting_date: new Date('2018-01-01'),
-      species: 'Custard apple',
-      species_family: 'custard_apple',
+      species: 'Mango',
+      species_family: 'mango',
+      lifecycle_stage: 'MATURE_BEARING',
     });
     const materialize = () =>
       request(app.getHttpServer())
@@ -56,7 +57,7 @@ describe('data integrity', () => {
     const [a, b] = await Promise.all([materialize(), materialize()]);
     expect([a.status, b.status]).toEqual([201, 201]);
     const tasks = await prisma.task.findMany({
-      where: { plant_id: plant.id, source: 'SEASONAL_PACK', status: 'PENDING' },
+      where: { plant_id: plant.id, source: 'TREE_CARE', status: 'PENDING' },
     });
     const keys = tasks.map((t) => t.source_key);
     expect(tasks.length).toBeGreaterThan(0);

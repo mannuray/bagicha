@@ -125,7 +125,8 @@ describe('plant ledger loop', () => {
       `/api/v1/ledger/plants/${plantId}/seasonal-state`,
     );
     expect(state.status).toBe(200);
-    expect(state.body.data.species_family).toBe('mango');
+    // Stage 4: the tree's reviewed care for this season, or "care coming".
+    expect(['reviewed', 'coming']).toContain(state.body.data.care_status);
 
     const updated = await a.put(`/api/v1/ledger/plants/${plantId}`, {
       name: 'Aam (old)',

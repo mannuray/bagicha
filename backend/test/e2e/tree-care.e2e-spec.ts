@@ -195,7 +195,8 @@ describe('tree care families', () => {
     expect(
       all.filter((t) => t.source === 'TREE_CARE' && t.status === 'PENDING'),
     ).toEqual([]);
-    expect(all.some((t) => t.source === 'SEASONAL_PACK')).toBe(true);
+    // No season-pack filler in its place (stage 4).
+    expect(all.some((t) => t.source === 'SEASONAL_PACK')).toBe(false);
   });
 
   it('intelligence for a care family reads the phase from care data', async () => {
@@ -236,7 +237,7 @@ describe('tree care families', () => {
     ).toBe(true);
   });
 
-  it('pending family keeps season pack behaviour', async () => {
+  it('a family without reviewed care is "care coming", with no season-pack tasks', async () => {
     const guava = await seedPlant(prisma, alice.id, {
       species: 'Guava',
       species_family: 'guava',
@@ -244,12 +245,11 @@ describe('tree care families', () => {
     });
     await materialize(guava.id);
     const sources = (await tasks(guava.id)).map((t) => t.source);
-    expect(sources.length).toBeGreaterThan(0);
-    expect(sources.every((s) => s === 'SEASONAL_PACK')).toBe(true);
+    expect(sources).toEqual([]);
     const res = await as(alice).get(
       `/api/v1/seasonal/plant/${guava.id}/intelligence`,
     );
-    expect(res.body.data.seasonal_pack.current_phase).not.toBe('fixture_phase');
+    expect(res.body.data.care_status).toBe('coming');
     expect(res.body.data.care_note).toBeNull();
   });
 
@@ -379,7 +379,7 @@ describe('tree care families', () => {
     expect(res.body.data.care_this_month).toEqual([]);
   });
 
-  it('a gardener in a region still pending verification keeps the season pack', async () => {
+  it('a gardener in a region still pending verification gets "care coming"', async () => {
     const cara = await seedUser(prisma, {
       district: 'Bhopal',
       region_cluster: 'CENTRAL_INDIA',
@@ -391,12 +391,11 @@ describe('tree care families', () => {
     });
     await materialize(plant.id, cara);
     const sources = (await tasks(plant.id, cara)).map((t) => t.source);
-    expect(sources).not.toContain('TREE_CARE');
-    expect(sources).toContain('SEASONAL_PACK');
+    expect(sources).toEqual([]);
     const res = await as(cara).get(
       `/api/v1/seasonal/plant/${plant.id}/intelligence`,
     );
-    expect(res.body.data.seasonal_pack.current_phase).not.toBe('fixture_phase');
+    expect(res.body.data.care_status).toBe('coming');
     expect(res.body.data.care_this_month).toEqual([]);
   });
 });
