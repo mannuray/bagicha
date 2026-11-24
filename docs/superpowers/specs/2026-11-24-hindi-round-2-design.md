@@ -64,9 +64,10 @@ lines (kept as written).
   Not found → the saved English stays. The database keeps the saved English. *(Design review.)*
 
 **Content:**
-- Hindi drafted per family and for the season tips in everyday Hindi (round 1's style guide and
-  glossary: plain words a gardener uses — खाद, गोबर की खाद, छिड़काव, दस्ताने; product names stay as
-  written; numbers as digits).
+- Hindi drafted per family and for the season tips in everyday Hindi (round 1's owner-decided style,
+  `2026-11-15-hindi-translation-design.md`: everyday spoken Hindi, keeping the English words people
+  say — "स्प्रे करें", not "छिड़काव"; खाद, गोबर की खाद, दस्ताने; product names stay as written;
+  digits 0–9).
 - **Owner review gate:** one Claude Doc per batch (tree care; season tips) with English beside
   Hindi; nothing is pushed before an explicit yes.
 
