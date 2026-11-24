@@ -59,3 +59,4 @@ export type {
   PhaseWindow,
   RegionCare,
 } from './domain/care';
+export { careFor } from './domain/care/care-for';

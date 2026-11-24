@@ -6,6 +6,9 @@ import { Job } from 'bullmq';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { addDays, Clock } from '../../../common/time';
 import { TaskDraft, TaskService } from '../services/task.service';
+import { regionFor } from '../../regions';
+import { careFor } from '../domain/care/care-for';
+import { PlantRepository } from '../repositories/plant.repository';
 
 export const TASK_GENERATION_QUEUE = 'task-generation';
 
@@ -26,6 +29,7 @@ export class TaskProcessor extends WorkerHost {
     private readonly logger: PinoLogger,
     private readonly species: SpeciesNormalizationService,
     private readonly catalogue: CatalogueStore,
+    private readonly plants: PlantRepository,
   ) {
     super();
   }
@@ -56,14 +60,22 @@ export class TaskProcessor extends WorkerHost {
       dueDate,
     });
 
-    // A family with reviewed care gets its first tasks from its care calendar
-    // (materialised when the plant opens); the rest get a first watering check.
+    // A tree whose reviewed care applies gets its first tasks from that care
+    // (materialised when the plant opens); the rest get a first watering check:
+    // no care for its family or kind, or its region not yet checked.
+    const plant = await this.plants.findOwnedWithOwnerLocation(
+      user_id,
+      plant_id,
+    );
+    if (!plant) return { created_count: 0 };
     const family = (await this.species.resolver()).family({ species });
-    // A family split by kind (citrus) has care only for a tree of a known kind;
-    // the job knows only the species, so a plain "Lemon" keeps the watering check.
-    if ((await this.catalogue.snapshot()).treeCareFor(family, { species })) {
-      return { created_count: 0 };
-    }
+    const care = careFor(
+      await this.catalogue.snapshot(),
+      family,
+      { species, variety: plant.variety, name: plant.name },
+      regionFor(plant.user),
+    );
+    if (care) return { created_count: 0 };
     const drafts = [draft(TaskType.WATER, addDays(now, 3))];
 
     const results = await this.tasks.createTasks(user_id, plant_id, drafts);
