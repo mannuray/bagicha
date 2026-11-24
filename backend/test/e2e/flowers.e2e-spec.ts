@@ -49,6 +49,8 @@ describe('perennial flowers', () => {
         request(server).post(url).set(auth).send(body),
       put: (url: string, body: object) =>
         request(server).put(url).set(auth).send(body),
+      patch: (url: string, body: object) =>
+        request(server).patch(url).set(auth).send(body),
     };
   };
   const addFlower = async (species: string) =>
@@ -60,7 +62,7 @@ describe('perennial flowers', () => {
       })
     ).body.data;
   const materialize = async (id: string) =>
-    (await as(alice).post(`/api/v1/seasonal/plant/${id}/materialize-tasks`))
+    (await as(alice).post(`/api/v1/seasonal/plants/${id}/materialize-tasks`))
       .body.data;
   // Every new plant gets a generic "water it in" SYSTEM task; these tests look at the rest.
   type Task = { id: string; source: string; title: string; status: string };
@@ -77,7 +79,7 @@ describe('perennial flowers', () => {
     let tasks = await tasksOf(rose.id);
     expect(tasks.map((t) => t.source)).toEqual(['FLOWER_CARE']);
     expect(tasks[0].title).toMatch(/prune the rose/i);
-    await as(alice).put(
+    await as(alice).patch(
       `/api/v1/ledger/plants/${rose.id}/tasks/${tasks[0].id}`,
       { status: 'COMPLETED' },
     );

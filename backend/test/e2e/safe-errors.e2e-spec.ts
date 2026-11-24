@@ -94,7 +94,7 @@ describe('safe errors and request ids', () => {
 
   it('rejects a field the endpoint does not take, instead of silently dropping it', async () => {
     const res = await request(app.getHttpServer())
-      .put('/api/v1/user/profile/update')
+      .patch('/api/v1/user/profile')
       .set(as(alice))
       .send({ name: 'Asha', nmae: 'typo' });
     expect(res.status).toBe(422);

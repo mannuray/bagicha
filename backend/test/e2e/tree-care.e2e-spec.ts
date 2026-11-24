@@ -129,7 +129,7 @@ describe('tree care families', () => {
       lifecycle_stage: 'MATURE_BEARING',
     });
   const materialize = (id: string, user = alice) =>
-    as(user).post(`/api/v1/seasonal/plant/${id}/materialize-tasks`);
+    as(user).post(`/api/v1/seasonal/plants/${id}/materialize-tasks`);
   type TaskRow = {
     title: string;
     source: string;
@@ -202,7 +202,7 @@ describe('tree care families', () => {
   it('intelligence for a care family reads the phase from care data', async () => {
     const plant = await mango();
     const res = await as(alice).get(
-      `/api/v1/seasonal/plant/${plant.id}/intelligence`,
+      `/api/v1/seasonal/plants/${plant.id}/intelligence`,
     );
     expect(res.status).toBe(200);
     expect(res.body.data.seasonal_pack).toMatchObject({
@@ -226,7 +226,7 @@ describe('tree care families', () => {
       lifecycle_stage: 'MATURE_BEARING',
     });
     const res = await as(bob).get(
-      `/api/v1/seasonal/plant/${plant.id}/intelligence`,
+      `/api/v1/seasonal/plants/${plant.id}/intelligence`,
     );
     expect(res.body.data.care_note).toBe(
       'Not usually grown in your region; timings may differ.',
@@ -247,7 +247,7 @@ describe('tree care families', () => {
     const sources = (await tasks(guava.id)).map((t) => t.source);
     expect(sources).toEqual([]);
     const res = await as(alice).get(
-      `/api/v1/seasonal/plant/${guava.id}/intelligence`,
+      `/api/v1/seasonal/plants/${guava.id}/intelligence`,
     );
     expect(res.body.data.care_status).toBe('coming');
     expect(res.body.data.care_note).toBeNull();
@@ -270,7 +270,7 @@ describe('tree care families', () => {
       content: 'soil very dry, leaves drooping',
     });
     const res = await as(paid).get(
-      `/api/v1/seasonal/plant/${plant.id}/intelligence`,
+      `/api/v1/seasonal/plants/${plant.id}/intelligence`,
     );
     expect(res.body.data.personalized_overlay.adjusted_phase).toBe(
       'fixture_phase_with_dryness_attention',
@@ -346,7 +346,7 @@ describe('tree care families', () => {
   it('the plant page lists this month\'s care with how-to, including capped and "if you see it" items', async () => {
     const plant = await mango();
     const res = await as(alice).get(
-      `/api/v1/seasonal/plant/${plant.id}/intelligence`,
+      `/api/v1/seasonal/plants/${plant.id}/intelligence`,
     );
     const month = res.body.data.care_this_month as Array<{
       title: string;
@@ -374,7 +374,7 @@ describe('tree care families', () => {
       species_family: 'guava',
     });
     const res = await as(alice).get(
-      `/api/v1/seasonal/plant/${guava.id}/intelligence`,
+      `/api/v1/seasonal/plants/${guava.id}/intelligence`,
     );
     expect(res.body.data.care_this_month).toEqual([]);
   });
@@ -393,7 +393,7 @@ describe('tree care families', () => {
     const sources = (await tasks(plant.id, cara)).map((t) => t.source);
     expect(sources).toEqual([]);
     const res = await as(cara).get(
-      `/api/v1/seasonal/plant/${plant.id}/intelligence`,
+      `/api/v1/seasonal/plants/${plant.id}/intelligence`,
     );
     expect(res.body.data.care_status).toBe('coming');
     expect(res.body.data.care_this_month).toEqual([]);

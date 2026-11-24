@@ -35,6 +35,8 @@ describe('plant ledger loop', () => {
         request(server).post(url).set(auth).send(body),
       put: (url: string, body: object) =>
         request(server).put(url).set(auth).send(body),
+      patch: (url: string, body: object) =>
+        request(server).patch(url).set(auth).send(body),
     };
   };
 
@@ -100,7 +102,7 @@ describe('plant ledger loop', () => {
       source_summary: 'Created from pest diagnosis log: mealybugs on new flush',
     });
 
-    const done = await a.put(
+    const done = await a.patch(
       `/api/v1/ledger/plants/${plantId}/tasks/${followUp!.id as string}`,
       { status: 'COMPLETED' },
     );
@@ -129,7 +131,7 @@ describe('plant ledger loop', () => {
     expect(state.body.data.care_status).toBe('reviewed');
     expect(state.body.data.current_phase).toEqual(expect.any(String));
 
-    const updated = await a.put(`/api/v1/ledger/plants/${plantId}`, {
+    const updated = await a.patch(`/api/v1/ledger/plants/${plantId}`, {
       name: 'Aam (old)',
     });
     expect(updated.body.data.name).toBe('Aam (old)');
@@ -149,9 +151,9 @@ describe('plant ledger loop', () => {
       b.get(`${base}/cycles`),
       b.get(`${base}/tasks`),
       b.get(`${base}/mitigation-plan`),
-      b.put(base, { name: 'stolen' }),
+      b.patch(base, { name: 'stolen' }),
       b.post(`${base}/journal`, { type: 'NOTE' }),
-      b.put(`${base}/tasks/${task.id}`, { status: 'COMPLETED' }),
+      b.patch(`${base}/tasks/${task.id}`, { status: 'COMPLETED' }),
     ]);
     for (const res of responses) {
       expect(res.status).toBe(404);
@@ -275,7 +277,7 @@ describe('plant ledger loop', () => {
       display_name: "Dadi's mango",
     });
     await request(server)
-      .put(`/api/v1/ledger/plants/${plant.id}`)
+      .patch(`/api/v1/ledger/plants/${plant.id}`)
       .set(hi)
       .send({ planted_context: 'GROUND' });
     const after = (

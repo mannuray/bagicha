@@ -84,7 +84,7 @@ describe('tree care by kind (citrus)', () => {
     };
   };
   const materialize = (id: string) =>
-    as().post(`/api/v1/seasonal/plant/${id}/materialize-tasks`);
+    as().post(`/api/v1/seasonal/plants/${id}/materialize-tasks`);
   const pendingCare = async (id: string) =>
     (
       (await as().get(`/api/v1/ledger/plants/${id}/tasks`)).body.data as Array<{

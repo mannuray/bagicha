@@ -26,7 +26,7 @@ describe('profile region', () => {
 
   const update = (body: object) =>
     request(app.getHttpServer())
-      .put('/api/v1/user/profile/update')
+      .patch('/api/v1/user/profile')
       .set('Authorization', `Bearer ${tokenFor(app, user)}`)
       .send(body);
 

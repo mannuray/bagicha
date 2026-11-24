@@ -182,7 +182,7 @@ describe('plant ownership', () => {
 
     it("PUT plants/:id/tasks/:taskId returns 404 for another user's plant", async () => {
       const res = await request(app.getHttpServer())
-        .put(`/api/v1/ledger/plants/${alicePlant.id}/tasks/nope`)
+        .patch(`/api/v1/ledger/plants/${alicePlant.id}/tasks/nope`)
         .set('Authorization', `Bearer ${tokenFor(app, bob)}`)
         .send({ status: 'COMPLETED' });
       expect(res.status).toBe(404);
