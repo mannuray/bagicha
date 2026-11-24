@@ -1,4 +1,6 @@
 import { DropLevel, JournalEntry, LogType, YieldQuality } from '@prisma/client';
+import type { AdviceRef, Catalogue } from '../../catalogue';
+import type { Lang } from '../../../common/http/lang';
 
 export function parseDropLevel(metadata: unknown, key: string): DropLevel {
   const value = (metadata as Record<string, unknown> | null | undefined)?.[key];
@@ -65,6 +67,7 @@ export function parseYieldQuality(quality: unknown): YieldQuality {
   }
 }
 
+/** One season's summary as advice pieces (the English joins them with spaces). */
 export function buildCycleSummary(input: {
   flowering: Date | null;
   fruitSet: Date | null;
@@ -73,41 +76,47 @@ export function buildCycleSummary(input: {
   fruitDropLevel: DropLevel;
   stressScore: number;
   pestPressureScore: number;
-}): string {
-  const parts: string[] = [];
-
-  if (input.flowering) {
-    parts.push('Flowering was recorded');
-  } else {
-    parts.push('No flowering record was added');
-  }
-
-  if (input.fruitSet) {
-    parts.push('fruit set was observed');
-  } else if (input.flowering) {
-    parts.push('but fruit set was not confirmed');
-  }
-
-  if (input.harvestCount > 0) {
-    parts.push(
-      `and ${input.harvestCount} harvest event${input.harvestCount > 1 ? 's were' : ' was'} logged`,
-    );
-  }
-
+}): AdviceRef[] {
+  const parts: AdviceRef[] = [];
+  parts.push({
+    key: input.flowering
+      ? 'cycle.summary.flowering'
+      : 'cycle.summary.no_flowering',
+  });
+  if (input.fruitSet) parts.push({ key: 'cycle.summary.fruit_set' });
+  else if (input.flowering) parts.push({ key: 'cycle.summary.no_fruit_set' });
+  if (input.harvestCount > 0)
+    parts.push({
+      key:
+        input.harvestCount > 1
+          ? 'cycle.summary.harvests_many'
+          : 'cycle.summary.harvests_one',
+      params: { count: input.harvestCount },
+    });
   if (
     input.flowerDropLevel === DropLevel.HIGH ||
     input.fruitDropLevel === DropLevel.HIGH
-  ) {
-    parts.push('with high drop pressure during the cycle');
-  }
+  )
+    parts.push({ key: 'cycle.summary.high_drop' });
+  if (input.stressScore > 0 || input.pestPressureScore > 0)
+    parts.push({
+      key: 'cycle.summary.signals',
+      params: { stress: input.stressScore, pests: input.pestPressureScore },
+    });
+  return parts;
+}
 
-  if (input.stressScore > 0 || input.pestPressureScore > 0) {
-    parts.push(
-      `while ${input.stressScore} stress and ${input.pestPressureScore} pest signals were recorded`,
-    );
-  }
-
-  return `${parts.join(' ')}.`;
+/** The summary pieces as one sentence in the gardener's language. */
+export function renderCycleSummary(
+  parts: AdviceRef[],
+  catalogue: Pick<Catalogue, 'advice' | 'adviceHasHindi'>,
+  lang: Lang,
+): string {
+  // Hindi joins only a fully Hindi sentence; until then it reads as English.
+  const hindi =
+    lang === 'hi' && parts.every((p) => catalogue.adviceHasHindi(p.key));
+  const words = parts.map((p) => catalogue.advice(p, hindi ? 'hi' : 'en'));
+  return hindi ? `${words.join(', ')}।` : `${words.join(' ')}.`;
 }
 
 export function buildRecommendedActions(input: {
@@ -119,51 +128,24 @@ export function buildRecommendedActions(input: {
   stressScore: number;
   pestPressureScore: number;
   treatmentCount: number;
-}): string[] {
-  const actions: string[] = [];
-
-  if (input.flowering && !input.fruitSet) {
-    actions.push(
-      'Inspect flowering closely next cycle and confirm fruit set early.',
-    );
-  }
-
+}): AdviceRef[] {
+  const actions: AdviceRef[] = [];
+  const add = (key: string) => actions.push({ key: `cycle.next.${key}` });
+  if (input.flowering && !input.fruitSet) add('confirm_fruit_set');
   if (
     input.flowerDropLevel === DropLevel.MEDIUM ||
     input.flowerDropLevel === DropLevel.HIGH
-  ) {
-    actions.push(
-      'Track flower drop severity early and stabilize watering during bloom.',
-    );
-  }
-
+  )
+    add('track_flower_drop');
   if (
     input.fruitDropLevel === DropLevel.MEDIUM ||
     input.fruitDropLevel === DropLevel.HIGH
-  ) {
-    actions.push(
-      'Watch fruit retention next cycle and log drop before harvest declines.',
-    );
-  }
-
-  if (input.stressScore > 0) {
-    actions.push(
-      'Plan moisture checks around flowering and fruit-development windows.',
-    );
-  }
-
-  if (input.pestPressureScore > 0 && input.treatmentCount === 0) {
-    actions.push(
-      'Add a follow-up treatment or inspection plan when pests are recorded.',
-    );
-  }
-
-  if (input.harvestCount === 0) {
-    actions.push(
-      'Keep recording flowering, fruit set, and harvest to compare the next cycle properly.',
-    );
-  }
-
+  )
+    add('watch_fruit_retention');
+  if (input.stressScore > 0) add('moisture_checks');
+  if (input.pestPressureScore > 0 && input.treatmentCount === 0)
+    add('treatment_plan');
+  if (input.harvestCount === 0) add('keep_recording');
   return actions.slice(0, 4);
 }
 
@@ -196,8 +178,15 @@ function seasonYield(harvests: CycleEntry[]): {
   };
 }
 
-/** Everything refreshCycleSummary writes to a PlantCycle, computed from its entries (oldest first). */
-export function buildCycleSnapshot(journal_entries: CycleEntry[]) {
+/**
+ * Everything refreshCycleSummary writes to a PlantCycle, computed from its
+ * entries (oldest first). The texts are saved in English (and as advice keys,
+ * which reads render in the gardener's language).
+ */
+export function buildCycleSnapshot(
+  journal_entries: CycleEntry[],
+  catalogue: Pick<Catalogue, 'advice' | 'adviceHasHindi'>,
+) {
   const flowering =
     journal_entries.find((log) => log.type === LogType.FLOWERING)?.timestamp ??
     null;
@@ -267,7 +256,11 @@ export function buildCycleSnapshot(journal_entries: CycleEntry[]) {
     stress_score: stressScore,
     pest_pressure_score: pestPressureScore,
     treatment_count: treatmentCount,
-    cycle_summary: summary,
-    recommended_next_cycle_actions: nextActions,
+    cycle_summary: renderCycleSummary(summary, catalogue, 'en'),
+    recommended_next_cycle_actions: nextActions.map((a) =>
+      catalogue.advice(a, 'en'),
+    ),
+    cycle_summary_refs: summary,
+    recommended_actions_refs: nextActions,
   };
 }

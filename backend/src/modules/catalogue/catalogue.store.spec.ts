@@ -179,6 +179,7 @@ describe('CatalogueStore', () => {
       flowerCount: CATALOGUE_SEED.perennialFlowers.length,
       treeCareCount: CATALOGUE_SEED.treeCare.length,
       seasonGuideCount: CATALOGUE_SEED.seasonGuide.length,
+      adviceCount: CATALOGUE_SEED.advice.length,
     });
   });
 

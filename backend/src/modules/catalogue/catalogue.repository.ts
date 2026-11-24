@@ -13,6 +13,7 @@ import type {
 } from './domain/types';
 import type { TreeCareSeed } from './domain/tree-care';
 import type { SeasonGuideSeed } from './domain/season-guide';
+import type { AdviceSeed } from './domain/advice';
 
 /** A record as the push writes it: its seed record and its place in the catalogue. */
 export type Ordered<T> = T & { sort_order: number };
@@ -27,6 +28,7 @@ export interface CatalogueWrite {
   perennialFlowers: Ordered<PerennialFlowerSeed>[];
   treeCare: TreeCareSeed[];
   seasonGuide: SeasonGuideSeed[];
+  advice: AdviceSeed[];
 }
 
 /**
@@ -56,6 +58,7 @@ export class CatalogueRepository {
       flowers,
       care,
       guides,
+      advice,
     ] = await Promise.all([
       this.prisma.catalogueCrop.findMany(inOrder),
       this.prisma.catalogueMethod.findMany({
@@ -76,6 +79,10 @@ export class CatalogueRepository {
       this.prisma.catalogueSeasonGuide.findMany({
         where,
         orderBy: { region: 'asc' },
+      }),
+      this.prisma.catalogueAdvice.findMany({
+        where,
+        orderBy: { key: 'asc' },
       }),
     ]);
     return {
@@ -154,6 +161,15 @@ export class CatalogueRepository {
             status: row.status,
             notes: row.notes,
           }) as SeasonGuideSeed,
+      ),
+      advice: advice.map(
+        (row) =>
+          ({
+            ...(row.data as object),
+            key: row.key,
+            status: row.status,
+            notes: row.notes,
+          }) as AdviceSeed,
       ),
     };
   }
@@ -255,6 +271,16 @@ export class CatalogueRepository {
         'region',
         write.seasonGuide.map(({ region, status, notes, ...data }) => ({
           region,
+          status,
+          notes,
+          data: json(data),
+        })),
+      );
+      await writeRows(
+        tx.catalogueAdvice as unknown as Table,
+        'key',
+        write.advice.map(({ key, status, notes, ...data }) => ({
+          key,
           status,
           notes,
           data: json(data),

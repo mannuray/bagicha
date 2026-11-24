@@ -431,6 +431,9 @@ model PlantCycle {
   treatment_count                Int            @default(0)
   cycle_summary                  String?
   recommended_next_cycle_actions Json?
+  /// The summary and actions as advice keys, rendered in the reader's language.
+  cycle_summary_refs             Json?
+  recommended_actions_refs       Json?
   /// Crops can have more than one season a year; trees always use 1.
   season_no                      Int            @default(1)
   started_at                     DateTime?
@@ -811,6 +814,19 @@ model CatalogueSeasonGuide {
   updated_at DateTime        @updatedAt
 
   @@map("catalogue_season_guide")
+}
+
+/// Advice text the rules pick by key: English, and Hindi once reviewed.
+model CatalogueAdvice {
+  key        String          @id
+  status     CatalogueStatus @default(DRAFT)
+  /// en, hi; validated on push and load.
+  data       Json
+  notes      String?
+  created_at DateTime        @default(now())
+  updated_at DateTime        @updatedAt
+
+  @@map("catalogue_advice")
 }
 
 /// A fruit type (species family): the words that identify it and its life profile.

@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import type { Lang } from '../../../common/http/lang';
 import type { RegionCluster } from '@prisma/client';
 import { careItemForKey } from '../domain/care/source-key';
-import { CatalogueStore } from '../../catalogue';
+import {
+  CatalogueStore,
+  type AdviceRef,
+  type Catalogue,
+} from '../../catalogue';
 import {
   cropTitle,
   defaultTitle,
@@ -36,8 +40,29 @@ export type CareTexts = {
   organic?: string;
   chemical?: string;
   why?: string;
+  /** The "why you have this" line (a personal adjustment's reasoning). */
+  summary?: string;
 };
 export type CareTexter = (task: TitledTask) => CareTexts | null;
+
+/** A saved personal-adjustment task's texts in Hindi, from the advice keys it saved; null without keys. */
+function overlayTexts(
+  metadata: unknown,
+  catalogue: Catalogue,
+): CareTexts | null {
+  const advice =
+    metadata && typeof metadata === 'object'
+      ? (metadata as { advice?: Record<string, AdviceRef | undefined> }).advice
+      : undefined;
+  if (!advice?.title) return null;
+  const hi = (ref?: AdviceRef) =>
+    ref ? catalogue.advice(ref, 'hi') : undefined;
+  return {
+    title: hi(advice.title),
+    why: hi(advice.reason),
+    summary: hi(advice.summary),
+  };
+}
 
 /** English requests (and code that never shows care) keep what was saved. */
 export const savedCareTexts: CareTexter = () => null;
@@ -91,6 +116,8 @@ export class PlantNamesService {
     if (lang !== 'hi') return savedCareTexts;
     const catalogue = await this.catalogue.snapshot();
     return (task) => {
+      if (task.source === 'PERSONALIZED_OVERLAY')
+        return overlayTexts(task.metadata, catalogue);
       if (task.source !== 'TREE_CARE' || !task.source_key) return null;
       const item = careItemForKey(catalogue, task.source_key, region);
       return item?.hi ?? null;

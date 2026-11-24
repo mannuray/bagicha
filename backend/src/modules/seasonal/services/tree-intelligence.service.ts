@@ -18,7 +18,10 @@ import {
 } from '../../plant-ledger';
 import type { SpeciesResolver } from '../../plant-ledger';
 import { isPremium, UserRepository } from '../../user';
-import { buildPersonalizedOverlay } from '../domain/overlay-rules';
+import {
+  buildPersonalizedOverlay,
+  overlayInLanguage,
+} from '../domain/overlay-rules';
 import { CatalogueStore } from '../../catalogue';
 import { regionFor } from '../../regions';
 import type { Lang } from '../../../common/http/lang';
@@ -71,7 +74,11 @@ export class TreeIntelligenceService {
       : null;
     return {
       seasonal_pack: toPackView(pack),
-      personalized_overlay: overlay ? toOverlayView(overlay) : null,
+      personalized_overlay: overlay
+        ? toOverlayView(
+            overlayInLanguage(overlay, await this.catalogue.snapshot(), lang),
+          )
+        : null,
       is_paid_user: premium,
       care_note: careNote,
       care_this_month: careDue?.thisMonth ?? [],
@@ -190,7 +197,10 @@ export class TreeIntelligenceService {
       plant.id,
       RECENT_ENTRIES_FOR_OVERLAY,
     );
-    const payload = buildPersonalizedOverlay(plant, entries, phase, now);
+    const catalogue = await this.catalogue.snapshot();
+    const payload = buildPersonalizedOverlay(plant, entries, phase, now, (r) =>
+      catalogue.advice(r, 'en'),
+    );
     if (!payload) return existing;
     return existing
       ? this.overlays.update(userId, existing.id, payload)

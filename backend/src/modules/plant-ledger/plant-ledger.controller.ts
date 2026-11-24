@@ -173,8 +173,9 @@ export class PlantLedgerController {
     @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Query() q: PaginationQueryDto,
+    @RequestLang() lang: Lang,
   ) {
-    return this.cycles.list(req.user.id, id, q);
+    return this.cycles.list(req.user.id, id, q, lang);
   }
 
   @Get('plants/:id/tasks')
@@ -214,8 +215,9 @@ export class PlantLedgerController {
   async getMitigationPlan(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
+    @RequestLang() lang: Lang,
   ) {
-    return this.mitigation.plan(req.user.id, id);
+    return this.mitigation.plan(req.user.id, id, lang);
   }
 
   @Put('plants/:id/tasks/:taskId')

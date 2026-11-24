@@ -9,6 +9,7 @@ export { CARE_PENDING } from './seed/tree-care';
 export { careForTree } from './domain/care-kind';
 export type { TreeWords } from './domain/care-kind';
 export { kindCare } from './domain/care-kind';
+export type { AdviceRef, AdviceSeed } from './domain/advice';
 export type {
   CareStep,
   CareStepInfo,

@@ -21,6 +21,7 @@ const small: CatalogueSeed = {
   perennialFlowers: [],
   treeCare: [],
   seasonGuide: [],
+  advice: [],
 };
 const inOrder = <T>(items: T[]) =>
   items.map((item, sort_order) => ({ ...item, sort_order }));
@@ -35,6 +36,7 @@ const writeOf = (seed: CatalogueSeed) => ({
   perennialFlowers: inOrder(seed.perennialFlowers),
   treeCare: seed.treeCare,
   seasonGuide: seed.seasonGuide,
+  advice: seed.advice,
 });
 const none = {
   fruitTypes: [],
@@ -42,6 +44,7 @@ const none = {
   perennialFlowers: [],
   treeCare: [],
   seasonGuide: [],
+  advice: [],
 };
 
 describe('catalogue repository', () => {
@@ -57,7 +60,7 @@ describe('catalogue repository', () => {
 
   beforeEach(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care, catalogue_season_guide',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care, catalogue_season_guide, catalogue_advice',
     );
     await prisma.catalogueMeta.update({
       where: { id: 1 },
@@ -67,7 +70,7 @@ describe('catalogue repository', () => {
 
   afterAll(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care, catalogue_season_guide',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care, catalogue_season_guide, catalogue_advice',
     );
     await repo.applyPush(writeOf(CATALOGUE_SEED));
     await app.close();
@@ -90,6 +93,12 @@ describe('catalogue repository', () => {
     const [guide] = CATALOGUE_SEED.seasonGuide;
     await repo.applyPush({ ...writeOf(small), seasonGuide: [guide] });
     expect((await repo.loadSeed(['APPROVED'])).seasonGuide).toEqual([guide]);
+  });
+
+  it('round-trips advice', async () => {
+    const [a] = CATALOGUE_SEED.advice;
+    await repo.applyPush({ ...writeOf(small), advice: [a] });
+    expect((await repo.loadSeed(['APPROVED'])).advice).toEqual([a]);
   });
 
   it('round-trips Hindi texts', async () => {

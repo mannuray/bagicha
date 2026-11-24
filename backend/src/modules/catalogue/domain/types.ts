@@ -1,3 +1,4 @@
+import type { AdviceSeed } from './advice';
 /**
  * The plant catalogue's shapes. Records live in the database (filled by the
  * push from ../seed); the API serves them from an in-memory Catalogue.
@@ -194,4 +195,5 @@ export interface CatalogueSeed {
   perennialFlowers: PerennialFlowerSeed[];
   treeCare: TreeCareSeed[];
   seasonGuide: SeasonGuideSeed[];
+  advice: AdviceSeed[];
 }

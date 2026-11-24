@@ -1,4 +1,22 @@
 import { DropLevel, LogType, Prisma, TaskStatus } from '@prisma/client';
+import type { AdviceRef, Catalogue } from '../../catalogue';
+import type { Lang } from '../../../common/http/lang';
+
+/** A drop level as advice, so its word ("high") is translated too. */
+const dropLevel = (level: DropLevel): AdviceRef => ({
+  key: `drop.level.${level.toLowerCase()}`,
+});
+
+/** The same advice once, first occurrence first (it was a Set of sentences). */
+function distinct(refs: AdviceRef[]): AdviceRef[] {
+  const seen = new Set<string>();
+  return refs.filter((r) => {
+    const id = JSON.stringify(r);
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
 
 function rankLikelyIssues(
   latest: {
@@ -19,53 +37,57 @@ function rankLikelyIssues(
   journal_entries: Array<{ type: LogType; content: string | null }>,
   tasks: Array<{ status: TaskStatus; title: string | null }>,
   cycleLogs: Array<{ type: LogType; metadata: Prisma.JsonValue | null }>,
-): string[] {
-  const issues: string[] = [];
+): AdviceRef[] {
+  const issues: AdviceRef[] = [];
   if (!latest) return issues;
 
   if (latest.observed_flowering_at && !latest.observed_fruit_set_at) {
-    issues.push('Flowering was recorded but fruit set was not confirmed.');
+    issues.push({ key: 'mitigation.issue.no_fruit_set' });
   }
 
   if (
     latest.flower_drop_level === DropLevel.HIGH ||
     latest.flower_drop_level === DropLevel.MEDIUM
   ) {
-    issues.push(
-      `Flower drop was ${latest.flower_drop_level.toLowerCase()} and likely reduced conversion to fruit set.`,
-    );
+    issues.push({
+      key: 'mitigation.issue.flower_drop',
+      params: { level: dropLevel(latest.flower_drop_level) },
+    });
   }
 
   if (
     latest.fruit_drop_level === DropLevel.HIGH ||
     latest.fruit_drop_level === DropLevel.MEDIUM
   ) {
-    issues.push(
-      `Fruit drop was ${latest.fruit_drop_level.toLowerCase()} and likely weakened harvest outcome.`,
-    );
+    issues.push({
+      key: 'mitigation.issue.fruit_drop',
+      params: { level: dropLevel(latest.fruit_drop_level) },
+    });
   }
 
   if ((latest.stress_score ?? 0) > 0) {
-    issues.push(
-      `Water or weather stress signals were recorded ${latest.stress_score} time(s) this cycle.`,
-    );
+    issues.push({
+      key: 'mitigation.issue.stress_signals',
+      params: { count: latest.stress_score ?? 0 },
+    });
   }
 
   if ((latest.pest_pressure_score ?? 0) > 0) {
-    issues.push(
-      `Pest pressure was recorded ${latest.pest_pressure_score} time(s) this cycle.`,
-    );
+    issues.push({
+      key: 'mitigation.issue.pest_signals',
+      params: { count: latest.pest_pressure_score ?? 0 },
+    });
   }
 
   if (previous && (latest.stress_score ?? 0) > (previous.stress_score ?? 0)) {
-    issues.push('Stress pressure increased compared with the previous cycle.');
+    issues.push({ key: 'mitigation.issue.stress_increased' });
   }
 
   if (
     previous &&
     (latest.pest_pressure_score ?? 0) > (previous.pest_pressure_score ?? 0)
   ) {
-    issues.push('Pest pressure increased compared with the previous cycle.');
+    issues.push({ key: 'mitigation.issue.pests_increased' });
   }
 
   if (
@@ -74,28 +96,28 @@ function rankLikelyIssues(
         log.type === LogType.DIAGNOSIS || log.type === LogType.PEST_DIAGNOSIS,
     )
   ) {
-    issues.push(
-      'Recent diagnosis activity suggests unresolved health stress may still be affecting recovery.',
-    );
+    issues.push({ key: 'mitigation.issue.recent_diagnosis' });
   }
 
   const harvestLossCategory = extractHarvestLossCategory(cycleLogs);
   if (harvestLossCategory) {
-    issues.push(
-      `Harvest loss was linked to ${harvestLossCategory.replace(/_/g, ' ').toLowerCase()}.`,
-    );
+    issues.push({
+      key: 'mitigation.issue.harvest_loss',
+      params: { cause: harvestLossCategory.replace(/_/g, ' ').toLowerCase() },
+    });
   }
 
   const skippedTasks = tasks.filter(
     (task) => task.status === TaskStatus.SKIPPED,
   ).length;
   if (skippedTasks > 0) {
-    issues.push(
-      `${skippedTasks} cycle task(s) were skipped, which may have reduced early intervention.`,
-    );
+    issues.push({
+      key: 'mitigation.issue.skipped_tasks',
+      params: { count: skippedTasks },
+    });
   }
 
-  return Array.from(new Set(issues)).slice(0, 4);
+  return distinct(issues).slice(0, 4);
 }
 
 function buildWhatToChange(
@@ -114,75 +136,53 @@ function buildWhatToChange(
   journal_entries: Array<{ type: LogType; content: string | null }>,
   tasks: Array<{ status: TaskStatus; title: string | null }>,
   cycleLogs: Array<{ type: LogType; metadata: Prisma.JsonValue | null }>,
-): string[] {
-  const actions: string[] = [];
+): AdviceRef[] {
+  const actions: AdviceRef[] = [];
   if (!latest) return actions;
 
   if (latest.observed_flowering_at && !latest.observed_fruit_set_at) {
-    actions.push(
-      'Confirm fruit set early next cycle instead of waiting until harvest time to assess outcome.',
-    );
+    actions.push({ key: 'mitigation.change.confirm_fruit_set' });
   }
   if ((latest.stress_score ?? 0) > 0) {
-    actions.push(
-      'Stabilize watering and moisture checks before flowering and during early fruit development.',
-    );
+    actions.push({ key: 'mitigation.change.stabilize_watering' });
   }
   if ((latest.pest_pressure_score ?? 0) > 0) {
-    actions.push(
-      'Start pest scouting earlier and follow diagnosis journal_entries with a same-cycle treatment or inspection.',
-    );
+    actions.push({ key: 'mitigation.change.scout_pests' });
   }
   if (
     latest.flower_drop_level === DropLevel.HIGH ||
     latest.flower_drop_level === DropLevel.MEDIUM
   ) {
-    actions.push(
-      'Track flower drop as soon as bloom starts so intervention is not delayed.',
-    );
+    actions.push({ key: 'mitigation.change.track_flower_drop' });
   }
   if (
     latest.fruit_drop_level === DropLevel.HIGH ||
     latest.fruit_drop_level === DropLevel.MEDIUM
   ) {
-    actions.push(
-      'Inspect fruit retention earlier and log drop severity before the harvest window is affected.',
-    );
+    actions.push({ key: 'mitigation.change.inspect_fruit_retention' });
   }
   if (
     previous?.harvest_completed_at != null &&
     latest.observed_fruit_set_at == null
   ) {
-    actions.push(
-      'Use last cycle as a benchmark and review what changed before flowering this year.',
-    );
+    actions.push({ key: 'mitigation.change.benchmark_last_cycle' });
   }
   if (journal_entries.some((log) => log.type === LogType.TREATMENT)) {
-    actions.push(
-      'Recheck treatment outcomes consistently so the next cycle starts from a cleaner health baseline.',
-    );
+    actions.push({ key: 'mitigation.change.recheck_treatments' });
   }
   if (tasks.some((task) => task.status === TaskStatus.SKIPPED)) {
-    actions.push(
-      'Avoid skipping early-cycle tasks next time, especially inspection and treatment follow-ups.',
-    );
+    actions.push({ key: 'mitigation.change.no_skipping' });
   }
   const harvestLossCategory = extractHarvestLossCategory(cycleLogs);
   if (harvestLossCategory === 'CRACKING') {
-    actions.push(
-      'Prepare rain and irrigation stability around harvest to reduce cracking losses.',
-    );
+    actions.push({ key: 'mitigation.change.cracking' });
   } else if (harvestLossCategory === 'PEST_DAMAGE') {
-    actions.push(
-      'Protect the harvest earlier with pest checks before fruit quality starts dropping.',
-    );
+    actions.push({ key: 'mitigation.change.pest_damage' });
   } else if (harvestLossCategory === 'ROT') {
-    actions.push(
-      'Reduce post-rain disease pressure and inspect fruit quality earlier in the harvest window.',
-    );
+    actions.push({ key: 'mitigation.change.rot' });
   }
 
-  return Array.from(new Set(actions)).slice(0, 4);
+  return distinct(actions).slice(0, 4);
 }
 
 function buildWatchEarly(
@@ -194,43 +194,39 @@ function buildWatchEarly(
   } | null,
   journal_entries: Array<{ type: LogType; content: string | null }>,
   cycleLogs: Array<{ type: LogType; metadata: Prisma.JsonValue | null }>,
-): string[] {
-  const watch: string[] = [];
+): AdviceRef[] {
+  const watch: AdviceRef[] = [];
   if (!latest) return watch;
 
   if ((latest.stress_score ?? 0) > 0) {
-    watch.push(
-      'Early leaf wilt, dry soil, and repeated watering stress signals.',
-    );
+    watch.push({ key: 'mitigation.watch.wilt' });
   }
   if ((latest.pest_pressure_score ?? 0) > 0) {
-    watch.push('Recurring pest symptoms before flowering and fruit set.');
+    watch.push({ key: 'mitigation.watch.pests' });
   }
   if (
     latest.flower_drop_level === DropLevel.HIGH ||
     latest.flower_drop_level === DropLevel.MEDIUM
   ) {
-    watch.push('Flower drop in the first bloom window.');
+    watch.push({ key: 'mitigation.watch.flower_drop' });
   }
   if (
     latest.fruit_drop_level === DropLevel.HIGH ||
     latest.fruit_drop_level === DropLevel.MEDIUM
   ) {
-    watch.push('Fruit drop shortly after set.');
+    watch.push({ key: 'mitigation.watch.fruit_drop' });
   }
   if (journal_entries.some((log) => log.type === LogType.DIAGNOSIS)) {
-    watch.push(
-      'Any repeat of the last diagnosis symptoms before the cycle stabilizes.',
-    );
+    watch.push({ key: 'mitigation.watch.repeat_diagnosis' });
   }
   const harvestLossCategory = extractHarvestLossCategory(cycleLogs);
   if (harvestLossCategory === 'BIRD_DAMAGE') {
-    watch.push('Early bird damage signs close to harvest maturity.');
+    watch.push({ key: 'mitigation.watch.birds' });
   } else if (harvestLossCategory === 'WEATHER_DAMAGE') {
-    watch.push('Rain, wind, or heat events close to fruit maturity.');
+    watch.push({ key: 'mitigation.watch.weather' });
   }
 
-  return Array.from(new Set(watch)).slice(0, 4);
+  return distinct(watch).slice(0, 4);
 }
 
 function buildPriorityActions(
@@ -247,66 +243,66 @@ function buildPriorityActions(
   journal_entries: Array<{ type: LogType; content: string | null }>,
   tasks: Array<{ status: TaskStatus; title: string | null }>,
   cycleLogs: Array<{ type: LogType; metadata: Prisma.JsonValue | null }>,
-): string[] {
-  const actions: string[] = [];
+): AdviceRef[] {
+  const actions: AdviceRef[] = [];
   if (!latest) return actions;
 
-  actions.push('Review this cycle before the next flowering window starts.');
+  actions.push({ key: 'mitigation.priority.review_cycle' });
   if ((latest.stress_score ?? 0) > 0) {
-    actions.push(
-      'Set one moisture-check task before bloom and one during early fruit development.',
-    );
+    actions.push({ key: 'mitigation.priority.moisture_tasks' });
   }
   if (
     (latest.pest_pressure_score ?? 0) > 0 ||
     journal_entries.some((log) => log.type === LogType.PEST_DIAGNOSIS)
   ) {
-    actions.push(
-      'Schedule an early pest inspection instead of waiting for visible damage.',
-    );
+    actions.push({ key: 'mitigation.priority.pest_inspection' });
   }
   if (latest.observed_flowering_at && !latest.observed_fruit_set_at) {
-    actions.push(
-      'Log flower-to-fruit conversion explicitly next cycle to catch weak set earlier.',
-    );
+    actions.push({ key: 'mitigation.priority.log_conversion' });
   }
   if (previous?.harvest_completed_at != null) {
-    actions.push(
-      'Compare the next cycle against the last successful harvest, not just current symptoms.',
-    );
+    actions.push({ key: 'mitigation.priority.compare_harvest' });
   }
   if (tasks.some((task) => task.status === TaskStatus.PENDING)) {
-    actions.push(
-      'Close or review pending cycle tasks before the next flowering window opens.',
-    );
+    actions.push({ key: 'mitigation.priority.close_pending' });
   }
   if (extractHarvestLossCategory(cycleLogs)) {
-    actions.push(
-      'Log harvest loss causes with more detail next cycle so mitigation stays specific.',
-    );
+    actions.push({ key: 'mitigation.priority.log_loss_causes' });
   }
 
-  return Array.from(new Set(actions)).slice(0, 4);
+  return distinct(actions).slice(0, 4);
 }
 
 function buildMitigationSummary(
   latest: { cycle_year: number } | null,
   previous: { cycle_year: number } | null,
-  issues: string[],
-): string {
+  issues: AdviceRef[],
+): AdviceRef {
   if (!latest) {
-    return 'Not enough cycle history yet to generate a mitigation plan.';
+    return { key: 'mitigation.summary.no_history' };
   }
 
   if (issues.length === 0) {
     return previous
-      ? `Cycle ${latest.cycle_year} does not show a clear failure pattern against ${previous.cycle_year}, so the next step is to keep logging key milestones more consistently.`
-      : `Cycle ${latest.cycle_year} does not yet show a strong failure pattern; keep logging flowering, fruit set, stress, and harvest to strengthen the next plan.`;
+      ? {
+          key: 'mitigation.summary.no_pattern_vs_previous',
+          params: { year: latest.cycle_year, previous: previous.cycle_year },
+        }
+      : {
+          key: 'mitigation.summary.no_pattern_yet',
+          params: { year: latest.cycle_year },
+        };
   }
 
   return previous
-    ? `Cycle ${latest.cycle_year} shows signals that can be improved before the next cycle, using ${previous.cycle_year} as the comparison baseline.`
-    : `Cycle ${latest.cycle_year} already shows enough signals to guide what should change before the next cycle.`;
+    ? {
+        key: 'mitigation.summary.improve_vs_previous',
+        params: { year: latest.cycle_year, previous: previous.cycle_year },
+      }
+    : {
+        key: 'mitigation.summary.enough_signals',
+        params: { year: latest.cycle_year },
+      };
 }
 
 function extractHarvestLossCategory(
@@ -338,7 +334,22 @@ export interface MitigationInput {
   latestCycleLogs: Array<{ type: LogType; metadata: Prisma.JsonValue | null }>;
 }
 
+/** The plan as advice keys; MitigationService renders it in the gardener's language. */
 export interface MitigationPlan {
+  cycle_year: number | null;
+  summary: AdviceRef;
+  likely_issues: AdviceRef[];
+  what_to_change: AdviceRef[];
+  watch_early: AdviceRef[];
+  priority_actions: AdviceRef[];
+  completed_tasks: number;
+  skipped_tasks: number;
+  pending_tasks: number;
+}
+
+/** "What went wrong this cycle and what to change next time" from cycle history. */
+/** The plan as the gardener reads it. */
+export interface RenderedMitigationPlan {
   cycle_year: number | null;
   summary: string;
   likely_issues: string[];
@@ -350,7 +361,23 @@ export interface MitigationPlan {
   pending_tasks: number;
 }
 
-/** "What went wrong this cycle and what to change next time" from cycle history. */
+/** The plan's advice in the gardener's language. */
+export function renderPlan(
+  plan: MitigationPlan,
+  catalogue: Pick<Catalogue, 'advice'>,
+  lang: Lang,
+): RenderedMitigationPlan {
+  const text = (ref: AdviceRef) => catalogue.advice(ref, lang);
+  return {
+    ...plan,
+    summary: text(plan.summary),
+    likely_issues: plan.likely_issues.map(text),
+    what_to_change: plan.what_to_change.map(text),
+    watch_early: plan.watch_early.map(text),
+    priority_actions: plan.priority_actions.map(text),
+  };
+}
+
 export class MitigationPlanner {
   plan(input: MitigationInput): MitigationPlan {
     const {

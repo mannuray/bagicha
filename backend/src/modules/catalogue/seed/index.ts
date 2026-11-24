@@ -1,3 +1,4 @@
+import { ADVICE_SEED } from './advice.seed';
 import type { CatalogueSeed } from '../domain/types';
 import { CARE_STEP_SEED } from './care-steps.seed';
 import { CROP_SEED } from './crops.seed';
@@ -18,4 +19,5 @@ export const CATALOGUE_SEED: CatalogueSeed = {
   perennialFlowers: PERENNIAL_FLOWER_SEED,
   treeCare: TREE_CARE_SEED,
   seasonGuide: SEASON_GUIDE_SEED,
+  advice: ADVICE_SEED,
 };

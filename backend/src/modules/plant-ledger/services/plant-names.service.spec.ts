@@ -252,3 +252,55 @@ describe('a saved tree-care reminder card in Hindi', () => {
     });
   });
 });
+
+describe('saved dryness reminders in Hindi', () => {
+  const { CATALOGUE_SEED } = jest.requireActual('../../catalogue');
+  const hindi: Record<string, string> = {
+    'overlay.task.water_today.title': 'आज पानी दें',
+    'overlay.task.water_today.reason': '{name} में सूखापन दिखा',
+    'overlay.dryness.summary': 'हाल की बातें सूखापन दिखाती हैं',
+  };
+  const service = new PlantNamesService(
+    seededCatalogueStore({
+      ...CATALOGUE_SEED,
+      advice: CATALOGUE_SEED.advice.map((a: { key: string }) =>
+        hindi[a.key] ? { ...a, hi: hindi[a.key] } : a,
+      ),
+    }),
+  );
+  const task = {
+    type: 'WATER',
+    title: 'Water the plant today',
+    source: 'PERSONALIZED_OVERLAY',
+    source_key: 'ov1:water_tree_today',
+    metadata: {
+      key: 'water_tree_today',
+      advice: {
+        title: { key: 'overlay.task.water_today.title' },
+        reason: {
+          key: 'overlay.task.water_today.reason',
+          params: { name: 'Aam' },
+        },
+        summary: { key: 'overlay.dryness.summary' },
+      },
+    },
+  };
+
+  it('reads the title, reason and why-line from the saved advice keys', async () => {
+    expect((await service.careTexter('hi', 'NORTH_INDIA'))(task)).toEqual({
+      title: 'आज पानी दें',
+      why: 'Aam में सूखापन दिखा',
+      summary: 'हाल की बातें सूखापन दिखाती हैं',
+    });
+  });
+
+  it('keeps English for English requests and tasks saved without keys', async () => {
+    expect((await service.careTexter('en', 'NORTH_INDIA'))(task)).toBeNull();
+    expect(
+      (await service.careTexter('hi', 'NORTH_INDIA'))({
+        ...task,
+        metadata: { key: 'water_tree_today' },
+      }),
+    ).toBeNull();
+  });
+});
