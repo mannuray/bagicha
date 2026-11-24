@@ -206,6 +206,71 @@ describe('tree care records in the seed', () => {
     ).not.toThrow();
   });
 
+  it('accepts Hindi on an item and on a phase', () => {
+    const f = family();
+    const care = f.regions.NORTH_INDIA as {
+      items: TreeCareItem[];
+      phases: unknown[];
+    };
+    expect(
+      check({
+        ...f,
+        regions: {
+          NORTH_INDIA: {
+            items: [
+              item({
+                hi: {
+                  title: 'पेड़ को खाद दें',
+                  why: 'फल लगने के लिए खाद चाहिए',
+                },
+              }),
+            ],
+            phases: [
+              {
+                ...(care.phases[0] as object),
+                hi: { avoid: ['ज़्यादा पानी'], watch: ['हॉपर'] },
+              },
+            ],
+          },
+        },
+      }),
+    ).not.toThrow();
+  });
+
+  it('rejects an unknown Hindi key and Hindi with no Devanagari', () => {
+    expect(
+      check(withItems(item({ hi: { colour: 'लाल' } as never }))),
+    ).toThrow();
+    expect(check(withItems(item({ hi: { title: 'Feed' } })))).toThrow();
+  });
+
+  it('rejects a Hindi title over 60 characters', () => {
+    expect(check(withItems(item({ hi: { title: 'क'.repeat(61) } })))).toThrow();
+  });
+
+  it('rejects a Hindi avoid list of a different length', () => {
+    const f = family();
+    const care = f.regions.NORTH_INDIA as unknown as {
+      phases: Array<Record<string, unknown>>;
+    };
+    expect(
+      issuesOf({
+        ...f,
+        regions: {
+          NORTH_INDIA: {
+            items: [item()],
+            phases: [
+              {
+                ...care.phases[0],
+                hi: { avoid: ['एक', 'दो'], watch: ['हॉपर'] },
+              },
+            ],
+          },
+        },
+      }),
+    ).toMatch(/Hindi avoid/);
+  });
+
   it('accepts the same key with different starts', () => {
     expect(
       check(

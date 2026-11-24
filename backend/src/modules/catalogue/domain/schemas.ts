@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { hindi, hindiText } from './hindi-text';
 import { ValidationError } from '../../../common/errors';
 import {
   seasonGuideIssues,
@@ -13,13 +14,6 @@ const range = z.tuple([z.number().int().min(0), z.number().int().min(0)]);
 const windows = z.array(z.tuple([month, month]));
 const text = z.string().min(1);
 /** A Hindi text: non-empty, with Devanagari in it. */
-const hindiText = z
-  .string()
-  .min(1)
-  .regex(/[\u0900-\u097F]/, 'needs Devanagari');
-/** Optional Hindi versions of some of a record's texts; no other keys. */
-const hindi = <T extends z.ZodRawShape>(shape: T) =>
-  z.object(shape).strict().optional();
 
 export const cropSeedSchema = z
   .object({

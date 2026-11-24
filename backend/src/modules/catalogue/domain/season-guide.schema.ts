@@ -1,10 +1,20 @@
 import { RegionCluster } from '@prisma/client';
 import { z } from 'zod';
 import type { CatalogueSeed } from './types';
+import { hindi, hindiText } from './hindi-text';
 
 const text = z.string().trim().min(1);
 const month = z
-  .object({ season: text, headline: text, points: z.array(text).min(1) })
+  .object({
+    season: text,
+    headline: text,
+    points: z.array(text).min(1),
+    hi: hindi({
+      season: hindiText.optional(),
+      headline: hindiText.optional(),
+      points: z.array(hindiText).optional(),
+    }),
+  })
   .strict();
 
 export const seasonGuideSeedSchema = z
@@ -24,6 +34,12 @@ export function seasonGuideIssues(seed: CatalogueSeed): string[] {
     if (seen.has(g.region))
       issues.push(`season guide: ${g.region} listed twice`);
     seen.add(g.region);
+    g.months.forEach((m, i) => {
+      if (m.hi?.points && m.hi.points.length !== m.points.length)
+        issues.push(
+          `season guide: ${g.region} month ${i + 1}: Hindi points differ in number from the English`,
+        );
+    });
   }
   const approved = new Set(
     seed.seasonGuide

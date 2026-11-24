@@ -6,6 +6,8 @@ export interface SeasonMonth {
   season: string;
   headline: string;
   points: string[];
+  /** Hindi versions; `points` the same length and order as the English. */
+  hi?: { season?: string; headline?: string; points?: string[] };
 }
 
 /** A region's twelve months of home season tips, January first. */
