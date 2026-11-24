@@ -782,6 +782,19 @@ model CatalogueTreeCare {
   @@map("catalogue_tree_care")
 }
 
+/// A region's home season tips: twelve months of season, headline and points.
+model CatalogueSeasonGuide {
+  region     String          @id
+  status     CatalogueStatus @default(DRAFT)
+  /// months; validated on push and load.
+  data       Json
+  notes      String?
+  created_at DateTime        @default(now())
+  updated_at DateTime        @updatedAt
+
+  @@map("catalogue_season_guide")
+}
+
 /// A fruit type (species family): the words that identify it and its life profile.
 model CatalogueFruitType {
   key        String          @id

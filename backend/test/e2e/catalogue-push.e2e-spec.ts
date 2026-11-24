@@ -39,7 +39,7 @@ describe('catalogue push', () => {
 
   beforeEach(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care, catalogue_season_guide',
     );
     await prisma.catalogueMeta.update({
       where: { id: 1 },
@@ -49,7 +49,7 @@ describe('catalogue push', () => {
 
   afterAll(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care, catalogue_season_guide',
     );
     await push.push(CATALOGUE_SEED);
     await app.close();
@@ -66,6 +66,7 @@ describe('catalogue push', () => {
       ...r.fruitPlants,
       ...r.perennialFlowers,
       ...r.treeCare,
+      ...r.seasonGuide,
     ];
     expect(outcomes(all(first))).toEqual(['added']);
     expect(first.crops).toHaveLength(CATALOGUE_SEED.crops.length);
@@ -129,6 +130,15 @@ describe('catalogue push', () => {
     await push.push(editCrop('carrot', () => ({ status: 'RETIRED' })));
     const stored = await repo.loadSeed(['RETIRED']);
     expect(stored.crops.map((c) => c.id)).toEqual(['carrot']);
+  });
+
+  it('writes one season guide per region, then leaves them unchanged', async () => {
+    const first = await push.push(CATALOGUE_SEED);
+    expect(first.seasonGuide).toHaveLength(7);
+    const again = await push.push(CATALOGUE_SEED);
+    expect(again.seasonGuide.map((o) => o.outcome)).toEqual(
+      Array(7).fill('unchanged'),
+    );
   });
 
   it('adds, then leaves unchanged, a tree-care record', async () => {

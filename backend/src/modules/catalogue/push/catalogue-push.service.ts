@@ -22,6 +22,7 @@ export interface PushReport {
   fruitPlants: ItemOutcome[];
   perennialFlowers: ItemOutcome[];
   treeCare: ItemOutcome[];
+  seasonGuide: ItemOutcome[];
 }
 
 type Kind = Exclude<keyof PushReport, 'version'>;
@@ -41,6 +42,7 @@ const KINDS: Record<
     ordered: true,
   },
   treeCare: { keyOf: (c: { family: string }) => c.family, ordered: false },
+  seasonGuide: { keyOf: (g: { region: string }) => g.region, ordered: false },
 };
 const KIND_NAMES = Object.keys(KINDS) as Kind[];
 

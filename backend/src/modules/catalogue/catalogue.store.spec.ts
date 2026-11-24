@@ -113,6 +113,16 @@ describe('CatalogueStore', () => {
     });
   });
 
+  it("refuses a catalogue missing one region's season guide", async () => {
+    const { store } = setup({
+      ...CATALOGUE_SEED,
+      seasonGuide: CATALOGUE_SEED.seasonGuide.filter(
+        (g) => g.region !== 'HILLS_COOL',
+      ),
+    });
+    await expect(store.snapshot()).rejects.toThrow();
+  });
+
   it('keeps the previous snapshot when a reload has an invalid care record', async () => {
     const { store, state, clock } = setup();
     await store.snapshot();
@@ -154,6 +164,7 @@ describe('CatalogueStore', () => {
       fruitTypeCount: CATALOGUE_SEED.fruitTypes.length,
       flowerCount: CATALOGUE_SEED.perennialFlowers.length,
       treeCareCount: CATALOGUE_SEED.treeCare.length,
+      seasonGuideCount: CATALOGUE_SEED.seasonGuide.length,
     });
   });
 
