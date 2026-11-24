@@ -6,6 +6,7 @@ import {
   Get,
   Param,
   Post,
+  Patch,
   Put,
   Query,
   Request,
@@ -113,6 +114,17 @@ export class PlantLedgerController {
   @Get('plants/:id/seasonal-state')
   getSeasonalState(@Request() req: AuthedRequest, @Param('id') id: string) {
     return this.plants.getSeasonalState(req.user.id, id);
+  }
+
+  /** Partial update: PATCH is the name to use; PUT stays until the web has moved. */
+  @Patch('plants/:id')
+  patchPlant(
+    @Request() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body() dto: UpdatePlantDto,
+    @RequestLang() lang: Lang,
+  ) {
+    return this.updatePlant(req, id, dto, lang);
   }
 
   @Put('plants/:id')
@@ -224,5 +236,17 @@ export class PlantLedgerController {
       await this.names.titler(lang),
       await this.names.careTexter(lang, regionFor(req.user)),
     );
+  }
+
+  /** PATCH is the name to use; PUT stays until the web has moved. */
+  @Patch('plants/:id/tasks/:taskId')
+  patchTaskStatus(
+    @Request() req: AuthedRequest,
+    @Param('id') id: string,
+    @Param('taskId') taskId: string,
+    @Body() dto: UpdateTaskStatusDto,
+    @RequestLang() lang: Lang,
+  ) {
+    return this.updateTaskStatus(req, id, taskId, dto, lang);
   }
 }

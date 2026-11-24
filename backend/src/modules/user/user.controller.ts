@@ -1,5 +1,12 @@
 import type { AuthedRequest } from '../../common/auth/authed-request';
-import { Body, Controller, Put, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Patch,
+  Put,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UserService } from './user.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -8,6 +15,12 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 @UseGuards(AuthGuard('jwt'))
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  /** The profile is one resource: PATCH user/profile. The old verb path stays until the web has moved. */
+  @Patch('profile')
+  patchProfile(@Request() req: AuthedRequest, @Body() dto: UpdateProfileDto) {
+    return this.updateProfile(req, dto);
+  }
 
   @Put('profile/update')
   async updateProfile(
