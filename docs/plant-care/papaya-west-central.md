@@ -175,4 +175,4 @@ No rows. No regional source supports any feed, calendar or phase row (see Not re
 - **QW6. Micronutrients in WEST.** Recommendation: no routine spray (NAU 2014's dose is impractical, and NAU 2026's foliar mix is far too strong). **Add WEST to conditional C8** (zinc sulphate 5 g + boric acid 1 g per litre if new leaves are small or pale; national NIPHM/NHB source).
 - **QC1. CENTRAL_INDIA.** No regional source was reached after searching JNKVV, RVSKVV, IGKV, Dr PDKV, the MP and Chhattisgarh horticulture departments and KVKs, in English and Hindi. Recommendation: **keep pending** with the season pack. Don't borrow NAU, NHB or IIHR. Re-search when a JNKVV or IGKV package of practices is published online.
 
-Status: Draft + source check, awaiting owner review — nothing written to data.
+Status: **WEST_INDIA approved by the owner on 2026-11-24 with every recommendation** and transcribed into `papaya.seed.ts` (with Hindi); CENTRAL_INDIA kept pending.
