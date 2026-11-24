@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
+import { MessageRepository } from '../../src/modules/chat/message.repository';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
 import { resetDb, seedUser, tokenFor } from './fixtures';
@@ -21,13 +22,12 @@ describe('chat pagination', () => {
     alice = await seedUser(prisma);
     bob = await seedUser(prisma);
     for (let i = 0; i < 5; i++) {
-      await prisma.message.create({
-        data: {
-          sender_id: i % 2 ? bob.id : alice.id,
-          receiver_id: i % 2 ? alice.id : bob.id,
-          content: `m${i}`,
-          created_at: new Date(Date.UTC(2026, 0, 1, 0, i)),
-        },
+      // Through the repository: sending a message also updates the conversation.
+      await app.get(MessageRepository).create({
+        sender_id: i % 2 ? bob.id : alice.id,
+        receiver_id: i % 2 ? alice.id : bob.id,
+        content: `m${i}`,
+        created_at: new Date(Date.UTC(2026, 0, 1, 0, i)),
       });
     }
   });
@@ -68,6 +68,27 @@ describe('chat pagination', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
     expect(res.body.pagination).toBeDefined();
+  });
+
+  it('shows one inbox row per conversation, whichever way the messages went', async () => {
+    const carol = await seedUser(prisma);
+    await app.get(MessageRepository).create({
+      sender_id: carol.id,
+      receiver_id: alice.id,
+      content: 'from carol',
+      created_at: new Date(Date.UTC(2026, 0, 1, 1, 0)),
+    });
+    const res = await get('/api/v1/chat/inbox');
+    expect(res.status).toBe(200);
+    expect(res.body.pagination.total_items).toBe(2);
+    expect(res.body.data.map((m: { content: string }) => m.content)).toEqual([
+      'from carol',
+      'm4',
+    ]);
+    const page2 = await get('/api/v1/chat/inbox?page=2&page_size=1');
+    expect(page2.body.data.map((m: { content: string }) => m.content)).toEqual([
+      'm4',
+    ]);
   });
 
   it('rejects an oversized page', async () => {

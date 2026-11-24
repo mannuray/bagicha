@@ -58,30 +58,57 @@ export class MessageRepository {
     };
   }
 
+  /** Saves the message and makes it its conversation's latest, together. */
   create(data: Prisma.MessageUncheckedCreateInput): Promise<Message> {
-    return this.prisma.message.create({ data });
+    const [user_a, user_b] = [data.sender_id, data.receiver_id].sort();
+    return this.prisma.$transaction(async (tx) => {
+      const message = await tx.message.create({ data });
+      const latest = {
+        last_message_id: message.id,
+        last_at: message.created_at,
+      };
+      await tx.conversation.upsert({
+        where: { user_a_user_b: { user_a, user_b } },
+        create: { user_a, user_b, ...latest },
+        // A message dated earlier (imports, tests) never replaces a newer one.
+        update: {},
+      });
+      await tx.conversation.updateMany({
+        where: { user_a, user_b, last_at: { lte: message.created_at } },
+        data: latest,
+      });
+      return message;
+    });
   }
 
-  /** Latest message per (sender, receiver) pair the user is part of. */
+  /** The latest message of each conversation the user is part of, newest first. */
   async inbox(
     userId: string,
     page: SkipTake,
   ): Promise<{ rows: InboxMessage[]; total: number }> {
-    const where: Prisma.MessageWhereInput = {
-      OR: [{ sender_id: userId }, { receiver_id: userId }],
-      ...(await this.visibleTo(userId)),
+    // Someone the user blocked drops out of their inbox entirely.
+    const blocked = (
+      await this.prisma.userBlock.findMany({
+        where: { blocker_id: userId },
+        select: { blocked_id: true },
+      })
+    ).map((b) => b.blocked_id);
+    const where: Prisma.ConversationWhereInput = {
+      OR: [
+        { user_a: userId, user_b: { notIn: blocked } },
+        { user_b: userId, user_a: { notIn: blocked } },
+      ],
     };
-    const [rows, pairs] = await Promise.all([
-      this.prisma.message.findMany({
+    const [conversations, total] = await Promise.all([
+      this.prisma.conversation.findMany({
         where,
-        orderBy: { created_at: 'desc' },
-        distinct: ['sender_id', 'receiver_id'],
-        include: inboxInclude,
+        orderBy: [{ last_at: 'desc' }, { last_message_id: 'desc' }],
+        include: { last_message: { include: inboxInclude } },
         ...page,
       }),
-      this.prisma.message.groupBy({ by: ['sender_id', 'receiver_id'], where }),
+      this.prisma.conversation.count({ where }),
     ]);
-    return { rows, total: pairs.length };
+    return { rows: conversations.map((c) => c.last_message), total };
   }
 
   async conversation(
