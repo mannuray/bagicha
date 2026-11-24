@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PlantAccess } from './plant-access.service';
 import {
   JournalEntry,
   LogType,
@@ -71,6 +72,7 @@ export class JournalService {
   constructor(
     private readonly journal: JournalRepository,
     private readonly plants: PlantRepository,
+    private readonly access: PlantAccess,
     private readonly cycles: CycleService,
     private readonly tasks: TaskService,
     private readonly cropJourney: CropJourneyService,
@@ -103,8 +105,7 @@ export class JournalService {
     plantId: string,
     entry: NewJournalEntry,
   ): Promise<JournalEntry> {
-    const plant = await this.plants.findOwned(userId, plantId, tx);
-    if (!plant) throw new NotFoundError('PLANT_NOT_FOUND', 'Plant not found');
+    const plant = await this.access.growing(userId, plantId, tx);
 
     const eventAt = entry.eventAt ?? this.clock.now();
     // Journey crops have seasons opened by planting; everything else keeps yearly cycles.
@@ -227,6 +228,7 @@ export class JournalService {
     plantId: string,
     q: PageQuery & { types?: LogType[] },
   ): Promise<Page<JournalEntry>> {
+    await this.access.owned(userId, plantId);
     const { rows, total } = await this.journal.listForPlant(
       userId,
       plantId,

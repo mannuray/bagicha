@@ -1,4 +1,5 @@
 import { UserModule } from '../user';
+import { PlantAccess } from './services/plant-access.service';
 import { CatalogueModule } from '../catalogue';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
@@ -33,6 +34,7 @@ import { TaskService } from './services/task.service';
   controllers: [PlantLedgerController],
   providers: [
     PlantRepository,
+    PlantAccess,
     JournalRepository,
     CycleRepository,
     TaskRepository,

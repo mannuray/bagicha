@@ -1,3 +1,4 @@
+import type { PlantAccess } from './plant-access.service';
 import {
   TaskCategory,
   TaskPriority,
@@ -35,6 +36,7 @@ function build(existingKeys: string[]) {
   const metrics = { taskCreated: jest.fn(), taskCompleted: jest.fn() };
   const service = new TaskService(
     repo as unknown as TaskRepository,
+    { owned: jest.fn(), growing: jest.fn() } as unknown as PlantAccess,
     metrics as unknown as Metrics,
     { error: jest.fn() } as any,
   );

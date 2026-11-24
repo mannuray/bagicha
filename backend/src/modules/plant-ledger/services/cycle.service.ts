@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PlantAccess } from './plant-access.service';
 import { Plant, PlantCycle, Prisma } from '@prisma/client';
 import { InvariantError } from '../../../common/errors';
 import {
@@ -57,6 +58,7 @@ export class CycleService {
     private readonly cycles: CycleRepository,
     private readonly journal: JournalRepository,
     private readonly species: SpeciesNormalizationService,
+    private readonly access: PlantAccess,
   ) {}
 
   /** The plant's cycle for `eventAt`, created if missing. The caller has already checked ownership. */
@@ -128,6 +130,7 @@ export class CycleService {
     plantId: string,
     q: PageQuery,
   ): Promise<Page<CycleView>> {
+    await this.access.owned(userId, plantId);
     const { rows, total } = await this.cycles.listForPlant(
       userId,
       plantId,

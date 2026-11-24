@@ -38,6 +38,7 @@ import {
   treeSeasonView,
   type TreeSeasonView,
 } from '../domain/care/season-view';
+import { PlantAccess } from './plant-access.service';
 import { SpeciesNormalizationService } from './species-normalization.service';
 import { firstsToClear, resolveBearing } from '../domain/bearing';
 
@@ -48,6 +49,7 @@ const plantNotFound = () =>
 @Injectable()
 export class PlantRecordService implements OnModuleInit {
   constructor(
+    private readonly access: PlantAccess,
     private readonly plants: PlantRepository,
     private readonly lifecycle: LifecycleService,
     private readonly species: SpeciesNormalizationService,
@@ -71,21 +73,12 @@ export class PlantRecordService implements OnModuleInit {
 
   /** The owner's plant, or 404. No side effects — for other modules. */
   /** The owner's plant, refusing writes that would grow the record of an ended tree. */
-  async assertGrowing(userId: string, plantId: string): Promise<Plant> {
-    const plant = await this.getOwnedOrThrow(userId, plantId);
-    if (plant.ended_at) {
-      throw new ConflictError(
-        'PLANT_ENDED',
-        'This tree has ended; restore it to keep growing its record',
-      );
-    }
-    return plant;
+  assertGrowing(userId: string, plantId: string): Promise<Plant> {
+    return this.access.growing(userId, plantId);
   }
 
-  async getOwnedOrThrow(userId: string, plantId: string): Promise<Plant> {
-    const plant = await this.plants.findOwned(userId, plantId);
-    if (!plant) throw plantNotFound();
-    return plant;
+  getOwnedOrThrow(userId: string, plantId: string): Promise<Plant> {
+    return this.access.owned(userId, plantId);
   }
 
   /**
