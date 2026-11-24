@@ -1,13 +1,10 @@
-import { FixedClock } from '../../common/time';
-import { TransactionRunner } from '../../common/prisma/transaction';
-import { AiProvider } from '../ai';
-import { AuditService } from '../audit';
-import { PlantRecordService } from '../plant-ledger';
-import { CommunityService } from './community.service';
-import { CommentRepository } from './repositories/comment.repository';
-import { ExpertRepository } from './repositories/expert.repository';
-import { PostRepository } from './repositories/post.repository';
-import { ReportRepository } from './repositories/report.repository';
+import { FixedClock } from '../../../common/time';
+import { TransactionRunner } from '../../../common/prisma/transaction';
+import { AuditService } from '../../audit';
+import { CommentRepository } from '../repositories/comment.repository';
+import { PostRepository } from '../repositories/post.repository';
+import { ReportRepository } from '../repositories/report.repository';
+import { ReportService } from './report.service';
 
 function build() {
   const reports: Array<{ reporter: string; target: string }> = [];
@@ -32,26 +29,20 @@ function build() {
     countPendingFromEstablished: jest.fn(() => Promise.resolve(reports.length)),
   };
   const audit = { record: jest.fn(() => Promise.resolve()) };
-  const service = new CommunityService(
+  const service = new ReportService(
     posts as unknown as PostRepository,
     {} as unknown as CommentRepository,
     reportRepo as unknown as ReportRepository,
-    {} as unknown as ExpertRepository,
-    { findById: jest.fn() } as any,
-    {} as unknown as PlantRecordService,
-    {} as unknown as AiProvider,
     audit as unknown as AuditService,
     {
       run: (fn: (tx: unknown) => unknown) => fn('tx'),
     } as unknown as TransactionRunner,
-    { recent: jest.fn(() => Promise.resolve([])) } as any,
-    {} as any,
     new FixedClock(new Date('2026-11-12T00:00:00Z')),
   );
   return { service, audit, posts };
 }
 
-describe('CommunityService reports', () => {
+describe('ReportService', () => {
   it('audits a new report with a snapshot of the reported content', async () => {
     const { service, audit } = build();
     const result = await service.reportPost('u1', 'post1', { reason: 'spam' });

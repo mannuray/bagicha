@@ -9,6 +9,8 @@ import {
   Post,
 } from '@nestjs/common';
 import { SeasonalService } from './seasonal.service';
+import { TreeIntelligenceService } from './services/tree-intelligence.service';
+import { TreeTaskMaterializer } from './services/tree-task-materializer.service';
 import { AuthGuard } from '@nestjs/passport';
 
 // Users have no pincode yet, so weather has always used this default.
@@ -18,7 +20,11 @@ const DEFAULT_DISTRICT = 'Patna';
 @Controller('seasonal')
 @UseGuards(AuthGuard('jwt'))
 export class SeasonalController {
-  constructor(private readonly seasonalService: SeasonalService) {}
+  constructor(
+    private readonly seasonalService: SeasonalService,
+    private readonly intelligence: TreeIntelligenceService,
+    private readonly materializer: TreeTaskMaterializer,
+  ) {}
 
   @Get('weather')
   getWeather() {
@@ -39,7 +45,7 @@ export class SeasonalController {
     @Param('id') id: string,
     @RequestLang() lang: Lang,
   ) {
-    return this.seasonalService.getTreeIntelligence(req.user.id, id, lang);
+    return this.intelligence.getTreeIntelligence(req.user.id, id, lang);
   }
 
   @Post('plant/:id/materialize-tasks')
@@ -47,6 +53,6 @@ export class SeasonalController {
     @Request() req: AuthedRequest,
     @Param('id') id: string,
   ) {
-    return this.seasonalService.materializeTasksForTree(req.user.id, id);
+    return this.materializer.materializeTasksForTree(req.user.id, id);
   }
 }

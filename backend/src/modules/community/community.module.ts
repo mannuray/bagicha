@@ -4,6 +4,8 @@ import { PlantLedgerModule } from '../plant-ledger';
 import { UserModule } from '../user';
 import { CommunityController } from './community.controller';
 import { CommunityService } from './community.service';
+import { AskAiService } from './services/ask-ai.service';
+import { ReportService } from './services/report.service';
 import { CommentRepository } from './repositories/comment.repository';
 import { ExpertRepository } from './repositories/expert.repository';
 import { PostRepository } from './repositories/post.repository';
@@ -15,6 +17,8 @@ import { ReportRepository } from './repositories/report.repository';
   controllers: [CommunityController],
   providers: [
     CommunityService,
+    AskAiService,
+    ReportService,
     PostRepository,
     CommentRepository,
     ReportRepository,
