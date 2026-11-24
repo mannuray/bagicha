@@ -212,13 +212,16 @@ export class PlantRepository {
     });
   }
 
-  /** When each of the plant's seasons started. */
-  async seasonStarts(plantId: string): Promise<Date[]> {
+  /** When each plant's seasons started, for many plants in one query. */
+  async seasonStartsFor(plantIds: string[]): Promise<Map<string, Date[]>> {
+    const starts = new Map<string, Date[]>(plantIds.map((id) => [id, []]));
+    if (plantIds.length === 0) return starts;
     const rows = await this.prisma.plantCycle.findMany({
-      where: { plant_id: plantId, started_at: { not: null } },
-      select: { started_at: true },
+      where: { plant_id: { in: plantIds }, started_at: { not: null } },
+      select: { plant_id: true, started_at: true },
     });
-    return rows.map((r) => r.started_at as Date);
+    for (const r of rows) starts.get(r.plant_id)?.push(r.started_at as Date);
+    return starts;
   }
 
   // Plant-scoped writes for an owner-checked transaction.

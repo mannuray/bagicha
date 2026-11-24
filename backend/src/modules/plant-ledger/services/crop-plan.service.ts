@@ -5,6 +5,7 @@ import {
   Plant,
   RecordKind,
   RecordPattern,
+  Task,
   TaskCategory,
   TaskPriority,
   TaskSource,
@@ -98,63 +99,54 @@ export class CropPlanService {
     });
   }
 
-  /** Creates the next window's seed and sow reminders for every waiting crop; idempotent. */
+  /**
+   * Creates the next window's seed and sow reminders for every waiting crop;
+   * idempotent. Runs once a dashboard session, so it reads seasons and pending
+   * reminders for all crops at once and writes only what is new.
+   */
   async sync(
     userId: string,
     group: ClimateGroup,
   ): Promise<{ created_count: number }> {
     const now = this.clock.now();
-    let created = 0;
     const catalogue = await this.catalogue.snapshot();
-    for (const plant of await this.plants.listWaitingCrops(userId)) {
-      const crop = catalogue.crop(plant.crop_id);
-      if (!crop) continue;
-      const used = (await this.plants.seasonStarts(plant.id))
+    const waiting = (await this.plants.listWaitingCrops(userId)).filter(
+      (plant) => catalogue.crop(plant.crop_id),
+    );
+    const ids = waiting.map((p) => p.id);
+    const [starts, pending] = await Promise.all([
+      this.plants.seasonStartsFor(ids),
+      this.taskRows.pendingForPlants(ids, TaskSource.CROP_PLAN),
+    ]);
+    // Seed and sow reminders whose window closed unsown are no longer suggested.
+    const stale = pending.filter((t) => closedUnsown(t, now));
+    await this.taskRows.cancelByIds(stale.map((t) => t.id));
+    const staleIds = new Set(stale.map((t) => t.id));
+    const open = new Set(
+      pending.filter((t) => !staleIds.has(t.id)).map((t) => t.source_key),
+    );
+
+    let created = 0;
+    for (const plant of waiting) {
+      const crop = catalogue.crop(plant.crop_id)!;
+      const used = (starts.get(plant.id) ?? [])
         .map((start) => windowContaining(crop, group, start)?.start)
         .filter((d): d is Date => Boolean(d));
-      await this.retireClosedReminders(plant.id, now);
       const window = nextWindow(crop, group, now, used);
       if (!window) continue;
-      const results = await this.tasks.createTasks(
-        userId,
-        plant.id,
-        this.reminders(
-          crop,
-          catalogue.method(crop.method),
-          plant,
-          window.start,
-          window.end,
-          now,
-        ),
-      );
+      const drafts = this.reminders(
+        crop,
+        catalogue.method(crop.method),
+        plant,
+        window.start,
+        window.end,
+        now,
+      ).filter((d) => !open.has(d.sourceKey));
+      if (drafts.length === 0) continue;
+      const results = await this.tasks.createTasks(userId, plant.id, drafts);
       created += results.filter((r) => r.status === 'created').length;
     }
     return { created_count: created };
-  }
-
-  /** Seed and sow reminders whose window closed unsown are no longer suggested. */
-  private async retireClosedReminders(
-    plantId: string,
-    now: Date,
-  ): Promise<void> {
-    await this.transactions.run(async (tx) => {
-      const pending = await this.taskRows.pendingForPlant(
-        plantId,
-        TaskSource.CROP_PLAN,
-        tx,
-      );
-      const stale = pending
-        .filter((t) => {
-          const meta = (t.metadata ?? {}) as Record<string, unknown>;
-          return (
-            (meta.step === 'seeds' || meta.step === 'sow') &&
-            typeof meta.window_end === 'string' &&
-            new Date(meta.window_end) <= now
-          );
-        })
-        .map((t) => t.id);
-      await this.taskRows.cancelByIds(stale, tx);
-    });
   }
 
   private reminders(
@@ -219,4 +211,14 @@ export class CropPlanService {
       },
     ];
   }
+}
+
+/** A seed or sow reminder whose sowing window has already closed. */
+function closedUnsown(task: Task, now: Date): boolean {
+  const meta = (task.metadata ?? {}) as Record<string, unknown>;
+  return (
+    (meta.step === 'seeds' || meta.step === 'sow') &&
+    typeof meta.window_end === 'string' &&
+    new Date(meta.window_end) <= now
+  );
 }

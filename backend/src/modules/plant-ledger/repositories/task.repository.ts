@@ -243,6 +243,14 @@ export class TaskRepository {
     return count;
   }
 
+  /** Pending tasks of one source for many plants, in one query. */
+  pendingForPlants(plantIds: string[], source: TaskSource): Promise<Task[]> {
+    if (plantIds.length === 0) return Promise.resolve([]);
+    return this.prisma.task.findMany({
+      where: { plant_id: { in: plantIds }, source, status: TaskStatus.PENDING },
+    });
+  }
+
   pendingForPlant(
     plantId: string,
     source: TaskSource,
