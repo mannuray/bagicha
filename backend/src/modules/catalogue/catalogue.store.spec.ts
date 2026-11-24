@@ -123,6 +123,20 @@ describe('CatalogueStore', () => {
     await expect(store.snapshot()).rejects.toThrow();
   });
 
+  it("keeps the previous snapshot when a reload is missing a region's season guide", async () => {
+    const { store, state, clock } = setup();
+    await store.snapshot();
+    state.version = 2;
+    state.seed = {
+      ...CATALOGUE_SEED,
+      seasonGuide: CATALOGUE_SEED.seasonGuide.filter(
+        (g) => g.region !== 'HILLS_COOL',
+      ),
+    };
+    clock.at += 61_000;
+    expect((await store.snapshot()).version).toBe(1);
+  });
+
   it('keeps the previous snapshot when a reload has an invalid care record', async () => {
     const { store, state, clock } = setup();
     await store.snapshot();

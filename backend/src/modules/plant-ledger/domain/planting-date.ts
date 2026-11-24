@@ -80,8 +80,15 @@ export function parsePlantingDate(
     };
   }
 
+  // An ISO date parses as UTC midnight; other written dates parse at local
+  // midnight, so keep their calendar day as UTC midnight on any server.
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(normalized)
+    ? parsed
+    : new Date(
+        Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()),
+      );
   return {
-    date: parsed,
+    date,
     precision: PlantingDatePrecision.EXACT_DATE,
     input: normalized,
   };

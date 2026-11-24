@@ -33,6 +33,15 @@ describe('parsePlantingDate', () => {
     });
   });
 
+  it('stores a written-out date as that calendar day, whatever the server time zone', () => {
+    expect(
+      parsePlantingDate('15 March 2024', undefined, clock).date?.toISOString(),
+    ).toBe('2024-03-15T00:00:00.000Z');
+    expect(
+      parsePlantingDate('2024-03-15', undefined, clock).date?.toISOString(),
+    ).toBe('2024-03-15T00:00:00.000Z');
+  });
+
   it('parses an exact date and rejects garbage', () => {
     expect(parsePlantingDate('2021-03-15', undefined, clock).precision).toBe(
       P.EXACT_DATE,

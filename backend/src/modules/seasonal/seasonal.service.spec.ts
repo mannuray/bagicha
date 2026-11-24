@@ -240,6 +240,20 @@ describe('SeasonalService.getSeasonalGuide', () => {
     expect(guide.advice).toBe('Test headline');
   });
 
+  it("names the missing region's guide, not an empty catalogue", async () => {
+    const { service } = build({ premium: false });
+    (service as unknown as { catalogue: unknown }).catalogue = {
+      snapshot: () =>
+        Promise.resolve({ seasonGuide: () => null, listedCrops: () => [] }),
+    };
+    await expect(
+      service.getSeasonalGuide({
+        district: null,
+        region_cluster: 'HILLS_COOL',
+      }),
+    ).rejects.toMatchObject({ reason: 'CATALOGUE_REGION_MISSING' });
+  });
+
   it('answers in Hindi where the month has it', async () => {
     const seasonGuide = CATALOGUE_SEED.seasonGuide.map((g) => ({
       ...g,
