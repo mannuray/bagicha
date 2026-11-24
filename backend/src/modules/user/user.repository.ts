@@ -17,6 +17,17 @@ export class UserRepository {
     return this.db(tx).user.findUnique({ where: { id: userId } });
   }
 
+  /** Just the fields that decide the gardener's region. */
+  findRegion(
+    userId: string,
+    tx?: Tx,
+  ): Promise<Pick<User, 'region_cluster' | 'district'> | null> {
+    return this.db(tx).user.findUnique({
+      where: { id: userId },
+      select: { region_cluster: true, district: true },
+    });
+  }
+
   findByPhone(phoneNumber: string): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: { phone_number: phoneNumber },

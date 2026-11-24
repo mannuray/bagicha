@@ -109,4 +109,28 @@ export class JournalRepository {
     if (!plant) return null;
     return db.journalEntry.create({ data: { ...data, plant_id: plantId } });
   }
+
+  // Plant-scoped reads and writes for an owner-checked transaction.
+
+  findInPlant(
+    entryId: string,
+    plantId: string,
+    tx?: Tx,
+  ): Promise<{ id: string } | null> {
+    return this.db(tx).journalEntry.findFirst({
+      where: { id: entryId, plant_id: plantId },
+      select: { id: true },
+    });
+  }
+
+  createEntry(
+    data: Prisma.JournalEntryUncheckedCreateInput,
+    tx?: Tx,
+  ): Promise<JournalEntry> {
+    return this.db(tx).journalEntry.create({ data });
+  }
+
+  async deleteForPlant(plantId: string, tx?: Tx): Promise<void> {
+    await this.db(tx).journalEntry.deleteMany({ where: { plant_id: plantId } });
+  }
 }

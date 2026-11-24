@@ -1,3 +1,4 @@
+import { UserModule } from '../user';
 import { CatalogueModule } from '../catalogue';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
@@ -26,6 +27,7 @@ import { TaskService } from './services/task.service';
 @Module({
   imports: [
     CatalogueModule,
+    UserModule,
     BullModule.registerQueue({ name: TASK_GENERATION_QUEUE }),
   ],
   controllers: [PlantLedgerController],

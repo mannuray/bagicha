@@ -9,7 +9,6 @@ import {
   TaskCategory,
   TaskPriority,
   TaskSource,
-  TaskStatus,
   TaskType,
 } from '@prisma/client';
 import { NotFoundError } from '../../../common/errors';
@@ -29,7 +28,11 @@ import {
 } from '../domain/crop-calendar';
 import { cropTitle, type CropTitleRef } from '../domain/task-titles';
 import { regionFor } from '../../regions';
+import { CycleRepository } from '../repositories/cycle.repository';
 import { GardenPlaceRepository } from '../repositories/garden-place.repository';
+import { PlantRepository } from '../repositories/plant.repository';
+import { TaskRepository } from '../repositories/task.repository';
+import { UserRepository } from '../../user';
 import { TaskDraft, TaskService } from './task.service';
 
 /** Entry types that can open a crop season (a crop already growing can start at harvest). */
@@ -65,6 +68,10 @@ export class CropJourneyService {
   constructor(
     private readonly tasks: TaskService,
     private readonly places: GardenPlaceRepository,
+    private readonly cycles: CycleRepository,
+    private readonly plantRows: PlantRepository,
+    private readonly taskRows: TaskRepository,
+    private readonly users: UserRepository,
     private readonly clock: Clock,
     private readonly catalogue: CatalogueStore,
   ) {}
@@ -78,10 +85,7 @@ export class CropJourneyService {
     metadata: unknown,
     eventAt: Date,
   ): Promise<{ cycle: PlantCycle | null; opened: boolean }> {
-    const open = await tx.plantCycle.findFirst({
-      where: { plant_id: plant.id, started_at: { not: null }, closed_at: null },
-      orderBy: { started_at: 'desc' },
-    });
+    const open = await this.cycles.openFor(plant.id, tx);
     const opens =
       OPENERS.has(type) ||
       (BLOOMS.has(type) &&
@@ -94,19 +98,17 @@ export class CropJourneyService {
       if (!place) throw new NotFoundError('PLACE_NOT_FOUND', 'Place not found');
     }
     const year = istYear(eventAt);
-    const last = await tx.plantCycle.findFirst({
-      where: { plant_id: plant.id, cycle_year: year },
-      orderBy: { season_no: 'desc' },
-    });
-    const cycle = await tx.plantCycle.create({
-      data: {
+    const last = await this.cycles.lastOfYear(plant.id, year, tx);
+    const cycle = await this.cycles.createSeason(
+      {
         plant_id: plant.id,
         cycle_year: year,
         season_no: (last?.season_no ?? 0) + 1,
         started_at: eventAt,
         place_id: typeof placeId === 'string' ? placeId : null,
       },
-    });
+      tx,
+    );
     return { cycle, opened: true };
   }
 
@@ -253,10 +255,7 @@ export class CropJourneyService {
           if (!(await this.places.findOwned(userId, placeId, tx))) {
             throw new NotFoundError('PLACE_NOT_FOUND', 'Place not found');
           }
-          await tx.plantCycle.update({
-            where: { id: cycle.id },
-            data: { place_id: placeId },
-          });
+          await this.cycles.setPlace(cycle.id, placeId, tx);
         }
         await this.setStage(tx, plant, CropStage.IN_GROUND);
         await this.completeSteps(tx, plant.id, [
@@ -318,22 +317,13 @@ export class CropJourneyService {
       case LogType.SEASON_END:
         // No season open (e.g. a planned crop): nothing to end, and its reminders stay.
         if (!cycle) return;
-        await tx.plantCycle.update({
-          where: { id: cycle.id },
-          data: { closed_at: at },
-        });
-        await tx.plant.update({
-          where: { id: plant.id },
-          data: { crop_stage: CropStage.RESTING },
-        });
-        await tx.task.updateMany({
-          where: {
-            plant_id: plant.id,
-            source: TaskSource.CROP_PLAN,
-            status: TaskStatus.PENDING,
-          },
-          data: { status: TaskStatus.CANCELLED },
-        });
+        await this.cycles.close(cycle.id, at, tx);
+        await this.plantRows.setCropStage(plant.id, CropStage.RESTING, tx);
+        await this.taskRows.cancelPending(
+          plant.id,
+          { source: TaskSource.CROP_PLAN },
+          tx,
+        );
         return;
       default:
         return;
@@ -353,10 +343,7 @@ export class CropJourneyService {
 
   /** The gardener's climate group (their region decides sowing windows and some harvest days). */
   private async groupOf(tx: Tx, userId: string) {
-    const user = await tx.user.findUnique({
-      where: { id: userId },
-      select: { region_cluster: true, district: true },
-    });
+    const user = await this.users.findRegion(userId, tx);
     return climateGroupFor(user ? regionFor(user) : RegionCluster.NORTH_INDIA);
   }
 
@@ -366,31 +353,21 @@ export class CropJourneyService {
     const waiting =
       current === CropStage.PLANNED || current === CropStage.RESTING;
     if (!waiting && RANK[target] <= RANK[current]) return;
-    await tx.plant.update({
-      where: { id: plant.id },
-      data: { crop_stage: target },
-    });
+    await this.plantRows.setCropStage(plant.id, target, tx);
     plant.crop_stage = target;
   }
 
   /** Marks the plant's pending journey tasks of these steps as done: a later step satisfied them. */
   private async completeSteps(tx: Tx, plantId: string, steps: string[]) {
-    const pending = await tx.task.findMany({
-      where: {
-        plant_id: plantId,
-        source: TaskSource.CROP_PLAN,
-        status: TaskStatus.PENDING,
-      },
-    });
+    const pending = await this.taskRows.pendingForPlant(
+      plantId,
+      TaskSource.CROP_PLAN,
+      tx,
+    );
     const ids = pending
       .filter((t) => steps.includes(String(metaOf(t.metadata)?.step)))
       .map((t) => t.id);
-    if (ids.length > 0) {
-      await tx.task.updateMany({
-        where: { id: { in: ids } },
-        data: { status: TaskStatus.COMPLETED, completed_at: this.clock.now() },
-      });
-    }
+    await this.taskRows.completeByIds(ids, this.clock.now(), tx);
   }
 
   /** The next "sow another row" for succession crops, while the sowing window is still open. */
@@ -406,13 +383,11 @@ export class CropJourneyService {
   ) {
     if (!crop.succession_every_days || !cycle) return;
     // One pending row at a time: frequent harvests must not pile them up.
-    const pending = await tx.task.findMany({
-      where: {
-        plant_id: plant.id,
-        source: TaskSource.CROP_PLAN,
-        status: TaskStatus.PENDING,
-      },
-    });
+    const pending = await this.taskRows.pendingForPlant(
+      plant.id,
+      TaskSource.CROP_PLAN,
+      tx,
+    );
     if (pending.some((t) => metaOf(t.metadata)?.step === 'row')) return;
     const due = addDays(at, crop.succession_every_days);
     if (!windowContaining(crop, await group(), due)) return;

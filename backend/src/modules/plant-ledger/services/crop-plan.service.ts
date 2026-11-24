@@ -8,7 +8,6 @@ import {
   TaskCategory,
   TaskPriority,
   TaskSource,
-  TaskStatus,
   TaskType,
 } from '@prisma/client';
 import {
@@ -31,6 +30,9 @@ import {
 } from '../domain/crop-calendar';
 import { fillCropTitle, type CropTitleKey } from '../domain/task-titles';
 import { PlantRepository } from '../repositories/plant.repository';
+import { CycleRepository } from '../repositories/cycle.repository';
+import { JournalRepository } from '../repositories/journal.repository';
+import { TaskRepository } from '../repositories/task.repository';
 import { TaskDraft, TaskService } from './task.service';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -48,6 +50,9 @@ const isoDay = (d: Date) => d.toISOString().slice(0, 10);
 export class CropPlanService {
   constructor(
     private readonly plants: PlantRepository,
+    private readonly cycles: CycleRepository,
+    private readonly journal: JournalRepository,
+    private readonly taskRows: TaskRepository,
     private readonly tasks: TaskService,
     private readonly transactions: TransactionRunner,
     private readonly clock: Clock,
@@ -79,19 +84,17 @@ export class CropPlanService {
   /** Deletes a crop that was never sown (no seasons), with its reminders and notes. */
   async remove(userId: string, plantId: string): Promise<void> {
     await this.transactions.run(async (tx) => {
-      const plant = await tx.plant.findFirst({
-        where: { id: plantId, user_id: userId, crop_id: { not: null } },
-      });
+      const plant = await this.plants.findOwnedCrop(userId, plantId, tx);
       if (!plant) throw new NotFoundError('PLANT_NOT_FOUND', 'Plant not found');
-      if ((await tx.plantCycle.count({ where: { plant_id: plantId } })) > 0) {
+      if ((await this.cycles.countFor(plantId, tx)) > 0) {
         throw new ConflictError(
           'CROP_HAS_SEASONS',
           'This crop has a history; end it instead',
         );
       }
-      await tx.task.deleteMany({ where: { plant_id: plantId } });
-      await tx.journalEntry.deleteMany({ where: { plant_id: plantId } });
-      await tx.plant.delete({ where: { id: plantId } });
+      await this.taskRows.deleteForPlant(plantId, tx);
+      await this.journal.deleteForPlant(plantId, tx);
+      await this.plants.delete(plantId, tx);
     });
   }
 
@@ -135,13 +138,11 @@ export class CropPlanService {
     now: Date,
   ): Promise<void> {
     await this.transactions.run(async (tx) => {
-      const pending = await tx.task.findMany({
-        where: {
-          plant_id: plantId,
-          source: TaskSource.CROP_PLAN,
-          status: TaskStatus.PENDING,
-        },
-      });
+      const pending = await this.taskRows.pendingForPlant(
+        plantId,
+        TaskSource.CROP_PLAN,
+        tx,
+      );
       const stale = pending
         .filter((t) => {
           const meta = (t.metadata ?? {}) as Record<string, unknown>;
@@ -152,12 +153,7 @@ export class CropPlanService {
           );
         })
         .map((t) => t.id);
-      if (stale.length > 0) {
-        await tx.task.updateMany({
-          where: { id: { in: stale } },
-          data: { status: TaskStatus.CANCELLED },
-        });
-      }
+      await this.taskRows.cancelByIds(stale, tx);
     });
   }
 
