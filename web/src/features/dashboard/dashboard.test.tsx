@@ -33,7 +33,7 @@ function baseHandlers(
       calls.weather += 1;
       return HttpResponse.json(ok({}));
     }),
-    http.post(`${API}/seasonal/plant/:id/materialize-tasks`, async ({ params }) => {
+    http.post(`${API}/seasonal/plants/:id/materialize-tasks`, async ({ params }) => {
       calls.materialize.push(String(params.id));
       await new Promise((r) => setTimeout(r, 20));
       if (opts.materializeFail) return HttpResponse.json(fail('X'), { status: 500 });

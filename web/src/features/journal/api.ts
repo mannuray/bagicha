@@ -1,8 +1,10 @@
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
 import { z } from 'zod';
 import { useApi } from '../../lib/api';
 import { queryKeys } from '../../lib/query-keys';
 import { logTypeSchema, type LogType } from './log-types';
+import { createRetryKey } from '../../lib/retry-key';
 import { staleAfter, useInvalidate } from '../../lib/stale';
 
 export const journalEntrySchema = z.object({
@@ -51,8 +53,16 @@ export function useTimeline(plantId: string, types?: readonly LogType[]) {
 export function useAddJournalEntry(plantId: string) {
   const api = useApi();
   const invalidate = useInvalidate();
+  // One key per entry being saved: a second tap after a timeout can't add it twice.
+  const [retry] = useState(createRetryKey);
   return useMutation({
-    mutationFn: (moment: NewMoment) => api.send('POST', `/ledger/plants/${plantId}/journal`, moment, journalEntrySchema),
-    onSuccess: () => invalidate(staleAfter.journalWrite(plantId)),
+    mutationFn: (moment: NewMoment) =>
+      api.send('POST', `/ledger/plants/${plantId}/journal`, moment, journalEntrySchema, {
+        idempotencyKey: retry.keyFor({ plantId, moment }),
+      }),
+    onSuccess: () => {
+      retry.done();
+      invalidate(staleAfter.journalWrite(plantId));
+    },
   });
 }

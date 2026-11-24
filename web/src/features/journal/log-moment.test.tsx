@@ -100,6 +100,30 @@ describe('log a moment', () => {
     expect(posts[0]).toMatchObject({ type: 'FLOWERING', metadata: { photo_key: 'journal/u1/abc.jpg' } });
   });
 
+  it('a save tried again after a failure carries the same Idempotency-Key, a new save a new one', async () => {
+    plantHandler();
+    const keys: (string | null)[] = [];
+    let calls = 0;
+    server.use(
+      http.post(`${API}/ledger/plants/p1/journal`, ({ request }) => {
+        keys.push(request.headers.get('Idempotency-Key'));
+        calls += 1;
+        return calls === 1
+          ? HttpResponse.json(fail('INTERNAL'), { status: 500 })
+          : HttpResponse.json(ok(entry()), { status: 201 });
+      }),
+    );
+    renderWithApp(screenTree, { route: '/plants/p1/log' });
+    await userEvent.type(await screen.findByLabelText(/note/i), 'New leaves');
+    await userEvent.click(screen.getByRole('button', { name: /save to biography/i }));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /save to biography/i }));
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/plants/p1'));
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toBeTruthy();
+    expect(keys[1]).toBe(keys[0]);
+  });
+
   it('keeps the form and saves nothing when the photo upload fails', async () => {
     plantHandler();
     let posts = 0;

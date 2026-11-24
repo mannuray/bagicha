@@ -24,7 +24,7 @@ export function useUpdateProfile() {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: (changes: ProfileChanges) =>
-      api.send('PUT', '/user/profile/update', changes, userSchema),
+      api.send('PATCH', '/user/profile', changes, userSchema),
     onSuccess: (user) => {
       updateUser(user);
       // Only a real change of place moves the season guide and crop calendar.

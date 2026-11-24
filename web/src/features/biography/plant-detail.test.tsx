@@ -33,7 +33,7 @@ function handlers(opts: { plant?: Record<string, unknown>; cycles?: unknown[] } 
   let signed = 0;
   server.use(
     http.get(`${API}/ledger/plants/p1`, () => HttpResponse.json(ok({ ...plantRecord(opts.plant), _count: { journal_entries: 2 } }))),
-    http.get(`${API}/seasonal/plant/p1/intelligence`, () => HttpResponse.json(ok(intelligence))),
+    http.get(`${API}/seasonal/plants/p1/intelligence`, () => HttpResponse.json(ok(intelligence))),
     http.get(`${API}/ledger/plants/p1/cycles`, ({ request }) => HttpResponse.json(pagedResponse(request, opts.cycles ?? [cycle]))),
     http.get(`${API}/ledger/plants/p1/tasks`, () => HttpResponse.json(pageOf([taskRecord()]))),
     http.get(`${API}/ledger/plants/p1/timeline`, () =>
@@ -65,7 +65,7 @@ describe('tree biography', () => {
   it('This season shows the region note when present', async () => {
     handlers();
     server.use(
-      http.get(`${API}/seasonal/plant/p1/intelligence`, () =>
+      http.get(`${API}/seasonal/plants/p1/intelligence`, () =>
         HttpResponse.json(ok({ ...intelligence, care_note: 'Not usually grown in your region; timings may differ.' })),
       ),
     );
@@ -76,7 +76,7 @@ describe('tree biography', () => {
   it("lists this month's care with how-to, and the sign to look for", async () => {
     handlers();
     server.use(
-      http.get(`${API}/seasonal/plant/p1/intelligence`, () =>
+      http.get(`${API}/seasonal/plants/p1/intelligence`, () =>
         HttpResponse.json(
           ok({
             ...intelligence,
@@ -102,7 +102,7 @@ describe('tree biography', () => {
   it('asks for the planting month when the server says so', async () => {
     handlers();
     server.use(
-      http.get(`${API}/seasonal/plant/p1/intelligence`, () =>
+      http.get(`${API}/seasonal/plants/p1/intelligence`, () =>
         HttpResponse.json(
           ok({
             ...intelligence,
@@ -127,7 +127,7 @@ describe('tree biography', () => {
   });
 
   const coming = (over: object = {}) =>
-    http.get(`${API}/seasonal/plant/p1/intelligence`, () =>
+    http.get(`${API}/seasonal/plants/p1/intelligence`, () =>
       HttpResponse.json(
         ok({
           ...intelligence,
@@ -184,7 +184,7 @@ describe('tree biography', () => {
   it('shows only the collapsed signs when nothing is due this month', async () => {
     handlers();
     server.use(
-      http.get(`${API}/seasonal/plant/p1/intelligence`, () =>
+      http.get(`${API}/seasonal/plants/p1/intelligence`, () =>
         HttpResponse.json(
           ok({
             ...intelligence,
@@ -523,7 +523,7 @@ describe('a perennial flower', () => {
   it('has flower stages, its bloom months and blooms per year, never fruit guidance', async () => {
     handlers({ plant: rose });
     let intel = 0;
-    server.use(http.get(`${API}/seasonal/plant/p1/intelligence`, () => { intel += 1; return HttpResponse.json(ok(intelligence)); }));
+    server.use(http.get(`${API}/seasonal/plants/p1/intelligence`, () => { intel += 1; return HttpResponse.json(ok(intelligence)); }));
     const { container } = renderWithApp(routes, { route: '/plants/p1' });
     expect(await screen.findByText(/in its bloom season \(nov–mar\)/i)).toBeInTheDocument();
     const stages = screen.getByRole('list', { name: /stage/i });

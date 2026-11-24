@@ -88,7 +88,7 @@ describe('plant end-of-life data', () => {
         body = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json(ok(plantRecord({ id: 'p2' })), { status: 201 });
       }),
-      http.post(`${API}/seasonal/plant/p2/materialize-tasks`, () => HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 })),
+      http.post(`${API}/seasonal/plants/p2/materialize-tasks`, () => HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 })),
     );
     renderWithApp(<Replace />);
     await userEvent.click(screen.getByRole('button', { name: 'replace' }));
@@ -114,8 +114,8 @@ describe('editing a plant', () => {
   const watch = () => {
     let refreshed = 0;
     server.use(
-      http.put(`${API}/ledger/plants/p1`, () => HttpResponse.json(ok(plantRecord()))),
-      http.post(`${API}/seasonal/plant/p1/materialize-tasks`, () => {
+      http.patch(`${API}/ledger/plants/p1`, () => HttpResponse.json(ok(plantRecord()))),
+      http.post(`${API}/seasonal/plants/p1/materialize-tasks`, () => {
         refreshed += 1;
         return HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 });
       }),

@@ -19,10 +19,21 @@ export interface Page<T> {
 
 type Query = Record<string, string | number | undefined>;
 
+export interface SendOptions {
+  /** Makes a retried create happen once (see lib/retry-key). */
+  idempotencyKey?: string;
+}
+
 export interface ApiClient {
   get<T>(path: string, schema: z.ZodType<T>, query?: Query): Promise<T>;
   getPage<T>(path: string, item: z.ZodType<T>, query?: Query): Promise<Page<T>>;
-  send<T>(method: 'POST' | 'PUT', path: string, body: unknown, schema: z.ZodType<T>): Promise<T>;
+  send<T>(
+    method: 'POST' | 'PUT' | 'PATCH',
+    path: string,
+    body: unknown,
+    schema: z.ZodType<T>,
+    options?: SendOptions,
+  ): Promise<T>;
   upload<T>(path: string, form: FormData, schema: z.ZodType<T>): Promise<T>;
   /** DELETE; the backend answers 204 with no body. */
   remove(path: string): Promise<void>;
@@ -77,7 +88,7 @@ const successEnvelope = z.object({
 });
 
 /** crypto.randomUUID only exists on secure origins; a phone on plain-http LAN has getRandomValues. */
-function cryptoRequestId(): string {
+export function cryptoRequestId(): string {
   if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
@@ -183,10 +194,13 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
       }
       return { items: validate(z.array(item), res.data, res.status, path), pagination: res.pagination };
     },
-    async send(method, path, body, schema) {
+    async send(method, path, body, schema, options) {
       const res = await request(path, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(options?.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {}),
+        },
         body: JSON.stringify(body),
       });
       return validate(schema, res.data, res.status, path);

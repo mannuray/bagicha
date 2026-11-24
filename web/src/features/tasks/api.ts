@@ -46,7 +46,7 @@ export function useUpdateTaskStatus() {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: ({ task, status }: { task: Task; status: 'COMPLETED' | 'SKIPPED' }) =>
-      api.send('PUT', `/ledger/plants/${task.plant_id}/tasks/${task.id}`, { status }, taskSchema),
+      api.send('PATCH', `/ledger/plants/${task.plant_id}/tasks/${task.id}`, { status }, taskSchema),
     onSettled: (_data, _err, { task }) => invalidate(staleAfter.taskChange(task.plant_id)),
   });
 }

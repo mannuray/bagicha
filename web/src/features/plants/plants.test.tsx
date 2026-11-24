@@ -171,7 +171,7 @@ describe('plant a replacement', () => {
         created = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json(ok(plantRecord({ id: 'new1' })), { status: 201 });
       }),
-      http.post(`${API}/seasonal/plant/new1/materialize-tasks`, () => HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 })),
+      http.post(`${API}/seasonal/plants/new1/materialize-tasks`, () => HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 })),
     );
     renderWithApp(routes, { route: '/plants/new?replaces=p1' });
     await waitFor(() => expect(screen.getByLabelText(/^species/i)).toHaveValue('Lemon'));
@@ -213,7 +213,7 @@ describe('add a plant', () => {
         created = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json(ok(plantRecord({ id: 'new1' })), { status: 201 });
       }),
-      http.post(`${API}/seasonal/plant/new1/materialize-tasks`, () => {
+      http.post(`${API}/seasonal/plants/new1/materialize-tasks`, () => {
         materialized += 1;
         return HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 });
       }),
@@ -257,7 +257,7 @@ describe('add a plant', () => {
     let sent: Record<string, unknown> | undefined;
     server.use(
       http.get(`${API}/ledger/plants/p1`, () => HttpResponse.json(ok({ ...plantRecord(), _count: { journal_entries: 0 } }))),
-      http.put(`${API}/ledger/plants/p1`, async ({ request }) => {
+      http.patch(`${API}/ledger/plants/p1`, async ({ request }) => {
         sent = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json(ok(plantRecord({ name: 'Old Aam' })));
       }),
@@ -365,7 +365,7 @@ describe('an old tree on the add form', () => {
         created = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json(ok(plantRecord({ id: 'new1' })), { status: 201 });
       }),
-      http.post(`${API}/seasonal/plant/new1/materialize-tasks`, () => HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 })),
+      http.post(`${API}/seasonal/plants/new1/materialize-tasks`, () => HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 })),
     );
     renderWithApp(routes, { route: '/plants/new' });
     await userEvent.type(screen.getByLabelText(/tree name/i), 'Aam');

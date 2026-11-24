@@ -11,7 +11,7 @@ describe('materializeTasks: the one call that asks for a plant\'s seasonal tasks
   it('posts to the plant and returns the validated result', async () => {
     let hit = '';
     server.use(
-      http.post(`${API}/seasonal/plant/:id/materialize-tasks`, ({ params }) => {
+      http.post(`${API}/seasonal/plants/:id/materialize-tasks`, ({ params }) => {
         hit = String(params.id);
         return HttpResponse.json({ success: true, data: { results: [], created_count: 2 } }, { status: 201 });
       }),
@@ -22,7 +22,7 @@ describe('materializeTasks: the one call that asks for a plant\'s seasonal tasks
 
   it('rejects a response that breaks the contract', async () => {
     server.use(
-      http.post(`${API}/seasonal/plant/:id/materialize-tasks`, () =>
+      http.post(`${API}/seasonal/plants/:id/materialize-tasks`, () =>
         HttpResponse.json({ success: true, data: { nope: true } }, { status: 201 }),
       ),
     );
