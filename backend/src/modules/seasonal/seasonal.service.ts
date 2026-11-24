@@ -48,9 +48,13 @@ import {
   buildTaskTemplates,
   TaskTemplateInput,
 } from './domain/overlay-rules';
-import { CatalogueStore, type Catalogue } from '../catalogue';
+import {
+  CatalogueStore,
+  CatalogueUnavailableError,
+  type Catalogue,
+} from '../catalogue';
 import { regionFor } from '../regions';
-import { seasonGuide } from './domain/season-guide';
+import { monthOf } from './domain/season-guide';
 import { resolveSeasonWindow } from './domain/season-window';
 import { OverlayRepository } from './repositories/overlay.repository';
 import { SeasonalPackRepository } from './repositories/seasonal-pack.repository';
@@ -113,8 +117,12 @@ export class SeasonalService implements OnModuleInit {
     const region = regionFor(user);
     const group = climateGroupFor(region);
     const now = this.clock.now();
-    const { season, headline, points } = seasonGuide(region, now);
-    const listed = (await this.catalogue.snapshot()).listedCrops();
+    const catalogue = await this.catalogue.snapshot();
+    // The store refuses a catalogue without every region's guide.
+    const months = catalogue.seasonGuide(region);
+    if (!months) throw new CatalogueUnavailableError();
+    const { season, headline, points } = monthOf(months, now);
+    const listed = catalogue.listedCrops();
     const crops = listed
       .filter(
         (c) =>

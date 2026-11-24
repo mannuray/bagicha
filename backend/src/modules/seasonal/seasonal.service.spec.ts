@@ -24,6 +24,7 @@ function build(opts: {
   mangoCare?: TreeCareSeed;
   plant?: object;
   now?: Date;
+  seasonGuide?: typeof CATALOGUE_SEED.seasonGuide;
 }) {
   const now = opts.now ?? NOW;
   const pending = new Set<string>();
@@ -125,6 +126,7 @@ function build(opts: {
         ...CATALOGUE_SEED.treeCare.filter((c) => c.family !== 'mango'),
         ...(opts.mangoCare ? [opts.mangoCare] : []),
       ],
+      seasonGuide: opts.seasonGuide ?? CATALOGUE_SEED.seasonGuide,
     }),
   );
   return { service, drafts, packs, pack, weatherQueue, retireCare };
@@ -178,6 +180,31 @@ describe('SeasonalService.materializeTasksForTree', () => {
     expect(
       drafts.filter((d) => d.source === TaskSource.PERSONALIZED_OVERLAY),
     ).toHaveLength(2);
+  });
+});
+
+describe('SeasonalService.getSeasonalGuide', () => {
+  it("reads the region's month from the catalogue", async () => {
+    const seasonGuide = CATALOGUE_SEED.seasonGuide.map((g) =>
+      g.region === 'NORTH_INDIA'
+        ? {
+            ...g,
+            months: g.months.map((m, i) =>
+              i === 0 ? { ...m, headline: 'Test headline' } : m,
+            ),
+          }
+        : g,
+    );
+    const { service } = build({
+      premium: false,
+      seasonGuide,
+      now: new Date('2026-01-15T06:00:00+05:30'),
+    });
+    const guide = await service.getSeasonalGuide({
+      district: null,
+      region_cluster: 'NORTH_INDIA',
+    });
+    expect(guide.advice).toBe('Test headline');
   });
 });
 
