@@ -125,7 +125,7 @@ export function mapTaskView(
     record_kind: task.plant?.record_kind ?? null,
     plant_cycle_id: task.plant_cycle_id,
     cycle_year: task.plant_cycle?.cycle_year ?? null,
-    source_summary: buildTaskSourceSummary(task),
+    source_summary: hi?.summary ?? buildTaskSourceSummary(task),
     care_how:
       how && hi
         ? {

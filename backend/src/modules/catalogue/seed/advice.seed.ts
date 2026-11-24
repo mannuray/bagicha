@@ -334,4 +334,52 @@ export const ADVICE_SEED: AdviceSeed[] = [
     status: 'APPROVED',
     notes: null,
   },
+  {
+    key: 'overlay.dryness.water_today',
+    en: 'Water the plant today',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'overlay.dryness.recheck_leaves',
+    en: 'Recheck leaf stress after watering',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'overlay.dryness.no_deferring',
+    en: 'Do not defer irrigation until the next normal checkpoint',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'overlay.dryness.summary',
+    en: 'Recent journal_entries indicate dryness or water stress, so irrigation support is needed immediately.',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'overlay.task.water_today.title',
+    en: 'Water the plant today',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'overlay.task.water_today.reason',
+    en: 'Dryness signal detected for {name}',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'overlay.task.recheck.title',
+    en: 'Recheck the plant after watering',
+    status: 'APPROVED',
+    notes: null,
+  },
+  {
+    key: 'overlay.task.recheck.reason',
+    en: 'Confirm recovery after dryness intervention',
+    status: 'APPROVED',
+    notes: null,
+  },
 ];
