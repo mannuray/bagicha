@@ -33,12 +33,25 @@ const refsOf = (value: Prisma.JsonValue | null): AdviceRef[] | null =>
 
 function toCycleView(
   cycle: CycleWithRecentEntries,
-  catalogue: Pick<Catalogue, 'advice'>,
+  catalogue: Pick<Catalogue, 'advice' | 'adviceHasHindi'>,
   lang: Lang,
 ) {
-  // Read in the gardener's language from the saved keys; older seasons keep their English.
-  const summary = refsOf(cycle.cycle_summary_refs);
-  const actions = refsOf(cycle.recommended_actions_refs);
+  // Read in the gardener's language from the saved keys. Older seasons, and
+  // seasons an older API rewrote after the keys were saved (a rollback), keep
+  // their saved English: the keys must still produce exactly that English.
+  let summary = refsOf(cycle.cycle_summary_refs);
+  let actions = refsOf(cycle.recommended_actions_refs);
+  if (
+    summary &&
+    renderCycleSummary(summary, catalogue, 'en') !== cycle.cycle_summary
+  )
+    summary = null;
+  if (
+    actions &&
+    JSON.stringify(actions.map((a) => catalogue.advice(a, 'en'))) !==
+      JSON.stringify(cycle.recommended_next_cycle_actions)
+  )
+    actions = null;
   return {
     id: cycle.id,
     cycle_year: cycle.cycle_year,

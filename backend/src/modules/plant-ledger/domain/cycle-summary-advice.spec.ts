@@ -51,3 +51,20 @@ describe('season summary English after the move to the catalogue', () => {
     expect(n).toBeGreaterThan(3000);
   });
 });
+
+describe('season summary in Hindi', () => {
+  it('reads as plain English sentence while its pieces have no Hindi', () => {
+    const parts = buildCycleSummary({
+      flowering: new Date('2026-02-01'),
+      fruitSet: null,
+      harvestCount: 2,
+      flowerDropLevel: DropLevel.UNKNOWN,
+      fruitDropLevel: DropLevel.UNKNOWN,
+      stressScore: 0,
+      pestPressureScore: 0,
+    });
+    expect(renderCycleSummary(parts, catalogue, 'hi')).toBe(
+      renderCycleSummary(parts, catalogue, 'en'),
+    );
+  });
+});

@@ -103,3 +103,19 @@ describe('advice seed validation', () => {
     ).toEqual(['advice: b: Hindi slots {} differ from English {n}']);
   });
 });
+
+describe('retired advice', () => {
+  it('still renders, so seasons and tasks that saved its key keep working', () => {
+    const { seededCatalogue } = jest.requireActual('../testing');
+    const { CATALOGUE_SEED } = jest.requireActual('../seed');
+    const catalogue = seededCatalogue({
+      ...CATALOGUE_SEED,
+      advice: CATALOGUE_SEED.advice.map((a: AdviceSeed) =>
+        a.key === 'cycle.next.keep_recording' ? { ...a, status: 'RETIRED' } : a,
+      ),
+    });
+    expect(
+      catalogue.advice({ key: 'cycle.next.keep_recording' }, 'en'),
+    ).toMatch(/Keep recording/);
+  });
+});

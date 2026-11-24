@@ -159,8 +159,9 @@ export class Catalogue {
         .filter(approved)
         .map((g) => [g.region, g.months] as const),
     );
+    // Retired advice still renders: seasons and tasks saved its key.
     const advice = new Map(
-      seed.advice.filter(approved).map((a) => [a.key, { en: a.en, hi: a.hi }]),
+      seed.advice.filter(served).map((a) => [a.key, { en: a.en, hi: a.hi }]),
     );
     return new Catalogue(version, {
       listed,
@@ -181,7 +182,7 @@ export class Catalogue {
         flowers: seed.perennialFlowers.filter(approved).length,
         treeCare: treeCare.size,
         seasonGuideRegions: [...seasonGuide.keys()],
-        advice: advice.size,
+        advice: seed.advice.filter(approved).length,
       },
     });
   }
@@ -308,7 +309,12 @@ export class Catalogue {
     return renderAdvice(this.parts.advice, ref, lang);
   }
 
-  /** Every approved advice key (for checks that rule code only uses known keys). */
+  /** Whether this advice has its Hindi text written. */
+  adviceHasHindi(key: string): boolean {
+    return Boolean(this.parts.advice.get(key)?.hi);
+  }
+
+  /** Every served advice key (for checks that rule code only uses known keys). */
   adviceKeys(): string[] {
     return [...this.parts.advice.keys()];
   }

@@ -109,11 +109,14 @@ export function buildCycleSummary(input: {
 /** The summary pieces as one sentence in the gardener's language. */
 export function renderCycleSummary(
   parts: AdviceRef[],
-  catalogue: Pick<Catalogue, 'advice'>,
+  catalogue: Pick<Catalogue, 'advice' | 'adviceHasHindi'>,
   lang: Lang,
 ): string {
-  const words = parts.map((p) => catalogue.advice(p, lang));
-  return lang === 'hi' ? `${words.join(', ')}।` : `${words.join(' ')}.`;
+  // Hindi joins only a fully Hindi sentence; until then it reads as English.
+  const hindi =
+    lang === 'hi' && parts.every((p) => catalogue.adviceHasHindi(p.key));
+  const words = parts.map((p) => catalogue.advice(p, hindi ? 'hi' : 'en'));
+  return hindi ? `${words.join(', ')}।` : `${words.join(' ')}.`;
 }
 
 export function buildRecommendedActions(input: {
@@ -182,7 +185,7 @@ function seasonYield(harvests: CycleEntry[]): {
  */
 export function buildCycleSnapshot(
   journal_entries: CycleEntry[],
-  catalogue: Pick<Catalogue, 'advice'>,
+  catalogue: Pick<Catalogue, 'advice' | 'adviceHasHindi'>,
 ) {
   const flowering =
     journal_entries.find((log) => log.type === LogType.FLOWERING)?.timestamp ??
