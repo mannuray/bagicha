@@ -14,7 +14,14 @@ export function corsOptionsFor(origins: string[]): CorsOptions | null {
   return {
     origin: origins,
     credentials: false,
-    allowedHeaders: ['Authorization', 'Content-Type', 'X-Request-Id'],
+    // Every header the web sends; anything else is refused at preflight.
+    allowedHeaders: [
+      'Authorization',
+      'Content-Type',
+      'X-Request-Id',
+      'Idempotency-Key',
+      'Accept-Language',
+    ],
     exposedHeaders: ['X-Request-ID'],
   };
 }

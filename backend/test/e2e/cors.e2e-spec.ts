@@ -31,6 +31,16 @@ describe('CORS', () => {
       );
     });
 
+    it('lets the browser send Idempotency-Key and PATCH', async () => {
+      const res = await preflight(app, 'http://localhost:5173');
+      expect(String(res.headers['access-control-allow-headers'])).toMatch(
+        /idempotency-key/i,
+      );
+      expect(String(res.headers['access-control-allow-methods'])).toMatch(
+        /PATCH/,
+      );
+    });
+
     it('does not allow other origins', async () => {
       const res = await preflight(app, 'http://evil.test');
       expect(res.headers['access-control-allow-origin']).toBeUndefined();
