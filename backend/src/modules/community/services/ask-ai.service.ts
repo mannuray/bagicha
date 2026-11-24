@@ -91,9 +91,12 @@ function truncate(text: string, max: number): string {
   return text.slice(0, max - 1).trimEnd() + '…';
 }
 
-/** Community text goes into the prompt as data: it must not close its own fence. */
+/**
+ * User text goes into the prompt as data: angle brackets are replaced, so no
+ * snippet or question can open or close a fence, however it is spelled.
+ */
 function fenced(text: string): string {
-  return text.replace(/<\/?(community_snippets|question)>/gi, '');
+  return text.replace(/</g, '‹').replace(/>/g, '›');
 }
 
 /** Answers a gardener's question with the AI, grounded in verified community answers. */

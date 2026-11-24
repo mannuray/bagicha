@@ -58,6 +58,20 @@ describe('rate limiting', () => {
       expect(blocked.body.error.details).toEqual({ bucket: 'auth' });
     });
 
+    it('counts OTP requests per IP even when a valid sign-in token is sent', async () => {
+      const prisma = app.get(PrismaService);
+      const token = `Bearer ${tokenFor(app, await seedUser(prisma))}`;
+      const send = (auth?: string) => {
+        const r = request(app.getHttpServer()).post('/api/v1/auth/request-otp');
+        if (auth) void r.set('Authorization', auth);
+        return r.send({
+          phone_number: `+9198888${String(++seq).padStart(5, '0')}`,
+        });
+      };
+      for (let i = 0; i < 5; i++) expect((await send()).status).toBe(200);
+      expect((await send(token)).status).toBe(429);
+    });
+
     it('caps community and chat writes at 30 a minute per user, shared across routes', async () => {
       const prisma = app.get(PrismaService);
       const [writer, other] = [await seedUser(prisma), await seedUser(prisma)];

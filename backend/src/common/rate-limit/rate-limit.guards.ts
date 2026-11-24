@@ -24,7 +24,6 @@ abstract class BaseRateLimitGuard extends ThrottlerGuard {
     @InjectThrottlerStorage() storage: ThrottlerStorage,
     reflector: Reflector,
     private readonly metrics: Metrics,
-    private readonly identity: BearerIdentity,
   ) {
     super(options, storage, reflector);
   }
@@ -37,10 +36,7 @@ abstract class BaseRateLimitGuard extends ThrottlerGuard {
   }
 
   protected getTracker(req: Record<string, any>): Promise<string> {
-    const headers = (req.headers ?? {}) as Record<string, string | undefined>;
-    return Promise.resolve(
-      trackerFor(req, this.identity.userIdOf(headers.authorization)),
-    );
+    return Promise.resolve(trackerFor(req));
   }
 
   protected throwThrottlingException(
@@ -61,6 +57,28 @@ abstract class BaseRateLimitGuard extends ThrottlerGuard {
 /** Global guard: the default limit for every route that has no bucket. */
 @Injectable()
 export class DefaultRateLimitGuard extends BaseRateLimitGuard {
+  constructor(
+    @InjectThrottlerOptions() options: ThrottlerModuleOptions,
+    @InjectThrottlerStorage() storage: ThrottlerStorage,
+    reflector: Reflector,
+    metrics: Metrics,
+    private readonly identity: BearerIdentity,
+  ) {
+    super(options, storage, reflector, metrics);
+  }
+
+  /**
+   * Runs before the auth guard, so it verifies the bearer token itself. Only
+   * here: bucket guards keep their own rule (auth and catalogue routes are
+   * anonymous and stay per IP, whatever token a caller sends).
+   */
+  protected getTracker(req: Record<string, any>): Promise<string> {
+    const headers = (req.headers ?? {}) as Record<string, string | undefined>;
+    return Promise.resolve(
+      trackerFor(req, this.identity.userIdOf(headers.authorization)),
+    );
+  }
+
   protected shouldSkip(context: ExecutionContext): Promise<boolean> {
     return Promise.resolve(this.bucketOf(context) !== undefined);
   }
