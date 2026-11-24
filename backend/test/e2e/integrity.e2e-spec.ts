@@ -52,7 +52,7 @@ describe('data integrity', () => {
     });
     const materialize = () =>
       request(app.getHttpServer())
-        .post(`/api/v1/seasonal/plant/${plant.id}/materialize-tasks`)
+        .post(`/api/v1/seasonal/plants/${plant.id}/materialize-tasks`)
         .set({ Authorization: `Bearer ${tokenFor(app, alice)}` });
     const [a, b] = await Promise.all([materialize(), materialize()]);
     expect([a.status, b.status]).toEqual([201, 201]);

@@ -103,9 +103,7 @@ export class ReportService {
       );
       if (count >= HIDE_REPORT_THRESHOLD && !target.isHidden)
         await target.hide(tx);
-      return !filed
-        ? { success: true, already_reported: true }
-        : { success: true, pending_reports: count };
+      return !filed ? { already_reported: true } : { pending_reports: count };
     });
   }
 }

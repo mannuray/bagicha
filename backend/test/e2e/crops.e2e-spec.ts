@@ -51,6 +51,8 @@ describe('crops', () => {
         request(server).post(url).set(auth).send(body),
       put: (url: string, body: object) =>
         request(server).put(url).set(auth).send(body),
+      patch: (url: string, body: object) =>
+        request(server).patch(url).set(auth).send(body),
       del: (url: string) => request(server).delete(url).set(auth),
     };
   };
@@ -260,7 +262,7 @@ describe('crops', () => {
       expect(
         (await a.post('/api/v1/crops/plan/sync')).body.data.created_count,
       ).toBe(0);
-      await a.put(
+      await a.patch(
         `/api/v1/ledger/plants/${tomato.body.data.id}/tasks/${seeds.id}`,
         { status: 'COMPLETED' },
       );
@@ -317,7 +319,7 @@ describe('crops', () => {
       expect(
         (
           await a.post(
-            `/api/v1/seasonal/plant/${legacy.body.data.id}/materialize-tasks`,
+            `/api/v1/seasonal/plants/${legacy.body.data.id}/materialize-tasks`,
           )
         ).status,
       ).toBe(201);
@@ -327,7 +329,7 @@ describe('crops', () => {
       const a = as(alice);
       const palak = await a.post('/api/v1/crops/plan', { crop_id: 'palak' });
       const res = await a.post(
-        `/api/v1/seasonal/plant/${palak.body.data.id}/materialize-tasks`,
+        `/api/v1/seasonal/plants/${palak.body.data.id}/materialize-tasks`,
       );
       expect(res.status).toBe(201);
       expect(res.body.data).toEqual({ results: [], created_count: 0 });

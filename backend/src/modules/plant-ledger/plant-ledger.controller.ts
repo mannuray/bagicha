@@ -7,7 +7,6 @@ import {
   Param,
   Post,
   Patch,
-  Put,
   Query,
   Request,
   UseGuards,
@@ -116,18 +115,8 @@ export class PlantLedgerController {
     return this.plants.getSeasonalState(req.user.id, id);
   }
 
-  /** Partial update: PATCH is the name to use; PUT stays until the web has moved. */
+  /** Partial update of the plant. */
   @Patch('plants/:id')
-  patchPlant(
-    @Request() req: AuthedRequest,
-    @Param('id') id: string,
-    @Body() dto: UpdatePlantDto,
-    @RequestLang() lang: Lang,
-  ) {
-    return this.updatePlant(req, id, dto, lang);
-  }
-
-  @Put('plants/:id')
   async updatePlant(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
@@ -220,7 +209,7 @@ export class PlantLedgerController {
     return this.mitigation.plan(req.user.id, id, lang);
   }
 
-  @Put('plants/:id/tasks/:taskId')
+  @Patch('plants/:id/tasks/:taskId')
   async updateTaskStatus(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
@@ -238,17 +227,5 @@ export class PlantLedgerController {
       await this.names.titler(lang),
       await this.names.careTexter(lang, regionFor(req.user)),
     );
-  }
-
-  /** PATCH is the name to use; PUT stays until the web has moved. */
-  @Patch('plants/:id/tasks/:taskId')
-  patchTaskStatus(
-    @Request() req: AuthedRequest,
-    @Param('id') id: string,
-    @Param('taskId') taskId: string,
-    @Body() dto: UpdateTaskStatusDto,
-    @RequestLang() lang: Lang,
-  ) {
-    return this.updateTaskStatus(req, id, taskId, dto, lang);
   }
 }

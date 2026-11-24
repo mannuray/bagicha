@@ -23,7 +23,11 @@ describe('old trees', () => {
     await app.close();
   });
 
-  const call = (method: 'post' | 'put' | 'get', url: string, body?: object) => {
+  const call = (
+    method: 'post' | 'put' | 'patch' | 'get',
+    url: string,
+    body?: object,
+  ) => {
     const req = request(app.getHttpServer())
       [method](`/api/v1/ledger${url}`)
       .set('Authorization', `Bearer ${tokenFor(app, user)}`);
@@ -110,7 +114,7 @@ describe('old trees', () => {
         first_harvest_at: new Date('2018-06-01'),
       },
     });
-    const res = await call('put', `/plants/${id}`, {
+    const res = await call('patch', `/plants/${id}`, {
       bearing_status: 'BEARING',
       bearing_since_year: 2019,
     });
@@ -124,7 +128,7 @@ describe('old trees', () => {
     const id = (
       await addTree({ bearing_status: 'BEARING', bearing_since_year: 2020 })
     ).body.data.id as string;
-    await call('put', `/plants/${id}`, { record_kind: 'FLOWER' });
+    await call('patch', `/plants/${id}`, { record_kind: 'FLOWER' });
     const plant = await row(id);
     expect(plant.bearing_status).toBeNull();
     expect(plant.bearing_since_year).toBeNull();
@@ -137,7 +141,7 @@ describe('old trees', () => {
       where: { id },
       data: { first_flowering_at: new Date('2024-03-01') },
     });
-    await call('put', `/plants/${id}`, { bearing_status: 'BEARING' });
+    await call('patch', `/plants/${id}`, { bearing_status: 'BEARING' });
     expect((await row(id)).first_flowering_at).toEqual(new Date('2024-03-01'));
   });
 
@@ -149,7 +153,7 @@ describe('old trees', () => {
         bearing_since_year: 2019,
       })
     ).body.data.id as string;
-    const res = await call('put', `/plants/${id}`, { planting_date: '2020' });
+    const res = await call('patch', `/plants/${id}`, { planting_date: '2020' });
     expect(res.status).toBe(200);
     expect(res.body.data).toMatchObject({
       bearing_status: 'BEARING',

@@ -35,6 +35,8 @@ describe('when a tree ends', () => {
         request(server).post(url).set(auth).send(body),
       put: (url: string, body: object) =>
         request(server).put(url).set(auth).send(body),
+      patch: (url: string, body: object) =>
+        request(server).patch(url).set(auth).send(body),
     };
   };
 
@@ -122,9 +124,9 @@ describe('when a tree ends', () => {
     await a.post(`${base}/end`, { reason: 'WEATHER' });
     const writes = [
       await a.post(`${base}/journal`, { type: 'NOTE', content: 'hello' }),
-      await a.put(`${base}/tasks/${task.id}`, { status: 'COMPLETED' }),
-      await a.post(`/api/v1/seasonal/plant/${id}/materialize-tasks`),
-      await a.put(base, { name: 'New name' }),
+      await a.patch(`${base}/tasks/${task.id}`, { status: 'COMPLETED' }),
+      await a.post(`/api/v1/seasonal/plants/${id}/materialize-tasks`),
+      await a.patch(base, { name: 'New name' }),
       await a.post('/api/v1/vision/diagnose', {
         image_base64: TINY_JPEG_B64,
         plant_id: id,
@@ -193,7 +195,9 @@ describe('when a tree ends', () => {
     ).map((t) => t.status);
     expect(statuses).not.toContain('PENDING');
     await withDryness(id);
-    const made = await a.post(`/api/v1/seasonal/plant/${id}/materialize-tasks`);
+    const made = await a.post(
+      `/api/v1/seasonal/plants/${id}/materialize-tasks`,
+    );
     expect(made.status).toBe(201);
     expect(made.body.data.created_count).toBeGreaterThan(0);
   });
@@ -202,7 +206,7 @@ describe('when a tree ends', () => {
     const { a, id, base } = await plantWithTask();
     await withDryness(id);
     const materialize = () =>
-      a.post(`/api/v1/seasonal/plant/${id}/materialize-tasks`);
+      a.post(`/api/v1/seasonal/plants/${id}/materialize-tasks`);
     await materialize();
     const seasonal = (
       (await a.get(`${base}/tasks`)).body.data as Array<{
@@ -215,8 +219,8 @@ describe('when a tree ends', () => {
     );
     expect(seasonal.length).toBeGreaterThanOrEqual(2);
     const [done, skipped] = seasonal;
-    await a.put(`${base}/tasks/${done.id}`, { status: 'COMPLETED' });
-    await a.put(`${base}/tasks/${skipped.id}`, { status: 'SKIPPED' });
+    await a.patch(`${base}/tasks/${done.id}`, { status: 'COMPLETED' });
+    await a.patch(`${base}/tasks/${skipped.id}`, { status: 'SKIPPED' });
 
     const again = await materialize();
     expect(again.body.data.created_count).toBe(0);
@@ -244,7 +248,7 @@ describe('when a tree ends', () => {
         due_date: new Date(),
       },
     });
-    await a.post(`/api/v1/seasonal/plant/${id}/materialize-tasks`);
+    await a.post(`/api/v1/seasonal/plants/${id}/materialize-tasks`);
     const pack = (
       (await a.get(`${base}/tasks`)).body.data as Array<{
         source: string;
@@ -339,7 +343,7 @@ describe('when a tree ends', () => {
       where: { id },
       data: { lifecycle_stage: 'MATURE_BEARING' },
     });
-    const renamed = await a.put(`/api/v1/ledger/plants/${id}`, {
+    const renamed = await a.patch(`/api/v1/ledger/plants/${id}`, {
       name: 'Bada Aam',
     });
     expect(renamed.status).toBe(200);

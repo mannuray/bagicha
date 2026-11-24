@@ -43,7 +43,7 @@ describe('response allow-lists', () => {
 
   it('the profile update returns only the user fields the app shows (no coordinates, no internals)', async () => {
     const res = await request(app.getHttpServer())
-      .put('/api/v1/user/profile/update')
+      .patch('/api/v1/user/profile')
       .set('Authorization', `Bearer ${tokenFor(app, user)}`)
       .send({ name: 'Asha' });
     expect(res.status).toBe(200);
@@ -91,7 +91,7 @@ describe('response allow-lists', () => {
     const auth = { Authorization: `Bearer ${tokenFor(app, user)}` };
     const other = await seedUser(prisma);
     const call = (
-      method: 'get' | 'post' | 'put',
+      method: 'get' | 'post' | 'put' | 'patch',
       url: string,
       body?: object,
     ) => {
@@ -118,7 +118,7 @@ describe('response allow-lists', () => {
       plantList: (await call('get', '/ledger/plants')).body.data,
       plantDetail: (await call('get', `/ledger/plants/${plant.id}`)).body.data,
       updatePlant: (
-        await call('put', `/ledger/plants/${plant.id}`, { name: 'Old Aam' })
+        await call('patch', `/ledger/plants/${plant.id}`, { name: 'Old Aam' })
       ).body.data,
       journal: (
         await call('post', `/ledger/plants/${plant.id}/journal`, {
@@ -200,7 +200,7 @@ describe('response allow-lists', () => {
       expect(Object.keys(item).sort()).toEqual(ENTRY);
     const intel = (
       await request(server)
-        .get(`/api/v1/seasonal/plant/${plant.id}/intelligence`)
+        .get(`/api/v1/seasonal/plants/${plant.id}/intelligence`)
         .set(auth)
     ).body.data;
     expect(Object.keys(intel.seasonal_pack).sort()).toEqual(

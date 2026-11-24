@@ -46,7 +46,7 @@ describe('ReportService', () => {
   it('audits a new report with a snapshot of the reported content', async () => {
     const { service, audit } = build();
     const result = await service.reportPost('u1', 'post1', { reason: 'spam' });
-    expect(result).toMatchObject({ success: true, pending_reports: 1 });
+    expect(result).toMatchObject({ pending_reports: 1 });
     expect(audit.record).toHaveBeenCalledTimes(1);
     expect((audit.record.mock.calls[0] as unknown[])[0]).toMatchObject({
       actorUserId: 'u1',
