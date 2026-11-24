@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DiagnosisSubjectType } from '@prisma/client';
 import { AiImage, AiProvider } from '../ai';
+import { decodeSafely } from '../media';
 import { DiagnosisPipelineService } from '../diagnosis';
 import { PlantRecordService } from '../plant-ledger';
 import { mapAiDiagnosis } from './ai-diagnosis.mapper';
@@ -8,11 +9,14 @@ import { buildDiagnosisPrompt, buildIdentifyPrompt } from './diagnosis-prompt';
 import { VisionRequestDto } from './dto/vision-request.dto';
 import { toIdentification } from '../ai';
 
-function toImage(imageBase64: string): AiImage {
-  return {
-    data: imageBase64.split(',')[1] || imageBase64,
-    mimeType: 'image/jpeg',
-  };
+/**
+ * The photo as the AI will see it: decoded and re-encoded like any upload, so
+ * only a real JPEG/PNG/WebP within the pixel cap ever reaches the provider.
+ */
+async function toImage(imageBase64: string): Promise<AiImage> {
+  const b64 = imageBase64.split(',')[1] || imageBase64;
+  const { data } = await decodeSafely(Buffer.from(b64, 'base64'));
+  return { data: data.toString('base64'), mimeType: 'image/jpeg' };
 }
 
 /** Photo → AI → (optionally) saved diagnosis on the plant record. */
@@ -28,7 +32,7 @@ export class VisionService {
     const raw = await this.ai.generateJson({
       feature: 'identify',
       prompt: buildIdentifyPrompt(),
-      image: toImage(dto.image_base64),
+      image: await toImage(dto.image_base64),
     });
     return toIdentification(raw);
   }
@@ -42,7 +46,7 @@ export class VisionService {
     const raw = await this.ai.generateJson({
       feature: 'diagnose',
       prompt: buildDiagnosisPrompt(context, dto.note ?? null),
-      image: toImage(dto.image_base64),
+      image: await toImage(dto.image_base64),
     });
     const diagnosis = mapAiDiagnosis(raw);
 

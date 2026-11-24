@@ -4,7 +4,7 @@ import request from 'supertest';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
 import { withFakeAi } from './fakes';
-import { resetDb, seedUser, tokenFor } from './fixtures';
+import { noisePngBase64, resetDb, seedUser, tokenFor } from './fixtures';
 
 describe('request body limits', () => {
   let app: INestApplication;
@@ -34,7 +34,7 @@ describe('request body limits', () => {
 
   it('accepts a ~1 MB scan image on vision routes', async () => {
     const res = await post('/api/v1/vision/identify', {
-      image_base64: oneMegabyte,
+      image_base64: await noisePngBase64(1024 * 1024),
     });
     expect(res.status).not.toBe(413);
     expect(res.status).toBe(201);
