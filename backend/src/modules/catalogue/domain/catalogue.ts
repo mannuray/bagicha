@@ -206,6 +206,11 @@ export class Catalogue {
     return this.parts.fruitTypes.find((t) => t.key === key) ?? null;
   }
 
+  /** Month (1–12, IST) a family's fruiting cycle starts; January when unknown. */
+  cycleStartMonth(family: string | null | undefined): number {
+    return this.fruitType(family)?.cycle_start_month ?? 1;
+  }
+
   /**
    * The first fruit type, in seed order, one of whose words appears whole in
    * this text: its English-letter words, or its Hindi names ("अमरूद").

@@ -36,6 +36,8 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
       lifespan_months: [720, 1200],
       note_key: null,
     },
+    // Moved from code (species-config) as it was.
+    cycle_start_month: 11,
     status: 'APPROVED',
     notes:
       'life: typical Indian home-garden values for usual nursery stock, shown as ranges; source: general horticulture references (spec 2026-11-10-tree-life-and-loss §2.2).',
@@ -76,6 +78,8 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
       lifespan_months: [360, 600],
       note_key: null,
     },
+    // Moved from code (species-config) as it was.
+    cycle_start_month: 7,
     status: 'APPROVED',
     notes:
       'life: typical Indian home-garden values for usual nursery stock, shown as ranges; source: general horticulture references (spec 2026-11-10-tree-life-and-loss §2.2).',
@@ -89,6 +93,8 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
       lifespan_months: [720, 1200],
       note_key: null,
     },
+    // Moved from code (species-config) as it was.
+    cycle_start_month: 11,
     status: 'APPROVED',
     notes:
       'life: typical Indian home-garden values for usual nursery stock, shown as ranges; source: general horticulture references (spec 2026-11-10-tree-life-and-loss §2.2).',
@@ -114,6 +120,8 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
       lifespan_months: [360, 480],
       note_key: null,
     },
+    // Moved from code (species-config) as it was.
+    cycle_start_month: 6,
     status: 'APPROVED',
     notes:
       'life: typical Indian home-garden values for usual nursery stock, shown as ranges; source: general horticulture references (spec 2026-11-10-tree-life-and-loss §2.2).',
@@ -137,6 +145,8 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
       lifespan_months: [300, 360],
       note_key: null,
     },
+    // Moved from code (species-config) as it was.
+    cycle_start_month: 6,
     status: 'APPROVED',
     notes:
       'life: typical Indian home-garden values for usual nursery stock, shown as ranges; source: general horticulture references (spec 2026-11-10-tree-life-and-loss §2.2).',
@@ -165,6 +175,8 @@ export const FRUIT_TYPE_SEED: FruitTypeSeed[] = [
       lifespan_months: [60, 96],
       note_key: 'banana',
     },
+    // Moved from code (species-config) as it was.
+    cycle_start_month: 1,
     status: 'APPROVED',
     notes:
       'life: typical Indian home-garden values for usual nursery stock, shown as ranges; source: general horticulture references (spec 2026-11-10-tree-life-and-loss §2.2).',

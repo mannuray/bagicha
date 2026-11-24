@@ -82,11 +82,12 @@ export class CycleService {
     eventAt: Date,
     tx?: Tx,
   ): Promise<PlantCycle> {
-    const family = (await this.species.resolver()).family(plant);
+    const species = await this.species.resolver();
+    const startMonth = species.catalogue.cycleStartMonth(species.family(plant));
     const cycle = await this.cycles.upsertForYear(
       userId,
       plant.id,
-      resolveCycleYear(family, eventAt),
+      resolveCycleYear(startMonth, eventAt),
       tx,
     );
     if (!cycle) {
