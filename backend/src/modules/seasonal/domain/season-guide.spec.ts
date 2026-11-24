@@ -8,7 +8,8 @@ const north = CATALOGUE_SEED.seasonGuide.find(
 describe('monthOf', () => {
   it('uses the month in India, not UTC', () => {
     // 31 Oct 20:00 UTC is already 1 Nov in India.
-    expect(monthOf(north, new Date('2026-10-31T20:00:00Z'))).toEqual(north[10]);
+    const { hi: _hi, ...november } = north[10];
+    expect(monthOf(north, new Date('2026-10-31T20:00:00Z'))).toEqual(november);
   });
 });
 
