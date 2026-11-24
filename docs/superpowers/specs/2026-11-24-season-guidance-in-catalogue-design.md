@@ -44,8 +44,9 @@ before.
   byte-for-byte (a test compares the seed with the old constant before the constant is deleted).
 - Persistence: Prisma model `CatalogueSeasonGuide` (JSON `data`, like `CatalogueTreeCare`) and a
   migration; repository load/write and the push's kind table (`keyOf` region, unordered).
-- `Catalogue.seasonGuide(region): SeasonMonth[]`; `CatalogueStore` refuses to boot with no season
-  guide (like tree care) and logs `seasonGuideCount`.
+- `Catalogue.seasonGuide(region): SeasonMonth[]`; `CatalogueStore` refuses to load a snapshot
+  unless every `RegionCluster` has an approved 12-month guide (checked at load, not just a count),
+  and logs `seasonGuideCount`. *(Design review.)*
 - `SeasonalService.getSeasonalGuide` reads it from the snapshot instead of `SEASON_GUIDE`; the
   month is still `istMonth(now)`. API response unchanged.
 - `season-guide.ts` keeps only the type (moved next to the catalogue types if cleaner); the data
@@ -64,24 +65,39 @@ before.
   view carries no phase and empty `do_now` / `avoid_now` / `watch_for`.
 - **Version skew:** Vercel deploys the web ~30 s before the manual Render deploy, and a cached old
   web may meet the new API. So the API keeps sending `seasonal_pack` (same shape; for `'coming'`
-  with empty lists and a neutral phase value the web hides), and the new web treats a missing
-  `care_status` as today's behaviour.
+  with empty lists and phase values `care_coming`, which an old cached web humanises as "Care
+  coming" — acceptable), and the new web treats a missing `care_status` as today's behaviour.
+- **Pack rows are anchors only, never content.** Neither the intelligence view nor
+  `materializeTasksForTree` reads a pack row's phase, lists or `task_templates` any more, so
+  existing rows still holding the old filler are harmless. New anchor rows are written with empty
+  lists, `current_phase`/`upcoming_phase` `care_coming`, empty `task_templates`, `basis`
+  `anchor_only` and **`pack_version: 2`**, so a rolled-back old API (which looks up version 1)
+  never reuses them and rebuilds its own filler rows. Test: a pending-family tree whose old filler
+  row (version 1, with templates) is in the database shows empty lists and gets no pack task.
+  *(Design review.)*
 - `SeasonalIntelligenceService`'s hand-written generic / guava / citrus guidance, its five windows,
   `buildTaskTemplates` (in `seasonal/domain/overlay-rules.ts`) and the cohort pack's guidance content are deleted. The `seasonal_packs`
   row stays only as the overlay's database anchor (no migration to the overlay table in this
   stage); dropping the pack table is a later cleanup. *(Builder's call where cleaner.)*
 - **Other readers of the deleted guidance** (`PlantRecordService.inferTreeSeasonalState` callers):
-  the AI diagnosis context (`getContextForAi`, every non-flower plant) and
+  the AI diagnosis context (`getContextForAi`) and
   `GET /plants/:id/seasonal-state` (no web caller found) both got the filler, even for trees with
   reviewed care. Both now get the same honest view as the plant page: when reviewed care applies,
   the care phase view (`carePhaseView`: phase, avoid, watch, what's open this month) plus
-  `care_status: 'reviewed'`; otherwise `care_status: 'coming'` with no seasonal guidance. The
+  `care_status: 'reviewed'`; otherwise `care_status: 'coming'` with no seasonal guidance. This
+  applies to **trees only** (`record_kind === TREE && !crop_id`); a crop or seasonal flower (any
+  plant with `crop_id`) gets no `seasonal_state` in the AI context (perennial flowers keep their
+  bloom season), so a tomato is never told "care is coming". Test: a crop's AI context has no
+  `seasonal_state`. *(Design review.)* The
   endpoint keeps its route (the shelved Android client may use it) with that shape. The care
   lookup (`treeCareFor` + `careApplies` + region) becomes one helper reachable from both
   plant-ledger and seasonal. Test: a diagnosis context for a pending-family tree has no
   seasonal advice; for a mango in North India it has the care phase. *(Builder's call, from the
   builder check: decision 1 applied to every reader.)*
-- First-watering check for a newly added tree without care (`TaskProcessor`) is unchanged.
+- **First-watering check** (`TaskProcessor`): it is skipped only when reviewed care *applies* —
+  the job loads the user's region (it carries `user_id`) and uses the shared care lookup with
+  `careApplies`. A new pomegranate in WEST_INDIA (reviewed family, pending region) therefore still
+  gets its watering check instead of nothing. Test for that case. *(Design review.)*
 - **Personal adjustment (decision 2):** `getOrRefreshOverlay` runs for premium users on every
   tree, care or not. `buildPersonalizedOverlay` no longer needs a pack phase: `adjusted_phase` is
   `${carePhase}_with_dryness_attention` when reviewed care gives a phase, else
@@ -91,16 +107,23 @@ before.
 - `ThisSeason`: for `care_status: 'coming'` show one short card: "Care for {fruit} is coming. Until
   then, log what you see — it helps." (English and Hindi strings; `{fruit}` is the plant's display
   name), with the existing "Log a moment" action as its link. No avoid/watch lists.
-- `AtAGlance`: no "Now: <phase>" line for `'coming'`, unless a personal adjustment is active
-  (then it shows the adjustment, humanised, as today).
+- `AtAGlance`: no "Now … → Next …" line for `'coming'`. With a personal adjustment active it shows
+  only "Now: <adjustment>" (humanised), never a "Next" half. *(Design review.)*
 - Web zod: `care_status` optional (missing → `'reviewed'` behaviour).
 
-## Release order
+## Release order (two releases, one risk each — design review)
 
-1. Prisma migration (new table) → catalogue push (writes the season guide) → API deploy → web.
-   The API refuses to boot without a season guide, so the push must precede the deploy.
-2. Rollback: the old API ignores the new table; rolling the API back brings the filler back
-   (acceptable).
+1. **Release A (home tips):** Prisma migration (new table) → catalogue push (writes the season
+   guide) → API deploy. The API refuses to boot without a complete season guide, so the push
+   precedes the deploy. No web change. Rollback: the old API ignores the new table.
+2. **Release B (no fallback):** API deploy, then the web (Vercel builds on push; the API stays
+   compatible with the old web and the new web with the old API). No migration, no catalogue
+   change. Pending SEASONAL_PACK tasks are cancelled lazily, the next time a tree's reminders
+   refresh (once per session per plant from the dashboard, or on add/refresh); a session open
+   during the deploy may show them until then. No blanket SQL cancel in a migration (the old API
+   could re-create them mid-deploy). Rollback: the old API rebuilds its version-1 filler packs.
+3. As for tree care: a seed change that adds a **new field** (e.g. Hindi `hi` on season-guide
+   rows) deploys the schema that knows it before the content is pushed.
 
 ## Tests
 
@@ -111,7 +134,12 @@ before.
   no SEASON_PACK task and retires an existing one; a premium user with a "soil dry" log still gets
   the two overlay tasks, `adjusted_phase` `dryness_attention`.
 - A reviewed-care tree: unchanged (existing suites), `care_status: 'reviewed'`.
-- A reviewed family in a pending region (pomegranate, WEST_INDIA): `'coming'`.
+- A reviewed family in a pending region (pomegranate, WEST_INDIA): `'coming'`; a new one still gets
+  the first-watering check.
+- An existing version-1 filler pack row: not shown, no task from its templates; new anchors are
+  version 2 with empty content.
+- A crop's AI context has no `seasonal_state`; a North India mango's has the care phase.
+- Store: a snapshot missing one region's guide is refused.
 - Web: the "coming" card shows and the lists don't; missing `care_status` behaves as today;
   AtAGlance hides the phase for `'coming'`.
 - e2e: the catalogue push writes the season guide; boot fails without it.
