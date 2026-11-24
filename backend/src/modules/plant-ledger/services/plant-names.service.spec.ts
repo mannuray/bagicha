@@ -148,3 +148,107 @@ describe('plant names in the request language', () => {
     });
   });
 });
+
+describe('saved tree-care reminders in Hindi', () => {
+  const { CATALOGUE_SEED } = jest.requireActual('../../catalogue');
+  const withHindi =
+    (region: string, title: string) =>
+    (r: { items: Array<{ key: string; hi?: object }> }) => ({
+      ...r,
+      items: r.items.map((i) =>
+        i.key === 'feed_1' ? { ...i, hi: { title, why: 'नियमित खाद' } } : i,
+      ),
+      _region: region,
+    });
+  const papaya = CATALOGUE_SEED.treeCare.find(
+    (c: { family: string }) => c.family === 'papaya',
+  );
+  const seed = {
+    ...CATALOGUE_SEED,
+    treeCare: [
+      ...CATALOGUE_SEED.treeCare.filter(
+        (c: { family: string }) => c.family !== 'papaya',
+      ),
+      {
+        ...papaya,
+        regions: {
+          ...papaya.regions,
+          SOUTH_DECCAN: (({ _region, ...r }) => r)(
+            withHindi('S', 'पहली खाद: 50 ग्राम')(papaya.regions.SOUTH_DECCAN),
+          ),
+          COASTAL_HUMID: (({ _region, ...r }) => r)(
+            withHindi('K', 'पहली खाद: 40 ग्राम')(papaya.regions.COASTAL_HUMID),
+          ),
+        },
+      },
+    ],
+  };
+  const service = new PlantNamesService(seededCatalogueStore(seed));
+  const task = {
+    type: 'FEED',
+    title: 'Give feed 1: 50 g each of N, P and K',
+    source: 'TREE_CARE',
+    source_key: 'papaya:feed_1:d90',
+  };
+
+  it("uses the gardener's region: South's Hindi, not the coast's", async () => {
+    const texts = await service.careTexter('hi', 'SOUTH_DECCAN');
+    expect(texts(task)).toMatchObject({
+      title: 'पहली खाद: 50 ग्राम',
+      why: 'नियमित खाद',
+    });
+  });
+
+  it('keeps English when the item is gone or the request is English', async () => {
+    expect(
+      (await service.careTexter('hi', 'SOUTH_DECCAN'))({
+        ...task,
+        source_key: 'papaya:no_such_item:d90',
+      }),
+    ).toBeNull();
+    expect((await service.careTexter('en', 'SOUTH_DECCAN'))(task)).toBeNull();
+  });
+});
+
+describe('a saved tree-care reminder card in Hindi', () => {
+  it('replaces title, how-to and reason; keeps the amount', () => {
+    const view = mapTaskView(
+      {
+        id: 't1',
+        type: 'FEED',
+        title: 'Give feed 1',
+        category: null,
+        priority: 'MEDIUM',
+        status: 'PENDING',
+        source: 'TREE_CARE',
+        source_key: 'papaya:feed_1:d90',
+        reason: 'Regular feeds',
+        due_date: new Date('2026-09-01'),
+        completed_at: null,
+        plant_cycle_id: null,
+        metadata: {
+          organic: 'FYM',
+          chemical: 'Urea 110 g',
+          why: 'Regular feeds',
+          amount: '110 g urea',
+          window_end: '2026-09-29T00:00:00.000Z',
+        },
+      } as never,
+      undefined,
+      undefined,
+      () => ({
+        title: 'पहली खाद',
+        why: 'नियमित खाद',
+        chemical: 'यूरिया 110 ग्राम',
+      }),
+    );
+    expect(view.title).toBe('पहली खाद');
+    expect(view.reason).toBe('नियमित खाद');
+    expect(view.care_how).toMatchObject({
+      organic: 'FYM',
+      chemical: 'यूरिया 110 ग्राम',
+      why: 'नियमित खाद',
+      amount: '110 g urea',
+    });
+  });
+});

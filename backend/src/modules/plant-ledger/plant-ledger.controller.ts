@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RequestLang, type Lang } from '../../common/http/lang';
+import { regionFor } from '../regions';
 import { PlantNamesService } from './services/plant-names.service';
 import { PaginationQueryDto } from '../../common/pagination';
 import { TimelineQueryDto } from './dto/timeline-query.dto';
@@ -179,6 +180,7 @@ export class PlantLedgerController {
       q,
       await this.names.namer(lang),
       await this.names.titler(lang),
+      await this.names.careTexter(lang, regionFor(req.user)),
     );
   }
 
@@ -194,6 +196,7 @@ export class PlantLedgerController {
       q.status,
       await this.names.namer(lang),
       await this.names.titler(lang),
+      await this.names.careTexter(lang, regionFor(req.user)),
     );
   }
 
@@ -223,6 +226,7 @@ export class PlantLedgerController {
       this.clock.now(),
       await this.names.namer(lang),
       await this.names.titler(lang),
+      await this.names.careTexter(lang, regionFor(req.user)),
     );
   }
 }
