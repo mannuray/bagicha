@@ -47,3 +47,4 @@ export type {
   TreeCareItem,
   TreeCareSeed,
 } from './domain/tree-care';
+export type { SeasonGuideSeed, SeasonMonth } from './domain/season-guide';

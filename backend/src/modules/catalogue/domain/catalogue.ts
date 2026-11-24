@@ -16,6 +16,8 @@ import { FORMER_DISPLAY_NAMES } from './former-names';
 import { hasWords, hindiWords, latinWords } from './words';
 import { careForTree, type TreeWords } from './care-kind';
 import type { FamilyCare } from './tree-care';
+import type { SeasonMonth } from './season-guide';
+import type { RegionCluster } from '@prisma/client';
 
 /** Vegetables ready in fewer days than this are tagged `quick`. */
 const QUICK_DAYS = 45;
@@ -57,8 +59,15 @@ export class Catalogue {
       search: SearchEntry[];
       /** Approved tree care by family (retired care sends trees back to the season pack). */
       treeCare: Map<string, FamilyCare>;
+      /** Approved home season tips by region, January first. */
+      seasonGuide: Map<RegionCluster, SeasonMonth[]>;
       /** APPROVED fruit types, perennial flowers and tree care: what the catalogue can offer. */
-      approved: { fruitTypes: number; flowers: number; treeCare: number };
+      approved: {
+        fruitTypes: number;
+        flowers: number;
+        treeCare: number;
+        seasonGuideRegions: RegionCluster[];
+      };
     },
   ) {}
 
@@ -141,6 +150,11 @@ export class Catalogue {
         .filter(approved)
         .map(({ status: _s, notes: _n, ...care }) => [care.family, care]),
     );
+    const seasonGuide = new Map(
+      seed.seasonGuide
+        .filter(approved)
+        .map((g) => [g.region, g.months] as const),
+    );
     return new Catalogue(version, {
       listed,
       crops,
@@ -153,10 +167,12 @@ export class Catalogue {
       hindiNames,
       search,
       treeCare,
+      seasonGuide,
       approved: {
         fruitTypes: seed.fruitTypes.filter(approved).length,
         flowers: seed.perennialFlowers.filter(approved).length,
         treeCare: treeCare.size,
+        seasonGuideRegions: [...seasonGuide.keys()],
       },
     });
   }
@@ -258,7 +274,17 @@ export class Catalogue {
   }
 
   /** How many APPROVED fruit types and perennial flowers the catalogue offers. */
-  approvedCounts(): { fruitTypes: number; flowers: number; treeCare: number } {
+  /** A region's home season tips, January first; null if none is approved. */
+  seasonGuide(region: RegionCluster): SeasonMonth[] | null {
+    return this.parts.seasonGuide.get(region) ?? null;
+  }
+
+  approvedCounts(): {
+    fruitTypes: number;
+    flowers: number;
+    treeCare: number;
+    seasonGuideRegions: RegionCluster[];
+  } {
     return this.parts.approved;
   }
 
