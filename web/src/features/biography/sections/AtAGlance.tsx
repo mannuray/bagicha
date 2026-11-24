@@ -31,6 +31,13 @@ export function AtAGlance({ plant, now }: { plant: PlantDetail; now: Date }) {
         <ErrorState error={intel.error} onRetry={() => void intel.refetch()} />
       ) : !pack ? (
         <LoadingState />
+      ) : intel.data?.care_status === 'coming' ? (
+        // No reviewed care: no season phase; a personal adjustment still shows what it asks now.
+        overlay?.adjusted_phase ? (
+          <p className="font-body text-sm text-on-surface">
+            <span className="font-bold">{t('biography.now', { current: humanize(overlay.adjusted_phase) })}</span>
+          </p>
+        ) : null
       ) : (
         <p className="font-body text-sm text-on-surface">
           <span className="font-bold">{t('biography.now', { current: humanize(overlay?.adjusted_phase ?? pack.current_phase) })}</span>

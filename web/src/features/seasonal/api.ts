@@ -51,6 +51,11 @@ export const intelligenceSchema = z.object({
     .boolean()
     .nullish()
     .transform((v) => v ?? false),
+  /** 'coming' when the tree has no reviewed care yet (missing from older servers: behave as today). */
+  care_status: z
+    .enum(['reviewed', 'coming'])
+    .nullish()
+    .transform((v) => v ?? 'reviewed'),
   /** Set when the tree isn't usually grown in the gardener's region. */
   care_note: z
     .string()

@@ -509,7 +509,8 @@
     "ifYouSee": "When:",
     "ifYouSeeIt": "Only if you see it ({{count}})",
     "plantingMonthAsk": "When did you plant it? Add the month to get care reminders for this tree.",
-    "addPlantingMonth": "Add planting month"
+    "addPlantingMonth": "Add planting month",
+    "careComing": "Care for {{name}} is coming. Until then, log what you see — it helps."
   },
   "scan": {
     "kicker": "Plant doctor",
