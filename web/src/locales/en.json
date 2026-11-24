@@ -37,7 +37,8 @@
     "OTP_COOLDOWN": "A code was already sent. Please wait a minute before asking for another.",
     "OTP_DAILY_LIMIT": "Too many codes for this number today. Please try again tomorrow.",
     "MEDIA_UNREADABLE": "We couldn't open that photo. Please try another one.",
-    "MEDIA_TYPE_UNSUPPORTED": "Please choose a JPEG, PNG or WebP photo."
+    "MEDIA_TYPE_UNSUPPORTED": "Please choose a JPEG, PNG or WebP photo.",
+    "IDEMPOTENCY_IN_PROGRESS": "This is still being saved — wait a moment and try again."
   },
   "nav": {
     "label": "Main",

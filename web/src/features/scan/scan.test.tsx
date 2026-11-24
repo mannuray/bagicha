@@ -220,6 +220,45 @@ describe('scan', () => {
     expect(calls).toBe(1);
   });
 
+  it('a diagnosis retried after leaving and coming back keeps its Idempotency-Key', async () => {
+    plants();
+    const keys: (string | null)[] = [];
+    server.use(
+      http.post(`${API}/vision/diagnose`, ({ request }) => {
+        keys.push(request.headers.get('Idempotency-Key'));
+        return keys.length === 1
+          ? HttpResponse.json(fail('AI_UNAVAILABLE'), { status: 502 })
+          : HttpResponse.json(ok({ diagnosis, persisted: true, task_id: null }), { status: 201 });
+      }),
+      http.get(`${API}/ledger/plants/p1/tasks`, () => HttpResponse.json(pageOf([]))),
+    );
+    renderWithApp(
+      <ImageCompressorProvider value={compressor}>
+        <ScanStateProvider>
+          <LeaveButton />
+          <Routes>
+            <Route path="/scan" element={<ScanScreen />} />
+            <Route path="/scan/diagnose" element={<DiagnoseResultScreen />} />
+            <Route path="/away" element={<Away />} />
+          </Routes>
+        </ScanStateProvider>
+      </ImageCompressorProvider>,
+      { route: '/scan' },
+    );
+    await screen.findByRole('option', { name: 'Aam' });
+    await userEvent.selectOptions(screen.getByLabelText(/which tree/i), 'p1');
+    await pickPhoto();
+    await userEvent.click(screen.getByRole('button', { name: /diagnose/i }));
+    await screen.findByRole('alert');
+    await userEvent.click(screen.getByRole('button', { name: 'leave' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'go back' }));
+    await userEvent.click(await screen.findByRole('button', { name: /try again/i }));
+    await screen.findByRole('heading', { name: /pest/i });
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toBeTruthy();
+    expect(keys[1]).toBe(keys[0]);
+  });
+
   it('forgets the pending scan photo on sign-out', async () => {
     plants();
     const view = renderWithApp(

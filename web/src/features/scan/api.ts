@@ -20,8 +20,11 @@ export function useVisionApi() {
   const invalidate = useInvalidate();
   return {
     identify: (req: ScanPayload) => api.send('POST', '/vision/identify', { image_base64: req.image_base64 }, identifySchema),
-    diagnose: async (req: ScanPayload) => {
-      const res = await api.send('POST', '/vision/diagnose', req, diagnoseResponseSchema);
+    /** `retryKey` belongs to the scan, so a retry of it (even after a remount) is saved once. */
+    diagnose: async (req: ScanPayload, retryKey: string) => {
+      const res = await api.send('POST', '/vision/diagnose', req, diagnoseResponseSchema, {
+        idempotencyKey: retryKey,
+      });
       if (req.plant_id) invalidate(staleAfter.diagnosis(req.plant_id));
       return res;
     },

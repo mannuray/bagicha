@@ -37,7 +37,8 @@
     "OTP_COOLDOWN": "कोड पहले ही भेज दिया गया है। नया कोड माँगने से पहले एक मिनट रुकें।",
     "OTP_DAILY_LIMIT": "आज इस नंबर पर बहुत ज़्यादा कोड भेजे जा चुके हैं। कल फिर से कोशिश करें।",
     "MEDIA_UNREADABLE": "हम यह फ़ोटो खोल नहीं पाए। कोई दूसरी फ़ोटो चुनें।",
-    "MEDIA_TYPE_UNSUPPORTED": "JPEG, PNG या WebP फ़ोटो चुनें।"
+    "MEDIA_TYPE_UNSUPPORTED": "JPEG, PNG या WebP फ़ोटो चुनें।",
+    "IDEMPOTENCY_IN_PROGRESS": "यह अभी सहेजा जा रहा है — थोड़ा रुककर फिर कोशिश करें।"
   },
   "nav": {
     "label": "मुख्य",

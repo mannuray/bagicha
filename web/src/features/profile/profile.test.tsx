@@ -42,7 +42,7 @@ function captureUpdates() {
   const bodies: Record<string, unknown>[] = [];
   let user = { ...incomplete };
   server.use(
-    http.put(`${API}/user/profile/update`, async ({ request }) => {
+    http.patch(`${API}/user/profile`, async ({ request }) => {
       const body = (await request.json()) as Record<string, unknown>;
       bodies.push(body);
       user = { ...user, ...body } as typeof user;
@@ -107,7 +107,7 @@ describe('onboarding', () => {
 
   it('a returning user who only lacked a region goes home after choosing it', async () => {
     server.use(
-      http.put(`${API}/user/profile/update`, async ({ request }) =>
+      http.patch(`${API}/user/profile`, async ({ request }) =>
         HttpResponse.json({ success: true, data: { ...testUser({ region_cluster: null }), ...((await request.json()) as object) } }),
       ),
     );
@@ -292,7 +292,7 @@ describe('profile', () => {
 
   it('will not save a blank district from the profile (it would send the user back to onboarding)', async () => {
     let puts = 0;
-    server.use(http.put(`${API}/user/profile/update`, () => {
+    server.use(http.patch(`${API}/user/profile`, () => {
       puts += 1;
       return HttpResponse.json({ success: true, data: testUser({ district: null }) });
     }));
@@ -337,7 +337,7 @@ describe('profile photo', () => {
         kinds.push(/name="kind"\r\n\r\n(\w+)/.exec(await request.text())?.[1] ?? '');
         return HttpResponse.json({ success: true, data: { key, url: 'x', width: 10, height: 10, is_public: false } }, { status: 201 });
       }),
-      http.put(`${API}/user/profile/update`, async ({ request }) => {
+      http.patch(`${API}/user/profile`, async ({ request }) => {
         const body = (await request.json()) as Record<string, unknown>;
         saved.push(body);
         return HttpResponse.json({ success: true, data: { ...testUser(), ...body } });

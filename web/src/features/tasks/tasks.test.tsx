@@ -23,7 +23,7 @@ describe('tasks screen', () => {
       http.get(`${API}/ledger/tasks`, () =>
         HttpResponse.json(pageOf(completed ? [] : [taskRecord()])),
       ),
-      http.put(`${API}/ledger/plants/p1/tasks/t1`, async ({ request }) => {
+      http.patch(`${API}/ledger/plants/p1/tasks/t1`, async ({ request }) => {
         puts += 1;
         expect(await request.json()).toEqual({ status: 'COMPLETED' });
         await new Promise((r) => setTimeout(r, 30));
@@ -56,7 +56,7 @@ describe('tasks screen', () => {
         gets += 1;
         return HttpResponse.json(pageOf([taskRecord()]));
       }),
-      http.put(`${API}/ledger/plants/p1/tasks/t1`, () =>
+      http.patch(`${API}/ledger/plants/p1/tasks/t1`, () =>
         HttpResponse.json(fail('TASK_NOT_FOUND'), { status: 404 }),
       ),
     );
@@ -71,7 +71,7 @@ describe('tasks screen', () => {
     let materialized = 0;
     server.use(
       http.get(`${API}/ledger/plants/p1/tasks`, () => HttpResponse.json(pageOf([taskRecord()]))),
-      http.post(`${API}/seasonal/plant/p1/materialize-tasks`, () => {
+      http.post(`${API}/seasonal/plants/p1/materialize-tasks`, () => {
         materialized += 1;
         return HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 });
       }),
@@ -142,7 +142,7 @@ describe('tasks screen', () => {
 
   it('shows a failed Complete on the card itself when the screen gives no error handler', async () => {
     const { TaskCard } = await import('.');
-    server.use(http.put(`${API}/ledger/plants/p1/tasks/t1`, () => HttpResponse.json(fail('X'), { status: 500 })));
+    server.use(http.patch(`${API}/ledger/plants/p1/tasks/t1`, () => HttpResponse.json(fail('X'), { status: 500 })));
     const { taskSchema } = await import('.');
     renderWithApp(<TaskCard task={taskSchema.parse(taskRecord())} now={new Date()} />);
     await userEvent.click(screen.getByRole('button', { name: /mark done/i }));

@@ -20,6 +20,9 @@ export function useLogMoment(plantId: string) {
   const [problem, setProblem] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
+  // The photo already uploaded for this entry: saving again after a failure
+  // reuses it, so the entry (and its retry key) stays the same.
+  const uploaded = useRef<{ file: File; key: string } | null>(null);
 
   useEffect(() => saveDraft(plantId, draft, storage), [plantId, draft, storage]);
   const set = <K extends keyof MomentDraft>(k: K, v: MomentDraft[K]) => setDraft((d) => ({ ...d, [k]: v }));
@@ -30,7 +33,12 @@ export function useLogMoment(plantId: string) {
     setBusy(true);
     setProblem(null);
     try {
-      const photoKey = photo ? await photoUpload.upload(photo) : null;
+      let photoKey: string | null = null;
+      if (photo) {
+        if (uploaded.current?.file !== photo)
+          uploaded.current = { file: photo, key: await photoUpload.upload(photo) };
+        photoKey = uploaded.current.key;
+      }
       await save.mutateAsync(toMoment(draft, photoKey));
       clearDraft(plantId, storage);
       navigate(`/plants/${plantId}`, { replace: true });

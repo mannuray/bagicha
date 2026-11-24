@@ -78,7 +78,7 @@ export function usePlantIntelligence(plantId: string) {
   const api = useApi();
   return useQuery({
     queryKey: queryKeys.plants.intelligence(plantId),
-    queryFn: () => api.get(`/seasonal/plant/${plantId}/intelligence`, intelligenceSchema),
+    queryFn: () => api.get(`/seasonal/plants/${plantId}/intelligence`, intelligenceSchema),
     enabled: Boolean(plantId),
   });
 }
@@ -94,5 +94,5 @@ export const materializeSchema = z.object({
  * creation and the dashboard's once-per-session check.
  */
 export function materializeTasks(api: ApiClient, plantId: string) {
-  return api.send('POST', `/seasonal/plant/${plantId}/materialize-tasks`, {}, materializeSchema);
+  return api.send('POST', `/seasonal/plants/${plantId}/materialize-tasks`, {}, materializeSchema);
 }

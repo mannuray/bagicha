@@ -122,6 +122,18 @@ describe('api client', () => {
     await client().api.send('POST', '/ledger/plants', { name: 'Aam' }, plant);
   });
 
+  it('sends an Idempotency-Key when asked, and PATCH', async () => {
+    let seen: { key: string | null; method: string } | null = null;
+    server.use(
+      http.patch(`${API}/user/profile`, ({ request }) => {
+        seen = { key: request.headers.get('Idempotency-Key'), method: request.method };
+        return HttpResponse.json({ success: true, data: 'done', request_id: 'r', timestamp: 't' });
+      }),
+    );
+    await client().api.send('PATCH', '/user/profile', {}, z.string(), { idempotencyKey: 'key-12345678' });
+    expect(seen).toEqual({ key: 'key-12345678', method: 'PATCH' });
+  });
+
   it('sends no Authorization header when signed out', async () => {
     server.use(http.post(`${API}/auth/request-otp`, ({ request }) => {
       expect(request.headers.get('authorization')).toBeNull();

@@ -11,7 +11,7 @@ function backend() {
     http.get(`${API}/ledger/plants`, () => HttpResponse.json(pageOf([plantRecord()]))),
     http.get(`${API}/ledger/tasks`, () => HttpResponse.json(pageOf([]))),
     http.get(`${API}/seasonal/guide`, () => HttpResponse.json(ok({ season: 'Winter', crops: [], advice: 'Mulch.' }))),
-    http.post(`${API}/seasonal/plant/:id/materialize-tasks`, () => HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 })),
+    http.post(`${API}/seasonal/plants/:id/materialize-tasks`, () => HttpResponse.json(ok({ results: [], created_count: 0 }), { status: 201 })),
   );
 }
 

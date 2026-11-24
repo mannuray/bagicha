@@ -105,7 +105,7 @@ export function useUpdatePlant(id: string) {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async (changes: Partial<PlantInput>) => {
-      const plant = await api.send('PUT', `/ledger/plants/${id}`, changes, plantSchema);
+      const plant = await api.send('PATCH', `/ledger/plants/${id}`, changes, plantSchema);
       // A new planting date moves planting-timed reminders: refresh them now, best effort.
       if (movesPlanting(changes)) await materializeTasks(api, id).catch(() => undefined);
       return plant;
