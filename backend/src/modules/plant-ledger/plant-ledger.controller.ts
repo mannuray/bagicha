@@ -1,3 +1,4 @@
+import { Idempotent } from '../../common/http/idempotent.decorator';
 import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
   Body,
@@ -128,6 +129,7 @@ export class PlantLedgerController {
   }
 
   @Post('plants/:id/journal')
+  @Idempotent()
   async addLog(
     @Request() req: AuthedRequest,
     @Param('id') id: string,

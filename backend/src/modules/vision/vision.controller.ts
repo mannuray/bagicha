@@ -1,3 +1,4 @@
+import { Idempotent } from '../../common/http/idempotent.decorator';
 import type { AuthedRequest } from '../../common/auth/authed-request';
 import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
 import { VisionService } from './vision.service';
@@ -20,6 +21,7 @@ export class VisionController {
   }
 
   @Post('diagnose')
+  @Idempotent()
   @RateLimit('ai')
   async diagnose(
     @Request() req: AuthedRequest,
