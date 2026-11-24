@@ -23,6 +23,8 @@ import {
   savedTitle,
   type PlantNamer,
   type TaskTitler,
+  type CareTexter,
+  savedCareTexts,
 } from './plant-names.service';
 import { isUniqueViolation } from '../../../common/prisma/unique-violation';
 import type { TaskListStatus } from '../dto/list-tasks-query.dto';
@@ -245,6 +247,7 @@ export class TaskService {
     q: PageQuery,
     displayName: PlantNamer = savedName,
     titleOf: TaskTitler = savedTitle,
+    careTextOf: CareTexter = savedCareTexts,
   ): Promise<Page<TaskView>> {
     const { rows, total } = await this.tasks.listForPlant(
       userId,
@@ -252,7 +255,7 @@ export class TaskService {
       toSkipTake(q),
     );
     return toPage(
-      rows.map((r) => mapTaskView(r, displayName, titleOf)),
+      rows.map((r) => mapTaskView(r, displayName, titleOf, careTextOf)),
       total,
       q,
     );
@@ -264,6 +267,7 @@ export class TaskService {
     status?: TaskListStatus,
     displayName: PlantNamer = savedName,
     titleOf: TaskTitler = savedTitle,
+    careTextOf: CareTexter = savedCareTexts,
   ): Promise<Page<TaskView>> {
     const { rows, total } = await this.tasks.listForUser(
       userId,
@@ -271,7 +275,7 @@ export class TaskService {
       status,
     );
     return toPage(
-      rows.map((r) => mapTaskView(r, displayName, titleOf)),
+      rows.map((r) => mapTaskView(r, displayName, titleOf, careTextOf)),
       total,
       q,
     );
@@ -285,6 +289,7 @@ export class TaskService {
     now: Date,
     displayName: PlantNamer = savedName,
     titleOf: TaskTitler = savedTitle,
+    careTextOf: CareTexter = savedCareTexts,
   ): Promise<TaskView> {
     const updated = await this.tasks.updateStatus(
       userId,
@@ -295,6 +300,6 @@ export class TaskService {
     );
     if (!updated) throw new NotFoundError('TASK_NOT_FOUND', 'Task not found');
     if (status === TaskStatus.COMPLETED) this.metrics.taskCompleted();
-    return mapTaskView(updated, displayName, titleOf);
+    return mapTaskView(updated, displayName, titleOf, careTextOf);
   }
 }

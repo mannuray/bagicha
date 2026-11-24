@@ -1,6 +1,8 @@
 import {
+  savedCareTexts,
   savedName,
   savedTitle,
+  type CareTexter,
   type PlantNamer,
   type TaskTitler,
 } from '../services/plant-names.service';
@@ -109,16 +111,20 @@ export function mapTaskView(
   },
   displayName: PlantNamer = savedName,
   titleOf: TaskTitler = savedTitle,
+  careTextOf: CareTexter = savedCareTexts,
 ) {
+  // A tree-care reminder in Hindi reads from its care item; the rest as saved.
+  const hi = careTextOf(task);
+  const how = careHowOf(task);
   return {
     id: task.id,
     type: task.type,
-    title: titleOf(task),
+    title: hi?.title ?? titleOf(task),
     category: task.category,
     priority: task.priority,
     status: task.status,
     source: task.source,
-    reason: task.reason,
+    reason: hi?.why ?? task.reason,
     due_date: task.due_date,
     completed_at: task.completed_at,
     plant_id: task.plant?.id ?? null,
@@ -127,7 +133,15 @@ export function mapTaskView(
     plant_cycle_id: task.plant_cycle_id,
     cycle_year: task.plant_cycle?.cycle_year ?? null,
     source_summary: buildTaskSourceSummary(task),
-    care_how: careHowOf(task),
+    care_how:
+      how && hi
+        ? {
+            ...how,
+            organic: hi.organic ?? how.organic,
+            chemical: hi.chemical ?? how.chemical,
+            why: hi.why ?? how.why,
+          }
+        : how,
   };
 }
 

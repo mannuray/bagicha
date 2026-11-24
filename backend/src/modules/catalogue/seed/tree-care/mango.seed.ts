@@ -34,6 +34,12 @@ const BEARING: ItemSpec<Group>[] = [
     organic:
       'Cut dead, diseased and inward branches; seal big cuts with Bordeaux paste (1 kg copper sulphate + 1 kg lime in 10 L water)',
     why: 'Light into the canopy: less disease, better flowering',
+    hi: {
+      title: 'सूखी और आपस में फंसी डालियां काटें',
+      organic:
+        'सूखी, रोगी और अंदर की ओर बढ़ती डालियां काटें; बड़े कटों पर Bordeaux पेस्ट (1 kg copper sulphate + 1 kg चूना, 10 L पानी में) लगाएं',
+      why: 'छतरी में रोशनी: रोग कम, फूल अच्छे',
+    },
     windows: {
       A: [
         [7, 15],
@@ -68,6 +74,14 @@ const BEARING: ItemSpec<Group>[] = [
       "Half the year's urea + SSP + MOP in the same ring, then water in; wear gloves",
     dose: MAIN_FEED_DOSE,
     why: 'Recovery after fruiting; builds next season’s shoots',
+    hi: {
+      title: 'तुड़ाई के बाद मुख्य खाद दें',
+      organic:
+        'साल की पूरी गोबर की खाद (FYM) छतरी के किनारे के नीचे घेरे में डालें, मिट्टी में मिला दें',
+      chemical:
+        'साल का आधा urea + SSP + MOP उसी घेरे में डालें, फिर पानी दें; दस्ताने पहनें',
+      why: 'फल देने के बाद पेड़ संभलता है; अगले सीज़न की टहनियां बनती हैं',
+    },
     windows: {
       A: [
         [7, 15],
@@ -101,6 +115,14 @@ const BEARING: ItemSpec<Group>[] = [
       'Other half of urea + SSP + MOP in the ring; water in if there is no rain; wear gloves',
     dose: SECOND_FEED_DOSE,
     why: 'Last feed before the dry spell that brings flowers',
+    hi: {
+      title: 'दूसरी खाद दें',
+      organic:
+        'अभी कुछ नहीं: साल की पूरी गोबर की खाद मुख्य खाद के साथ जा चुकी है',
+      chemical:
+        'बाकी आधा urea + SSP + MOP घेरे में डालें; बारिश न हो तो पानी दें; दस्ताने पहनें',
+      why: 'फूल लाने वाले सूखे समय से पहले की आखिरी खाद',
+    },
     windows: {
       A: [
         [9, 15],
@@ -132,6 +154,12 @@ const BEARING: ItemSpec<Group>[] = [
     organic:
       "Don't water bearing trees now (young trees still need water); in coastal areas the rains usually cover this",
     why: 'A dry spell makes the tree flower; water now gives leaves, not flowers',
+    hi: {
+      title: 'फूल आने से पहले पानी रोक दें',
+      organic:
+        'फल देने वाले पेड़ों को अभी पानी न दें (छोटे पेड़ों को अब भी पानी चाहिए); तटीय इलाकों में आमतौर पर बारिश से यह हो जाता है',
+      why: 'सूखा समय पेड़ में फूल लाता है; अभी पानी देने से पत्ते आते हैं, फूल नहीं',
+    },
     windows: {
       A: [
         [10, 15],
@@ -165,6 +193,14 @@ const BEARING: ItemSpec<Group>[] = [
     chemical:
       'If young bugs still climb: spirotetramat + imidacloprid 11.01% SC 0.75 ml per litre; wear gloves; not within 15 days of picking',
     why: 'Stops mealybugs reaching the flowers in Jan–Feb',
+    hi: {
+      title: 'मिलीबग से बचाने के लिए तने पर पट्टी बांधें',
+      organic:
+        'तने के आसपास मिट्टी खोदें; दिसंबर के बीच तक 30–50 cm ऊंचाई पर 20–25 cm चौड़ी पॉलीथीन पट्टी (400 gauge) बांधें, उसके निचले किनारे पर ग्रीस या मिट्टी लगाएं; जनवरी–फरवरी में इसे पोंछते रहें',
+      chemical:
+        'अगर छोटे कीड़े फिर भी चढ़ें: spirotetramat + imidacloprid 11.01% SC 0.75 ml प्रति लीटर; दस्ताने पहनें; तोड़ने से 15 दिन पहले तक नहीं',
+      why: 'जनवरी–फरवरी में मिलीबग फूलों तक नहीं पहुंच पाते',
+    },
     windows: {
       A: [
         [11, 15],
@@ -182,6 +218,14 @@ const BEARING: ItemSpec<Group>[] = [
     chemical:
       'Imidacloprid 17.8 SL 0.3 ml per litre; wear gloves; not within 45 days of picking',
     why: 'Hoppers suck the new flower stalks. Never spray in full bloom (bees)',
+    hi: {
+      title: 'फूल निकलते ही हॉपर के लिए स्प्रे करें',
+      organic:
+        'फूलों की डंडियां निकलने पर Azadirachtin 3000 ppm, 2 ml प्रति लीटर (या 1500 ppm, 4 ml)',
+      chemical:
+        'Imidacloprid 17.8 SL 0.3 ml प्रति लीटर; दस्ताने पहनें; तोड़ने से 45 दिन पहले तक नहीं',
+      why: 'हॉपर नई फूल डंडियों का रस चूसते हैं। पूरे फूल खिले हों तब कभी स्प्रे न करें (मधुमक्खियां)',
+    },
     windows: {
       A: [
         [2, 10],
@@ -215,6 +259,14 @@ const BEARING: ItemSpec<Group>[] = [
     chemical:
       'Hexaconazole 5 EC 1 ml per litre; wear gloves; not within 30 days of picking',
     why: 'White powder on the flowers makes them drop',
+    hi: {
+      title: 'पाउडरी मिल्ड्यू के लिए स्प्रे करें',
+      organic:
+        'फूल डंडियां 3–4 inch लंबी होने पर Wettable sulphur 2–3 g प्रति लीटर; 15–20 दिन बाद दोहराएं',
+      chemical:
+        'Hexaconazole 5 EC 1 ml प्रति लीटर; दस्ताने पहनें; तोड़ने से 30 दिन पहले तक नहीं',
+      why: 'फूलों पर सफेद पाउडर से वे झड़ जाते हैं',
+    },
     windows: {
       A: [
         [2, 10],
@@ -245,6 +297,11 @@ const BEARING: ItemSpec<Group>[] = [
     stages: ['BEARING'],
     organic: 'Water deeply from pea-size fruit until harvest',
     why: 'Steady water stops fruit drop and grows bigger fruit',
+    hi: {
+      title: 'फल बनने के बाद हर 10–15 दिन पानी दें',
+      organic: 'मटर जितने फल से लेकर तुड़ाई तक गहरा पानी दें',
+      why: 'लगातार पानी से फल नहीं झड़ते और बड़े होते हैं',
+    },
     windows: {
       A: [
         [3, 20],
@@ -276,6 +333,12 @@ const BEARING: ItemSpec<Group>[] = [
     organic:
       '1 methyl eugenol trap per tree at mid-canopy, lure changed every 2–3 weeks; bury fallen fruit',
     why: 'Fruit fly maggots spoil ripe fruit; the trap catches the males',
+    hi: {
+      title: 'फल मक्खी ट्रैप टांगें, गिरे फल उठाएं',
+      organic:
+        'हर पेड़ पर छतरी के बीच में 1 methyl eugenol ट्रैप, lure हर 2–3 हफ्ते में बदलें; गिरे फल गाड़ दें',
+      why: 'फल मक्खी के कीड़े पके फल खराब करते हैं; ट्रैप नर मक्खियों को पकड़ता है',
+    },
     windows: {
       A: [
         [5, 1],
@@ -307,6 +370,12 @@ const BEARING: ItemSpec<Group>[] = [
     organic:
       'Copper oxychloride 50 WG 2.4 g per litre on the new leaves (allowed in organic growing)',
     why: 'Stops anthracnose spots on new leaves and flowers',
+    hi: {
+      title: 'बारिश की नई पत्तियों के बाद कॉपर स्प्रे करें',
+      organic:
+        'नई पत्तियों पर Copper oxychloride 50 WG 2.4 g प्रति लीटर (जैविक खेती में मान्य)',
+      why: 'नई पत्तियों और फूलों पर एंथ्रेक्नोज़ के धब्बे रोकता है',
+    },
     windows: {
       SOUTH: [
         [10, 1],
@@ -326,6 +395,12 @@ const BEARING: ItemSpec<Group>[] = [
     organic:
       'Pick with a 10–20 cm stalk; keep fruit stalk-down for a while so the sap drains',
     why: 'Sap burns the skin and spoils the fruit',
+    hi: {
+      title: 'फल डंठल के साथ तोड़ें',
+      organic:
+        '10–20 cm डंठल के साथ तोड़ें; फल को कुछ देर डंठल नीचे करके रखें ताकि रस निकल जाए',
+      why: 'रस छिलके को जलाकर फल खराब कर देता है',
+    },
     windows: {
       A: [
         [6, 10],
@@ -364,6 +439,14 @@ const CONDITIONAL: ItemSpec<Group>[] = [
       'Imidacloprid 17.8 SL 0.3 ml per litre; wear gloves; not within 45 days of picking',
     why: 'A second wave of hoppers can still drop young fruit',
     // Pea-size fruit: the fruit-development months of the approved phase table.
+    hi: {
+      title: 'हॉपर का स्प्रे दोहराएं',
+      organic: 'Azadirachtin स्प्रे दोहराएं',
+      chemical:
+        'Imidacloprid 17.8 SL 0.3 ml प्रति लीटर; दस्ताने पहनें; तोड़ने से 45 दिन पहले तक नहीं',
+      why: 'हॉपर की दूसरी लहर अब भी छोटे फल गिरा सकती है',
+      conditional: 'मटर जितने फल के समय हर फूल डंडी पर 5 से ज़्यादा हॉपर',
+    },
     windows: {
       A: [
         [4, 1],
@@ -396,6 +479,13 @@ const CONDITIONAL: ItemSpec<Group>[] = [
     organic:
       'Hook out the grub with wire, plug the hole with cotton soaked in a little kerosene, seal with mud; cut and burn badly bored branches',
     why: 'Borers hollow the trunk and can kill branches',
+    hi: {
+      title: 'तना छेदक के छेदों का इलाज करें',
+      organic:
+        'तार से सुंडी निकालें, थोड़े केरोसिन में भीगी रुई से छेद बंद करें, मिट्टी से सील करें; बहुत छिदी डालियां काटकर जला दें',
+      why: 'छेदक तने को खोखला कर देते हैं और डालियां सुखा सकते हैं',
+      conditional: 'तने या डालियों पर बुरादे के साथ छेद',
+    },
     windows: {
       A: ALL_YEAR,
       CENTRAL: ALL_YEAR,
@@ -413,6 +503,12 @@ const CONDITIONAL: ItemSpec<Group>[] = [
     organic: 'Cut them off with 15–20 cm of healthy wood and burn them',
     why: 'Malformed bunches never fruit and spread the problem',
     // Flowering months of the approved phase table.
+    hi: {
+      title: 'बिगड़े हुए फूलों के गुच्छे काट दें',
+      organic: 'उन्हें 15–20 cm स्वस्थ लकड़ी के साथ काटें और जला दें',
+      why: 'बिगड़े गुच्छों पर कभी फल नहीं आता और रोग फैलता है',
+      conditional: 'फूलों के गुच्छे जो सिकुड़कर गुच्छा बन गए हों और बिगड़े हों',
+    },
     windows: {
       A: [
         [2, 1],
@@ -446,6 +542,15 @@ const CONDITIONAL: ItemSpec<Group>[] = [
     chemical:
       'Azoxystrobin 23 SC 1 ml per litre; wear gloves; not within 5 days of picking',
     why: 'Blight blackens flowers in damp weather',
+    hi: {
+      title: 'फूल झुलसा (ब्लॉसम ब्लाइट) के लिए स्प्रे करें',
+      organic:
+        'इसके लिए कोई जांचा हुआ जैविक स्प्रे नहीं है; नीचे दिया विकल्प इस्तेमाल करें',
+      chemical:
+        'Azoxystrobin 23 SC 1 ml प्रति लीटर; दस्ताने पहनें; तोड़ने से 5 दिन पहले तक नहीं',
+      why: 'नम मौसम में झुलसा फूलों को काला कर देता है',
+      conditional: 'पेड़ पर फूल आते समय उमस और बादल वाला मौसम',
+    },
     windows: {
       // Coastal flowering (Nov–Dec), per the approved phase table.
       COAST: [
@@ -466,6 +571,13 @@ const YOUNG: ItemSpec<Group>[] = [
     chemical: 'Urea + SSP + MOP in the same ring, then water in; wear gloves',
     dose: MAIN_FEED_DOSE,
     why: 'Steady growth for a strong frame',
+    hi: {
+      title: 'छोटे पेड़ को खाद दें',
+      organic: 'साल की गोबर की खाद (FYM) तने से 30 cm दूर घेरे में डालें',
+      chemical:
+        'Urea + SSP + MOP उसी घेरे में डालें, फिर पानी दें; दस्ताने पहनें',
+      why: 'मज़बूत ढांचे के लिए लगातार बढ़त',
+    },
     windows: {
       A: [
         [7, 1],
@@ -498,6 +610,13 @@ const YOUNG: ItemSpec<Group>[] = [
     chemical: 'Urea + SSP + MOP in the ring, then water in; wear gloves',
     dose: SECOND_FEED_DOSE,
     why: 'Keeps growth steady into the cool months',
+    hi: {
+      title: 'छोटे पेड़ को दूसरी खाद दें',
+      organic:
+        'अभी कुछ नहीं: साल की पूरी गोबर की खाद पहली खाद के साथ जा चुकी है',
+      chemical: 'Urea + SSP + MOP घेरे में डालें, फिर पानी दें; दस्ताने पहनें',
+      why: 'ठंडे महीनों तक बढ़त लगातार बनी रहती है',
+    },
     windows: {
       A: [
         [9, 15],
@@ -525,6 +644,12 @@ const YOUNG: ItemSpec<Group>[] = [
     organic:
       'First year every 2–3 days, years 2–3 every 4–5 days; mulch the basin',
     why: 'Young roots dry out fast',
+    hi: {
+      title: 'सूखे महीनों में छोटे पेड़ को पानी दें',
+      organic:
+        'पहले साल हर 2–3 दिन, दूसरे–तीसरे साल हर 4–5 दिन; थाले में मल्च बिछाएं',
+      why: 'छोटी जड़ें जल्दी सूख जाती हैं',
+    },
     windows: {
       A: [
         [10, 15],
@@ -555,6 +680,11 @@ const YOUNG: ItemSpec<Group>[] = [
     stages: ['YOUNG'],
     organic: 'Thatch or wrap it with straw or jute',
     why: 'Frost kills young mango shoots',
+    hi: {
+      title: 'ठंडी रातों में छोटे पेड़ को ढकें',
+      organic: 'छप्पर डालें या पुआल या जूट से लपेट दें',
+      why: 'पाला आम की नई टहनियों को मार देता है',
+    },
     windows: {
       A: [
         [12, 15],
@@ -573,6 +703,11 @@ const YOUNG: ItemSpec<Group>[] = [
     stages: ['YOUNG'],
     organic: 'Remove every flower bunch for the first 3–4 years',
     why: 'Fruiting too early stunts the tree',
+    hi: {
+      title: 'छोटे पेड़ के सारे फूल तोड़ दें',
+      organic: 'पहले 3–4 साल हर फूल का गुच्छा हटा दें',
+      why: 'बहुत जल्दी फल देने से पेड़ की बढ़त रुक जाती है',
+    },
     windows: {
       A: [
         [2, 10],
@@ -604,6 +739,12 @@ const YOUNG: ItemSpec<Group>[] = [
     organic:
       'Clear the trunk to about 75 cm; keep 3–4 branches facing different ways, 20–25 cm apart; remove crossing shoots while pencil-thick',
     why: 'A low, open frame is easy to care for and harvest',
+    hi: {
+      title: 'छोटे पेड़ को 3–4 मुख्य डालियों का आकार दें',
+      organic:
+        'लगभग 75 cm तक तना साफ रखें; अलग-अलग दिशा में 3–4 डालियां रखें, 20–25 cm की दूरी पर; आपस में फंसती टहनियां पेंसिल जितनी मोटी रहते ही हटा दें',
+      why: 'नीचा, खुला ढांचा देखभाल और तुड़ाई में आसान होता है',
+    },
     windows: {
       A: [
         [7, 15],
@@ -634,6 +775,10 @@ const PHASES: PhaseSpec<Group>[] = [
     phase: 'post_harvest_recovery',
     avoid: ['Heavy pruning after September'],
     watch: ['Leaf spots in the rain', 'Stem borer'],
+    hi: {
+      avoid: ['सितंबर के बाद भारी छंटाई'],
+      watch: ['बारिश में पत्तों पर धब्बे', 'तना छेदक'],
+    },
     months: {
       A: [7, 9],
       CENTRAL: [6, 8],
@@ -646,12 +791,17 @@ const PHASES: PhaseSpec<Group>[] = [
     phase: 'pre_flowering',
     avoid: ['Heavy watering', 'Extra nitrogen beyond the schedule'],
     watch: ['Mealybug', 'Shoot gall'],
+    hi: {
+      avoid: ['ज़्यादा पानी', 'शेड्यूल से ज़्यादा नाइट्रोजन'],
+      watch: ['मिलीबग', 'शूट गॉल'],
+    },
     months: { A: [10, 1] },
   },
   {
     phase: 'pre_flowering',
     avoid: ['Heavy watering', 'Extra nitrogen beyond the schedule'],
     watch: [],
+    hi: { avoid: ['ज़्यादा पानी', 'शेड्यूल से ज़्यादा नाइट्रोजन'], watch: [] },
     months: {
       CENTRAL: [10, 12],
       WEST: [10, 12],
@@ -663,6 +813,10 @@ const PHASES: PhaseSpec<Group>[] = [
     phase: 'flowering',
     avoid: ['Insecticide in full bloom (bees)', 'Heavy watering'],
     watch: ['Hoppers', 'Powdery mildew', 'Malformed flowers'],
+    hi: {
+      avoid: ['पूरे फूल खिले हों तब कीटनाशक (मधुमक्खियां)', 'ज़्यादा पानी'],
+      watch: ['हॉपर', 'पाउडरी मिल्ड्यू', 'बिगड़े हुए फूल'],
+    },
     months: {
       A: [2, 3],
       CENTRAL: [1, 2],
@@ -675,6 +829,7 @@ const PHASES: PhaseSpec<Group>[] = [
     phase: 'fruit_development',
     avoid: ['Letting the soil dry out'],
     watch: ['Fruit drop', 'Fruit fly'],
+    hi: { avoid: ['मिट्टी को सूखने देना'], watch: ['फल झड़ना', 'फल मक्खी'] },
     months: {
       A: [4, 5],
       CENTRAL: [3, 4],
@@ -687,6 +842,10 @@ const PHASES: PhaseSpec<Group>[] = [
     phase: 'harvest',
     avoid: ['Leaving ripe fruit on the tree'],
     watch: ['Fruit fly', 'Stem-end rot'],
+    hi: {
+      avoid: ['पके फल पेड़ पर छोड़ देना'],
+      watch: ['फल मक्खी', 'डंठल की तरफ से सड़न'],
+    },
     months: {
       A: [6, 6],
       CENTRAL: [5, 5],

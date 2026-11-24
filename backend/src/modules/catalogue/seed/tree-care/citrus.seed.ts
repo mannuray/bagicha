@@ -63,6 +63,22 @@ const PSYLLA_CHEMICAL =
 const LEAF_MINER_CHEMICAL =
   'Thiamethoxam 12.6% + lambda-cyhalothrin 9.5% ZC 0.3 ml per litre; wear gloves; not within 10 days of picking';
 
+const FYM_BANDS_HI =
+  '1–3 साल पर 5–20 kg, 4–6 पर 25–50 kg, 7–9 पर 60–90 kg, 10 साल से 100 kg';
+const UREA_BANDS_HI =
+  '1–3 साल पर साल में 110–330 g, 4–6 पर 440–550 g, 7–9 पर 660–880 g, 10 साल से 880–1760 g';
+const POMELO_UREA_HALF_HI =
+  '90–110 g (पहला साल), 175–220 g (दूसरा), 325–380 g (तीसरा), 490–545 g (चौथा), 650–705 g (5वें से आगे)';
+// Ends the sentence ("… पर" + this), so the verb comes before the gloves note.
+const BORDEAUX_PASTE_HI =
+  'Bordeaux paste लगाएं (200 g copper sulphate 1.5 L पानी में, 300 g quicklime 1.5 L में, फिर दोनों मिलाएं); दस्ताने पहनें';
+const SPOTS_CHEMICAL_HI =
+  'Copper sulphate 47.15% + mancozeb 30% WDG 5 g प्रति लीटर; दस्ताने पहनें; तोड़ने से 10 दिन पहले तक नहीं';
+const PSYLLA_CHEMICAL_HI =
+  'Thiamethoxam 25 WG 0.1 g प्रति लीटर (10 L में 1 g); शाम को स्प्रे करें, खुले फूलों पर नहीं; दस्ताने पहनें; तोड़ने से 20 दिन पहले तक नहीं';
+const LEAF_MINER_CHEMICAL_HI =
+  'Thiamethoxam 12.6% + lambda-cyhalothrin 9.5% ZC 0.3 ml प्रति लीटर; दस्ताने पहनें; तोड़ने से 10 दिन पहले तक नहीं';
+
 const OTHERS: Kind[] = ['lime', 'lemon', 'sweet_orange'];
 const month = (
   m: number,
@@ -85,6 +101,12 @@ const NORTH_ITEMS: Item[] = [
       "All the year's FYM in the basin under the canopy, forked in lightly: 10 kg per year of age, up to 8 years",
     dose: MANDARIN_FYM,
     why: 'Manure goes in during the winter rest, before spring growth',
+    hi: {
+      title: 'साल भर की खाद पेड़ के नीचे डालें',
+      organic:
+        'साल भर की पूरी गोबर की खाद (FYM) छतरी के नीचे थाले में डालें और हल्का गोड़कर मिलाएं: पेड़ की उम्र के हर साल पर 10 kg, 8 साल तक',
+      why: 'खाद सर्दी के आराम में डलती है, बसंत की बढ़वार से पहले',
+    },
     windows: { NORTH: month(12) },
   },
   {
@@ -95,6 +117,11 @@ const NORTH_ITEMS: Item[] = [
     stages: ['YOUNG', 'BEARING'],
     organic: `All the year's FYM in the basin under the canopy, forked in lightly: ${FYM_BANDS}`,
     why: 'Manure goes in during the winter rest, before spring growth',
+    hi: {
+      title: 'साल भर की खाद पेड़ के नीचे डालें',
+      organic: `साल भर की पूरी गोबर की खाद (FYM) छतरी के नीचे थाले में डालें और हल्का गोड़कर मिलाएं: ${FYM_BANDS_HI}`,
+      why: 'खाद सर्दी के आराम में डलती है, बसंत की बढ़वार से पहले',
+    },
     windows: { NORTH: month(12) },
   },
   {
@@ -108,6 +135,12 @@ const NORTH_ITEMS: Item[] = [
       "Half the year's urea in the basin, plus SSP from the 4th year (1.37–2.4 kg at 4–7 years, 2.73 kg from 8); water in; wear gloves",
     dose: MANDARIN_UREA,
     why: 'Feeds the spring flush and the flowers',
+    hi: {
+      title: 'नई बढ़वार से पहले पहली खाद दें',
+      chemical:
+        'साल भर के urea का आधा थाले में, और चौथे साल से SSP भी (4–7 साल पर 1.37–2.4 kg, 8 से 2.73 kg); पानी दें; दस्ताने पहनें',
+      why: 'बसंत की नई फुटान और फूलों को खुराक देती है',
+    },
     windows: { NORTH: month(2) },
   },
   {
@@ -119,6 +152,11 @@ const NORTH_ITEMS: Item[] = [
     organic: '',
     chemical: `Half the year's urea in the basin (${UREA_BANDS}); water in; wear gloves`,
     why: 'Feeds the spring flush and the flowers',
+    hi: {
+      title: 'नई बढ़वार से पहले पहली खाद दें',
+      chemical: `साल भर के urea का आधा थाले में (${UREA_BANDS_HI}); पानी दें; दस्ताने पहनें`,
+      why: 'बसंत की नई फुटान और फूलों को खुराक देती है',
+    },
     windows: { NORTH: month(2) },
   },
   {
@@ -132,6 +170,11 @@ const NORTH_ITEMS: Item[] = [
       "The other half of the year's urea in the basin; water in; wear gloves",
     dose: MANDARIN_UREA,
     why: 'Feeds the young fruit',
+    hi: {
+      title: 'फल बनने के बाद दूसरी खाद दें',
+      chemical: 'साल भर के urea का बाकी आधा थाले में; पानी दें; दस्ताने पहनें',
+      why: 'छोटे फलों को खुराक देती है',
+    },
     windows: {
       NORTH: [
         [4, 1],
@@ -149,6 +192,11 @@ const NORTH_ITEMS: Item[] = [
     chemical:
       "The other half of the year's urea in the basin; water in; wear gloves",
     why: 'Feeds the young fruit',
+    hi: {
+      title: 'फल बनने के बाद दूसरी खाद दें',
+      chemical: 'साल भर के urea का बाकी आधा थाले में; पानी दें; दस्ताने पहनें',
+      why: 'छोटे फलों को खुराक देती है',
+    },
     windows: {
       NORTH: [
         [4, 1],
@@ -164,6 +212,11 @@ const NORTH_ITEMS: Item[] = [
     stages: ['BEARING'],
     organic: `Cut dead, dried and diseased twigs back to healthy wood, open up the centre and burn the prunings; seal cuts with ${BORDEAUX_PASTE}`,
     why: 'Stops die-back spreading and lets light in',
+    hi: {
+      title: 'सूखी और रोगी टहनियां काट दें',
+      organic: `सूखी, मरी और रोगी टहनियों को स्वस्थ लकड़ी तक काटें, बीच से पेड़ खोलें और कटी टहनियां जला दें; कटे हिस्सों पर ${BORDEAUX_PASTE_HI}`,
+      why: 'डाईबैक (ऊपर से सूखना) फैलने से रुकता है और धूप अंदर आती है',
+    },
     windows: {
       NORTH: [
         [1, 1],
@@ -179,6 +232,11 @@ const NORTH_ITEMS: Item[] = [
     stages: ['BEARING'],
     organic: `After picking, cut dead, dried and diseased twigs back to healthy wood, open up the centre and burn the prunings; seal cuts with ${BORDEAUX_PASTE}`,
     why: 'Stops die-back spreading and lets light in',
+    hi: {
+      title: 'सूखी और रोगी टहनियां काट दें',
+      organic: `फल तोड़ने के बाद, सूखी, मरी और रोगी टहनियों को स्वस्थ लकड़ी तक काटें, बीच से पेड़ खोलें और कटी टहनियां जला दें; कटे हिस्सों पर ${BORDEAUX_PASTE_HI}`,
+      why: 'डाईबैक (ऊपर से सूखना) फैलने से रुकता है और धूप अंदर आती है',
+    },
     windows: { NORTH: month(2) },
   },
   {
@@ -190,6 +248,12 @@ const NORTH_ITEMS: Item[] = [
     organic:
       "Bordeaux mixture 2:2:250: 8 g copper sulphate and 8 g quicklime per litre, each dissolved in half the water, then the copper poured into the lime while stirring; skip it if fruit is still on the tree, and don't spray in rain or in great heat; wear gloves",
     why: 'Protects cuts and the new flush from die-back',
+    hi: {
+      title: 'छंटाई के बाद Bordeaux mixture स्प्रे करें',
+      organic:
+        'Bordeaux mixture 2:2:250: 8 g copper sulphate और 8 g quicklime प्रति लीटर, दोनों को आधे-आधे पानी में घोलें, फिर copper वाला घोल चलाते हुए lime वाले घोल में डालें; पेड़ पर अभी फल हों तो यह न करें, और बारिश या तेज़ गर्मी में स्प्रे न करें; दस्ताने पहनें',
+      why: 'कटे हिस्सों और नई फुटान को डाईबैक से बचाता है',
+    },
     windows: { NORTH: month(3) },
   },
   {
@@ -201,6 +265,12 @@ const NORTH_ITEMS: Item[] = [
     organic:
       "Water every 2–3 weeks into a ring basin so water doesn't touch the trunk; don't flood",
     why: 'Dry soil after fruit set sheds flowers and fruit',
+    hi: {
+      title: 'गर्मी के महीनों में हर 2–3 हफ्ते पानी दें',
+      organic:
+        'हर 2–3 हफ्ते रिंग थाले में पानी दें ताकि पानी तने को न छुए; पानी न भरें',
+      why: 'फल बनने के बाद सूखी मिट्टी से फूल और फल झड़ जाते हैं',
+    },
     windows: {
       NORTH: [
         [4, 1],
@@ -216,6 +286,13 @@ const NORTH_ITEMS: Item[] = [
     organic: 'Pinch off and destroy curled new shoots carrying nymphs',
     chemical: PSYLLA_CHEMICAL,
     why: 'Psylla sucks the new shoots and spreads greening disease',
+    hi: {
+      title: 'सिट्रस सिल्ला के लिए स्प्रे करें',
+      organic:
+        'मुड़ी हुई नई टहनियां, जिन पर शिशु (nymph) हों, तोड़कर नष्ट करें',
+      chemical: PSYLLA_CHEMICAL_HI,
+      why: 'सिल्ला नई टहनियों का रस चूसता है और ग्रीनिंग रोग फैलाता है',
+    },
     windows: { NORTH: [month(3), month(9, 1, 10)] },
   },
   {
@@ -226,6 +303,12 @@ const NORTH_ITEMS: Item[] = [
     organic: 'Pick off and burn leaves with silvery tunnels',
     chemical: LEAF_MINER_CHEMICAL,
     why: 'Tunnels curl young leaves and open the way for canker',
+    hi: {
+      title: 'छोटे पेड़ों पर लीफ माइनर के लिए स्प्रे करें',
+      organic: 'चांदी जैसी सुरंगों वाली पत्तियां तोड़कर जला दें',
+      chemical: LEAF_MINER_CHEMICAL_HI,
+      why: 'सुरंगों से नई पत्तियां मुड़ जाती हैं और कैंकर का रास्ता खुलता है',
+    },
     windows: {
       NORTH: [
         [
@@ -248,6 +331,12 @@ const NORTH_ITEMS: Item[] = [
     organic: 'Cut out and burn twigs with canker spots',
     chemical: SPOTS_CHEMICAL,
     why: 'Kagzi lime is highly susceptible: corky spots on leaves and fruit',
+    hi: {
+      title: 'कागज़ी नींबू पर कैंकर के लिए स्प्रे करें',
+      organic: 'कैंकर के धब्बों वाली टहनियां काटकर जला दें',
+      chemical: SPOTS_CHEMICAL_HI,
+      why: 'कागज़ी नींबू को कैंकर बहुत जल्दी लगता है: पत्तियों और फलों पर कॉर्क जैसे धब्बे',
+    },
     windows: { NORTH: [month(10), month(12), month(2)] },
   },
   {
@@ -259,6 +348,12 @@ const NORTH_ITEMS: Item[] = [
     organic:
       'From now until picking, collect stung or fallen fruit and bury it deep',
     why: 'Flies sting fruit at colour break; the fruit rots and drops',
+    hi: {
+      title: 'गिरे फल इकट्ठा करके गाड़ दें',
+      organic:
+        'अब से फल तोड़ने तक, डंक लगे या गिरे फल इकट्ठा करें और गहरा गाड़ दें',
+      why: 'रंग बदलते समय मक्खियां फल पर डंक मारती हैं; फल सड़कर गिर जाता है',
+    },
     windows: { NORTH: month(8, 8, 14) },
   },
   {
@@ -270,6 +365,12 @@ const NORTH_ITEMS: Item[] = [
     organic:
       "Clip the fruit with a short button stalk; don't pull. Don't pick in dew or just after rain; outer fruit first",
     why: 'Pulling tears the skin and the fruit rots',
+    hi: {
+      title: 'किन्नू कैंची से तोड़ें',
+      organic:
+        'फल को छोटी बटन जैसी डंठल के साथ काटें; खींचें नहीं। ओस में या बारिश के तुरंत बाद न तोड़ें; पहले बाहर वाले फल तोड़ें',
+      why: 'खींचने से छिलका फटता है और फल सड़ जाता है',
+    },
     windows: {
       NORTH: [
         [1, 15],
@@ -287,6 +388,12 @@ const NORTH_ITEMS: Item[] = [
     chemical:
       'Potassium nitrate 10 g per litre (1%); a fertiliser, so no waiting days; wear gloves',
     why: 'Bigger fruit and a higher yield',
+    hi: {
+      title: 'बड़े फलों के लिए potassium nitrate स्प्रे करें',
+      chemical:
+        'Potassium nitrate 10 g प्रति लीटर (1%); यह खाद है, इसलिए तोड़ने से पहले रुकने की ज़रूरत नहीं; दस्ताने पहनें',
+      why: 'बड़े फल और ज़्यादा पैदावार',
+    },
     windows: { NORTH: [month(5, 21), month(6, 21), month(7, 21)] },
   },
   {
@@ -298,6 +405,12 @@ const NORTH_ITEMS: Item[] = [
     organic:
       'Soon after fruit set in the 3rd and 4th year, thin heavy loads (400–500 fruits is too many)',
     why: 'An over-loaded young tree can die',
+    hi: {
+      title: 'छोटे किन्नू पेड़ों पर फल कम करें',
+      organic:
+        'तीसरे और चौथे साल में फल बनने के जल्दी बाद भारी लदान कम करें (400–500 फल बहुत ज़्यादा हैं)',
+      why: 'ज़्यादा लदा छोटा पेड़ मर सकता है',
+    },
     windows: { NORTH: month(5) },
   },
   // Pomelo's own rows (IH 2026): its dose, summer watering and Oct–Nov picking.
@@ -311,6 +424,12 @@ const NORTH_ITEMS: Item[] = [
       "All the year's FYM in the basin under the canopy, forked in lightly: 10 kg per year of age, up to 5 years (50 kg)",
     dose: POMELO_FYM,
     why: 'Manure goes in during the winter rest, before spring growth',
+    hi: {
+      title: 'साल भर की खाद पेड़ के नीचे डालें',
+      organic:
+        'साल भर की पूरी गोबर की खाद (FYM) छतरी के नीचे थाले में डालें और हल्का गोड़कर मिलाएं: पेड़ की उम्र के हर साल पर 10 kg, 5 साल तक (50 kg)',
+      why: 'खाद सर्दी के आराम में डलती है, बसंत की बढ़वार से पहले',
+    },
     windows: {
       NORTH: [
         [12, 1],
@@ -327,6 +446,11 @@ const NORTH_ITEMS: Item[] = [
     organic: '',
     chemical: `Half the year's urea in the basin: ${POMELO_UREA_HALF}; water in; wear gloves`,
     why: 'Feeds the spring flush and the flowers',
+    hi: {
+      title: 'फूल आने से पहले पहली खाद दें',
+      chemical: `साल भर के urea का आधा थाले में: ${POMELO_UREA_HALF_HI}; पानी दें; दस्ताने पहनें`,
+      why: 'बसंत की नई फुटान और फूलों को खुराक देती है',
+    },
     windows: { NORTH: month(2) },
   },
   {
@@ -338,6 +462,11 @@ const NORTH_ITEMS: Item[] = [
     organic: '',
     chemical: `The other half of the year's urea in the basin: ${POMELO_UREA_HALF}; water in; wear gloves`,
     why: 'Feeds the young fruit',
+    hi: {
+      title: 'फल बनने के बाद दूसरी खाद दें',
+      chemical: `साल भर के urea का बाकी आधा थाले में: ${POMELO_UREA_HALF_HI}; पानी दें; दस्ताने पहनें`,
+      why: 'छोटे फलों को खुराक देती है',
+    },
     windows: {
       NORTH: [
         [4, 1],
@@ -354,6 +483,12 @@ const NORTH_ITEMS: Item[] = [
     organic:
       "Bearing tree: every 7–10 days. Young tree: twice a week. Use a ring basin so water doesn't touch the trunk; don't flood. Keep the basin weed-free",
     why: 'Steady water from flowering to harvest holds the fruit and stops splitting',
+    hi: {
+      title: 'पूरी गर्मी हर 7–10 दिन पानी दें',
+      organic:
+        'फल देने वाला पेड़: हर 7–10 दिन। छोटा पेड़: हफ्ते में दो बार। रिंग थाला बनाएं ताकि पानी तने को न छुए; पानी न भरें। थाले में खरपतवार न रहने दें',
+      why: 'फूल से फसल तक लगातार पानी से फल टिके रहते हैं और फटते नहीं',
+    },
     windows: {
       NORTH: [
         [4, 1],
@@ -370,6 +505,12 @@ const NORTH_ITEMS: Item[] = [
     organic:
       "Pick at full eating ripeness: the oil glands on the rind grow larger and glossier, and the colour turns from dull to bright yellow. Clip with a short stalk; don't pull. Pick on time: fruit left too long goes dry and grainy inside",
     why: "Pomelo doesn't ripen further once picked",
+    hi: {
+      title: 'छिलका चमकीला पीला हो तब चकोतरा तोड़ें',
+      organic:
+        'पूरी तरह खाने लायक पकने पर तोड़ें: छिलके पर तेल की ग्रंथियां बड़ी और ज़्यादा चमकदार हो जाती हैं, और रंग फीके से चमकीला पीला हो जाता है। छोटी डंठल के साथ काटें; खींचें नहीं। समय पर तोड़ें: ज़्यादा देर छोड़ा फल अंदर से सूखा और दानेदार हो जाता है',
+      why: 'चकोतरा तोड़ने के बाद और नहीं पकता',
+    },
     windows: {
       NORTH: [
         [10, 1],
@@ -388,6 +529,14 @@ const NORTH_ITEMS: Item[] = [
     chemical:
       'Cymoxanil 8% + mancozeb 64% WP: drench 2.5 g per litre, 10 L per tree, or paint the lesion with 25 g per litre of linseed oil; wear gloves; not within 82 days of picking',
     why: 'A soil fungus rots the bark at the collar',
+    hi: {
+      title: 'तने से निकलते गोंद का इलाज करें',
+      organic: `रिंग थाले से पानी तने से दूर रखें; पानी न भरें, गहरी गुड़ाई न करें; घाव को खुरचकर साफ़ करें और उस पर ${BORDEAUX_PASTE_HI}`,
+      chemical:
+        'Cymoxanil 8% + mancozeb 64% WP: 2.5 g प्रति लीटर का घोल, 10 L प्रति पेड़ जड़ में डालें, या 25 g प्रति लीटर linseed oil में मिलाकर घाव पर लगाएं; दस्ताने पहनें; तोड़ने से 82 दिन पहले तक नहीं',
+      why: 'मिट्टी की फफूंद तने के निचले हिस्से (कॉलर) की छाल सड़ा देती है',
+      conditional: 'तने के निचले हिस्से से गोंद निकलना, फटी छाल, फीकी पत्तियां',
+    },
     windows: {
       NORTH: [
         [
@@ -411,6 +560,13 @@ const NORTH_ITEMS: Item[] = [
     chemical:
       'Zinc sulphate 4.7 g + manganese sulphate 3.3 g per litre on fully grown flush leaves; keep a week from any Bordeaux spray; a fertiliser, so no waiting days; wear gloves',
     why: 'Corrects a zinc and manganese shortage',
+    hi: {
+      title: 'पत्तियों पर zinc और manganese स्प्रे करें',
+      chemical:
+        'Zinc sulphate 4.7 g + manganese sulphate 3.3 g प्रति लीटर, पूरी बढ़ चुकी नई पत्तियों पर; किसी भी Bordeaux स्प्रे से एक हफ्ते का फ़ासला रखें; यह खाद है, इसलिए तोड़ने से पहले रुकने की ज़रूरत नहीं; दस्ताने पहनें',
+      why: 'zinc और manganese की कमी पूरी करता है',
+      conditional: 'चितकबरी पत्तियां, या छोटी पतली पत्तियां ("little leaf")',
+    },
     windows: { NORTH: [month(4, 20), month(8, 10, 20)] },
   },
   {
@@ -421,6 +577,12 @@ const NORTH_ITEMS: Item[] = [
     conditional: 'Webbing and chewed bark on the trunk',
     organic: 'Pull off the webbing and push kerosene into the holes',
     why: 'The caterpillar tunnels into the bark',
+    hi: {
+      title: 'छाल खाने वाली इल्लियां हटाएं',
+      organic: 'जाला हटा दें और छेदों में मिट्टी का तेल (kerosene) डालें',
+      why: 'इल्ली छाल में सुरंग बनाती है',
+      conditional: 'तने पर जाला और कुतरी हुई छाल',
+    },
     windows: {
       NORTH: [
         [
@@ -444,6 +606,13 @@ const NORTH_ITEMS: Item[] = [
     chemical:
       'Diafenthiuron 50 WP 2 g per litre; wear gloves; not within 30 days of picking',
     why: 'Mites suck the leaves pale',
+    hi: {
+      title: 'माइट के लिए स्प्रे करें',
+      chemical:
+        'Diafenthiuron 50 WP 2 g प्रति लीटर; दस्ताने पहनें; तोड़ने से 30 दिन पहले तक नहीं',
+      why: 'माइट पत्तियों का रस चूसकर उन्हें फीका कर देते हैं',
+      conditional: 'बारीक चित्तियां और धूल भरी दिखती पत्तियां',
+    },
     windows: {
       NORTH: [
         [
@@ -466,6 +635,13 @@ const NORTH_ITEMS: Item[] = [
     organic:
       'Keep branches off the ground, prune and destroy infested shoots, destroy ant nests; or spray Verticillium lecanii 1.15% WP about 4.5 g per litre; wear gloves',
     why: 'Mealybugs suck sap and bring sooty mould',
+    hi: {
+      title: 'मिलीबग हटाएं',
+      organic:
+        'डालियां ज़मीन से ऊपर रखें, कीड़े लगी टहनियां काटकर नष्ट करें, चींटियों के घोंसले नष्ट करें; या Verticillium lecanii 1.15% WP लगभग 4.5 g प्रति लीटर स्प्रे करें; दस्ताने पहनें',
+      why: 'मिलीबग रस चूसते हैं और काली फफूंद (sooty mould) लाते हैं',
+      conditional: 'टहनियों और फलों पर सफ़ेद रुई जैसे गुच्छे',
+    },
     windows: {
       NORTH: [
         [7, 1],
@@ -484,6 +660,13 @@ const NORTH_ITEMS: Item[] = [
     chemical: `If it spreads: ${SPOTS_CHEMICAL}`,
     why: 'Canker spreads in rain and through leaf miner tunnels',
     // "Before the monsoon"
+    hi: {
+      title: 'कैंकर के धब्बे काट दें',
+      organic: 'बरसात से पहले धब्बों वाली टहनियां काटकर जला दें',
+      chemical: `फैले तो: ${SPOTS_CHEMICAL_HI}`,
+      why: 'कैंकर बारिश में और लीफ माइनर की सुरंगों से फैलता है',
+      conditional: 'पत्तियों, टहनियों या फलों पर कॉर्क जैसे उभरे धब्बे',
+    },
     windows: {
       NORTH: [
         [5, 1],
@@ -500,6 +683,13 @@ const NORTH_ITEMS: Item[] = [
     organic:
       'Destroy dried fruit left on the tree, bury fallen fruit deep, prune and feed on schedule, and keep water from standing in the basin',
     why: 'Disease and water stress cause most fruit drop',
+    hi: {
+      title: 'फल गिरना कम करें',
+      organic:
+        'पेड़ पर बचे सूखे फल नष्ट करें, गिरे फल गहरा गाड़ दें, समय पर छंटाई करें और खाद दें, और थाले में पानी रुकने न दें',
+      why: 'ज़्यादातर फल रोग और पानी की तंगी से गिरते हैं',
+      conditional: 'पकने से पहले फल गिरना',
+    },
     windows: { NORTH: ALL_YEAR },
   },
   {
@@ -513,6 +703,13 @@ const NORTH_ITEMS: Item[] = [
       'Hang a PAU fruit fly trap 1–1.5 m up in shade until picking; recharge it if fresh damage appears. PAU says traps work less well in home gardens than in orchards',
     why: 'Flies sting fruit at colour break; the fruit rots and drops',
     // Second week of August until picking (Valencia, the last, in March)
+    hi: {
+      title: 'फल मक्खी का ट्रैप टांगें',
+      organic:
+        'PAU fruit fly trap 1–1.5 m ऊंचाई पर छांव में फल तोड़ने तक टांगें; नया नुकसान दिखे तो उसे फिर से भरें (recharge)। PAU के अनुसार घर के बगीचों में ट्रैप बागों जितना असर नहीं करते',
+      why: 'रंग बदलते समय मक्खियां फल पर डंक मारती हैं; फल सड़कर गिर जाता है',
+      conditional: 'डंक के निशान वाले फल, जो रंग बदलते समय सड़ रहे हों',
+    },
     windows: {
       NORTH: [
         [8, 8],
@@ -528,6 +725,12 @@ const NORTH_ITEMS: Item[] = [
     conditional: 'A young tree, up to 3–4 years old',
     organic: 'Water every week into a ring basin, off the trunk',
     why: 'Young roots dry out fast',
+    hi: {
+      title: 'छोटे पेड़ को हर हफ्ते पानी दें',
+      organic: 'हर हफ्ते रिंग थाले में पानी दें, तने से दूर',
+      why: 'छोटी जड़ें जल्दी सूखती हैं',
+      conditional: 'छोटा पेड़, 3–4 साल तक का',
+    },
     windows: { NORTH: ALL_YEAR },
   },
   {
@@ -541,6 +744,13 @@ const NORTH_ITEMS: Item[] = [
       'Hang a PAU fruit fly trap 1–1.5 m up in shade until picking; recharge it if fresh damage appears. PAU says traps work less well in home gardens than in orchards',
     why: 'Flies sting fruit at colour break; the fruit rots and drops',
     // Second week of August until picking (pomelo, by November)
+    hi: {
+      title: 'फल मक्खी का ट्रैप टांगें',
+      organic:
+        'PAU fruit fly trap 1–1.5 m ऊंचाई पर छांव में फल तोड़ने तक टांगें; नया नुकसान दिखे तो उसे फिर से भरें (recharge)। PAU के अनुसार घर के बगीचों में ट्रैप बागों जितना असर नहीं करते',
+      why: 'रंग बदलते समय मक्खियां फल पर डंक मारती हैं; फल सड़कर गिर जाता है',
+      conditional: 'डंक के निशान वाले फल, जो रंग बदलते समय सड़ रहे हों',
+    },
     windows: {
       NORTH: [
         [8, 8],
@@ -561,6 +771,15 @@ const NORTH_ITEMS: Item[] = [
     chemical:
       'Boric acid 1 g per litre (0.1%) on the leaves; a fertiliser, so no waiting days; wear gloves',
     why: 'Uneven water splits the rind as the fruit swells',
+    hi: {
+      title: 'चकोतरे का फल फटने से रोकने के लिए बराबर पानी दें',
+      organic:
+        'फूल से फसल तक बराबर पानी दें; थाले को कभी सूखकर सख़्त न होने दें और फिर उसमें पानी न भरें। थाले में मल्च बिछाएं',
+      chemical:
+        'Boric acid 1 g प्रति लीटर (0.1%) पत्तियों पर; यह खाद है, इसलिए तोड़ने से पहले रुकने की ज़रूरत नहीं; दस्ताने पहनें',
+      why: 'फल बढ़ते समय असमान पानी से छिलका फट जाता है',
+      conditional: 'नीचे के सिरे के पास फल लंबाई में फटना, रस की थैलियां दिखना',
+    },
     windows: { NORTH: ALL_YEAR },
   },
   {
@@ -574,6 +793,14 @@ const NORTH_ITEMS: Item[] = [
     organic:
       'Remove and destroy the infected tree. Replant only with disease-free nursery plants, and keep psylla down',
     why: 'No spray cures greening; a sick tree spreads it',
+    hi: {
+      title: 'सिट्रस ग्रीनिंग वाला पेड़ हटा दें',
+      organic:
+        'रोगी पेड़ उखाड़कर नष्ट करें। दोबारा सिर्फ़ रोग-मुक्त नर्सरी पौधे लगाएं, और सिल्ला को काबू में रखें',
+      why: 'कोई स्प्रे ग्रीनिंग ठीक नहीं करता; बीमार पेड़ इसे फैलाता है',
+      conditional:
+        'नई पत्तियां पीली और धब्बेदार, फल छोटे, टेढ़े और हरे ही रहें, रस फीका',
+    },
     windows: { NORTH: ALL_YEAR },
   },
 ];
@@ -589,6 +816,14 @@ const SOUTH_LIME_ITEMS: Item[] = [
     chemical:
       "All the year's P and K and half the N in the basin (N 200 g in year 1, +100 g a year, 600 g from year 6; P₂O₅ 100 g, +25 g, 200 g; K₂O 100 g, +40 g, 300 g); water in; wear gloves",
     why: 'The main feed, after the monsoon flush',
+    hi: {
+      title: 'खाद, P, K और आधी नाइट्रोजन दें',
+      organic:
+        'साल भर की गोबर की खाद (पहले साल 10 kg, हर साल 5 kg ज़्यादा, 6वें साल से 30 kg) के साथ Pseudomonas 20 g और VAM 200 g, थाले में मिलाएं',
+      chemical:
+        'साल भर का पूरा P और K और आधा N थाले में (N पहले साल 200 g, हर साल +100 g, 6वें साल से 600 g; P₂O₅ 100 g, +25 g, 200 g; K₂O 100 g, +40 g, 300 g); पानी दें; दस्ताने पहनें',
+      why: 'मुख्य खाद, बरसात की नई फुटान के बाद',
+    },
     windows: { SOUTH: month(10) },
   },
   {
@@ -600,6 +835,11 @@ const SOUTH_LIME_ITEMS: Item[] = [
     chemical:
       "The other half of the year's N in the basin; water in; wear gloves",
     why: 'Feeds the spring flush',
+    hi: {
+      title: 'बाकी आधी नाइट्रोजन दें',
+      chemical: 'साल भर के N का बाकी आधा थाले में; पानी दें; दस्ताने पहनें',
+      why: 'बसंत की नई फुटान को खुराक देती है',
+    },
     windows: { SOUTH: month(3) },
   },
   {
@@ -611,6 +851,12 @@ const SOUTH_LIME_ITEMS: Item[] = [
     chemical:
       'Zinc sulphate 5 g per litre (0.5%) once the new flush has opened; a fertiliser, so no waiting days; wear gloves',
     why: 'Prevents little leaf and twig die-back',
+    hi: {
+      title: 'नई फुटान पर zinc स्प्रे करें',
+      chemical:
+        'Zinc sulphate 5 g प्रति लीटर (0.5%), जब नई फुटान खुल जाए; यह खाद है, इसलिए तोड़ने से पहले रुकने की ज़रूरत नहीं; दस्ताने पहनें',
+      why: 'छोटी पत्ती (little leaf) और टहनियों का सूखना रोकता है',
+    },
     windows: { SOUTH: [month(3), month(7), month(10)] },
   },
   {
@@ -622,6 +868,14 @@ const SOUTH_LIME_ITEMS: Item[] = [
     organic: 'Pinch off and destroy curled new shoots carrying nymphs',
     chemical: PSYLLA_CHEMICAL,
     why: 'Psylla sucks the new shoots and spreads greening disease',
+    hi: {
+      title: 'सिट्रस सिल्ला के लिए स्प्रे करें',
+      organic:
+        'मुड़ी हुई नई टहनियां, जिन पर शिशु (nymph) हों, तोड़कर नष्ट करें',
+      chemical: PSYLLA_CHEMICAL_HI,
+      why: 'सिल्ला नई टहनियों का रस चूसता है और ग्रीनिंग रोग फैलाता है',
+      conditional: 'मुड़ी हुई नई टहनियां, जिन पर सिल्ला के शिशु हों',
+    },
     windows: { SOUTH: ALL_YEAR },
   },
   {
@@ -633,6 +887,13 @@ const SOUTH_LIME_ITEMS: Item[] = [
     organic: 'Pick off and burn leaves with silvery tunnels',
     chemical: LEAF_MINER_CHEMICAL,
     why: 'Tunnels curl young leaves and open the way for canker',
+    hi: {
+      title: 'लीफ माइनर के लिए स्प्रे करें',
+      organic: 'चांदी जैसी सुरंगों वाली पत्तियां तोड़कर जला दें',
+      chemical: LEAF_MINER_CHEMICAL_HI,
+      why: 'सुरंगों से नई पत्तियां मुड़ जाती हैं और कैंकर का रास्ता खुलता है',
+      conditional: 'नई पत्तियों में चांदी जैसी सुरंगें',
+    },
     windows: { SOUTH: ALL_YEAR },
   },
   {
@@ -645,6 +906,13 @@ const SOUTH_LIME_ITEMS: Item[] = [
     chemical:
       'Diafenthiuron 50 WP 2 g per litre; wear gloves; not within 30 days of picking',
     why: 'Mites scar the fruit skin',
+    hi: {
+      title: 'रस्ट माइट के लिए स्प्रे करें',
+      chemical:
+        'Diafenthiuron 50 WP 2 g प्रति लीटर; दस्ताने पहनें; तोड़ने से 30 दिन पहले तक नहीं',
+      why: 'माइट फल के छिलके पर दाग डालते हैं',
+      conditional: 'फल का छिलका जंग जैसा, कांसे के रंग का',
+    },
     windows: { SOUTH: ALL_YEAR },
   },
   {
@@ -656,6 +924,13 @@ const SOUTH_LIME_ITEMS: Item[] = [
     organic:
       'Debark infested branches, tie a 5 cm sticky band on fruiting shoots; or spray Verticillium lecanii 1.15% WP 5 g per litre; wear gloves',
     why: 'Mealybugs suck sap and bring sooty mould',
+    hi: {
+      title: 'मिलीबग हटाएं',
+      organic:
+        'कीड़े लगी डालियों की छाल उतारें, फल वाली टहनियों पर 5 cm चिपचिपी पट्टी बांधें; या Verticillium lecanii 1.15% WP 5 g प्रति लीटर स्प्रे करें; दस्ताने पहनें',
+      why: 'मिलीबग रस चूसते हैं और काली फफूंद (sooty mould) लाते हैं',
+      conditional: 'टहनियों और फलों पर सफ़ेद रुई जैसे गुच्छे',
+    },
     windows: { SOUTH: ALL_YEAR },
   },
   {
@@ -667,6 +942,13 @@ const SOUTH_LIME_ITEMS: Item[] = [
     organic: 'Cut out and burn spotted twigs',
     chemical: SPOTS_CHEMICAL,
     why: 'Canker spreads in rain and through leaf miner tunnels',
+    hi: {
+      title: 'कैंकर के धब्बे काट दें',
+      organic: 'धब्बों वाली टहनियां काटकर जला दें',
+      chemical: SPOTS_CHEMICAL_HI,
+      why: 'कैंकर बारिश में और लीफ माइनर की सुरंगों से फैलता है',
+      conditional: 'पत्तियों, टहनियों या फलों पर कॉर्क जैसे उभरे धब्बे',
+    },
     windows: { SOUTH: ALL_YEAR },
   },
   {
@@ -677,6 +959,12 @@ const SOUTH_LIME_ITEMS: Item[] = [
     conditional: 'Twigs drying back from the tip',
     organic: 'Cut each dried twig back with 2–3 cm of green wood and burn it',
     why: 'Stops the blight spreading down the twig',
+    hi: {
+      title: 'सूखी टहनियां काट दें',
+      organic: 'हर सूखी टहनी को 2–3 cm हरी लकड़ी समेत काटें और जला दें',
+      why: 'झुलसा टहनी में नीचे की ओर फैलने से रुकता है',
+      conditional: 'सिरे से नीचे की ओर सूखती टहनियां',
+    },
     windows: { SOUTH: ALL_YEAR },
   },
   {
@@ -688,6 +976,13 @@ const SOUTH_LIME_ITEMS: Item[] = [
     organic:
       'Water every 8–10 days after the monsoon and every 5–7 days in summer into a ring basin, with no water standing; remove side branches on the main stem up to 45 cm',
     why: 'Young roots dry out fast; a clear stem gives a strong frame',
+    hi: {
+      title: 'छोटे पेड़ को नियम से पानी दें',
+      organic:
+        'बरसात के बाद हर 8–10 दिन और गर्मी में हर 5–7 दिन रिंग थाले में पानी दें, पानी रुकने न दें; मुख्य तने पर 45 cm तक की बगल वाली डालियां हटा दें',
+      why: 'छोटी जड़ें जल्दी सूखती हैं; साफ़ तने से मज़बूत ढांचा बनता है',
+      conditional: 'छोटा पेड़',
+    },
     windows: { SOUTH: ALL_YEAR },
   },
 ];
@@ -703,6 +998,14 @@ const SOUTH_SWEET_ORANGE_ITEMS: Item[] = [
     chemical:
       "All the year's P and K and half the N (N 200 g in year 1, +100 g a year, 600 g from year 6; P 100 g, +20 g, 200 g; K 100 g, +40 g, 300 g); water in; wear gloves",
     why: 'The main feed, after the monsoon flush',
+    hi: {
+      title: 'खाद, P, K और आधी नाइट्रोजन दें',
+      organic:
+        'साल भर की गोबर की खाद तने से 70 cm दूर थाले में डालकर मिलाएं: पहले साल 10 kg, हर साल 5 kg ज़्यादा, 6वें साल से 30 kg',
+      chemical:
+        'साल भर का पूरा P और K और आधा N (N पहले साल 200 g, हर साल +100 g, 6वें साल से 600 g; P 100 g, +20 g, 200 g; K 100 g, +40 g, 300 g); पानी दें; दस्ताने पहनें',
+      why: 'मुख्य खाद, बरसात की नई फुटान के बाद',
+    },
     windows: { SOUTH: month(10) },
   },
   {
@@ -714,6 +1017,11 @@ const SOUTH_SWEET_ORANGE_ITEMS: Item[] = [
     chemical:
       "The other half of the year's N in the basin; water in; wear gloves",
     why: 'Feeds the spring flush',
+    hi: {
+      title: 'बाकी आधी नाइट्रोजन दें',
+      chemical: 'साल भर के N का बाकी आधा थाले में; पानी दें; दस्ताने पहनें',
+      why: 'बसंत की नई फुटान को खुराक देती है',
+    },
     windows: { SOUTH: month(3) },
   },
 ];
@@ -723,6 +1031,10 @@ const PHASES = (kind: Kind): PhaseSpec<Group>[] => {
   return [
     {
       phase: 'winter_rest',
+      hi: {
+        avoid: ['बढ़वार के समय भारी छंटाई'],
+        watch: ['छाल खाने वाली इल्ली'],
+      },
       months: { NORTH: mandarin ? [12, 12] : [12, 1] },
       avoid: ['Heavy pruning in active growth'],
       watch: ['Bark-eating caterpillar'],
@@ -731,6 +1043,10 @@ const PHASES = (kind: Kind): PhaseSpec<Group>[] => {
       ? [
           {
             phase: 'harvest',
+            hi: {
+              avoid: ['फल खींचकर तोड़ना', 'ओस में या बारिश के बाद तोड़ना'],
+              watch: ['फल गिरना'],
+            },
             months: { NORTH: [1, 2] as [number, number] },
             avoid: ['Pulling fruit off', 'Picking in dew or after rain'],
             watch: ['Fruit drop'],
@@ -739,6 +1055,13 @@ const PHASES = (kind: Kind): PhaseSpec<Group>[] => {
       : []),
     {
       phase: 'spring_flush_and_flowering',
+      hi: {
+        avoid: [
+          'फुटाव से पहले और फल बनने के बाद पानी की कमी',
+          'खुले फूलों पर कीटनाशक',
+        ],
+        watch: ['सिल्ला', 'माहू (aphid)', 'थ्रिप्स', 'लीफ माइनर'],
+      },
       months: { NORTH: mandarin ? [3, 4] : [2, 4] },
       avoid: [
         'Water stress before sprouting and after fruit set',
@@ -748,18 +1071,35 @@ const PHASES = (kind: Kind): PhaseSpec<Group>[] => {
     },
     {
       phase: 'summer',
+      hi: {
+        avoid: ['थाला सूखने देना', 'पानी भरकर सिंचाई'],
+        watch: ['माइट', 'लीफ माइनर'],
+      },
       months: { NORTH: [5, 6] },
       avoid: ['Letting the basin dry out', 'Flood irrigation'],
       watch: ['Mites', 'Leaf miner'],
     },
     {
       phase: 'monsoon',
+      hi: {
+        avoid: ['थाले में पानी रुकना या तने को छूना'],
+        watch: [
+          'गोंद रोग (gummosis)',
+          'स्कैब और मेलानोज़',
+          'मिलीबग',
+          'फल मक्खी',
+        ],
+      },
       months: { NORTH: [7, 9] },
       avoid: ['Water standing in the basin or touching the trunk'],
       watch: ['Gummosis', 'Scab and melanose', 'Mealybug', 'Fruit fly'],
     },
     {
       phase: 'autumn',
+      hi: {
+        avoid: ['पानी भरकर सिंचाई'],
+        watch: kind === 'lime' ? ['लीफ माइनर', 'कैंकर'] : ['लीफ माइनर'],
+      },
       months: { NORTH: [10, 11] },
       avoid: ['Flood irrigation'],
       watch: kind === 'lime' ? ['Leaf miner', 'Canker'] : ['Leaf miner'],
@@ -771,6 +1111,12 @@ const PHASES = (kind: Kind): PhaseSpec<Group>[] => {
 const POMELO_PHASES: PhaseSpec<Group>[] = [
   {
     phase: 'winter_rest',
+    hi: {
+      avoid: [
+        'ज़्यादा पानी देना; फल देने वाले पेड़ को सर्दी में सिर्फ़ हर 30–40 दिन पानी चाहिए',
+      ],
+      watch: ['छाल खाने वाली इल्ली'],
+    },
     months: { NORTH: [12, 2] },
     avoid: [
       'Heavy watering; a bearing tree needs water only every 30–40 days in winter',
@@ -779,6 +1125,10 @@ const POMELO_PHASES: PhaseSpec<Group>[] = [
   },
   {
     phase: 'spring_flush_and_flowering',
+    hi: {
+      avoid: ['फूल आना शुरू होने के बाद पानी की कमी', 'खुले फूलों पर कीटनाशक'],
+      watch: ['सिल्ला', 'थ्रिप्स', 'लीफ माइनर'],
+    },
     months: { NORTH: [3, 4] },
     avoid: [
       'Water stress once flowering starts',
@@ -788,6 +1138,13 @@ const POMELO_PHASES: PhaseSpec<Group>[] = [
   },
   {
     phase: 'fruit_growth',
+    hi: {
+      avoid: [
+        'थाला सूखने देना, फिर पानी भर देना (फल फटते हैं)',
+        'तने के पास पानी रुकना',
+      ],
+      watch: ['माइट', 'गोंद रोग (gummosis)', 'मिलीबग', 'फल मक्खी'],
+    },
     months: { NORTH: [5, 9] },
     avoid: [
       'Letting the basin dry out, then flooding it (splitting)',
@@ -797,6 +1154,10 @@ const POMELO_PHASES: PhaseSpec<Group>[] = [
   },
   {
     phase: 'harvest',
+    hi: {
+      avoid: ['पके फल पेड़ पर छोड़े रखना (फांकें सूखी, दानेदार हो जाती हैं)'],
+      watch: ['फल मक्खी'],
+    },
     months: { NORTH: [10, 11] },
     avoid: ['Leaving ripe fruit on the tree (dry, grainy segments)'],
     watch: ['Fruit fly'],
@@ -806,6 +1167,13 @@ const POMELO_PHASES: PhaseSpec<Group>[] = [
 const SOUTH_LIME_PHASES: PhaseSpec<Group>[] = [
   {
     phase: 'year_round_bearing',
+    hi: {
+      avoid: ['थाले में पानी रुकना या तने को छूना'],
+      watch: [
+        'हर नई फुटान पर सिल्ला और लीफ माइनर (जून–जुलाई, सितंबर–अक्टूबर, जनवरी–फरवरी)',
+        'बारिश में कैंकर',
+      ],
+    },
     months: { SOUTH: [1, 12] },
     avoid: ['Water standing in the basin or touching the trunk'],
     watch: [

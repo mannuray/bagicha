@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { FamilyCare, RegionCare, TreeCareSeed } from './tree-care';
 import { hindiWords } from './words';
+import { hindi, hindiText } from './hindi-text';
 import type { CatalogueSeed } from './types';
 
 const REGIONS = [
@@ -72,6 +73,13 @@ const careItem = z
       .optional(),
     conditional: text.optional(),
     why: text,
+    hi: hindi({
+      title: hindiText.max(60).optional(),
+      organic: hindiText.optional(),
+      chemical: hindiText.optional(),
+      why: hindiText.optional(),
+      conditional: hindiText.optional(),
+    }),
   })
   .strict()
   .refine(
@@ -88,6 +96,10 @@ const phaseWindow = z
     phase: z.string().regex(/^[a-z][a-z0-9_]*$/),
     avoid: z.array(text),
     watch: z.array(text),
+    hi: hindi({
+      avoid: z.array(hindiText).optional(),
+      watch: z.array(hindiText).optional(),
+    }),
   })
   .strict();
 
@@ -209,6 +221,14 @@ function regionIssues(label: string, care: Grown): string[] {
       );
     const regionCare = own(name);
     if (!regionCare) continue;
+    for (const phase of regionCare.phases)
+      for (const list of ['avoid', 'watch'] as const) {
+        const hi = phase.hi?.[list];
+        if (hi && hi.length !== phase[list].length)
+          issues.push(
+            `${label}: ${name} phase ${phase.phase}: Hindi ${list} differs in number from the English`,
+          );
+      }
     const keys = new Set<string>();
     for (const item of regionCare.items) {
       const when = item.when;

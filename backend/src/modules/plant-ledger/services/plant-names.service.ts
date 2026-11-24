@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Lang } from '../../../common/http/lang';
+import type { RegionCluster } from '@prisma/client';
+import { careItemForKey } from '../domain/care/source-key';
 import { CatalogueStore } from '../../catalogue';
 import {
   cropTitle,
@@ -27,6 +29,18 @@ export interface TitledTask {
 }
 
 export type TaskTitler = (task: TitledTask) => string;
+
+/** A saved tree-care reminder's texts in Hindi; null keeps the saved English. */
+export type CareTexts = {
+  title?: string;
+  organic?: string;
+  chemical?: string;
+  why?: string;
+};
+export type CareTexter = (task: TitledTask) => CareTexts | null;
+
+/** English requests (and code that never shows care) keep what was saved. */
+export const savedCareTexts: CareTexter = () => null;
 
 /** The saved title (or the type's default): what English requests use. */
 export const savedTitle: TaskTitler = (task) =>
@@ -70,9 +84,23 @@ export class PlantNamesService {
   }
 
   /**
+   * Hindi for saved tree-care reminders (title and how-to), from the care item
+   * in the gardener's region; the saved English stays in the database.
+   */
+  async careTexter(lang: Lang, region: RegionCluster): Promise<CareTexter> {
+    if (lang !== 'hi') return savedCareTexts;
+    const catalogue = await this.catalogue.snapshot();
+    return (task) => {
+      if (task.source !== 'TREE_CARE' || !task.source_key) return null;
+      const item = careItemForKey(catalogue, task.source_key, region);
+      return item?.hi ?? null;
+    };
+  }
+
+  /**
    * How reminders are titled in a response: as saved, or in Hindi where the
    * sentence is known (crop reminders that saved theirs, perennial flower
-   * care, untitled ones). Tree care and typed reminders stay as saved.
+   * care, untitled ones). Typed reminders stay as saved; tree care reads its Hindi through careTexter.
    */
   async titler(lang: Lang): Promise<TaskTitler> {
     if (lang !== 'hi') return savedTitle;

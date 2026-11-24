@@ -36,6 +36,24 @@ describe('season guide records in the seed', () => {
     expect(withGuides(...others(), { ...guide(), extra: 1 })).toThrow();
   });
 
+  it('accepts Hindi on a month and rejects Hindi points of a different length', () => {
+    const hiMonth = {
+      ...month,
+      hi: {
+        season: 'सर्दी',
+        headline: 'ठंडी रातें।',
+        points: ['पानी कम दें।'],
+      },
+    };
+    expect(
+      withGuides(...others(), guide({ months: Array(12).fill(hiMonth) })),
+    ).not.toThrow();
+    const bad = { ...month, hi: { points: ['एक', 'दो'] } };
+    expect(
+      withGuides(...others(), guide({ months: Array(12).fill(bad) })),
+    ).toThrow();
+  });
+
   it('rejects a region listed twice', () => {
     expect(withGuides(...others(), guide(), guide())).toThrow();
   });

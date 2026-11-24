@@ -44,6 +44,7 @@ import {
 } from './domain/overlay-rules';
 import { CatalogueStore, CatalogueUnavailableError } from '../catalogue';
 import { regionFor } from '../regions';
+import type { Lang } from '../../common/http/lang';
 import { monthOf } from './domain/season-guide';
 import { resolveSeasonWindow } from './domain/season-window';
 import { OverlayRepository } from './repositories/overlay.repository';
@@ -109,7 +110,10 @@ export class SeasonalService implements OnModuleInit {
   }
 
   /** Season advice, with "good to sow now" from the crop calendar for the user's region. */
-  async getSeasonalGuide(user: Pick<User, 'district' | 'region_cluster'>) {
+  async getSeasonalGuide(
+    user: Pick<User, 'district' | 'region_cluster'>,
+    lang: Lang = 'en',
+  ) {
     const region = regionFor(user);
     const group = climateGroupFor(region);
     const now = this.clock.now();
@@ -117,7 +121,7 @@ export class SeasonalService implements OnModuleInit {
     // The store refuses a catalogue without every region's guide.
     const months = catalogue.seasonGuide(region);
     if (!months) throw new CatalogueUnavailableError();
-    const { season, headline, points } = monthOf(months, now);
+    const { season, headline, points } = monthOf(months, now, lang);
     const listed = catalogue.listedCrops();
     const crops = listed
       .filter(
@@ -128,9 +132,13 @@ export class SeasonalService implements OnModuleInit {
     return { season, advice: headline, points, crops };
   }
 
-  async getTreeIntelligence(userId: string, plantId: string) {
+  async getTreeIntelligence(
+    userId: string,
+    plantId: string,
+    lang: Lang = 'en',
+  ) {
     const { pack, overlay, premium, careNote, care, user, plant } =
-      await this.loadIntelligence(userId, plantId);
+      await this.loadIntelligence(userId, plantId, lang);
     const careDue = care
       ? treeCareDue(care, {
           region: regionFor(user),
@@ -138,6 +146,7 @@ export class SeasonalService implements OnModuleInit {
           plantedAt: plant.planting_date,
           plantingPrecision: plant.planting_date_precision,
           now: this.clock.now(),
+          lang,
         })
       : null;
     return {
@@ -265,7 +274,11 @@ export class SeasonalService implements OnModuleInit {
     };
   }
 
-  private async loadIntelligence(userId: string, plantId: string) {
+  private async loadIntelligence(
+    userId: string,
+    plantId: string,
+    lang: Lang = 'en',
+  ) {
     const plant = await this.plants.getOwnedOrThrow(userId, plantId);
     const user = await this.users.findById(userId);
     if (!user) throw new NotFoundError('USER_NOT_FOUND', 'User not found');
@@ -285,7 +298,7 @@ export class SeasonalService implements OnModuleInit {
           );
     const anchor = await this.getOrCreateAnchor(plant, user, species);
     const phase = care
-      ? carePhaseView(care, { region, stage: plant.lifecycle_stage, now })
+      ? carePhaseView(care, { region, stage: plant.lifecycle_stage, now, lang })
       : null;
     // Guidance comes from reviewed care only, never from the anchor row (old
     // version-1 rows still hold the retired filler).

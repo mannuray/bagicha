@@ -21,6 +21,12 @@ import type {
   MonthDay,
 } from './types';
 
+/** The language care texts are shown in; saved reminders always stay English. */
+type Lang = 'en' | 'hi';
+
+export const NOT_GROWN_NOTE_HI =
+  'यह आपके इलाके में आम तौर पर नहीं उगाया जाता; समय अलग हो सकता है।';
+
 export const NOT_GROWN_NOTE =
   'Not usually grown in your region; timings may differ.';
 
@@ -76,7 +82,20 @@ export interface TreeCareInput {
   now: Date;
   /** Source keys of this tree's care reminders still pending: they count toward the cap. */
   openKeys?: string[];
+  /** Language of the plant-page texts (care lines, dose, note); reminders stay English. */
+  lang?: Lang;
 }
+
+/** An item's text in the language asked for; English where no Hindi is written. */
+const textOf = (
+  item: CareItem,
+  field: 'title' | 'organic' | 'chemical' | 'why' | 'conditional',
+  lang: Lang = 'en',
+): string | null =>
+  (lang === 'hi' ? item.hi?.[field] : undefined) ?? item[field] ?? null;
+
+const notGrown = (lang: Lang = 'en') =>
+  lang === 'hi' ? NOT_GROWN_NOTE_HI : NOT_GROWN_NOTE;
 
 /** Midnight IST of a calendar date. */
 function istMidnight(year: number, [month, day]: MonthDay): Date {
@@ -192,12 +211,29 @@ const doseLine = (parts: DosePart[], years: number) =>
  * This tree's dose ("For a 6-year-old tree: 30 kg FYM; or 660 g urea …"), or the
  * per-year rule when its age is unknown.
  */
-export function doseFor(dose: Dose, age: number | null): string {
+export function doseFor(
+  dose: Dose,
+  age: number | null,
+  lang: Lang = 'en',
+): string {
   const years = age === null ? 1 : Math.min(age, dose.maxAgeYears);
+  const hi = lang === 'hi';
   const lines = [doseLine(dose.organic, years), doseLine(dose.chemical, years)]
     .filter(Boolean)
     // Manure is the organic way; fertiliser is added on top by those who use it.
-    .join(dose.together ? ' + ' : '; if you also use fertiliser, add ');
+    .join(
+      dose.together
+        ? ' + '
+        : hi
+          ? '; अगर खाद (फ़र्टिलाइज़र) भी देते हैं तो साथ में: '
+          : '; if you also use fertiliser, add ',
+    );
+  if (hi)
+    return age === null
+      ? `पेड़ की उम्र के हर साल के लिए (${dose.maxAgeYears} साल तक): ${lines}`
+      : age > dose.maxAgeYears
+        ? `${dose.maxAgeYears} साल या उससे पुराने पेड़ के लिए: ${lines}`
+        : `${years} साल के पेड़ के लिए: ${lines}`;
   return age === null
     ? `Per year of the tree's age (up to ${dose.maxAgeYears}): ${lines}`
     : age > dose.maxAgeYears
@@ -286,13 +322,14 @@ export function treeCareDue(
       amount: item.dose ? doseFor(item.dose, age) : null,
     }),
   );
+  const lang = input.lang ?? 'en';
   const line = (item: CareItem): CareLine => ({
-    title: item.title,
-    organic: item.organic,
-    chemical: item.chemical ?? null,
-    why: item.why,
-    amount: item.dose ? doseFor(item.dose, age) : null,
-    if_you_see: item.conditional ?? null,
+    title: textOf(item, 'title', lang) as string,
+    organic: textOf(item, 'organic', lang) as string,
+    chemical: textOf(item, 'chemical', lang),
+    why: textOf(item, 'why', lang) as string,
+    amount: item.dose ? doseFor(item.dose, age, lang) : null,
+    if_you_see: textOf(item, 'conditional', lang),
   });
   const thisMonth = [
     ...[...candidates].sort(byPriority).map((c) => line(c.item)),
@@ -305,7 +342,7 @@ export function treeCareDue(
     onPage,
     current: candidates.map((c) => c.sourceKey),
     thisMonth,
-    note: grownHere ? null : NOT_GROWN_NOTE,
+    note: grownHere ? null : notGrown(lang),
     needsPlantingMonth:
       !plantedOn &&
       care.items.some(
@@ -348,6 +385,7 @@ export interface CarePhase {
 /** Shown when no phase window covers today. */
 const BETWEEN_PHASES = 'growing';
 const CONDITIONAL_PREFIX = 'If you see it: ';
+const CONDITIONAL_PREFIX_HI = 'दिखे तो: ';
 
 /**
  * What the tree is doing now and next, with this phase's avoid and watch lists
@@ -359,6 +397,7 @@ export function carePhaseView(
 ): CarePhase {
   const { care, grownHere } = verifiedCare(family, input.region);
   const stage = stageOf(input.stage);
+  const lang = input.lang ?? 'en';
   const windows = care.phases
     .filter((p) => p.stages.includes(stage))
     .map((p) => ({
@@ -377,14 +416,24 @@ export function carePhaseView(
     .sort((a, b) => a.start.getTime() - b.start.getTime())[0];
   const doNow = care.items
     .filter((i) => i.stages.includes(stage) && windowOf(i, input.now)?.openNow)
-    .map((i) => (i.conditional ? `${CONDITIONAL_PREFIX}${i.title}` : i.title));
+    .map((i) =>
+      i.conditional
+        ? `${lang === 'hi' ? CONDITIONAL_PREFIX_HI : CONDITIONAL_PREFIX}${textOf(i, 'title', lang)}`
+        : (textOf(i, 'title', lang) as string),
+    );
   return {
     current_phase: current?.phase.phase ?? BETWEEN_PHASES,
     upcoming_phase:
       upcoming?.phase.phase ?? current?.phase.phase ?? BETWEEN_PHASES,
     do_now: doNow,
-    avoid_now: current?.phase.avoid ?? [],
-    watch_for: current?.phase.watch ?? [],
-    note: grownHere ? null : NOT_GROWN_NOTE,
+    avoid_now:
+      (lang === 'hi' ? current?.phase.hi?.avoid : undefined) ??
+      current?.phase.avoid ??
+      [],
+    watch_for:
+      (lang === 'hi' ? current?.phase.hi?.watch : undefined) ??
+      current?.phase.watch ??
+      [],
+    note: grownHere ? null : notGrown(lang),
   };
 }

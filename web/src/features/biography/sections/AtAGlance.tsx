@@ -4,7 +4,7 @@ import type { PlantDetail } from '../../plants';
 import { usePlantIntelligence } from '../../seasonal';
 import { STAGES } from '../growth-stage';
 import { lifeLine } from '../life-line';
-import { humanize } from './format';
+import { phaseLabel } from './format';
 
 /** Lifelong stage (a 5-step track) next to this season's phase, so the two read as different things. */
 export function AtAGlance({ plant, now }: { plant: PlantDetail; now: Date }) {
@@ -35,14 +35,14 @@ export function AtAGlance({ plant, now }: { plant: PlantDetail; now: Date }) {
         // No reviewed care: no season phase; a personal adjustment still shows what it asks now.
         overlay?.adjusted_phase ? (
           <p className="font-body text-sm text-on-surface">
-            <span className="font-bold">{t('biography.now', { current: humanize(overlay.adjusted_phase) })}</span>
+            <span className="font-bold">{t('biography.now', { current: phaseLabel(t, overlay.adjusted_phase) })}</span>
           </p>
         ) : null
       ) : (
         <p className="font-body text-sm text-on-surface">
-          <span className="font-bold">{t('biography.now', { current: humanize(overlay?.adjusted_phase ?? pack.current_phase) })}</span>
+          <span className="font-bold">{t('biography.now', { current: phaseLabel(t, overlay?.adjusted_phase ?? pack.current_phase) })}</span>
           {' → '}
-          <span className="text-on-surface-variant">{t('biography.next', { next: humanize(pack.upcoming_phase) })}</span>
+          <span className="text-on-surface-variant">{t('biography.next', { next: phaseLabel(t, pack.upcoming_phase) })}</span>
         </p>
       )}
     </section>

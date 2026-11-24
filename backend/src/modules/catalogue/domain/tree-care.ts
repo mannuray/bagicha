@@ -51,6 +51,14 @@ export interface TreeCareItem {
   /** "Only if you see …": shown on the plant page, never a reminder. */
   conditional?: string;
   why: string;
+  /** Hindi versions of the texts; a missing one shows in English. */
+  hi?: {
+    title?: string;
+    organic?: string;
+    chemical?: string;
+    why?: string;
+    conditional?: string;
+  };
 }
 
 /** What the tree is doing in a window: Now / Next, and what to avoid and watch. */
@@ -74,6 +82,8 @@ export interface PhaseWindow {
   phase: string;
   avoid: string[];
   watch: string[];
+  /** Hindi lists, the same length and order as the English. */
+  hi?: { avoid?: string[]; watch?: string[] };
 }
 
 export interface RegionCare {

@@ -1,3 +1,4 @@
+import { RequestLang, type Lang } from '../../common/http/lang';
 import type { AuthedRequest } from '../../common/auth/authed-request';
 import {
   Controller,
@@ -25,19 +26,20 @@ export class SeasonalController {
   }
 
   @Get('guide')
-  getGuide(@Request() req: AuthedRequest) {
-    return this.seasonalService.getSeasonalGuide({
-      ...req.user,
-      district: req.user.district || DEFAULT_DISTRICT,
-    });
+  getGuide(@Request() req: AuthedRequest, @RequestLang() lang: Lang) {
+    return this.seasonalService.getSeasonalGuide(
+      { ...req.user, district: req.user.district || DEFAULT_DISTRICT },
+      lang,
+    );
   }
 
   @Get('plant/:id/intelligence')
   async getTreeIntelligence(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
+    @RequestLang() lang: Lang,
   ) {
-    return this.seasonalService.getTreeIntelligence(req.user.id, id);
+    return this.seasonalService.getTreeIntelligence(req.user.id, id, lang);
   }
 
   @Post('plant/:id/materialize-tasks')
