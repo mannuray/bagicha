@@ -165,3 +165,5 @@ A has no phase in Jan–Feb now that the derived harvest phase is gone.
 - NHM: IPM Schedule for Guava Pests, National Horticulture Mission, 2012, https://agritech.tnau.ac.in/horticulture/pdf/tech_bulletin/national/IPM-GUAVA-Revised-Sept2011.pdf
 - TNAU: TNAU Agritech, Guava, https://agritech.tnau.ac.in/horticulture/horti_fruits_guava.html
 - KAU: Package of Practices Recommendations: Crops 2016, Kerala Agricultural University, https://intranet.kau.in/sites/default/files/documents/pop2016.pdf. Guava p.215.
+
+**Leap-day fix (2026-11-24, owner yes):** February windows that ended on the 28th now end on the 29th, so the leap day is covered; the engine shows Feb 28 in a normal year. Start dates, and so reminder keys, are unchanged.

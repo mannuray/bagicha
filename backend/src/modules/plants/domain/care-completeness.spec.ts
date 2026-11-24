@@ -86,6 +86,24 @@ describe('tree care completeness (the add-plant playbook)', () => {
     expect(CARE_PENDING.filter((f) => TREE_CARE[f])).toEqual([]);
   });
 
+  it('no window ends on Feb 28, so a leap day is never uncovered', () => {
+    const feb28: string[] = [];
+    const check = (label: string, when: { kind: string; to?: number[] }) => {
+      if (when.kind === 'CALENDAR' && when.to?.[0] === 2 && when.to[1] === 28)
+        feb28.push(label);
+    };
+    for (const care of Object.values(TREE_CARE))
+      for (const c of cares(care))
+        for (const [region, entry] of Object.entries(c.regions))
+          if (entry && 'items' in entry) {
+            for (const i of entry.items)
+              check(`${c.family} ${region} ${i.key}`, i.when);
+            for (const p of entry.phases)
+              check(`${c.family} ${region} phase ${p.phase}`, p.when);
+          }
+    expect(feb28).toEqual([]);
+  });
+
   it('titles are at most 60 characters; every chemical spray mentions gloves and waiting days', () => {
     const problems: string[] = [];
     for (const care of Object.values(TREE_CARE)) {

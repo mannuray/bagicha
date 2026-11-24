@@ -317,7 +317,7 @@ const BEARING: ItemSpec<Group>[] = [
       ],
       SOUTH: [
         [2, 1],
-        [2, 28],
+        [2, 29],
       ],
       COAST: [
         [1, 10],
@@ -466,7 +466,7 @@ const CONDITIONAL: ItemSpec<Group>[] = [
       ],
       COAST: [
         [1, 1],
-        [2, 28],
+        [2, 29],
       ],
     },
   },
@@ -516,11 +516,11 @@ const CONDITIONAL: ItemSpec<Group>[] = [
       ],
       CENTRAL: [
         [1, 1],
-        [2, 28],
+        [2, 29],
       ],
       WEST: [
         [1, 1],
-        [2, 28],
+        [2, 29],
       ],
       SOUTH: [
         [12, 1],

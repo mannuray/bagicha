@@ -47,3 +47,5 @@ Plant page only (never reminders):
 | harvest | Jun–Aug | May–Jun | Apr–Jul | Mar–May | Leaving ripe fruit on the tree | Fruit fly, stem-end rot |
 
 Removed as unverified: mealybug for Central/West, neem cake doses, frost for Gujarat, "open on the south-east side". Removed as not approved: dichlorvos (no mango label claim, 2026).
+
+**Leap-day fix (2026-11-24, owner yes):** February windows that ended on the 28th now end on the 29th, so the leap day is covered; the engine shows Feb 28 in a normal year. Start dates, and so reminder keys, are unchanged.
