@@ -19,34 +19,49 @@ with no Hindi falls back to English.
 
 In:
 1. **Tree care** (13 families, citrus kinds included): per item `title`, `organic`, `chemical`,
-   `why`, `conditional`; per phase its name, `avoid` and `watch`.
+   `why`, `conditional`; per phase its `avoid` and `watch`. Phase **names** are translated once,
+   by key, in the web's strings (decision below).
 2. **Home season tips** (7 regions × 12 months): `season`, `headline`, `points`.
-3. **Reminder titles in lists**: tree-care reminders already saved show in Hindi (looked up from
-   the catalogue by their task key, as round 2a does for crops and flowers).
+3. **Saved reminders**: a tree-care reminder's title **and its card body** (organic way,
+   alternative, why) show in Hindi, looked up from the catalogue by the task key in the
+   gardener's region (as round 2a does for crops and flowers). *(Design review.)*
+4. **Engine sentences**: the dose line's three patterns ("For a 6-year-old tree: …", "Per year of
+   the tree's age …", "… if you also use fertiliser, add …"), the not-grown note, and the
+   "growing" and "care coming" phases get Hindi in code. *(Design review.)*
 
-Out: dose amounts (`amount` lines are numbers and product names: "For a 6-year-old tree: 30 kg
-FYM …" — the units already read in both; translating the template is a later polish), typed
-reminders, AI diagnosis text, the review docs.
+Out: typed reminders, AI diagnosis text, the review docs, product names and numbers inside dose
+lines (kept as written).
 
 ## How
 
 **Data (code first, then content — strict schemas):**
 - `TreeCareItem.hi?: { title?; organic?; chemical?; why?; conditional? }` (all optional strings,
   title ≤ 60 characters like the English).
-- `PhaseWindow.hi?: { phase?: string; avoid?: string[]; watch?: string[] }`; when given, `avoid`
-  and `watch` must have the same length as the English lists (validator issue otherwise).
-- `SeasonMonth.hi?: { season?; headline?; points?: string[] }`; `points` same length as English.
-- Phase names: today the web humanises the snake-case key ("fruit_development" → "fruit
-  development"). With `hi.phase` the API sends a ready label in Hindi; English keeps the key and
-  the web keeps humanising it.
+- `PhaseWindow.hi?: { avoid?: string[]; watch?: string[] }`; when given, the same length as the
+  English lists (checked in `treeCareIssues`).
+- `SeasonMonth.hi?: { season?; headline?; points?: string[] }`; `points` the same length as
+  English (checked in `seasonGuideIssues`).
+- Hindi strings reuse round 1's `hindi()` / `hindiText` helpers (non-empty, trimmed); the
+  Hindi title limit follows round 1's precedent, chosen on purpose for Devanagari (matras count
+  as characters). *(Design review.)*
+- **Phase names (decision, design review):** about 35 phase keys are shared across families. The
+  web gets one key → Hindi map (`biography.phase.<key>` in `hi.json`), which also covers
+  `growing`, `care_coming` and the personal adjustment's `…_with_dryness_attention` /
+  `dryness_attention` (the suffix translated once). The API keeps sending keys; a key with no
+  Hindi string falls back to today's humanised English. Cost: a new fruit's new phase key needs
+  one web string (the add-plant checklist says so).
 
 **API (`Accept-Language`, `RequestLang`, as round 1):**
 - `GET seasonal/plant/:id/intelligence` and `GET seasonal/guide` take the request language and
-  return Hindi where written, English otherwise. The pack view gains `current_phase_label` /
-  `upcoming_phase_label` (null when no Hindi; the web then humanises the key as today).
-- Reminder lists: `PlantNamesService.titler('hi')` also translates `TREE_CARE` tasks: from the
-  task's source key (`family:key:…`, family may be `citrus:<kind>`) it finds the item and uses its
-  `hi.title`. A reminder's saved English title stays in the database.
+  return Hindi where written, English otherwise (care lines, avoid/watch, dose line, not-grown
+  note, season tips).
+- Saved reminders: for `TREE_CARE` tasks the reminder view, in Hindi, replaces `title`,
+  `care_how.organic` / `chemical` / `why` and `reason` with the item's `hi` fields; `amount` (a
+  number line saved at creation) and `window_end` stay. The item is found from the source key
+  parsed **from the right** (last part `YYYY-MM-DD` or `d<n>`, then the item key, the rest is the
+  family, which may be `citrus:<kind>`) **in the gardener's region** (`resolveRegionCare`, so
+  `sameAs` works): keys repeat across regions with different doses (18 of 361 family:key pairs).
+  Not found → the saved English stays. The database keeps the saved English. *(Design review.)*
 
 **Content:**
 - Hindi drafted per family and for the season tips in everyday Hindi (round 1's style guide and
@@ -55,9 +70,12 @@ reminders, AI diagnosis text, the review docs.
 - **Owner review gate:** one Claude Doc per batch (tree care; season tips) with English beside
   Hindi; nothing is pushed before an explicit yes.
 
-**Release order:** code release (schemas accept `hi`, API serves it, web shows labels) → then
-the catalogue push with the Hindi content. Pushing content first would make the live API reject
-the catalogue on its next restart.
+**Release order:** code release (schemas accept `hi`, API serves it, web shows phase strings) →
+then the catalogue push with the Hindi content. This is the reverse of the usual "migrate →
+push → deploy": pushing content first would make the live API reject the catalogue on its next
+restart. **Rollback after the Hindi push:** revert the content first (push the seed without
+`hi`), then roll the code back — the old schemas reject `hi` and the push never deletes, so a
+rolled-back API would not start. *(Design review.)*
 
 ## Tests
 
@@ -68,7 +86,14 @@ the catalogue on its next restart.
 - Titler: a saved `TREE_CARE` reminder (plain family and citrus kind) shows its Hindi title; a
   reminder whose item no longer exists keeps its saved title.
 - Season guide: Hindi month returned for `hi`, English otherwise.
-- Web: phase label shown when sent; humanised key otherwise.
+- Reminder view: a saved papaya reminder (`papaya:feed_1:d90`) in SOUTH_DECCAN shows the South
+  Hindi title and body, not the coastal one; a citrus-kind key works; an unknown key keeps English.
+- Engine: Hindi dose line patterns, not-grown note.
+- **Completeness (with the content):** a spec lists every approved item, phase list and season
+  month missing `hi`; it lands with the Hindi content and must be empty before the owner review.
+  *(Design review.)*
+- Web: Hindi phase strings for known keys (incl. the dryness suffix, `growing`, `care_coming`);
+  humanised key for an unknown one.
 
 ## Non-goals
 
