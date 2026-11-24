@@ -127,6 +127,8 @@ export interface FruitTypeInfo {
   /** Whole words in what people type that mean this fruit ("aam", "dasheri"); the first type that matches wins. */
   match_aliases: string[];
   life: LifeProfile;
+  /** Month (1–12, IST) a new fruiting cycle starts; absent means January. */
+  cycle_start_month?: number;
 }
 
 /** One add-tree search entry: a fruit type's plain entry or a named variety. */

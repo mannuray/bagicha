@@ -128,6 +128,7 @@ export const fruitTypeSeedSchema = z
         note_key: text.nullable(),
       })
       .strict(),
+    cycle_start_month: z.number().int().min(1).max(12).optional(),
     status,
     notes: z.string().nullable(),
   })

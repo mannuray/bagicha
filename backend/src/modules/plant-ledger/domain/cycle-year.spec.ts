@@ -1,36 +1,26 @@
 import { resolveCycleYear } from './cycle-year';
-import { speciesConfigFor } from './species-config';
+import { seededCatalogue } from '../../catalogue/testing';
 
 describe('resolveCycleYear (IST)', () => {
   it('starts the mango cycle at IST midnight on 1 November', () => {
-    expect(resolveCycleYear('mango', new Date('2026-10-31T19:00:00Z'))).toBe(
-      2026,
-    );
+    expect(resolveCycleYear(11, new Date('2026-10-31T19:00:00Z'))).toBe(2026);
   });
 
   it('keeps late-October IST events in the previous mango cycle', () => {
-    expect(resolveCycleYear('mango', new Date('2026-10-31T18:00:00Z'))).toBe(
-      2025,
-    );
+    expect(resolveCycleYear(11, new Date('2026-10-31T18:00:00Z'))).toBe(2025);
   });
 
   it('starts the citrus cycle in July (IST)', () => {
-    expect(resolveCycleYear('citrus', new Date('2026-06-30T19:00:00Z'))).toBe(
-      2026,
-    );
-    expect(resolveCycleYear('citrus', new Date('2026-06-30T18:00:00Z'))).toBe(
-      2025,
-    );
+    expect(resolveCycleYear(7, new Date('2026-06-30T19:00:00Z'))).toBe(2026);
+    expect(resolveCycleYear(7, new Date('2026-06-30T18:00:00Z'))).toBe(2025);
   });
 
-  it('uses the calendar year for unknown species', () => {
-    expect(
-      resolveCycleYear('jackfruit', new Date('2026-03-01T00:00:00Z')),
-    ).toBe(2026);
+  it('a January start is the calendar year', () => {
+    expect(resolveCycleYear(1, new Date('2026-03-01T00:00:00Z'))).toBe(2026);
   });
 });
 
-describe('species config', () => {
+describe('cycle start month from the catalogue', () => {
   it.each([
     ['mango', 11],
     ['litchi', 11],
@@ -39,7 +29,9 @@ describe('species config', () => {
     ['pomegranate', 6],
     ['banana', 1],
     ['anything-else', 1],
+    ['papaya', 1],
+    [null, 1],
   ])('%s cycles start in month %i', (family, month) => {
-    expect(speciesConfigFor(family).cycleStartMonth).toBe(month);
+    expect(seededCatalogue().cycleStartMonth(family)).toBe(month);
   });
 });
