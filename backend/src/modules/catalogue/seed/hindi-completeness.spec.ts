@@ -56,4 +56,12 @@ describe('Hindi is written for approved care and season tips', () => {
     );
     expect(missing).toEqual([]);
   });
+
+  it('every advice text', () => {
+    expect(
+      CATALOGUE_SEED.advice
+        .filter((a) => a.status === 'APPROVED' && !a.hi)
+        .map((a) => a.key),
+    ).toEqual([]);
+  });
 });

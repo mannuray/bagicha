@@ -1,4 +1,5 @@
 import { DropLevel } from '@prisma/client';
+import { CATALOGUE_SEED } from '../../catalogue';
 import { seededCatalogue } from '../../catalogue/testing';
 import * as legacy from './__fixtures__/legacy-cycle-summary';
 import {
@@ -53,6 +54,11 @@ describe('season summary English after the move to the catalogue', () => {
 });
 
 describe('season summary in Hindi', () => {
+  const noHindi = seededCatalogue({
+    ...CATALOGUE_SEED,
+    advice: CATALOGUE_SEED.advice.map(({ hi: _hi, ...a }) => a),
+  });
+
   it('reads as plain English sentence while its pieces have no Hindi', () => {
     const parts = buildCycleSummary({
       flowering: new Date('2026-02-01'),
@@ -63,8 +69,23 @@ describe('season summary in Hindi', () => {
       stressScore: 0,
       pestPressureScore: 0,
     });
+    expect(renderCycleSummary(parts, noHindi, 'hi')).toBe(
+      renderCycleSummary(parts, noHindi, 'en'),
+    );
+  });
+
+  it('joins a fully Hindi summary with commas and ।', () => {
+    const parts = buildCycleSummary({
+      flowering: new Date('2026-02-01'),
+      fruitSet: null,
+      harvestCount: 2,
+      flowerDropLevel: DropLevel.UNKNOWN,
+      fruitDropLevel: DropLevel.UNKNOWN,
+      stressScore: 0,
+      pestPressureScore: 0,
+    });
     expect(renderCycleSummary(parts, catalogue, 'hi')).toBe(
-      renderCycleSummary(parts, catalogue, 'en'),
+      'फूल आने की बात दर्ज हुई, पर फल लगने की पुष्टि नहीं हुई, 2 बार तुड़ाई दर्ज हुई।',
     );
   });
 });
