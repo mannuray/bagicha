@@ -32,16 +32,23 @@ export function careForTree(
   for (const [field, withVarietyWords] of fields) {
     const kind = field ? earliestKind(care, field, withVarietyWords) : null;
     if (kind === BLOCKED) return null;
-    if (kind)
-      return {
-        family: `${care.family}:${kind.key}`,
-        sources: care.sources,
-        grownIn: kind.grownIn,
-        regions: kind.regions,
-        ...(kind.pendingRegions && { pendingRegions: kind.pendingRegions }),
-      };
+    if (kind) return kindCare(care, kind);
   }
   return null;
+}
+
+/** One kind's care as the engine sees it: its own regions under `family:kind`. */
+export function kindCare(
+  care: FamilyCare,
+  kind: NonNullable<FamilyCare['kinds']>[number],
+): FamilyCare {
+  return {
+    family: `${care.family}:${kind.key}`,
+    sources: care.sources,
+    grownIn: kind.grownIn,
+    regions: kind.regions,
+    ...(kind.pendingRegions && { pendingRegions: kind.pendingRegions }),
+  };
 }
 
 /** A field naming a different plant ("kaffir lime") decides: no kind. */

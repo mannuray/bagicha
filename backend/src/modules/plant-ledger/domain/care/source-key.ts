@@ -1,5 +1,10 @@
 import type { RegionCluster } from '@prisma/client';
-import type { Catalogue, FamilyCare, TreeCareItem } from '../../../catalogue';
+import {
+  kindCare,
+  type Catalogue,
+  type FamilyCare,
+  type TreeCareItem,
+} from '../../../catalogue';
 import { resolveRegionCare } from './region-care';
 
 /** Where a reminder's window starts: days after planting, or a calendar day. */
@@ -41,15 +46,7 @@ function careOfFamily(
   // A family split by kind has no care of its own: only a kind key finds one.
   if (!kindKey) return care.kinds ? null : care;
   const kind = care.kinds?.find((k) => k.key === kindKey);
-  return kind
-    ? {
-        family,
-        sources: care.sources,
-        grownIn: kind.grownIn,
-        regions: kind.regions,
-        pendingRegions: kind.pendingRegions,
-      }
-    : null;
+  return kind ? kindCare(care, kind) : null;
 }
 
 /**
