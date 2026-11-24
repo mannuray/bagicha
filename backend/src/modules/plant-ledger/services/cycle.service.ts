@@ -9,7 +9,16 @@ import {
   toSkipTake,
 } from '../../../common/pagination';
 import { Tx } from '../../../common/prisma/transaction';
-import { buildCycleSnapshot } from '../domain/cycle-summary';
+import {
+  buildCycleSnapshot,
+  renderCycleSummary,
+} from '../domain/cycle-summary';
+import {
+  CatalogueStore,
+  type AdviceRef,
+  type Catalogue,
+} from '../../catalogue';
+import type { Lang } from '../../../common/http/lang';
 import { resolveCycleYear } from '../domain/cycle-year';
 import {
   CycleRepository,
@@ -18,7 +27,18 @@ import {
 import { JournalRepository } from '../repositories/journal.repository';
 import { SpeciesNormalizationService } from './species-normalization.service';
 
-function toCycleView(cycle: CycleWithRecentEntries) {
+/** Advice keys saved on a season, or null for seasons saved before they existed. */
+const refsOf = (value: Prisma.JsonValue | null): AdviceRef[] | null =>
+  Array.isArray(value) ? (value as unknown as AdviceRef[]) : null;
+
+function toCycleView(
+  cycle: CycleWithRecentEntries,
+  catalogue: Pick<Catalogue, 'advice'>,
+  lang: Lang,
+) {
+  // Read in the gardener's language from the saved keys; older seasons keep their English.
+  const summary = refsOf(cycle.cycle_summary_refs);
+  const actions = refsOf(cycle.recommended_actions_refs);
   return {
     id: cycle.id,
     cycle_year: cycle.cycle_year,
@@ -38,8 +58,12 @@ function toCycleView(cycle: CycleWithRecentEntries) {
     stress_score: cycle.stress_score,
     pest_pressure_score: cycle.pest_pressure_score,
     treatment_count: cycle.treatment_count,
-    cycle_summary: cycle.cycle_summary,
-    recommended_next_cycle_actions: cycle.recommended_next_cycle_actions,
+    cycle_summary: summary
+      ? renderCycleSummary(summary, catalogue, lang)
+      : cycle.cycle_summary,
+    recommended_next_cycle_actions: actions
+      ? actions.map((a) => catalogue.advice(a, lang))
+      : cycle.recommended_next_cycle_actions,
     recent_events: cycle.journal_entries.map((log) => ({
       id: log.id,
       type: log.type,
@@ -59,6 +83,7 @@ export class CycleService {
     private readonly journal: JournalRepository,
     private readonly species: SpeciesNormalizationService,
     private readonly access: PlantAccess,
+    private readonly catalogue: CatalogueStore,
   ) {}
 
   /** The plant's cycle for `eventAt`, created if missing. The caller has already checked ownership. */
@@ -113,7 +138,10 @@ export class CycleService {
       cycleId,
       tx,
     );
-    const snapshot = buildCycleSnapshot(entries);
+    const snapshot = buildCycleSnapshot(
+      entries,
+      await this.catalogue.snapshot(),
+    );
     await this.cycles.update(
       userId,
       cycleId,
@@ -121,6 +149,10 @@ export class CycleService {
         ...snapshot,
         recommended_next_cycle_actions:
           snapshot.recommended_next_cycle_actions as Prisma.InputJsonValue,
+        cycle_summary_refs:
+          snapshot.cycle_summary_refs as unknown as Prisma.InputJsonValue,
+        recommended_actions_refs:
+          snapshot.recommended_actions_refs as unknown as Prisma.InputJsonValue,
       },
       tx,
     );
@@ -130,6 +162,7 @@ export class CycleService {
     userId: string,
     plantId: string,
     q: PageQuery,
+    lang: Lang = 'en',
   ): Promise<Page<CycleView>> {
     await this.access.owned(userId, plantId);
     const { rows, total } = await this.cycles.listForPlant(
@@ -137,6 +170,11 @@ export class CycleService {
       plantId,
       toSkipTake(q),
     );
-    return toPage(rows.map(toCycleView), total, q);
+    const catalogue = await this.catalogue.snapshot();
+    return toPage(
+      rows.map((row) => toCycleView(row, catalogue, lang)),
+      total,
+      q,
+    );
   }
 }

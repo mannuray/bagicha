@@ -9,3 +9,7 @@ CREATE TABLE "catalogue_advice" (
 
     CONSTRAINT "catalogue_advice_pkey" PRIMARY KEY ("key")
 );
+
+-- AlterTable: a season's summary and next actions as advice keys (read in the reader's language).
+ALTER TABLE "tree_cycles" ADD COLUMN "cycle_summary_refs" JSONB,
+ADD COLUMN "recommended_actions_refs" JSONB;

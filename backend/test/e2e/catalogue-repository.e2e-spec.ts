@@ -60,7 +60,7 @@ describe('catalogue repository', () => {
 
   beforeEach(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care, catalogue_season_guide',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care, catalogue_season_guide, catalogue_advice',
     );
     await prisma.catalogueMeta.update({
       where: { id: 1 },
@@ -70,7 +70,7 @@ describe('catalogue repository', () => {
 
   afterAll(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care, catalogue_season_guide',
+      'TRUNCATE catalogue_crops, catalogue_methods, catalogue_care_steps, catalogue_fruit_types, catalogue_fruit_plants, catalogue_perennial_flowers, catalogue_tree_care, catalogue_season_guide, catalogue_advice',
     );
     await repo.applyPush(writeOf(CATALOGUE_SEED));
     await app.close();

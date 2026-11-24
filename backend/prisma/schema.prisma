@@ -431,6 +431,9 @@ model PlantCycle {
   treatment_count                Int            @default(0)
   cycle_summary                  String?
   recommended_next_cycle_actions Json?
+  /// The summary and actions as advice keys, rendered in the reader's language.
+  cycle_summary_refs             Json?
+  recommended_actions_refs       Json?
   /// Crops can have more than one season a year; trees always use 1.
   season_no                      Int            @default(1)
   started_at                     DateTime?

@@ -173,8 +173,9 @@ export class PlantLedgerController {
     @Request() req: AuthedRequest,
     @Param('id') id: string,
     @Query() q: PaginationQueryDto,
+    @RequestLang() lang: Lang,
   ) {
-    return this.cycles.list(req.user.id, id, q);
+    return this.cycles.list(req.user.id, id, q, lang);
   }
 
   @Get('plants/:id/tasks')
