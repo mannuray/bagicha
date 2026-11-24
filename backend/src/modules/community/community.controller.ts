@@ -34,11 +34,13 @@ export class CommunityController {
   }
 
   @Post('posts')
+  @RateLimit('write')
   async createPost(@Request() req: AuthedRequest, @Body() dto: CreatePostDto) {
     return toPostView(await this.communityService.createPost(req.user.id, dto));
   }
 
   @Post('posts/:id/comments')
+  @RateLimit('write')
   async addComment(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
@@ -56,6 +58,7 @@ export class CommunityController {
   }
 
   @Post('posts/:id/report')
+  @RateLimit('write')
   async reportPost(
     @Request() req: AuthedRequest,
     @Param('id') id: string,
@@ -65,6 +68,7 @@ export class CommunityController {
   }
 
   @Post('comments/:id/report')
+  @RateLimit('write')
   async reportComment(
     @Request() req: AuthedRequest,
     @Param('id') id: string,

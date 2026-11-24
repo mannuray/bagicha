@@ -11,6 +11,7 @@ import { ThrottlerLimitDetail } from '@nestjs/throttler/dist/throttler.guard.int
 import { RateLimitedError } from '../errors';
 import { Metrics } from '../observability';
 import { RateLimitBucket } from './limits';
+import { BearerIdentity } from './bearer-identity';
 import { trackerFor } from './user-or-ip.tracker';
 
 export const RATE_LIMIT_BUCKET = 'rateLimitBucket';
@@ -23,6 +24,7 @@ abstract class BaseRateLimitGuard extends ThrottlerGuard {
     @InjectThrottlerStorage() storage: ThrottlerStorage,
     reflector: Reflector,
     private readonly metrics: Metrics,
+    private readonly identity: BearerIdentity,
   ) {
     super(options, storage, reflector);
   }
@@ -35,7 +37,10 @@ abstract class BaseRateLimitGuard extends ThrottlerGuard {
   }
 
   protected getTracker(req: Record<string, any>): Promise<string> {
-    return Promise.resolve(trackerFor(req));
+    const headers = (req.headers ?? {}) as Record<string, string | undefined>;
+    return Promise.resolve(
+      trackerFor(req, this.identity.userIdOf(headers.authorization)),
+    );
   }
 
   protected throwThrottlingException(

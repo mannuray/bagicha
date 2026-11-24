@@ -2,7 +2,9 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { RATE_LIMIT_BACKEND } from '../../src/common/rate-limit/fail-open.storage';
 import { createTestApp } from './app';
-import { clearRateLimitKeys } from './fixtures';
+import { User } from '@prisma/client';
+import { PrismaService } from '../../src/prisma/prisma.service';
+import { clearRateLimitKeys, seedUser, tokenFor } from './fixtures';
 
 // A fresh phone per request: one phone also has its own one-a-minute cooldown.
 let seq = 0;
@@ -54,6 +56,38 @@ describe('rate limiting', () => {
       expect(blocked.status).toBe(429);
       expect(blocked.body.error.code).toBe('RATE_LIMITED');
       expect(blocked.body.error.details).toEqual({ bucket: 'auth' });
+    });
+
+    it('caps community and chat writes at 30 a minute per user, shared across routes', async () => {
+      const prisma = app.get(PrismaService);
+      const [writer, other] = [await seedUser(prisma), await seedUser(prisma)];
+      const as = (user: User) => `Bearer ${tokenFor(app, user)}`;
+      for (let i = 0; i < 20; i++) {
+        const res = await request(app.getHttpServer())
+          .post('/api/v1/community/posts')
+          .set('Authorization', as(writer))
+          .send({ content: `post ${i}` });
+        expect(res.status).not.toBe(429);
+      }
+      for (let i = 0; i < 10; i++) {
+        const res = await request(app.getHttpServer())
+          .post('/api/v1/chat/messages')
+          .set('Authorization', as(writer))
+          .send({ receiver_id: other.id, content: `hi ${i}` });
+        expect(res.status).not.toBe(429);
+      }
+      const blocked = await request(app.getHttpServer())
+        .post('/api/v1/community/posts')
+        .set('Authorization', as(writer))
+        .send({ content: 'one too many' });
+      expect(blocked.status).toBe(429);
+      expect(blocked.body.error.details).toEqual({ bucket: 'write' });
+      // Another user from the same address is not affected.
+      const fresh = await request(app.getHttpServer())
+        .post('/api/v1/community/posts')
+        .set('Authorization', as(other))
+        .send({ content: 'mine' });
+      expect(fresh.status).not.toBe(429);
     });
   });
 
