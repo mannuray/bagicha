@@ -825,5 +825,22 @@
       "flowers": "फूल",
       "perennials": "गुलाब या मोगरा जैसे सदाबहार पौधे? एक जोड़ें"
     }
+  },
+  "weather": {
+    "title": "मौसम",
+    "highLow": "अधिकतम {{high}} · न्यूनतम {{low}}",
+    "rainChance": "बारिश की संभावना {{chance}}%",
+    "source": "मौसम: {{source}}",
+    "condition": {
+      "CLEAR": "साफ़",
+      "PARTLY_CLOUDY": "आंशिक बादल",
+      "CLOUDY": "बादल",
+      "FOG": "कोहरा",
+      "DRIZZLE": "बूँदाबाँदी",
+      "RAIN": "बारिश",
+      "HEAVY_RAIN": "तेज़ बारिश",
+      "THUNDERSTORM": "गरज के साथ बारिश",
+      "SNOW": "बर्फ़बारी"
+    }
   }
 }

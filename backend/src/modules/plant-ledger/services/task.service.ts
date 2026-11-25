@@ -67,6 +67,7 @@ const ONE_OFF_SOURCES: ReadonlySet<TaskSource> = new Set([
   TaskSource.SEASONAL_PACK,
   TaskSource.PERSONALIZED_OVERLAY,
   TaskSource.TREE_CARE,
+  TaskSource.WEATHER,
 ]);
 
 /** The single entry point for creating tasks, plus task reads and status changes. */
@@ -123,6 +124,11 @@ export class TaskService {
       this.metrics.taskCreated(source, count),
     );
     return results;
+  }
+
+  /** Cancels pending reminders of one source that fell due before `before` (weather reminders after their day). */
+  expirePendingBefore(source: TaskSource, before: Date): Promise<number> {
+    return this.tasks.cancelPendingBefore(source, before);
   }
 
   private async createOne(

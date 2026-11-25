@@ -1,31 +1,21 @@
 import { CatalogueModule } from '../catalogue';
-import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { PlantLedgerModule } from '../plant-ledger';
 import { UserModule } from '../user';
-import { WeatherProcessor } from './processors/weather.processor';
 import { OverlayRepository } from './repositories/overlay.repository';
 import { SeasonalPackRepository } from './repositories/seasonal-pack.repository';
 import { SeasonalController } from './seasonal.controller';
-import { SeasonalService, WEATHER_QUEUE } from './seasonal.service';
+import { SeasonalService } from './seasonal.service';
 import { TreeIntelligenceService } from './services/tree-intelligence.service';
 import { TreeTaskMaterializer } from './services/tree-task-materializer.service';
-import { WeatherService } from './services/weather.service';
 
 @Module({
-  imports: [
-    CatalogueModule,
-    PlantLedgerModule,
-    UserModule,
-    BullModule.registerQueue({ name: WEATHER_QUEUE }),
-  ],
+  imports: [CatalogueModule, PlantLedgerModule, UserModule],
   controllers: [SeasonalController],
   providers: [
     SeasonalService,
     TreeIntelligenceService,
     TreeTaskMaterializer,
-    WeatherService,
-    WeatherProcessor,
     SeasonalPackRepository,
     OverlayRepository,
   ],

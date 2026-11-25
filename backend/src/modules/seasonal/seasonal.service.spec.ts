@@ -65,16 +65,10 @@ function build(opts: {
     findCohort: jest.fn(() => Promise.resolve(pack as typeof pack | null)),
     create: jest.fn(),
   };
-  const weatherQueue = { add: jest.fn(() => Promise.resolve()) };
   const retireCare = jest.fn(() => Promise.resolve(0));
   const retireSeason = jest.fn((_u: string, _p: string, _keys: string[]) =>
     Promise.resolve(0),
   );
-  const weatherQueueArg = weatherQueue as any;
-  const weatherService = {
-    getWeather: jest.fn(() => Promise.resolve({ temp: 30 })),
-  } as any;
-  const redis = { get: jest.fn(() => Promise.resolve(null)) } as any;
   const plants = {
     getOwnedOrThrow: jest.fn(() => Promise.resolve(plant)),
     assertGrowing: jest.fn(() => Promise.resolve(plant)),
@@ -121,8 +115,6 @@ function build(opts: {
   } as unknown as OverlayRepository;
   const species = new SpeciesNormalizationService(seededCatalogueStore());
   const clock = new FixedClock(now);
-  const metrics = { registerQueueDepth: jest.fn() } as any;
-  const logger = { warn: jest.fn() } as any;
   const catalogue = // Season-pack behaviour: this catalogue has no mango care.
     seededCatalogueStore({
       ...CATALOGUE_SEED,
@@ -150,22 +142,13 @@ function build(opts: {
     species,
     clock,
   );
-  const seasonal = new SeasonalService(
-    weatherQueueArg,
-    weatherService,
-    redis,
-    clock,
-    metrics,
-    logger,
-    catalogue,
-  );
+  const seasonal = new SeasonalService(clock, catalogue);
   // One handle on the three services the old SeasonalService was split into.
   const service = {
     materializeTasksForTree:
       materializer.materializeTasksForTree.bind(materializer),
     getTreeIntelligence: intelligence.getTreeIntelligence.bind(intelligence),
     getSeasonalGuide: seasonal.getSeasonalGuide.bind(seasonal),
-    getLocalizedWeather: seasonal.getLocalizedWeather.bind(seasonal),
   };
   return {
     service,
@@ -173,7 +156,6 @@ function build(opts: {
     drafts,
     packs,
     pack,
-    weatherQueue,
     retireCare,
     retireSeason,
   };
@@ -429,20 +411,5 @@ describe('SeasonalService care status', () => {
     );
     const res = await service.getTreeIntelligence('u1', 'p1');
     expect(res.seasonal_pack).toMatchObject({ id: 'pack1' });
-  });
-});
-
-describe('SeasonalService weather', () => {
-  it('queues one check per pincode and still answers when the queue is down', async () => {
-    const { service, weatherQueue } = build({ premium: false });
-    weatherQueue.add.mockRejectedValueOnce(new Error('redis down'));
-    await expect(service.getLocalizedWeather('800001')).resolves.toEqual({
-      temp: 30,
-    });
-    expect(weatherQueue.add).toHaveBeenCalledWith(
-      'check',
-      { pincode: '800001' },
-      { jobId: 'weather-800001' },
-    );
   });
 });

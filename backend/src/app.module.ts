@@ -10,6 +10,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { RedisModule } from './common/redis/redis.module';
 import { MonitorModule } from './common/monitor';
 import { PlantLedgerModule } from './modules/plant-ledger/plant-ledger.module';
+import { WeatherModule } from './modules/weather';
 import { SeasonalModule } from './modules/seasonal/seasonal.module';
 import { CropsModule } from './modules/crops/crops.module';
 import { RegionsModule } from './modules/regions';
@@ -19,7 +20,6 @@ import { MediaModule } from './modules/media/media.module';
 import { CommunityModule } from './modules/community/community.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
-import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { PlantsModule } from './modules/plants/plants.module';
 import { UserModule } from './modules/user/user.module';
 import { validateEnv } from './config/env.validation';
@@ -60,6 +60,7 @@ import { AuditModule } from './modules/audit';
     AuthModule,
     PlantLedgerModule,
     SeasonalModule,
+    WeatherModule,
     CropsModule,
     RegionsModule,
     VisionModule,
@@ -68,7 +69,6 @@ import { AuditModule } from './modules/audit';
     CommunityModule,
     ChatModule,
     SubscriptionModule,
-    MarketplaceModule,
     PlantsModule,
     UserModule,
   ],

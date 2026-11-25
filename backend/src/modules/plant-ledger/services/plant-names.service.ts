@@ -116,7 +116,8 @@ export class PlantNamesService {
     if (lang !== 'hi') return savedCareTexts;
     const catalogue = await this.catalogue.snapshot();
     return (task) => {
-      if (task.source === 'PERSONALIZED_OVERLAY')
+      // Both save their English texts with the advice keys they came from.
+      if (task.source === 'PERSONALIZED_OVERLAY' || task.source === 'WEATHER')
         return overlayTexts(task.metadata, catalogue);
       if (task.source !== 'TREE_CARE' || !task.source_key) return null;
       const item = careItemForKey(catalogue, task.source_key, region);

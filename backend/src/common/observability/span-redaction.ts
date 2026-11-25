@@ -21,3 +21,13 @@ export function redactIncomingHttpSpan(
   span.setAttribute('net.peer.ip', '');
   span.setAttribute('network.peer.address', '');
 }
+
+/** Outgoing HTTP spans: keep the origin and path, drop the query string (an API key can ride there). */
+export function redactOutgoingHttpSpan(
+  span: { setAttribute: (key: string, value: string) => unknown },
+  request: { origin?: string; path?: string },
+): void {
+  const path = (request.path ?? '').split('?')[0];
+  span.setAttribute('url.full', `${request.origin ?? ''}${path}`);
+  span.setAttribute('url.query', '');
+}

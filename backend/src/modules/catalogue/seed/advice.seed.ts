@@ -468,4 +468,76 @@ export const ADVICE_SEED: AdviceSeed[] = [
     status: 'APPROVED',
     notes: null,
   },
+  {
+    key: 'weather.tip.heat',
+    en: 'Very hot day ahead: water the soil lightly in the early morning or evening, mulch the beds, and shade seedlings.',
+    hi: 'बहुत गर्म दिन आने वाला है: सुबह जल्दी या शाम को मिट्टी को हल्का पानी दें, क्यारियों में मल्च बिछाएँ और पौध को छाया दें।',
+    status: 'APPROVED',
+    notes:
+      'Weather tip. English approved by owner 2026-11-25 (IMD/ICAR source check); Hindi approved by owner 2026-11-25.',
+  },
+  {
+    key: 'weather.tip.heavy_rain',
+    en: 'Heavy rain expected: skip watering, clear drainage from pots and beds, and stake tall plants.',
+    hi: 'तेज़ बारिश की संभावना है: पानी न दें, गमलों और क्यारियों से पानी निकलने का रास्ता साफ़ करें, और लंबे पौधों को सहारा दें।',
+    status: 'APPROVED',
+    notes:
+      'Weather tip. English approved by owner 2026-11-25 (IMD/ICAR source check); Hindi approved by owner 2026-11-25.',
+  },
+  {
+    key: 'weather.tip.cold_night',
+    en: 'Cold night ahead: cover seedlings and young plants with straw or cloth, and lightly moisten the soil this evening.',
+    hi: 'ठंडी रात आने वाली है: पौध और छोटे पौधों को पुआल या कपड़े से ढकें, और आज शाम मिट्टी को हल्का नम करें।',
+    status: 'APPROVED',
+    notes:
+      'Weather tip. English approved by owner 2026-11-25 (IMD/ICAR source check); Hindi approved by owner 2026-11-25.',
+  },
+  {
+    key: 'weather.task.heat.title',
+    en: 'Water the soil lightly in the early morning or evening',
+    hi: 'सुबह जल्दी या शाम को मिट्टी को हल्का पानी दें',
+    status: 'APPROVED',
+    notes:
+      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi approved by owner 2026-11-25.',
+  },
+  {
+    key: 'weather.task.heat.reason',
+    en: 'Very hot day expected ({max}°C)',
+    hi: 'बहुत गर्म दिन की संभावना ({max}°C)',
+    status: 'APPROVED',
+    notes:
+      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi approved by owner 2026-11-25.',
+  },
+  {
+    key: 'weather.task.heavy_rain.title',
+    en: 'Skip watering and clear drainage from pots and beds',
+    hi: 'पानी न दें और गमलों व क्यारियों से पानी निकलने का रास्ता साफ़ करें',
+    status: 'APPROVED',
+    notes:
+      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi approved by owner 2026-11-25.',
+  },
+  {
+    key: 'weather.task.heavy_rain.reason',
+    en: 'Heavy rain expected ({mm} mm)',
+    hi: 'तेज़ बारिश की संभावना ({mm} मिमी)',
+    status: 'APPROVED',
+    notes:
+      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi approved by owner 2026-11-25.',
+  },
+  {
+    key: 'weather.task.cold_night.title',
+    en: 'Cover seedlings and young plants overnight',
+    hi: 'रात में पौध और छोटे पौधों को ढकें',
+    status: 'APPROVED',
+    notes:
+      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi approved by owner 2026-11-25.',
+  },
+  {
+    key: 'weather.task.cold_night.reason',
+    en: 'Cold night expected ({min}°C)',
+    hi: 'ठंडी रात की संभावना ({min}°C)',
+    status: 'APPROVED',
+    notes:
+      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi approved by owner 2026-11-25.',
+  },
 ];

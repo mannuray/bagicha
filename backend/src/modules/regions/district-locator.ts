@@ -8,6 +8,7 @@ import {
   growBBox,
   inBBox,
   inPolygons,
+  interiorPoint,
   type BBox,
   type Polygon,
 } from './domain/geometry';
@@ -60,6 +61,14 @@ export class DistrictLocator {
       region: district.region,
       label: districtLabel(district),
     };
+  }
+
+  /** A point surely inside the district's boundary (for weather when the user shared no location). */
+  centreOf(name: string, state: string): { lat: number; lng: number } | null {
+    const shape = this.load().find((s) => s.name === name && s.state === state);
+    if (!shape) return null;
+    const [lng, lat] = interiorPoint(shape.polygons);
+    return { lat, lng };
   }
 
   private nearest(shapes: Shape[], point: [number, number]): Shape | undefined {

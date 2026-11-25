@@ -19,6 +19,7 @@ export const queryKeys = {
     mineAll: ['tasks', 'mine'] as const,
   },
   guide: ['seasonal', 'guide'] as const,
+  weather: ['weather'] as const,
   crops: {
     calendar: ['crops', 'calendar'] as const,
     detail: (cropId: string) => ['crops', 'calendar', cropId] as const,

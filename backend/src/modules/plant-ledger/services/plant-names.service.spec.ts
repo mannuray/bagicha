@@ -294,6 +294,20 @@ describe('saved dryness reminders in Hindi', () => {
     });
   });
 
+  it('reads a weather reminder in Hindi the same way', async () => {
+    expect(
+      (await service.careTexter('hi', 'NORTH_INDIA'))({
+        ...task,
+        source: 'WEATHER',
+        source_key: 'weather:HEAT:p1:2026-05-11',
+      }),
+    ).toEqual({
+      title: 'आज पानी दें',
+      why: 'Aam में सूखापन दिखा',
+      summary: 'हाल की बातें सूखापन दिखाती हैं',
+    });
+  });
+
   it('keeps English for English requests and tasks saved without keys', async () => {
     expect((await service.careTexter('en', 'NORTH_INDIA'))(task)).toBeNull();
     expect(

@@ -243,6 +243,15 @@ export class TaskRepository {
     return count;
   }
 
+  /** Cancels every user's pending tasks of one source due before `before` (a system sweep, not plant-scoped). */
+  async cancelPendingBefore(source: TaskSource, before: Date): Promise<number> {
+    const { count } = await this.prisma.task.updateMany({
+      where: { source, status: TaskStatus.PENDING, due_date: { lt: before } },
+      data: { status: TaskStatus.CANCELLED },
+    });
+    return count;
+  }
+
   /** Pending tasks of one source for many plants, in one query. */
   pendingForPlants(plantIds: string[], source: TaskSource): Promise<Task[]> {
     if (plantIds.length === 0) return Promise.resolve([]);

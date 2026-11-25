@@ -12,6 +12,7 @@ import { Logger } from 'nestjs-pino';
 import { AppError } from '../errors';
 import { routePattern } from '../http/route-pattern';
 import { validationField } from './validation-field';
+import { reportError } from '../observability/error-reporting';
 
 interface ErrorBody {
   code: string;
@@ -143,6 +144,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
     return { err, reason, status, route, message };
   }
 
+  /** A server-side failure: one error log line and one crash report. */
+  private logFailure(
+    log: ReturnType<HttpExceptionFilter['logFields']>,
+    exception: unknown,
+    base: Pick<ErrorBody, 'request_id' | 'path'>,
+  ): void {
+    this.logger.error(log);
+    reportError(exception, { route: base.path, requestId: base.request_id });
+  }
+
   private toEnvelope(
     exception: unknown,
     base: Pick<ErrorBody, 'request_id' | 'timestamp' | 'path'>,
@@ -155,7 +166,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         base.path,
       );
       if (exception.kind === 'operational') this.logger.warn(log);
-      else this.logger.error(log);
+      else this.logFailure(log, exception, base);
       // A programmer error is a bug: its message and details are for the log, not the client.
       const internal = exception.kind === 'programmer';
       return {
@@ -193,7 +204,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       };
     }
 
-    this.logger.error(
+    this.logFailure(
       this.logFields(
         exception,
         'INTERNAL',
@@ -201,6 +212,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
         base.path,
         'unhandled exception',
       ),
+      exception,
+      base,
     );
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -247,7 +260,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         : (FIXED_MESSAGES[status] ?? 'Request failed');
 
     const log = this.logFields(exception, code, status, base.path);
-    if (status >= 500) this.logger.error(log);
+    if (status >= 500) this.logFailure(log, exception, base);
     else this.logger.warn(log);
 
     return {
