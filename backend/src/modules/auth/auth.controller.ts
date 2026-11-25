@@ -14,6 +14,7 @@ import { AuthService } from './auth.service';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { RateLimit } from '../../common/rate-limit';
+import { JWT_ALLOW_PENDING } from '../../common/auth/allow-pending-deletion';
 
 @Controller('auth')
 export class AuthController {
@@ -39,9 +40,9 @@ export class AuthController {
     );
   }
 
-  /** Signs out everywhere (every device's token stops working). */
+  /** Signs out everywhere (every device's token stops working); open to accounts waiting to be deleted. */
   @Post('sign-out')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard(JWT_ALLOW_PENDING))
   @HttpCode(HttpStatus.NO_CONTENT)
   async signOut(@Request() req: AuthedRequest): Promise<void> {
     await this.authService.signOut(req.user.id);

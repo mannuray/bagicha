@@ -9,6 +9,7 @@ import { clearRateLimitKeys, resetDb, seedUser, tokenFor } from './fixtures';
 const USER_FIELDS = [
   'avatar_key',
   'badge_level',
+  'deletion_due_at',
   'district',
   'garden_types',
   'id',

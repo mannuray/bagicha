@@ -64,6 +64,33 @@ export class UserRepository {
     });
   }
 
+  /**
+   * Starts the notice period and signs the user out everywhere. A repeat
+   * request keeps the first dates: only an account with nothing pending changes.
+   */
+  async markForDeletion(
+    userId: string,
+    requestedAt: Date,
+    dueAt: Date,
+  ): Promise<User> {
+    await this.prisma.user.updateMany({
+      where: { id: userId, deletion_due_at: null },
+      data: {
+        deletion_requested_at: requestedAt,
+        deletion_due_at: dueAt,
+        token_version: { increment: 1 },
+      },
+    });
+    return this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+  }
+
+  clearDeletion(userId: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { deletion_requested_at: null, deletion_due_at: null },
+    });
+  }
+
   updateProfile(userId: string, data: Prisma.UserUpdateInput): Promise<User> {
     return this.prisma.user.update({ where: { id: userId }, data });
   }

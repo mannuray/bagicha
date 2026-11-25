@@ -16,6 +16,8 @@ export interface UserView {
   premium_expires_at: Date | null;
   badge_level: string;
   avatar_key: string | null;
+  /** Set while the account waits to be erased: the app offers to keep it. */
+  deletion_due_at: Date | null;
 }
 
 export function toUserView(user: User): UserView {
@@ -31,5 +33,6 @@ export function toUserView(user: User): UserView {
     premium_expires_at: user.premium_expires_at,
     badge_level: user.badge_level,
     avatar_key: user.avatar_key,
+    deletion_due_at: user.deletion_due_at,
   };
 }

@@ -1,42 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { UnauthorizedError } from '../../../common/errors';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { PassportStrategy } from '@nestjs/passport';
+import { Strategy } from 'passport-jwt';
+import { ForbiddenError } from '../../../common/errors';
 import { UserRepository } from '../../user';
+import { jwtOptions, userForToken, type TokenPayload } from './token-user';
 
+/** The default guard: a signed-in user whose account isn't waiting to be deleted. */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private configService: ConfigService,
-    private users: UserRepository,
+    config: ConfigService,
+    private readonly users: UserRepository,
   ) {
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      // One algorithm only: a token signed any other way is refused.
-      algorithms: ['HS256'],
-      secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
-    });
+    super(jwtOptions(config));
   }
 
-  async validate(payload: { sub: string; tv?: number }) {
-    const user = await this.users.findById(payload.sub);
-
-    if (!user) {
-      throw new UnauthorizedError(
-        'AUTH_USER_NOT_FOUND',
-        'The user associated with this token no longer exists',
+  async validate(payload: TokenPayload) {
+    const user = await userForToken(this.users, payload);
+    if (user.deletion_due_at) {
+      throw new ForbiddenError(
+        'ACCOUNT_DELETION_PENDING',
+        'This account is waiting to be deleted; keep it to continue',
       );
     }
-    // Tokens from before sign-out existed carry no version: they count as 0.
-    if ((payload.tv ?? 0) !== user.token_version) {
-      throw new UnauthorizedError(
-        'AUTH_TOKEN_REVOKED',
-        'This sign-in has ended; please sign in again',
-      );
-    }
-
     return user;
   }
 }
