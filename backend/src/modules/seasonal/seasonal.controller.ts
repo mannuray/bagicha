@@ -13,8 +13,6 @@ import { TreeIntelligenceService } from './services/tree-intelligence.service';
 import { TreeTaskMaterializer } from './services/tree-task-materializer.service';
 import { AuthGuard } from '@nestjs/passport';
 
-// Users have no pincode yet, so weather has always used this default.
-const DEFAULT_PINCODE = '800001';
 const DEFAULT_DISTRICT = 'Patna';
 
 @Controller('seasonal')
@@ -25,11 +23,6 @@ export class SeasonalController {
     private readonly intelligence: TreeIntelligenceService,
     private readonly materializer: TreeTaskMaterializer,
   ) {}
-
-  @Get('weather')
-  getWeather() {
-    return this.seasonalService.getLocalizedWeather(DEFAULT_PINCODE);
-  }
 
   @Get('guide')
   getGuide(@Request() req: AuthedRequest, @RequestLang() lang: Lang) {

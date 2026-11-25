@@ -110,4 +110,24 @@ describe('point in polygon', () => {
     expect(inPolygon([5, 5], square)).toBe(false);
     expect(inPolygon([2, 2], square)).toBe(true);
   });
+
+  describe('centreOf', () => {
+    const locator = new DistrictLocator();
+    it('gives a point inside the named district', () => {
+      const centre = locator.centreOf('Patna', 'Bihar');
+      expect(centre).not.toBeNull();
+      expect(locator.locate(centre!.lat, centre!.lng)?.district).toBe('Patna');
+    });
+
+    it('tells same-named districts apart by state', () => {
+      const hp = locator.centreOf('Bilaspur', 'Himachal Pradesh');
+      const cg = locator.centreOf('Bilaspur', 'Chhattisgarh');
+      expect(locator.locate(hp!.lat, hp!.lng)?.state).toBe('Himachal Pradesh');
+      expect(locator.locate(cg!.lat, cg!.lng)?.state).toBe('Chhattisgarh');
+    });
+
+    it('is null for a district with no boundary', () => {
+      expect(locator.centreOf('Nowhere', 'Bihar')).toBeNull();
+    });
+  });
 });

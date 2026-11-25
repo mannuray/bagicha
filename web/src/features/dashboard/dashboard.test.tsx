@@ -29,9 +29,17 @@ function baseHandlers(
       return HttpResponse.json(pagedResponse(request, opts.plants ?? [plantRecord()]));
     }),
     http.get(`${API}/seasonal/guide`, () => HttpResponse.json(ok(guide))),
-    http.get(`${API}/seasonal/weather`, () => {
+    http.get(`${API}/weather`, () => {
       calls.weather += 1;
-      return HttpResponse.json(ok({}));
+      return HttpResponse.json(
+        ok({
+          weather: {
+            now: { temp_c: 24.8, condition: 'CLEAR' },
+            today: { max_c: 24.9, min_c: 14.6, rain_chance: 0, rain_mm: 0 },
+          },
+          source: 'Open-Meteo',
+        }),
+      );
     }),
     http.post(`${API}/seasonal/plants/:id/materialize-tasks`, async ({ params }) => {
       calls.materialize.push(String(params.id));
@@ -44,7 +52,7 @@ function baseHandlers(
 }
 
 describe('dashboard', () => {
-  it('greets, shows this week’s tasks and the seasonal guide — never weather', async () => {
+  it('greets, shows real weather, this week’s tasks and the seasonal guide', async () => {
     const calls = baseHandlers({
       tasks: [taskRecord(), taskRecord({ id: 't0', title: 'Water Aam', due_date: new Date(Date.now() - 3 * 864e5).toISOString() })],
     });
@@ -57,7 +65,8 @@ describe('dashboard', () => {
     const points = screen.getByRole('list', { name: /this month/i });
     expect(points).toHaveTextContent(/sow peas and another row of greens/i);
     expect(points).toHaveTextContent(/mulch beds/i);
-    expect(calls.weather).toBe(0);
+    expect(calls.weather).toBe(1);
+    expect(screen.getByRole('region', { name: /weather/i })).toHaveTextContent(/25° · clear/i);
     expect(screen.getAllByText(/^this week$/i)).toHaveLength(1);
   });
 

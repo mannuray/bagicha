@@ -92,6 +92,10 @@ Secrets live only in the Render dashboard and the Neon console, never in git. Se
 | `AI_PROVIDER` | `render.yaml` | `gemini`. |
 | `NODE_ENV` | `render.yaml` | `staging`. `production` refuses the on-screen OTP. |
 | `AUTH_EXPOSE_OTP` | `render.yaml` | `true`: the sign-in code is shown on the page until an SMS provider is chosen. |
+| `WEATHER_PROVIDERS` | `render.yaml` (optional) | Ordered weather sources, first tried first, e.g. `open-meteo`. Unset means `open-meteo`; `none` turns weather off. An unknown name stops the API from starting. |
+| `OPEN_METEO_API_KEY` | Render (optional) | Open-Meteo's paid API, required once the app is commercial. Without it the free, non-commercial API is used (a warning is logged in production). Secret. |
+| `SENTRY_DSN` | Render (optional) | Crash reports from the API to Sentry. Off when unset. |
+| `VITE_SENTRY_DSN` | Vercel (optional) | Crash reports from the web app to Sentry. Off when unset; takes effect on the next build. |
 
 After changing a setting on Render, redeploy the service.
 

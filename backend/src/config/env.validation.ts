@@ -1,4 +1,5 @@
 import { InvariantError } from '../common/errors';
+import { validateWeatherEnv } from '../modules/weather/providers/provider-config';
 
 export interface Env {
   DATABASE_URL: string;
@@ -14,6 +15,10 @@ export interface Env {
   RAZORPAY_WEBHOOK_SECRET?: string;
   OTEL_EXPORTER_OTLP_ENDPOINT?: string;
   OTEL_SERVICE_NAME?: string;
+  /** Ordered weather providers ("open-meteo"); unset means Open-Meteo, "none" turns weather off. */
+  WEATHER_PROVIDERS?: string;
+  /** Open-Meteo paid API key; required for commercial use. */
+  OPEN_METEO_API_KEY?: string;
   /** Sentry project DSN; crash reports are off without it. */
   SENTRY_DSN?: string;
   LOG_LEVEL?: string;
@@ -48,5 +53,6 @@ export function validateEnv(raw: Record<string, unknown>): Env {
   if (raw.AUTH_EXPOSE_OTP === 'true' && raw.NODE_ENV === 'production') {
     throw new InvariantError('AUTH_EXPOSE_OTP is not allowed in production');
   }
+  validateWeatherEnv(raw as Record<string, string | undefined>);
   return raw as Env;
 }
