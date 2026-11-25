@@ -42,6 +42,75 @@ describe('data integrity', () => {
     expect(await prisma.auditEvent.count()).toBe(1);
   });
 
+  describe("erasing a person's words from report events", () => {
+    const report = () =>
+      prisma.auditEvent.create({
+        data: {
+          action: 'COMMUNITY_REPORT_FILED',
+          target_type: 'POST',
+          target_id: 'p1',
+          actor_user_id: 'u1',
+          snapshot: {
+            target_id: 'p1',
+            reason: 'rude',
+            content_excerpt: 'hello',
+            reporter_id: 'u1',
+          },
+        },
+      });
+    const redacted = {
+      target_id: 'p1',
+      reason: null,
+      content_excerpt: null,
+      reporter_id: 'u1',
+    };
+
+    it('allows blanking only the reason and the excerpt', async () => {
+      const row = await report();
+      await prisma.auditEvent.update({
+        where: { id: row.id },
+        data: { snapshot: redacted },
+      });
+      const after = await prisma.auditEvent.findUniqueOrThrow({
+        where: { id: row.id },
+      });
+      expect(after.snapshot).toEqual(redacted);
+    });
+
+    it('still refuses any other change to a report event', async () => {
+      const row = await report();
+      await expect(
+        prisma.auditEvent.update({
+          where: { id: row.id },
+          data: { snapshot: { ...redacted, reporter_id: 'someone-else' } },
+        }),
+      ).rejects.toThrow();
+      await expect(
+        prisma.auditEvent.update({
+          where: { id: row.id },
+          data: { snapshot: redacted, target_id: 'p2' },
+        }),
+      ).rejects.toThrow();
+    });
+
+    it('refuses the same blanking on other kinds of event', async () => {
+      const row = await prisma.auditEvent.create({
+        data: {
+          action: 'SUBSCRIPTION_CHANGED',
+          target_type: 'user',
+          target_id: 'u1',
+          snapshot: { reason: 'x', content_excerpt: 'y' },
+        },
+      });
+      await expect(
+        prisma.auditEvent.update({
+          where: { id: row.id },
+          data: { snapshot: { reason: null, content_excerpt: null } },
+        }),
+      ).rejects.toThrow();
+    });
+  });
+
   it('materializing twice at once makes one copy of each care reminder', async () => {
     // Mango has reviewed care in the test gardener's region; pending families get no tasks now.
     const plant = await seedPlant(prisma, alice.id, {

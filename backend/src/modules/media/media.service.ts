@@ -13,8 +13,17 @@ import {
   PUBLIC_PREFIXES,
   parseMediaKey,
 } from './media.config';
-import { NotFoundError, ValidationError } from '../../common/errors';
+import {
+  InvariantError,
+  NotFoundError,
+  ValidationError,
+} from '../../common/errors';
 import { decodeSafely } from './image-safety';
+
+/** S3's limit on keys per delete request. */
+const REMOVE_BATCH = 1000;
+/** An owner id as it appears in media keys: one path segment, never empty. */
+const OWNER_ID = /^[A-Za-z0-9_-]+$/;
 
 export interface MediaUploadResult {
   key: string;
@@ -135,6 +144,40 @@ export class MediaService implements OnModuleInit {
     return withSpan('minio.presignedGetObject', { bucket: this.bucket }, () =>
       this.client.presignedGetObject(this.bucket, key, expirySeconds),
     );
+  }
+
+  /**
+   * Deletes every photo this owner uploaded, of every kind, and returns how
+   * many. Throws if listing or deleting fails, so the caller can retry later
+   * rather than treat the owner as cleaned up.
+   */
+  async removeOwnerMedia(ownerId: string): Promise<number> {
+    if (!OWNER_ID.test(ownerId)) {
+      throw new InvariantError(
+        'Refusing to remove media for a malformed owner id',
+      );
+    }
+    let removed = 0;
+    for (const prefix of Object.values(MEDIA_PREFIXES)) {
+      const keys = await this.listKeys(`${prefix}/${ownerId}/`);
+      for (let i = 0; i < keys.length; i += REMOVE_BATCH) {
+        const chunk = keys.slice(i, i + REMOVE_BATCH);
+        await withSpan('minio.removeObjects', { bucket: this.bucket }, () =>
+          this.client.removeObjects(this.bucket, chunk),
+        );
+        removed += chunk.length;
+      }
+    }
+    return removed;
+  }
+
+  private async listKeys(prefix: string): Promise<string[]> {
+    const keys: string[] = [];
+    const stream = this.client.listObjectsV2(this.bucket, prefix, true);
+    for await (const item of stream as AsyncIterable<{ name?: string }>) {
+      if (item.name) keys.push(item.name);
+    }
+    return keys;
   }
 
   private buildKey(kind: MediaKind, ownerId: string): string {

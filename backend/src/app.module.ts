@@ -11,6 +11,7 @@ import { RedisModule } from './common/redis/redis.module';
 import { MonitorModule } from './common/monitor';
 import { PlantLedgerModule } from './modules/plant-ledger/plant-ledger.module';
 import { WeatherModule } from './modules/weather';
+import { AccountErasureModule } from './modules/account-erasure';
 import { SeasonalModule } from './modules/seasonal/seasonal.module';
 import { CropsModule } from './modules/crops/crops.module';
 import { RegionsModule } from './modules/regions';
@@ -61,6 +62,7 @@ import { AuditModule } from './modules/audit';
     PlantLedgerModule,
     SeasonalModule,
     WeatherModule,
+    AccountErasureModule,
     CropsModule,
     RegionsModule,
     VisionModule,
