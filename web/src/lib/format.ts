@@ -7,6 +7,10 @@ export const shortDate = (iso: string, lang: string) =>
 export const monthYear = (iso: string, lang: string) =>
   new Date(iso).toLocaleDateString(locale(lang), { month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
 
+/** "26 Dec 2026", a full date in India time. */
+export const fullDate = (iso: string, lang: string) =>
+  new Date(iso).toLocaleDateString(locale(lang), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
+
 /** "November", the month name in India for an instant. */
 export const monthName = (at: Date, lang: string) =>
   at.toLocaleString(locale(lang), { month: 'long', timeZone: 'Asia/Kolkata' });

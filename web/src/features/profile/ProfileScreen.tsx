@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import { Button, Chip, Icon, Screen, TextField, formSubmit } from '../../ui';
 import { useSession } from '../auth';
@@ -121,6 +122,14 @@ export function ProfileScreen() {
           >
             {t('profile.signOut')}
           </button>
+        </div>
+        <div className="flex justify-center">
+          <Link
+            to="/account/delete"
+            className="flex min-h-11 items-center px-6 font-label text-[11px] font-bold tracking-wide text-error transition-colors hover:underline"
+          >
+            {t('profile.deleteAccount')}
+          </Link>
         </div>
         {/* The district map's licence (ODbL) asks for this credit. */}
         <p className="pb-4 text-center font-label text-[11px] text-outline">{t('profile.attribution')}</p>

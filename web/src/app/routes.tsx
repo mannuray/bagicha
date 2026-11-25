@@ -2,6 +2,7 @@ import { AddToGardenButton, CropDetailScreen, CropHindiName, CropPebble, CropsSc
 import type { ReactNode } from 'react';
 import { Route, Routes } from 'react-router';
 import { LoginScreen, OtpScreen, RequireAuth, RequireOnboarded, SplashScreen } from '../features/auth';
+import { DeleteAccountInfoPage, DeleteAccountScreen, DeletionPendingScreen } from '../features/account';
 import { PlantDetailScreen, SeasonReviewScreen } from '../features/biography';
 import { DashboardScreen } from '../features/dashboard';
 import { LogMomentScreen } from '../features/journal';
@@ -30,6 +31,15 @@ export function AppRoutes() {
         <Route path="/splash" element={<SplashScreen />} />
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/login/otp" element={<OtpScreen />} />
+        <Route path="/delete-account" element={<DeleteAccountInfoPage />} />
+        <Route
+          path="/account/deletion-pending"
+          element={
+            <RequireAuth allowPending>
+              <DeletionPendingScreen />
+            </RequireAuth>
+          }
+        />
 
         <Route path="/onboarding/language" element={authed(<LanguageScreen />)} />
         <Route path="/onboarding/region" element={authed(<RegionScreen />)} />
@@ -50,6 +60,7 @@ export function AppRoutes() {
         <Route path="/scan/identify" element={app(<IdentifyResultScreen />)} />
         <Route path="/scan/diagnose" element={app(<DiagnoseResultScreen />)} />
         <Route path="/profile" element={app(<ProfileScreen />)} />
+        <Route path="/account/delete" element={app(<DeleteAccountScreen />)} />
 
         <Route path="*" element={<NotFoundScreen />} />
       </Routes>

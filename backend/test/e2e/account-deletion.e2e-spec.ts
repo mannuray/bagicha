@@ -108,8 +108,7 @@ describe('account deletion', () => {
       const token = await freshToken(alice);
       expect((await plants(token)).status).toBe(403);
       const kept = await keep(token);
-      expect(kept.status).toBe(200);
-      expect(kept.body.data.deletion_due_at).toBeNull();
+      expect(kept.status).toBe(204);
       expect((await plants(token)).status).toBe(200);
     });
   });

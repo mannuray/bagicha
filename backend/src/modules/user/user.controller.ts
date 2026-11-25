@@ -41,10 +41,11 @@ export class UserController {
     return this.deletion.request(req.user.id);
   }
 
-  /** Keeps the account during the notice period. */
+  /** Keeps the account during the notice period (204, like every DELETE). */
   @Delete('deletion')
   @UseGuards(AuthGuard(JWT_ALLOW_PENDING))
-  cancelDeletion(@Request() req: AuthedRequest) {
-    return this.deletion.cancel(req.user.id);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async cancelDeletion(@Request() req: AuthedRequest): Promise<void> {
+    await this.deletion.cancel(req.user.id);
   }
 }

@@ -24,6 +24,8 @@ export const userSchema = z.object({
   badge_level: z.string(),
   /** Private media key of the profile photo; shown through a signed URL. */
   avatar_key: z.string().nullable().default(null),
+  /** Set while the account waits to be erased; the app offers to keep it. */
+  deletion_due_at: z.string().nullable().default(null),
 });
 export type User = z.infer<typeof userSchema>;
 
@@ -52,9 +54,13 @@ function onboardingStart(user: User): string {
   return onlyLacksRegion(user) ? '/onboarding/region' : '/onboarding/language';
 }
 
+/** Where an account waiting to be deleted is sent: keep it, or sign out. */
+export const DELETION_PENDING_PATH = '/account/deletion-pending';
+
 /** The one rule for where a user lands — splash, sign-in and the route guards all use it. */
 export function homeFor(user: User | null): string {
   if (!user) return '/login';
+  if (user.deletion_due_at) return DELETION_PENDING_PATH;
   return isProfileComplete(user) ? '/' : onboardingStart(user);
 }
 
