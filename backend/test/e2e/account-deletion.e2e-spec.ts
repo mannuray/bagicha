@@ -73,6 +73,40 @@ describe('account deletion', () => {
     });
   });
 
+  describe('asking and keeping', () => {
+    const ask = (token: string) =>
+      request(server())
+        .post('/api/v1/user/deletion')
+        .set('Authorization', `Bearer ${token}`);
+    const keep = (token: string) =>
+      request(server())
+        .delete('/api/v1/user/deletion')
+        .set('Authorization', `Bearer ${token}`);
+
+    it('asking schedules deletion 30 days out and signs out every device', async () => {
+      const before = Date.now();
+      const old = tokenFor(app, alice);
+      const res = await ask(old);
+      expect(res.status).toBe(200);
+      const due = new Date(res.body.data.deletion_due_at).getTime();
+      expect(due - before).toBeGreaterThanOrEqual(30 * 86_400_000 - 5_000);
+      expect(due - before).toBeLessThanOrEqual(30 * 86_400_000 + 5_000);
+      const stale = await plants(old);
+      expect(stale.status).toBe(401);
+      expect(stale.body.error.code).toBe('AUTH_TOKEN_REVOKED');
+    });
+
+    it('signing back in, keeping the account restores everything', async () => {
+      await ask(tokenFor(app, alice));
+      const token = await freshToken(alice);
+      expect((await plants(token)).status).toBe(403);
+      const kept = await keep(token);
+      expect(kept.status).toBe(200);
+      expect(kept.body.data.deletion_due_at).toBeNull();
+      expect((await plants(token)).status).toBe(200);
+    });
+  });
+
   it('an account with nothing pending is unaffected', async () => {
     expect((await plants(tokenFor(app, alice))).status).toBe(200);
   });
