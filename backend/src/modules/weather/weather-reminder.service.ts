@@ -4,7 +4,7 @@ import { Clock } from '../../common/time';
 import { CatalogueStore } from '../catalogue';
 import { TaskService } from '../plant-ledger';
 import { DistrictLocator, regionFor } from '../regions';
-import { weatherEvents } from './domain/weather-events';
+import { istDate, weatherEvents } from './domain/weather-events';
 import { weatherPlace } from './domain/weather-place';
 import { istDayStart, reminderDrafts } from './domain/weather-reminders';
 import {
@@ -20,13 +20,6 @@ export interface ReminderRunSummary {
   created: number;
   expired: number;
 }
-
-const IST_DATE = new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'Asia/Kolkata',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
 
 const BATCH_SIZE = 200;
 /** Overrides the users-per-query batch size (tests). */
@@ -55,7 +48,7 @@ export class WeatherReminderService {
   ) {}
 
   async run(): Promise<ReminderRunSummary> {
-    const today = IST_DATE.format(this.clock.now());
+    const today = istDate(this.clock.now());
     const summary: ReminderRunSummary = {
       users: 0,
       noPlace: 0,
@@ -107,9 +100,11 @@ export class WeatherReminderService {
       summary.noWeather += 1;
       return;
     }
-    const events = weatherEvents(sourced.forecast, {
-      hills: regionFor(user) === 'HILLS_COOL',
-    }).filter((e) => e.date >= today);
+    const events = weatherEvents(
+      sourced.forecast,
+      { hills: regionFor(user) === 'HILLS_COOL' },
+      today,
+    );
     const drafts = reminderDrafts(events, user.plants, en);
     const byPlant = new Map<string, typeof drafts>();
     for (const d of drafts)

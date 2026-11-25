@@ -7,11 +7,16 @@ import type { GridCell } from '../../src/modules/weather/domain/grid-cell';
 import { createTestApp } from './app';
 import { resetDb, seedUser, tokenFor } from './fixtures';
 
+const istDate = (offsetDays: number) =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(
+    new Date(Date.now() + offsetDays * 864e5),
+  );
+
 const forecast = {
   now: { tempC: 27.4, condition: 'PARTLY_CLOUDY' },
   days: [
     {
-      date: '2026-11-25',
+      date: istDate(0),
       condition: 'PARTLY_CLOUDY',
       maxC: 28.1,
       minC: 14.2,
@@ -19,7 +24,7 @@ const forecast = {
       rainChance: 10,
     },
     {
-      date: '2026-11-26',
+      date: istDate(1),
       condition: 'RAIN',
       maxC: 26,
       minC: 15,

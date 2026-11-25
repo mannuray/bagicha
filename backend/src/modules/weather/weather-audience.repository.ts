@@ -20,10 +20,14 @@ export class WeatherAudienceRepository {
   batch(after: string | null, size: number): Promise<AudienceUser[]> {
     const living = { ended_at: null };
     return this.prisma.user.findMany({
-      where: { plants: { some: living } },
+      // id > last seen, not a Prisma cursor: a cursor row that leaves the filter
+      // mid-run (account deleted, last plant ended) would end or shift the run.
+      where: {
+        ...(after ? { id: { gt: after } } : {}),
+        plants: { some: living },
+      },
       orderBy: { id: 'asc' },
       take: size,
-      ...(after ? { cursor: { id: after }, skip: 1 } : {}),
       select: {
         id: true,
         latitude: true,

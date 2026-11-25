@@ -66,16 +66,29 @@ describe('weatherEvents', () => {
     expect(rain(120, 49)).toEqual([]);
   });
 
-  it('flags a cold night at 4 °C in the plains and 0 °C in the hills', () => {
+  it('flags a cold night at 4 °C in the plains and 0 °C in the hills, dated the evening before', () => {
+    // Tomorrow's low comes around dawn: tonight is the cold night, so the event is today.
+    const tonight = (minC: number, place: { hills: boolean }) =>
+      weatherEvents(
+        forecast(day('2027-01-04'), day('2027-01-05', { minC })),
+        place,
+      );
+    expect(tonight(4, plains)).toEqual([
+      { kind: 'COLD_NIGHT', date: '2027-01-04', value: 4 },
+    ]);
+    expect(tonight(4, hills)).toEqual([]);
+    expect(tonight(0, hills)).toEqual([
+      { kind: 'COLD_NIGHT', date: '2027-01-04', value: 0 },
+    ]);
+  });
+
+  it("ignores today's low: that night has already passed", () => {
     expect(
-      weatherEvents(forecast(day('2027-01-05', { minC: 4 })), plains),
-    ).toEqual([{ kind: 'COLD_NIGHT', date: '2027-01-05', value: 4 }]);
-    expect(
-      weatherEvents(forecast(day('2027-01-05', { minC: 4 })), hills),
+      weatherEvents(
+        forecast(day('2027-01-04', { minC: 1 }), day('2027-01-05')),
+        plains,
+      ),
     ).toEqual([]);
-    expect(
-      weatherEvents(forecast(day('2027-01-05', { minC: 0 })), hills),
-    ).toEqual([{ kind: 'COLD_NIGHT', date: '2027-01-05', value: 0 }]);
   });
 
   it('looks at today and tomorrow only, in date order', () => {
@@ -90,11 +103,37 @@ describe('weatherEvents', () => {
     expect(events).toEqual([{ kind: 'HEAT', date: '2026-05-11', value: 42 }]);
   });
 
+  it("puts tonight's cold before tomorrow's events", () => {
+    const events = weatherEvents(
+      forecast(
+        day('2027-01-04'),
+        day('2027-01-05', { minC: 2, rainMm: 70, rainChance: 90 }),
+      ),
+      plains,
+    );
+    expect(events.map((e) => [e.kind, e.date])).toEqual([
+      ['COLD_NIGHT', '2027-01-04'],
+      ['HEAVY_RAIN', '2027-01-05'],
+    ]);
+  });
+
   it('can find two kinds on one day, heavy rain first', () => {
     const events = weatherEvents(
       forecast(day('2026-06-15', { maxC: 41, rainMm: 80, rainChance: 80 })),
       plains,
     );
     expect(events.map((e) => e.kind)).toEqual(['HEAVY_RAIN', 'HEAT']);
+  });
+
+  it('drops events before `from`: a forecast cached last evening still starts with yesterday', () => {
+    const events = weatherEvents(
+      forecast(
+        day('2026-05-10', { maxC: 42 }),
+        day('2026-05-11', { maxC: 41 }),
+      ),
+      plains,
+      '2026-05-11',
+    );
+    expect(events).toEqual([{ kind: 'HEAT', date: '2026-05-11', value: 41 }]);
   });
 });

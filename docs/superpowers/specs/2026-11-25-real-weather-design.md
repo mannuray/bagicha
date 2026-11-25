@@ -47,12 +47,12 @@ The weather code returns random numbers (32–47 °C) for a fixed Patna pincode,
 
 ### Home card API
 
-- `GET weather` (new; the old `GET seasonal/weather` ignores the user, uses a fixed Patna pincode and nothing calls it, so it is deleted) returns `{ weather: {...} | null, tip: {...} | null, source: "Open-Meteo" }` for the signed-in user's place. `null` means hidden, never a fake.
+- `GET weather` (new; the old `GET seasonal/weather` ignores the user, uses a fixed Patna pincode and nothing calls it, so it is deleted) returns `{ weather: {...} | null, tip: string | null, source: "Open-Meteo" }` (the tip already in the request's language) for the signed-in user's place. `null` means hidden, never a fake.
 - The card shows the source credit; Open-Meteo's licence (CC BY 4.0) requires attribution.
 
 ### Tips and reminders
 
-- **Rules** are pure functions over `Forecast`, identical for every provider: HEAT (tomorrow's or today's max at or above a threshold), HEAVY_RAIN (rain due above a threshold in mm), COLD_NIGHT (min below a threshold). Thresholds may differ for the hills; values come from the source check (for example, IMD's heatwave definition).
+- **Rules** are pure functions over `Forecast`, identical for every provider. A day's low comes around dawn, so a cold low on day D is dated D-1 (the evening to cover plants); today's own low is ignored. Events before IST today are dropped (a cached forecast can start a day early). A reminder keeps the figure first seen for its date, even if a later forecast softens. HEAT (tomorrow's or today's max at or above a threshold), HEAVY_RAIN (rain due above a threshold in mm), COLD_NIGHT (min below a threshold). Thresholds may differ for the hills; values come from the source check (for example, IMD's heatwave definition).
 - **Tip** text is a catalogue advice entry (the bilingual advice kind shipped in R5b), so English and Hindi go through the same review.
 - **Reminders:** a daily job (05:00 IST) evaluates the rules per cell and adds one task per growing plant per event, with source `WEATHER` and key `weather:<event>:<plantId>:<event date>`. The key holds the **date of the weather event**, not the run date, so heat seen coming on day D and seen again on D+1 gives one reminder. Due date: the event day (for heat, the task says to water that evening). Before creating, the job checks for a task with that key **in any status**: the database unique index only covers pending tasks, so a completed or skipped reminder must not come back.
 - **Schedule:** this is the app's first repeating job. It uses BullMQ's `upsertJobScheduler` with a fixed scheduler id; the schedule lives in Redis, so it runs once per day however many instances or deploys there are.
