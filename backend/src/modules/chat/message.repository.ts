@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Message, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ACTIVE_ACCOUNT } from '../user';
 
 const inboxInclude = {
   sender: { select: { id: true, name: true } },
@@ -17,8 +18,10 @@ type SkipTake = { skip: number; take: number };
 export class MessageRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** A gardener who can be messaged: exists and isn't leaving. */
   async userExists(userId: string): Promise<boolean> {
-    return (await this.prisma.user.count({ where: { id: userId } })) > 0;
+    const where = { id: userId, ...ACTIVE_ACCOUNT };
+    return (await this.prisma.user.count({ where })) > 0;
   }
 
   async hasBlocked(blockerId: string, blockedId: string): Promise<boolean> {
@@ -94,6 +97,8 @@ export class MessageRepository {
       })
     ).map((b) => b.blocked_id);
     const where: Prisma.ConversationWhereInput = {
+      // The reader is active (the sign-in gate saw to that): this drops partners who are leaving.
+      last_message: { sender: ACTIVE_ACCOUNT, receiver: ACTIVE_ACCOUNT },
       OR: [
         { user_a: userId, user_b: { notIn: blocked } },
         { user_b: userId, user_a: { notIn: blocked } },
@@ -121,6 +126,8 @@ export class MessageRepository {
         { sender_id: userId, receiver_id: otherUserId },
         { sender_id: otherUserId, receiver_id: userId },
       ],
+      sender: ACTIVE_ACCOUNT,
+      receiver: ACTIVE_ACCOUNT,
       ...(await this.visibleTo(userId)),
     };
     const [rows, total] = await Promise.all([

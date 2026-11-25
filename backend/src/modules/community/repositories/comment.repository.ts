@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Comment, Prisma } from '@prisma/client';
 import { Tx } from '../../../common/prisma/transaction';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { ACTIVE_ACCOUNT } from '../../user';
 
 const withPost = {
   post: { select: { id: true, content: true, is_hidden: true } },
@@ -33,7 +34,12 @@ export class CommentRepository {
   /** Recent visible expert-verified answers: the ask-AI knowledge pool. */
   recentVerified(take: number): Promise<CommentWithPost[]> {
     return this.prisma.comment.findMany({
-      where: { is_expert_verified: true, is_hidden: false },
+      where: {
+        is_expert_verified: true,
+        is_hidden: false,
+        author: ACTIVE_ACCOUNT,
+        post: { author: ACTIVE_ACCOUNT },
+      },
       include: withPost,
       orderBy: { created_at: 'desc' },
       take,

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Plant, User } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ACTIVE_ACCOUNT } from '../user';
 
 export type AudienceUser = Pick<
   User,
@@ -25,6 +26,7 @@ export class WeatherAudienceRepository {
       where: {
         ...(after ? { id: { gt: after } } : {}),
         plants: { some: living },
+        ...ACTIVE_ACCOUNT,
       },
       orderBy: { id: 'asc' },
       take: size,

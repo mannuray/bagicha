@@ -3,8 +3,15 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { WeatherAudienceRepository } from '../../src/modules/weather/weather-audience.repository';
 import { createTestApp } from './app';
-import { clearRateLimitKeys, resetDb, seedUser, tokenFor } from './fixtures';
+import {
+  clearRateLimitKeys,
+  resetDb,
+  seedPlant,
+  seedUser,
+  tokenFor,
+} from './fixtures';
 
 describe('account deletion', () => {
   let app: INestApplication;
@@ -104,6 +111,69 @@ describe('account deletion', () => {
       expect(kept.status).toBe(200);
       expect(kept.body.data.deletion_due_at).toBeNull();
       expect((await plants(token)).status).toBe(200);
+    });
+  });
+
+  describe('others no longer see a pending account', () => {
+    let bob: User;
+    const as = (user: User) => ({
+      get: (url: string) =>
+        request(server())
+          .get(url)
+          .set('Authorization', `Bearer ${tokenFor(app, user)}`),
+      post: (url: string, body: object) =>
+        request(server())
+          .post(url)
+          .set('Authorization', `Bearer ${tokenFor(app, user)}`)
+          .send(body),
+    });
+    beforeEach(async () => {
+      bob = await seedUser(prisma);
+    });
+
+    it('their posts leave the feed and cannot be replied to', async () => {
+      const post = await prisma.post.create({
+        data: {
+          author_id: alice.id,
+          content: 'My lemon tree',
+          district: 'Patna',
+        },
+      });
+      await markPending(alice);
+      const feed = await as(bob).get('/api/v1/community/feed');
+      expect(feed.body.data.map((p: { id: string }) => p.id)).not.toContain(
+        post.id,
+      );
+      const reply = await as(bob).post(
+        `/api/v1/community/posts/${post.id}/comments`,
+        { content: 'Nice' },
+      );
+      expect(reply.status).toBe(404);
+    });
+
+    it('their conversations leave the inbox and they cannot be messaged', async () => {
+      await as(alice).post('/api/v1/chat/messages', {
+        receiver_id: bob.id,
+        content: 'hello',
+      });
+      await markPending(alice);
+      const inbox = await as(bob).get('/api/v1/chat/inbox');
+      expect(inbox.body.data).toHaveLength(0);
+      const thread = await as(bob).get(`/api/v1/chat/messages/${alice.id}`);
+      expect(thread.body.data).toHaveLength(0);
+      const sent = await as(bob).post('/api/v1/chat/messages', {
+        receiver_id: alice.id,
+        content: 'are you there?',
+      });
+      expect(sent.status).toBe(404);
+    });
+
+    it('the daily weather run skips them', async () => {
+      await seedPlant(prisma, alice.id);
+      await seedPlant(prisma, bob.id);
+      await markPending(alice);
+      const audience = await app.get(WeatherAudienceRepository).batch(null, 10);
+      expect(audience.map((u) => u.id)).toEqual([bob.id]);
     });
   });
 

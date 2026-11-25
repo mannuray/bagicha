@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Post, Prisma } from '@prisma/client';
 import { Tx } from '../../../common/prisma/transaction';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { ACTIVE_ACCOUNT } from '../../user';
 
 const feedInclude = {
   author: { select: { id: true, name: true, badge_level: true } },
@@ -20,6 +21,7 @@ export class PostRepository {
   ): Promise<{ rows: FeedPost[]; total: number }> {
     const where: Prisma.PostWhereInput = {
       is_hidden: false,
+      author: ACTIVE_ACCOUNT,
       ...(district ? { district } : {}),
     };
     const [rows, total] = await Promise.all([
@@ -36,6 +38,13 @@ export class PostRepository {
 
   findById(postId: string): Promise<Post | null> {
     return this.prisma.post.findUnique({ where: { id: postId } });
+  }
+
+  /** A post others may see and reply to: not hidden, author not leaving. */
+  findVisible(postId: string): Promise<Post | null> {
+    return this.prisma.post.findFirst({
+      where: { id: postId, is_hidden: false, author: ACTIVE_ACCOUNT },
+    });
   }
 
   create(data: Prisma.PostUncheckedCreateInput): Promise<Post> {
