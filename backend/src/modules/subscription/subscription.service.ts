@@ -5,11 +5,7 @@ import { randomUUID } from 'crypto';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import {
-  InvariantError,
-  NotFoundError,
-  ValidationError,
-} from '../../common/errors';
+import { InvariantError, ValidationError } from '../../common/errors';
 import { Tx, TransactionRunner } from '../../common/prisma/transaction';
 import { isUniqueViolation } from '../../common/prisma/unique-violation';
 import { addDays, Clock } from '../../common/time';
@@ -124,8 +120,9 @@ export class SubscriptionService {
       return 'refused';
     }
 
+    let outcome: 'applied' | 'refused';
     try {
-      await this.transactions.run((tx) =>
+      outcome = await this.transactions.run((tx) =>
         this.extendPremium(tx, userId, paymentId, planIdRaw, plan.days),
       );
     } catch (err) {
@@ -133,21 +130,33 @@ export class SubscriptionService {
       if (isUniqueViolation(err)) return 'duplicate';
       throw err;
     }
-    this.logger.info({ userId, paymentId }, 'Premium applied');
-    return 'applied';
+    if (outcome === 'applied') {
+      this.logger.info({ userId, paymentId }, 'Premium applied');
+    }
+    return outcome;
   }
 
-  /** Records the payment (once, by its id) and extends premium in one transaction. */
+  /**
+   * Records the payment (once, by its id) and extends premium in one transaction.
+   * A payment for an account that is gone or waiting to be deleted is recorded
+   * but applies nothing: it needs a manual refund.
+   */
   private async extendPremium(
     tx: Tx,
     userId: string,
     paymentId: string,
     planId: PlanId,
     days: number,
-  ): Promise<void> {
+  ): Promise<'applied' | 'refused'> {
     await this.payments.record(tx, { paymentId, userId, planId });
     const user = await this.users.findById(userId, tx);
-    if (!user) throw new NotFoundError('USER_NOT_FOUND', 'User not found');
+    if (!user || user.deletion_due_at) {
+      this.logger.error(
+        { paymentId, userId },
+        'Payment for a deleted or deleting account; refund manually',
+      );
+      return 'refused';
+    }
 
     const now = this.clock.now();
     const lifetime =
@@ -182,5 +191,6 @@ export class SubscriptionService {
       },
       tx,
     );
+    return 'applied';
   }
 }

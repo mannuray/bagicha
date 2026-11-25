@@ -11,7 +11,7 @@ import { RazorpayWebhookDto } from './dto/razorpay-webhook.dto';
 const NOW = new Date('2026-11-10T00:00:00Z');
 const DAY = 24 * 60 * 60 * 1000;
 
-function build(user: Partial<User>) {
+function build(user: Partial<User>, exists = true) {
   const state = {
     id: 'u1',
     subscription_tier: SubscriptionTier.FREE,
@@ -21,7 +21,7 @@ function build(user: Partial<User>) {
   };
   const seen = new Set<string>();
   const users = {
-    findById: jest.fn(() => Promise.resolve({ ...state })),
+    findById: jest.fn(() => Promise.resolve(exists ? { ...state } : null)),
     updateSubscription: jest.fn(
       (
         _id: string,
@@ -57,7 +57,7 @@ function build(user: Partial<User>) {
     { get: () => 'rzp_test' } as any,
     logger as unknown as PinoLogger,
   );
-  return { service, state, audit, users };
+  return { service, state, audit, users, payments, logger };
 }
 
 const AMOUNTS: Record<string, number> = {
@@ -134,6 +134,32 @@ describe('SubscriptionService.handleWebhook', () => {
     expect(second).toEqual({ received: true, duplicate: true });
     expect(state.premium_expires_at?.getTime()).toBe(NOW.getTime() + 30 * DAY);
     expect(audit.record).toHaveBeenCalledTimes(1);
+  });
+
+  describe('a payment for an account that is leaving or gone', () => {
+    it('records the payment, applies nothing, and asks for a manual refund (erased account)', async () => {
+      const { service, users, payments, logger } = build({}, false);
+      await expect(
+        service.handleWebhook(paid('PREMIUM_MONTHLY')),
+      ).resolves.toEqual({
+        received: true,
+      });
+      expect(payments.record).toHaveBeenCalled();
+      expect(users.updateSubscription).not.toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalledWith(
+        { paymentId: 'pay_1', userId: 'u1' },
+        'Payment for a deleted or deleting account; refund manually',
+      );
+    });
+
+    it('applies nothing to an account waiting to be deleted', async () => {
+      const { service, users, audit } = build({
+        deletion_due_at: new Date(NOW.getTime() + 10 * DAY),
+      });
+      await service.handleWebhook(paid('PREMIUM_MONTHLY'));
+      expect(users.updateSubscription).not.toHaveBeenCalled();
+      expect(audit.record).not.toHaveBeenCalled();
+    });
   });
 
   it('ignores events other than order.paid', async () => {
