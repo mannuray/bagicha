@@ -13,6 +13,7 @@ import { resourceFromAttributes } from '@opentelemetry/resources';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK, tracing } from '@opentelemetry/sdk-node';
 import { registerOtelSdk } from './common/observability/otel-handle';
+import { initErrorReporting } from './common/observability/error-reporting';
 import {
   redactIncomingHttpSpan,
   redisStatement,
@@ -58,3 +59,5 @@ sdk.start();
 // No signal handlers here: Nest owns SIGTERM and flushes the SDK via OtelShutdownHook
 // after requests drain and connections close.
 registerOtelSdk(sdk);
+// Crash reports (Sentry) when SENTRY_DSN is set; it leaves OpenTelemetry to the SDK above.
+initErrorReporting(process.env);

@@ -7,6 +7,11 @@ import { Logger } from 'nestjs-pino';
 import { InvariantError, NotFoundError } from '../errors';
 import { FixedClock } from '../time';
 import { HttpExceptionFilter } from './http-exception.filter';
+import { reportError } from '../observability/error-reporting';
+
+jest.mock('../observability/error-reporting', () => ({
+  reportError: jest.fn(),
+}));
 
 function run(exception: unknown) {
   const logger = { warn: jest.fn(), error: jest.fn() };
@@ -25,7 +30,10 @@ function run(exception: unknown) {
   const host = {
     switchToHttp: () => ({
       getResponse: () => response,
-      getRequest: () => ({ headers: {}, url: '/api/v1/x' }),
+      getRequest: () => ({
+        headers: { 'x-request-id': 'req-1' },
+        url: '/api/v1/x',
+      }),
     }),
   } as unknown as ArgumentsHost;
   filter.catch(exception, host);
@@ -106,5 +114,30 @@ describe('HttpExceptionFilter time', () => {
       }),
     } as unknown as ArgumentsHost);
     expect(body.error.timestamp).toBe(at.toISOString());
+  });
+});
+
+describe('HttpExceptionFilter crash reports', () => {
+  beforeEach(() => jest.mocked(reportError).mockClear());
+
+  it('reports an unknown error with its route and request id', () => {
+    const err = new Error('boom');
+    run(err);
+    expect(reportError).toHaveBeenCalledWith(err, {
+      route: expect.any(String),
+      requestId: 'req-1',
+    });
+  });
+
+  it('reports a programmer error', () => {
+    run(new InvariantError('cycle missing'));
+    expect(reportError).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not report expected errors (not found, validation)', () => {
+    run(new NotFoundError('PLANT_NOT_FOUND', 'Plant not found'));
+    run(new NotFoundException());
+    run(new UnprocessableEntityException(['name must be a string']));
+    expect(reportError).not.toHaveBeenCalled();
   });
 });

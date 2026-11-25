@@ -1,4 +1,4 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { CatalogueStore } from '../../catalogue';
 import { SpeciesNormalizationService } from '../services/species-normalization.service';
 import { TaskPriority, TaskSource, TaskType } from '@prisma/client';
@@ -9,6 +9,7 @@ import { TaskDraft, TaskService } from '../services/task.service';
 import { regionFor } from '../../regions';
 import { careFor } from '../domain/care/care-for';
 import { PlantRepository } from '../repositories/plant.repository';
+import { logJobFailure } from '../../../common/redis/job-failure';
 
 export const TASK_GENERATION_QUEUE = 'task-generation';
 
@@ -82,5 +83,10 @@ export class TaskProcessor extends WorkerHost {
     return {
       created_count: results.filter((r) => r.status === 'created').length,
     };
+  }
+
+  @OnWorkerEvent('failed')
+  onFailed(job: Job | undefined, err: Error): void {
+    logJobFailure(this.logger, job, err);
   }
 }

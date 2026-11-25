@@ -44,6 +44,7 @@
     "@opentelemetry/sdk-metrics": "~2.12.0",
     "@opentelemetry/sdk-node": "^0.223.1",
     "@prisma/client": "^6.19.3",
+    "@sentry/node": "11.11.0",
     "@types/multer": "^2.1.0",
     "bullmq": "^5.75.2",
     "class-transformer": "^0.5.1",

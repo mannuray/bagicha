@@ -33,7 +33,7 @@ function build(
       );
     }),
   };
-  const logger = { info: jest.fn(), warn: jest.fn() };
+  const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const plants = {
     findOwnedWithOwnerLocation: jest.fn((_u: string, _p: string) =>
       Promise.resolve({ variety: null, name: 'Tree', user: owner }),
@@ -186,5 +186,21 @@ describe('TaskProcessor', () => {
     expect(tasks.createTasks).not.toHaveBeenCalled();
     expect(logger.warn).toHaveBeenCalled();
     expect(result.created_count).toBe(0);
+  });
+
+  it('logs an error when a job fails its last attempt: failed jobs are not kept', () => {
+    const { processor, logger } = build();
+    const failed = {
+      id: 'lifecycle-p1-SAPLING',
+      queueName: 'task-generation',
+      attemptsMade: 3,
+      opts: { attempts: 3 },
+      data: {},
+    } as unknown as Job;
+    processor.onFailed(failed, new Error('db down'));
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: 'lifecycle-p1-SAPLING', attempt: 3 }),
+      'Job failed after its last attempt',
+    );
   });
 });

@@ -14,6 +14,8 @@ export interface Env {
   RAZORPAY_WEBHOOK_SECRET?: string;
   OTEL_EXPORTER_OTLP_ENDPOINT?: string;
   OTEL_SERVICE_NAME?: string;
+  /** Sentry project DSN; crash reports are off without it. */
+  SENTRY_DSN?: string;
   LOG_LEVEL?: string;
   WEB_ORIGINS?: string;
   AI_PROVIDER?: 'gemini' | 'fake';

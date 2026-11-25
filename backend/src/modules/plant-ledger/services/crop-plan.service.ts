@@ -181,7 +181,7 @@ export class CropPlanService {
         source: TaskSource.CROP_PLAN,
         sourceKey: key('seeds'),
         reason: `Sowing season for ${titleName(crop)} starts soon in your region.`,
-        // TODO(seed-order): link this step to ordering seeds in the app (marketplace module).
+        // TODO(seed-order): link this step to ordering seeds once there is a real seed supplier.
         metadata: {
           crop_id: crop.id,
           step: 'seeds',

@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client';
 import App from './app/App';
 import './index.css';
 import './lib/i18n';
+import { initErrorReporting } from './lib/report-error';
+
+initErrorReporting();
 
 const root = document.getElementById('root');
 if (root) {
