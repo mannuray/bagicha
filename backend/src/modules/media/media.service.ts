@@ -16,6 +16,7 @@ import {
 import {
   InvariantError,
   NotFoundError,
+  UpstreamError,
   ValidationError,
 } from '../../common/errors';
 import { decodeSafely } from './image-safety';
@@ -162,9 +163,22 @@ export class MediaService implements OnModuleInit {
       const keys = await this.listKeys(`${prefix}/${ownerId}/`);
       for (let i = 0; i < keys.length; i += REMOVE_BATCH) {
         const chunk = keys.slice(i, i + REMOVE_BATCH);
-        await withSpan('minio.removeObjects', { bucket: this.bucket }, () =>
-          this.client.removeObjects(this.bucket, chunk),
+        const results = await withSpan(
+          'minio.removeObjects',
+          { bucket: this.bucket },
+          () => this.client.removeObjects(this.bucket, chunk),
         );
+        // S3 answers 200 even when it refuses keys: each refusal is an entry here.
+        const refused = results.filter((r) => r?.Error);
+        if (refused.length > 0) {
+          const codes = [...new Set(refused.map((r) => r?.Error?.Code))].join(
+            ',',
+          );
+          throw new UpstreamError(
+            'MEDIA_DELETE_REFUSED',
+            `Storage refused to delete ${refused.length} photos (${codes})`,
+          );
+        }
         removed += chunk.length;
       }
     }

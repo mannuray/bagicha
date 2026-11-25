@@ -38,7 +38,8 @@
     "OTP_DAILY_LIMIT": "Too many codes for this number today. Please try again tomorrow.",
     "MEDIA_UNREADABLE": "We couldn't open that photo. Please try another one.",
     "MEDIA_TYPE_UNSUPPORTED": "Please choose a JPEG, PNG or WebP photo.",
-    "IDEMPOTENCY_IN_PROGRESS": "This is still being saved — wait a moment and try again."
+    "IDEMPOTENCY_IN_PROGRESS": "This is still being saved — wait a moment and try again.",
+    "ACCOUNT_DELETION_DUE": "The 30 days are up, so this account is being deleted and can no longer be kept."
   },
   "nav": {
     "label": "Main",

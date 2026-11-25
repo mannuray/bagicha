@@ -84,11 +84,16 @@ export class UserRepository {
     return this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
   }
 
-  clearDeletion(userId: string): Promise<User> {
-    return this.prisma.user.update({
-      where: { id: userId },
+  /**
+   * Drops a pending deletion only while it isn't due yet, in one statement:
+   * a due account belongs to the erasure run. Null when nothing was kept.
+   */
+  async keepIfNotDue(userId: string, now: Date): Promise<User | null> {
+    const { count } = await this.prisma.user.updateMany({
+      where: { id: userId, deletion_due_at: { gt: now } },
       data: { deletion_requested_at: null, deletion_due_at: null },
     });
+    return count === 0 ? null : this.findById(userId);
   }
 
   updateProfile(userId: string, data: Prisma.UserUpdateInput): Promise<User> {

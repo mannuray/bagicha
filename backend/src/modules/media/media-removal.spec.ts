@@ -91,6 +91,18 @@ describe('MediaService.removeOwnerMedia', () => {
     );
   });
 
+  it('fails when S3 refuses some keys (a 200 answer with per-key errors), so the account is kept and retried', async () => {
+    listObjectsV2.mockImplementation((_b: string, prefix: string) =>
+      objects(prefix === 'posts/u1/' ? ['posts/u1/a.jpg'] : []),
+    );
+    removeObjects.mockResolvedValueOnce([
+      { Error: { Code: 'AccessDenied', Key: 'posts/u1/a.jpg' } },
+    ] as never);
+    await expect(service().removeOwnerMedia('u1')).rejects.toThrow(
+      /AccessDenied/,
+    );
+  });
+
   it('refuses an owner id that could reach outside its folder', async () => {
     await expect(service().removeOwnerMedia('')).rejects.toThrow();
     await expect(service().removeOwnerMedia('u1/../x')).rejects.toThrow();

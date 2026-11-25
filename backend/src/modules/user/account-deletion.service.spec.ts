@@ -30,7 +30,10 @@ function build(stored: User) {
       }
       return Promise.resolve(row);
     }),
-    clearDeletion: jest.fn(() => {
+    keepIfNotDue: jest.fn((_id: string, now: Date) => {
+      if (!row.deletion_due_at || row.deletion_due_at <= now) {
+        return Promise.resolve(null);
+      }
       row = { ...row, deletion_requested_at: null, deletion_due_at: null };
       return Promise.resolve(row);
     }),
@@ -83,10 +86,31 @@ describe('AccountDeletionService', () => {
     );
   });
 
+  it('refuses to keep an account whose 30 days are up (erasure may already be running)', async () => {
+    const { service, audit } = build(
+      user({
+        deletion_requested_at: new Date('2026-10-01'),
+        deletion_due_at: new Date('2026-10-31'),
+      }),
+    );
+    await expect(service.cancel('u1')).rejects.toMatchObject({
+      reason: 'ACCOUNT_DELETION_DUE',
+    });
+    expect(audit.record).not.toHaveBeenCalled();
+  });
+
+  it('a gone account (erased while asking) is told to sign in again, not a server error', async () => {
+    const { service, users } = build(user());
+    users.findById.mockResolvedValueOnce(null as never);
+    await expect(service.cancel('u1')).rejects.toMatchObject({
+      reason: 'AUTH_USER_NOT_FOUND',
+    });
+  });
+
   it('keeping an account with nothing pending changes nothing', async () => {
     const { service, users, audit } = build(user());
     await service.cancel('u1');
-    expect(users.clearDeletion).not.toHaveBeenCalled();
+    expect(users.keepIfNotDue).not.toHaveBeenCalled();
     expect(audit.record).not.toHaveBeenCalled();
   });
 });

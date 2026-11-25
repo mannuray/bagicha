@@ -176,6 +176,21 @@ describe('account deletion', () => {
     });
   });
 
+  it('once the 30 days are up, the account can no longer be kept', async () => {
+    await prisma.user.update({
+      where: { id: alice.id },
+      data: {
+        deletion_requested_at: new Date(Date.now() - 31 * 86_400_000),
+        deletion_due_at: new Date(Date.now() - 86_400_000),
+      },
+    });
+    const res = await request(server())
+      .delete('/api/v1/user/deletion')
+      .set('Authorization', `Bearer ${await freshToken(alice)}`);
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('ACCOUNT_DELETION_DUE');
+  });
+
   it('an account with nothing pending is unaffected', async () => {
     expect((await plants(tokenFor(app, alice))).status).toBe(200);
   });

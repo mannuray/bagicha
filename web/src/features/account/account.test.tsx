@@ -100,6 +100,20 @@ describe('signing in while deletion is pending', () => {
     expect(session.get().user?.deletion_due_at).toBeNull();
   });
 
+  it('says so plainly when the 30 days are already up', async () => {
+    server.use(
+      http.delete(`${API}/user/deletion`, () =>
+        HttpResponse.json(
+          { success: false, error: { code: 'ACCOUNT_DELETION_DUE', message: 'due' } },
+          { status: 409 },
+        ),
+      ),
+    );
+    renderWithApp(<Account />, { route: '/account/deletion-pending', user: pendingUser });
+    await userEvent.click(screen.getByRole('button', { name: /keep my account/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/30 days are up/i);
+  });
+
   it('continuing signs out and leaves the deletion in place', async () => {
     let signedOut = false;
     server.use(

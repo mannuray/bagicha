@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { NotFoundError } from '../../common/errors';
+import { ConflictError, UnauthorizedError } from '../../common/errors';
 import { Clock } from '../../common/time';
 import { AuditAction, AuditService } from '../audit';
 import { toUserView, type UserView } from './user-view';
@@ -36,12 +36,26 @@ export class AccountDeletionService {
     return toUserView(user);
   }
 
-  /** Keeps the account: the pending deletion is dropped. */
+  /**
+   * Keeps the account: the pending deletion is dropped. Refused once the 30
+   * days are up, because the erasure run may already be removing photos.
+   */
   async cancel(userId: string): Promise<UserView> {
     const user = await this.users.findById(userId);
-    if (!user) throw new NotFoundError('USER_NOT_FOUND', 'User not found');
+    if (!user) {
+      throw new UnauthorizedError(
+        'AUTH_USER_NOT_FOUND',
+        'This account no longer exists',
+      );
+    }
     if (!user.deletion_due_at) return toUserView(user);
-    const kept = await this.users.clearDeletion(userId);
+    const kept = await this.users.keepIfNotDue(userId, this.clock.now());
+    if (!kept) {
+      throw new ConflictError(
+        'ACCOUNT_DELETION_DUE',
+        'The 30 days are up; this account is being deleted',
+      );
+    }
     await this.audit.record({
       actorUserId: userId,
       action: AuditAction.ACCOUNT_DELETION_CANCELLED,
