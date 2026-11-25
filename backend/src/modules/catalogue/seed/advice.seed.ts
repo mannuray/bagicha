@@ -474,7 +474,7 @@ export const ADVICE_SEED: AdviceSeed[] = [
     hi: 'बहुत गर्म दिन आने वाला है: सुबह जल्दी या शाम को मिट्टी को हल्का पानी दें, क्यारियों में मल्च बिछाएँ और पौध को छाया दें।',
     status: 'APPROVED',
     notes:
-      'Weather tip. English approved by owner 2026-11-25 (IMD/ICAR source check); Hindi drafted 2026-11-25, pending owner review.',
+      'Weather tip. English approved by owner 2026-11-25 (IMD/ICAR source check); Hindi approved by owner 2026-11-25.',
   },
   {
     key: 'weather.tip.heavy_rain',
@@ -482,7 +482,7 @@ export const ADVICE_SEED: AdviceSeed[] = [
     hi: 'तेज़ बारिश की संभावना है: पानी न दें, गमलों और क्यारियों से पानी निकलने का रास्ता साफ़ करें, और लंबे पौधों को सहारा दें।',
     status: 'APPROVED',
     notes:
-      'Weather tip. English approved by owner 2026-11-25 (IMD/ICAR source check); Hindi drafted 2026-11-25, pending owner review.',
+      'Weather tip. English approved by owner 2026-11-25 (IMD/ICAR source check); Hindi approved by owner 2026-11-25.',
   },
   {
     key: 'weather.tip.cold_night',
@@ -490,7 +490,7 @@ export const ADVICE_SEED: AdviceSeed[] = [
     hi: 'ठंडी रात आने वाली है: पौध और छोटे पौधों को पुआल या कपड़े से ढकें, और आज शाम मिट्टी को हल्का नम करें।',
     status: 'APPROVED',
     notes:
-      'Weather tip. English approved by owner 2026-11-25 (IMD/ICAR source check); Hindi drafted 2026-11-25, pending owner review.',
+      'Weather tip. English approved by owner 2026-11-25 (IMD/ICAR source check); Hindi approved by owner 2026-11-25.',
   },
   {
     key: 'weather.task.heat.title',
@@ -498,7 +498,7 @@ export const ADVICE_SEED: AdviceSeed[] = [
     hi: 'सुबह जल्दी या शाम को मिट्टी को हल्का पानी दें',
     status: 'APPROVED',
     notes:
-      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi pending owner review.',
+      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi approved by owner 2026-11-25.',
   },
   {
     key: 'weather.task.heat.reason',
@@ -506,7 +506,7 @@ export const ADVICE_SEED: AdviceSeed[] = [
     hi: 'बहुत गर्म दिन की संभावना ({max}°C)',
     status: 'APPROVED',
     notes:
-      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi pending owner review.',
+      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi approved by owner 2026-11-25.',
   },
   {
     key: 'weather.task.heavy_rain.title',
@@ -514,7 +514,7 @@ export const ADVICE_SEED: AdviceSeed[] = [
     hi: 'पानी न दें और गमलों व क्यारियों से पानी निकलने का रास्ता साफ़ करें',
     status: 'APPROVED',
     notes:
-      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi pending owner review.',
+      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi approved by owner 2026-11-25.',
   },
   {
     key: 'weather.task.heavy_rain.reason',
@@ -522,7 +522,7 @@ export const ADVICE_SEED: AdviceSeed[] = [
     hi: 'तेज़ बारिश की संभावना ({mm} मिमी)',
     status: 'APPROVED',
     notes:
-      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi pending owner review.',
+      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi approved by owner 2026-11-25.',
   },
   {
     key: 'weather.task.cold_night.title',
@@ -530,7 +530,7 @@ export const ADVICE_SEED: AdviceSeed[] = [
     hi: 'रात में पौध और छोटे पौधों को ढकें',
     status: 'APPROVED',
     notes:
-      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi pending owner review.',
+      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi approved by owner 2026-11-25.',
   },
   {
     key: 'weather.task.cold_night.reason',
@@ -538,6 +538,6 @@ export const ADVICE_SEED: AdviceSeed[] = [
     hi: 'ठंडी रात की संभावना ({min}°C)',
     status: 'APPROVED',
     notes:
-      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi pending owner review.',
+      'Weather reminder. Drafted 2026-11-25 from the approved tip actions; English and Hindi approved by owner 2026-11-25.',
   },
 ];
