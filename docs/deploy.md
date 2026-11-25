@@ -66,6 +66,10 @@ docker run --rm --dns 1.1.1.1 \
 
 - **Weather tips and reminders** (migration `20261125140000_task_source_weather`, new advice keys `weather.tip.*` and `weather.task.*`): migration → push → API deploy → web. The push adds advice rows only (no new field), so the old API ignores them, and the new API needs them to write a tip or reminder. The API registers a daily job at 05:00 IST (`weather-reminders`, BullMQ scheduler id `weather-reminders-daily` in Redis). Rolling back the API leaves that schedule in Redis with no worker; it does nothing until the API returns. To remove it: `redis-cli -n 1 DEL bull:weather-reminders:repeat:weather-reminders-daily` (or run `queue.removeJobScheduler('weather-reminders-daily')`).
 
+- **Account deletion** (migrations `20261126100000_account_deletion` and `20261126110000_audit_report_redaction`): migration → API deploy → web. No catalogue push. Both migrations are additive: the first adds two nullable `users` columns, the second lets the audit trigger accept one narrow update (blanking `reason` and `content_excerpt` on report events). The old API ignores both. The API registers a daily job at 03:30 IST (`account-erasure`, scheduler id `account-erasure-daily`); removing it works the same way as the weather job: `redis-cli -n 1 DEL bull:account-erasure:repeat:account-erasure-daily`.
+  - **Before the first erasure (AWS console, owner):** the media IAM user `bagicha-staging-media` needs `s3:ListBucket` on the bucket and `s3:DeleteObject` on `bucket/*`. Without them every erasure fails at the photo step, and the account is retried daily and reported to Sentry. If bucket versioning is on, add a lifecycle rule that expires noncurrent versions, or deleted photos stay recoverable.
+  - Google Play's "delete account" link is `https://bagicha-web.vercel.app/delete-account`. Set `VITE_SUPPORT_EMAIL` on Vercel so that page shows the email fallback.
+
 ## Deploy the API (Render)
 
 Render builds `backend/Dockerfile` and waits for `/api/v1/health/live`. The service was created with the Render CLI and, as of the first deploy, **did not auto-deploy on push**: after pushing `main`, start the deploy yourself with `render deploys create srv-dbq3qch5efls739jf6l0 --commit <sha> --confirm` (or Manual Deploy in the dashboard). Connecting the repo under bagicha-api → Settings → Build & Deploy may restore auto-deploy. To redeploy without a commit, use Manual Deploy → Deploy latest commit on `bagicha-api` in the Render dashboard.
@@ -88,7 +92,7 @@ Secrets live only in the Render dashboard and the Neon console, never in git. Se
 | `DATABASE_URL` | Render | Neon **pooled** connection string. Secret. |
 | `JWT_SECRET` | Render (generated) | Signs sessions. Leave it alone. |
 | `REDIS_URL` | `render.yaml` | `opd-redis` database 1; never database 0 (OPD's). |
-| `MEDIA_BUCKET`, `MEDIA_ACCESS_KEY`, `MEDIA_SECRET_KEY` | Render | The S3 bucket and an IAM key that can read and write only that bucket. Secret. |
+| `MEDIA_BUCKET`, `MEDIA_ACCESS_KEY`, `MEDIA_SECRET_KEY` | Render | The S3 bucket and an IAM key that can read, write, list and delete only that bucket (delete and list are for account erasure). Secret. |
 | `MEDIA_ENDPOINT`, `MEDIA_PORT`, `MEDIA_USE_SSL`, `MEDIA_REGION` | `render.yaml` | S3 in `ap-south-1`. |
 | `GEMINI_API_KEY` | Render | Plant scan and diagnosis. Secret. |
 | `AI_PROVIDER` | `render.yaml` | `gemini`. |
@@ -98,6 +102,7 @@ Secrets live only in the Render dashboard and the Neon console, never in git. Se
 | `OPEN_METEO_API_KEY` | Render (optional) | Open-Meteo's paid API, required once the app is commercial. Without it the free, non-commercial API is used (a warning is logged in production). Secret. |
 | `SENTRY_DSN` | Render (optional) | Crash reports from the API to Sentry. Off when unset. |
 | `VITE_SENTRY_DSN` | Vercel (optional) | Crash reports from the web app to Sentry. Off when unset; takes effect on the next build. |
+| `VITE_SUPPORT_EMAIL` | Vercel | The address on the public `/delete-account` page for people who can't sign in. The line is hidden when unset. |
 
 After changing a setting on Render, redeploy the service.
 
