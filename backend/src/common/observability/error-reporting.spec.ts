@@ -35,12 +35,14 @@ function event(): ErrorEvent {
     extra: { body: { phone_number: '+919812345678' } },
     contexts: { trace: { trace_id: 't1', span_id: 's1' } },
     tags: { route: '/ledger/plants/:id' },
+    transaction: 'GET /api/v1/ledger/plants/3f1c',
   } as ErrorEvent;
 }
 
 describe('scrubEvent', () => {
-  it('drops the request, user, breadcrumbs and extra data', () => {
+  it('drops the request, user, breadcrumbs, extra data and the raw transaction URL', () => {
     const out = scrubEvent(event(), {});
+    expect(out.transaction).toBeUndefined();
     expect(out.request).toBeUndefined();
     expect(out.user).toBeUndefined();
     expect(out.breadcrumbs).toBeUndefined();
@@ -101,11 +103,18 @@ describe('errorReportingOptions', () => {
         httpBodies: [],
         urlQueryParams: false,
       },
-      tracesSampleRate: 0,
       enableOpenTelemetrySetup: false,
     });
     expect(opts?.beforeBreadcrumb?.({ message: 'x' }, {})).toBeNull();
     expect(opts?.beforeSend).toBe(scrubEvent);
+  });
+
+  it('leaves tracing off entirely (a rate of 0 would still load tracing integrations)', () => {
+    const opts = errorReportingOptions({
+      SENTRY_DSN: 'https://k@o1.ingest.sentry.io/2',
+    });
+    expect(opts).not.toHaveProperty('tracesSampleRate');
+    expect(opts).not.toHaveProperty('tracesSampler');
   });
 });
 

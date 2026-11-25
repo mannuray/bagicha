@@ -1,4 +1,5 @@
 import type { PinoLogger } from 'nestjs-pino';
+import { z } from 'zod';
 import type { RedisService } from '../../common/redis/redis.service';
 import type { Forecast } from './domain/forecast';
 import type { GridCell } from './domain/grid-cell';
@@ -11,6 +12,40 @@ export interface SourcedForecast {
 }
 
 const CACHE_TTL_SECONDS = 3600;
+/** Redis queues commands while unreachable and never settles them: give up on the cache after this. */
+const DEFAULT_CACHE_TIMEOUT_MS = 300;
+
+const conditionSchema = z.enum([
+  'CLEAR',
+  'PARTLY_CLOUDY',
+  'CLOUDY',
+  'FOG',
+  'DRIZZLE',
+  'RAIN',
+  'HEAVY_RAIN',
+  'THUNDERSTORM',
+  'SNOW',
+]);
+const num = z.number().finite();
+/** A cache entry is checked like a provider answer: a bad one is ignored, never served. */
+const cachedSchema = z.object({
+  source: z.string(),
+  forecast: z.object({
+    now: z.object({ tempC: num, condition: conditionSchema }),
+    days: z
+      .array(
+        z.object({
+          date: z.string(),
+          condition: conditionSchema,
+          maxC: num,
+          minC: num,
+          rainMm: num,
+          rainChance: num,
+        }),
+      )
+      .min(1),
+  }),
+});
 const cacheKey = (cell: GridCell) => `weather:v1:${cell.key}`;
 
 /**
@@ -24,6 +59,7 @@ export class WeatherForecasts {
     private readonly redis: RedisService,
     private readonly logger: PinoLogger,
     private readonly timeoutMs: number,
+    private readonly cacheTimeoutMs = DEFAULT_CACHE_TIMEOUT_MS,
   ) {}
 
   async forCell(cell: GridCell): Promise<SourcedForecast | null> {
@@ -71,12 +107,10 @@ export class WeatherForecasts {
 
   private async readCache(cell: GridCell): Promise<SourcedForecast | null> {
     try {
-      const raw = await this.redis.get(cacheKey(cell));
+      const raw = await this.withinCacheTime(this.redis.get(cacheKey(cell)));
       if (!raw) return null;
-      const value = JSON.parse(raw) as Partial<SourcedForecast>;
-      return value.forecast && typeof value.source === 'string'
-        ? (value as SourcedForecast)
-        : null;
+      const parsed = cachedSchema.safeParse(JSON.parse(raw));
+      return parsed.success ? parsed.data : null;
     } catch (err: unknown) {
       this.logger.warn({ err, cell: cell.key }, 'Weather cache unreadable');
       return null;
@@ -85,13 +119,31 @@ export class WeatherForecasts {
 
   private async writeCache(cell: GridCell, value: SourcedForecast) {
     try {
-      await this.redis.set(
-        cacheKey(cell),
-        JSON.stringify(value),
-        CACHE_TTL_SECONDS,
+      await this.withinCacheTime(
+        this.redis.set(
+          cacheKey(cell),
+          JSON.stringify(value),
+          CACHE_TTL_SECONDS,
+        ),
       );
     } catch (err: unknown) {
       this.logger.warn({ err, cell: cell.key }, 'Weather not cached');
+    }
+  }
+
+  private async withinCacheTime<T>(op: Promise<T>): Promise<T> {
+    let timer: NodeJS.Timeout | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(
+        () =>
+          reject(new Error(`cache timed out after ${this.cacheTimeoutMs} ms`)),
+        this.cacheTimeoutMs,
+      );
+    });
+    try {
+      return await Promise.race([op, timeout]);
+    } finally {
+      clearTimeout(timer);
     }
   }
 }

@@ -42,15 +42,25 @@ function redis(stored: string | null = null, broken = false) {
     ),
   };
 }
+/** Redis while unreachable: the client queues commands and they never settle. */
+function hangingRedis() {
+  const never = () => new Promise<string | null>(() => undefined);
+  return { get: jest.fn(never), set: jest.fn(never) };
+}
 const logger = () => ({ warn: jest.fn(), info: jest.fn() });
 
-function build(providers: WeatherProvider[], r = redis(), timeoutMs = 50) {
+function build(
+  providers: WeatherProvider[],
+  r: { get: jest.Mock; set: jest.Mock } = redis(),
+  timeoutMs = 50,
+) {
   const log = logger();
   const service = new WeatherForecasts(
     providers,
     r as unknown as RedisService,
     log as unknown as PinoLogger,
     timeoutMs,
+    20,
   );
   return { service, r, log };
 }
@@ -135,6 +145,27 @@ describe('WeatherForecasts', () => {
   it('ignores a corrupt cache entry and fetches again', async () => {
     const a = ok('A');
     const { service } = build([a], redis('{not json'));
+    await expect(service.forCell(cell)).resolves.toEqual({
+      forecast,
+      source: 'A',
+    });
+    expect(a.forecast).toHaveBeenCalled();
+  });
+
+  it('serves weather when Redis hangs instead of failing fast', async () => {
+    const { service } = build([ok('A')], hangingRedis());
+    await expect(service.forCell(cell)).resolves.toEqual({
+      forecast,
+      source: 'A',
+    });
+  });
+
+  it('ignores a cached entry that is valid JSON but not a forecast', async () => {
+    const a = ok('A');
+    const { service } = build(
+      [a],
+      redis(JSON.stringify({ forecast: {}, source: 'A' })),
+    );
     await expect(service.forCell(cell)).resolves.toEqual({
       forecast,
       source: 'A',

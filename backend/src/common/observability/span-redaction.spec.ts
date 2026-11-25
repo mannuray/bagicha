@@ -1,4 +1,8 @@
-import { redactIncomingHttpSpan, redisStatement } from './span-redaction';
+import {
+  redactIncomingHttpSpan,
+  redactOutgoingHttpSpan,
+  redisStatement,
+} from './span-redaction';
 
 describe('span redaction', () => {
   it('a Redis span records the command name only, never its keys or job data', () => {
@@ -24,5 +28,19 @@ describe('span redaction', () => {
     expect(attrs['client.address']).toBe('');
     expect(attrs['network.peer.address']).toBe('');
     expect(JSON.stringify(attrs)).not.toContain('9876543210');
+  });
+
+  it('an outgoing HTTP span drops the query string: it can carry an API key', () => {
+    const attrs: Record<string, unknown> = {};
+    const span = { setAttribute: (k: string, v: unknown) => (attrs[k] = v) };
+    redactOutgoingHttpSpan(span, {
+      origin: 'https://customer-api.open-meteo.com',
+      path: '/v1/forecast?latitude=25.65&apikey=SECRET',
+    });
+    expect(attrs['url.full']).toBe(
+      'https://customer-api.open-meteo.com/v1/forecast',
+    );
+    expect(attrs['url.query']).toBe('');
+    expect(JSON.stringify(attrs)).not.toContain('SECRET');
   });
 });

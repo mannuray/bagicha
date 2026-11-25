@@ -16,6 +16,7 @@ import { registerOtelSdk } from './common/observability/otel-handle';
 import { initErrorReporting } from './common/observability/error-reporting';
 import {
   redactIncomingHttpSpan,
+  redactOutgoingHttpSpan,
   redisStatement,
 } from './common/observability/span-redaction';
 
@@ -51,7 +52,9 @@ const sdk = new NodeSDK({
     new ExpressInstrumentation(),
     // Spans follow the logging rules (span-redaction.ts).
     new IORedisInstrumentation({ dbStatementSerializer: redisStatement }),
-    new UndiciInstrumentation(),
+    new UndiciInstrumentation({
+      requestHook: (span, request) => redactOutgoingHttpSpan(span, request),
+    }),
   ],
 });
 

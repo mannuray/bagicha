@@ -22,6 +22,8 @@ export function scrubEvent(event: ErrorEvent, hint: EventHint): ErrorEvent {
     user: undefined,
     breadcrumbs: undefined,
     extra: undefined,
+    // Sentry names it from the raw URL (real ids); the route tag carries the pattern.
+    transaction: undefined,
     exception: event.exception ? { ...event.exception, values } : undefined,
   };
 }
@@ -44,8 +46,8 @@ export function errorReportingOptions(
       httpBodies: [],
       urlQueryParams: false,
     },
-    // Errors only: traces already go to OpenTelemetry, which this app sets up itself.
-    tracesSampleRate: 0,
+    // Errors only: no tracesSampleRate at all (even 0 loads Sentry's tracing integrations);
+    // traces go to OpenTelemetry, which this app sets up itself.
     enableOpenTelemetrySetup: false,
     beforeBreadcrumb: () => null,
     beforeSend: scrubEvent,

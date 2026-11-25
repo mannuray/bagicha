@@ -79,7 +79,7 @@ The weather code returns random numbers (32–47 °C) for a fixed Patna pincode,
 
 ## Delivery in two slices
 
-1. Providers, config, location, cache, `GET seasonal/weather` and the web card (no tip). Ships without content review.
+1. Providers, config, location, cache, `GET weather` and the web card (no tip). Ships without content review.
 2. Rules, tips and reminders, after the thresholds and text are approved.
 
 ## Decided: free Open-Meteo for now
