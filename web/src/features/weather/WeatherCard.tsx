@@ -23,6 +23,7 @@ export function WeatherCard() {
   const weather = data?.weather;
   if (!weather || !data.source) return null;
   const { now, today } = weather;
+  const { tip } = data;
 
   return (
     <section
@@ -41,6 +42,7 @@ export function WeatherCard() {
           {t('weather.highLow', { high: deg(today.max_c), low: deg(today.min_c) })} ·{' '}
           {t('weather.rainChance', { chance: Math.round(today.rain_chance) })}
         </p>
+        {tip && <p className="mt-1 font-body text-sm text-on-surface">{tip}</p>}
       </div>
       <p className="self-end font-body text-[10px] text-outline">{t('weather.source', { source: data.source })}</p>
     </section>

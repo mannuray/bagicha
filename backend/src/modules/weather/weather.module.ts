@@ -1,19 +1,38 @@
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PinoLogger } from 'nestjs-pino';
 import { RedisService } from '../../common/redis/redis.service';
+import { CatalogueModule } from '../catalogue';
+import { PlantLedgerModule } from '../plant-ledger';
 import { RegionsModule } from '../regions';
 import { buildProviders } from './providers/provider-config';
 import { WeatherController } from './weather.controller';
+import { WeatherAudienceRepository } from './weather-audience.repository';
 import { WeatherForecasts } from './weather-forecasts';
+import {
+  WEATHER_REMINDER_QUEUE,
+  WeatherReminderProcessor,
+  WeatherReminderSchedule,
+} from './weather-reminder.processor';
+import { WeatherReminderService } from './weather-reminder.service';
 
 /** Per-call limit before the next provider is tried. */
 const PROVIDER_TIMEOUT_MS = 4000;
 
 @Module({
-  imports: [RegionsModule],
+  imports: [
+    RegionsModule,
+    CatalogueModule,
+    PlantLedgerModule,
+    BullModule.registerQueue({ name: WEATHER_REMINDER_QUEUE }),
+  ],
   controllers: [WeatherController],
   providers: [
+    WeatherAudienceRepository,
+    WeatherReminderService,
+    WeatherReminderSchedule,
+    WeatherReminderProcessor,
     {
       provide: WeatherForecasts,
       inject: [ConfigService, RedisService, PinoLogger],

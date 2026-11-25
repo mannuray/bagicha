@@ -11,6 +11,7 @@ const weather = {
     now: { temp_c: 27.4, condition: 'PARTLY_CLOUDY' },
     today: { max_c: 28.1, min_c: 14.2, rain_chance: 70, rain_mm: 4.2 },
   },
+  tip: null as string | null,
   source: 'Open-Meteo',
 };
 
@@ -35,6 +36,20 @@ describe('WeatherCard', () => {
     expect(card).toHaveTextContent(/28°.*14°/);
     expect(card).toHaveTextContent(/70%/);
     expect(card).toHaveTextContent(/open-meteo/i);
+  });
+
+  it('shows the gardening tip when the weather calls for one', async () => {
+    serve({ ...weather, tip: 'Very hot day ahead: water the soil lightly.' });
+    renderWithApp(<WeatherCard />);
+    const card = await screen.findByRole('region', { name: /weather/i });
+    expect(card).toHaveTextContent('Very hot day ahead: water the soil lightly.');
+  });
+
+  it('works with a server that sends no tip yet', async () => {
+    const { tip: _tip, ...older } = weather;
+    serve(older);
+    renderWithApp(<WeatherCard />);
+    expect(await screen.findByRole('region', { name: /weather/i })).toHaveTextContent('27°');
   });
 
   it('is hidden when there is no weather for the user', async () => {

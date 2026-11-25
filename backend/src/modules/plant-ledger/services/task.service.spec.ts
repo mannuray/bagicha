@@ -22,6 +22,13 @@ const draft = (sourceKey: string): TaskDraft => ({
 function build(existingKeys: string[]) {
   const created: string[] = [];
   const repo = {
+    findOpenOrClosedBySourceKey: jest.fn(
+      (_u: string, _p: string, _s: TaskSource, key: string) =>
+        Promise.resolve(
+          existingKeys.includes(key) ? { id: `old-${key}` } : null,
+        ),
+    ),
+    cancelPendingBefore: jest.fn(() => Promise.resolve(2)),
     findPendingBySourceKey: jest.fn(
       (_u: string, _p: string, _s: TaskSource, key: string) =>
         Promise.resolve(
@@ -82,5 +89,29 @@ describe('TaskService.createTasks', () => {
       status: 'failed',
       reason: 'PLANT_NOT_FOUND',
     });
+  });
+});
+
+describe('TaskService weather reminders', () => {
+  it('never re-creates a weather reminder once done or skipped (any status counts)', async () => {
+    const { service, repo, created } = build(['weather:HEAT:p1:2026-05-11']);
+    const results = await service.createTasks('u1', 'p1', [
+      { ...draft('weather:HEAT:p1:2026-05-11'), source: TaskSource.WEATHER },
+    ]);
+    expect(results[0].status).toBe('skipped');
+    expect(repo.findOpenOrClosedBySourceKey).toHaveBeenCalled();
+    expect(created).toEqual([]);
+  });
+
+  it('expires pending reminders of a source due before a time', async () => {
+    const { service, repo } = build([]);
+    const before = new Date('2026-05-12T00:00:00+05:30');
+    await expect(
+      service.expirePendingBefore(TaskSource.WEATHER, before),
+    ).resolves.toBe(2);
+    expect(repo.cancelPendingBefore).toHaveBeenCalledWith(
+      TaskSource.WEATHER,
+      before,
+    );
   });
 });

@@ -28,6 +28,11 @@ export const weatherSchema = z.object({
       }),
     })
     .nullable(),
+  /** One gardening line for heavy rain, a very hot day or a cold night (missing from older servers). */
+  tip: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? null),
   /** The provider's name, shown as the credit its licence requires. */
   source: z.string().nullable(),
 });

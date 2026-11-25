@@ -204,6 +204,7 @@ enum TaskSource {
   MANUAL
   AI_DIAGNOSIS
   TREE_CARE
+  WEATHER
 }
 
 enum DiagnosisSubjectType {

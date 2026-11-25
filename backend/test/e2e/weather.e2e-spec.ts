@@ -74,6 +74,7 @@ describe('weather', () => {
         now: { temp_c: 27.4, condition: 'PARTLY_CLOUDY' },
         today: { max_c: 28.1, min_c: 14.2, rain_chance: 10, rain_mm: 0.4 },
       },
+      tip: null,
       source: 'Open-Meteo',
     });
     expect(cells).toHaveLength(1);
@@ -97,7 +98,11 @@ describe('weather', () => {
     });
     const res = await get(user);
     expect(res.status).toBe(200);
-    expect(res.body.data ?? res.body).toEqual({ weather: null, source: null });
+    expect(res.body.data ?? res.body).toEqual({
+      weather: null,
+      tip: null,
+      source: null,
+    });
     expect(cells).toHaveLength(0);
   });
 
@@ -109,7 +114,55 @@ describe('weather', () => {
     });
     answer = null;
     const res = await get(user);
-    expect(res.body.data ?? res.body).toEqual({ weather: null, source: null });
+    expect(res.body.data ?? res.body).toEqual({
+      weather: null,
+      tip: null,
+      source: null,
+    });
+  });
+
+  const hot = {
+    forecast: {
+      ...forecast,
+      days: [{ ...forecast.days[0], maxC: 41 }, forecast.days[1]],
+    },
+    source: 'Open-Meteo',
+  };
+
+  it("adds the tip for a very hot day, in the gardener's language", async () => {
+    const user = await seedUser(prisma);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { district: 'Patna' },
+    });
+    answer = hot;
+    const en = await get(user);
+    expect((en.body.data ?? en.body).tip).toMatch(/^Very hot day ahead/);
+    const hi = await request(app.getHttpServer())
+      .get('/api/v1/weather')
+      .set('Authorization', `Bearer ${tokenFor(app, user)}`)
+      .set('Accept-Language', 'hi');
+    expect((hi.body.data ?? hi.body).tip).toMatch(/^बहुत गर्म दिन/);
+  });
+
+  it('uses the hills limit for a hills gardener (30 °C is very hot there, not in the plains)', async () => {
+    const user = await seedUser(prisma);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { district: 'Shimla' },
+    });
+    answer = {
+      ...hot,
+      forecast: { ...hot.forecast, days: [{ ...forecast.days[0], maxC: 31 }] },
+    };
+    expect(((await get(user)).body.data ?? {}).tip).toMatch(
+      /^Very hot day ahead/,
+    );
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { district: 'Patna' },
+    });
+    expect(((await get(user)).body.data ?? {}).tip).toBeNull();
   });
 
   it('has removed the old fixed-pincode route', async () => {
