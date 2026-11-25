@@ -114,6 +114,11 @@ describe('signing in while deletion is pending', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/30 days are up/i);
   });
 
+  it('an account with nothing pending is sent home from the pending screen (no blank page)', async () => {
+    renderWithApp(<Account />, { route: '/account/deletion-pending', user: testUser() });
+    expect(await screen.findByTestId('where')).toHaveTextContent('/');
+  });
+
   it('continuing signs out and leaves the deletion in place', async () => {
     let signedOut = false;
     server.use(

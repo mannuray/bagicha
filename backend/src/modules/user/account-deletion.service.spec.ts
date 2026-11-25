@@ -21,14 +21,15 @@ function build(stored: User) {
   const users = {
     findById: jest.fn(() => Promise.resolve(row)),
     markForDeletion: jest.fn((_id: string, requestedAt: Date, dueAt: Date) => {
-      if (!row.deletion_due_at) {
+      const marked = !row.deletion_due_at;
+      if (marked) {
         row = {
           ...row,
           deletion_requested_at: requestedAt,
           deletion_due_at: dueAt,
         };
       }
-      return Promise.resolve(row);
+      return Promise.resolve({ user: row, marked });
     }),
     keepIfNotDue: jest.fn((_id: string, now: Date) => {
       if (!row.deletion_due_at || row.deletion_due_at <= now) {

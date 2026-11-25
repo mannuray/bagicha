@@ -72,8 +72,8 @@ export class UserRepository {
     userId: string,
     requestedAt: Date,
     dueAt: Date,
-  ): Promise<User> {
-    await this.prisma.user.updateMany({
+  ): Promise<{ user: User; marked: boolean }> {
+    const { count } = await this.prisma.user.updateMany({
       where: { id: userId, deletion_due_at: null },
       data: {
         deletion_requested_at: requestedAt,
@@ -81,7 +81,10 @@ export class UserRepository {
         token_version: { increment: 1 },
       },
     });
-    return this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+    return { user, marked: count === 1 };
   }
 
   /**

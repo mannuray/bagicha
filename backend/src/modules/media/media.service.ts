@@ -21,6 +21,18 @@ import {
 } from '../../common/errors';
 import { decodeSafely } from './image-safety';
 
+/**
+ * The error code of one refused key, or null. minio 8.0.7 returns the
+ * DeleteResult's <Error> entries bare ({Code, Key}), though its types say
+ * {Error: {...}}: accept both.
+ */
+function refusalCode(entry: unknown): string | null {
+  if (!entry || typeof entry !== 'object') return null;
+  const e = entry as { Code?: string; Error?: { Code?: string } };
+  if (e.Error) return e.Error.Code ?? 'Unknown';
+  return e.Code ?? null;
+}
+
 /** S3's limit on keys per delete request. */
 const REMOVE_BATCH = 1000;
 /** An owner id as it appears in media keys: one path segment, never empty. */
@@ -169,11 +181,9 @@ export class MediaService implements OnModuleInit {
           () => this.client.removeObjects(this.bucket, chunk),
         );
         // S3 answers 200 even when it refuses keys: each refusal is an entry here.
-        const refused = results.filter((r) => r?.Error);
+        const refused = results.map(refusalCode).filter((c) => c !== null);
         if (refused.length > 0) {
-          const codes = [...new Set(refused.map((r) => r?.Error?.Code))].join(
-            ',',
-          );
+          const codes = [...new Set(refused)].join(',');
           throw new UpstreamError(
             'MEDIA_DELETE_REFUSED',
             `Storage refused to delete ${refused.length} photos (${codes})`,

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { Navigate, useNavigate } from 'react-router';
 import { messageFor } from '../../lib/error-messages';
 import { fullDate } from '../../lib/format';
 import { Button, Screen } from '../../ui';
@@ -13,7 +13,8 @@ export function DeletionPendingScreen() {
   const { user } = useSession();
   const keep = useKeepAccount();
   const signOut = useSignOut();
-  if (!user?.deletion_due_at) return null;
+  // Nothing pending (kept already, or a stale link): this screen has nothing to offer.
+  if (!user?.deletion_due_at) return <Navigate to={homeFor(user)} replace />;
 
   const onKeep = () => keep.mutate(undefined, { onSuccess: (kept) => navigate(homeFor(kept), { replace: true }) });
   const onContinue = () => {

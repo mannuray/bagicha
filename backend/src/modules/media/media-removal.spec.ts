@@ -95,8 +95,9 @@ describe('MediaService.removeOwnerMedia', () => {
     listObjectsV2.mockImplementation((_b: string, prefix: string) =>
       objects(prefix === 'posts/u1/' ? ['posts/u1/a.jpg'] : []),
     );
+    // minio 8.0.7's parser returns DeleteResult.Error entries bare (its .d.ts says otherwise).
     removeObjects.mockResolvedValueOnce([
-      { Error: { Code: 'AccessDenied', Key: 'posts/u1/a.jpg' } },
+      { Code: 'AccessDenied', Message: 'Access Denied', Key: 'posts/u1/a.jpg' },
     ] as never);
     await expect(service().removeOwnerMedia('u1')).rejects.toThrow(
       /AccessDenied/,

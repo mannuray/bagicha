@@ -152,13 +152,16 @@ describe('SubscriptionService.handleWebhook', () => {
       );
     });
 
-    it('applies nothing to an account waiting to be deleted', async () => {
-      const { service, users, audit } = build({
+    it('applies premium to an account waiting to be deleted (it may be kept), and flags it', async () => {
+      const { service, state, logger } = build({
         deletion_due_at: new Date(NOW.getTime() + 10 * DAY),
       });
       await service.handleWebhook(paid('PREMIUM_MONTHLY'));
-      expect(users.updateSubscription).not.toHaveBeenCalled();
-      expect(audit.record).not.toHaveBeenCalled();
+      expect(state.subscription_tier).toBe(SubscriptionTier.PREMIUM);
+      expect(logger.warn).toHaveBeenCalledWith(
+        { paymentId: 'pay_1', userId: 'u1' },
+        'Payment for an account waiting to be deleted; refund if it is erased',
+      );
     });
   });
 

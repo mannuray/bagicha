@@ -35,7 +35,7 @@ export class ReportService {
   ) {}
 
   async reportPost(userId: string, postId: string, dto: ReportTargetDto) {
-    const post = await this.posts.findById(postId);
+    const post = await this.posts.findReportable(postId);
     if (!post) throw new NotFoundError('POST_NOT_FOUND', 'Post not found');
     return this.recordReport(userId, dto.reason, {
       type: ReportTargetType.POST,
@@ -47,7 +47,7 @@ export class ReportService {
   }
 
   async reportComment(userId: string, commentId: string, dto: ReportTargetDto) {
-    const comment = await this.comments.findById(commentId);
+    const comment = await this.comments.findReportable(commentId);
     if (!comment)
       throw new NotFoundError('COMMENT_NOT_FOUND', 'Comment not found');
     return this.recordReport(userId, dto.reason, {

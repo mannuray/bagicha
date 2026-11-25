@@ -150,6 +150,34 @@ describe('account deletion', () => {
       expect(reply.status).toBe(404);
     });
 
+    it("the feed's reply counts leave out their replies, and their posts can't be reported", async () => {
+      const bobPost = await prisma.post.create({
+        data: {
+          author_id: bob.id,
+          content: 'mango question',
+          district: 'Patna',
+        },
+      });
+      await prisma.comment.create({
+        data: { post_id: bobPost.id, author_id: alice.id, content: 'use neem' },
+      });
+      const alicePost = await prisma.post.create({
+        data: { author_id: alice.id, content: 'my roof', district: 'Patna' },
+      });
+      await markPending(alice);
+      const carol = await seedUser(prisma);
+      const feed = await as(carol).get('/api/v1/community/feed');
+      const row = feed.body.data.find(
+        (p: { id: string }) => p.id === bobPost.id,
+      );
+      expect(row._count.comments).toBe(0);
+      const report = await as(carol).post(
+        `/api/v1/community/posts/${alicePost.id}/report`,
+        { reason: 'spam' },
+      );
+      expect(report.status).toBe(404);
+    });
+
     it('their conversations leave the inbox and they cannot be messaged', async () => {
       await as(alice).post('/api/v1/chat/messages', {
         receiver_id: bob.id,

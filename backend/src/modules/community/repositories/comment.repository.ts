@@ -20,6 +20,13 @@ export class CommentRepository {
     return this.prisma.comment.findUnique({ where: { id: commentId } });
   }
 
+  /** A comment that may be reported (hidden or not), unless its author is leaving. */
+  findReportable(commentId: string): Promise<Comment | null> {
+    return this.prisma.comment.findFirst({
+      where: { id: commentId, author: ACTIVE_ACCOUNT },
+    });
+  }
+
   create(data: Prisma.CommentUncheckedCreateInput): Promise<Comment> {
     return this.prisma.comment.create({ data });
   }

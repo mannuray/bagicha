@@ -22,9 +22,8 @@ export class AccountDeletionService {
   async request(userId: string): Promise<UserView> {
     const now = this.clock.now();
     const due = new Date(now.getTime() + DELETION_NOTICE_DAYS * DAY_MS);
-    const user = await this.users.markForDeletion(userId, now, due);
-    const newlyMarked = user.deletion_requested_at?.getTime() === now.getTime();
-    if (newlyMarked) {
+    const { user, marked } = await this.users.markForDeletion(userId, now, due);
+    if (marked) {
       await this.audit.record({
         actorUserId: userId,
         action: AuditAction.ACCOUNT_DELETION_REQUESTED,

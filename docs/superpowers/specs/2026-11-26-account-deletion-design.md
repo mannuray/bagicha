@@ -63,7 +63,7 @@ All text in English and Hindi; the Hindi goes to the owner for approval before s
   2. **Database, one transaction:** delete, for this user: plants and everything hanging off them (journal entries, tasks, plant cycles, personalized overlays, diagnosis sessions and outcomes), garden places, posts (with all comments on them, including other people's replies), their comments elsewhere, reports they filed and reports about their content, direct messages sent and received plus the conversation rows, blocks in either direction, expert verification, and finally the user row.
   3. **Redis:** remove any keys tied to the user or phone number (OTP and rate-limit keys expire anyway; a sweep is my call only if any long-lived per-user key exists).
   4. **Audit snapshots (my call):** inside the same transaction, blank the person's words in kept audit events: `content_excerpt` on report events about their content, and `reason` on reports they filed. Action, ids and dates stay.
-- **A payment that arrives late (my call):** if a Razorpay webhook lands for a pending or erased account, record it in `applied_payments` against the id, apply nothing, log it for a manual refund, and answer 200 so Razorpay stops retrying.
+- **A payment that arrives late (my call):** for an account waiting to be deleted, premium is applied as usual (they may keep the account) and a warning says to refund if it is erased. For an erased account, the payment is recorded against the id, nothing is applied, an error asks for a manual refund, and the webhook answers 200 so Razorpay stops retrying.
 - Re-checks inside the transaction that the account is still due (a last-minute cancel wins).
 - Logs only the user id and counts, never content.
 

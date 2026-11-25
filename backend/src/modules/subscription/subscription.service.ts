@@ -138,8 +138,8 @@ export class SubscriptionService {
 
   /**
    * Records the payment (once, by its id) and extends premium in one transaction.
-   * A payment for an account that is gone or waiting to be deleted is recorded
-   * but applies nothing: it needs a manual refund.
+   * A payment for an account that is gone is recorded but applies nothing: it
+   * needs a manual refund.
    */
   private async extendPremium(
     tx: Tx,
@@ -150,12 +150,19 @@ export class SubscriptionService {
   ): Promise<'applied' | 'refused'> {
     await this.payments.record(tx, { paymentId, userId, planId });
     const user = await this.users.findById(userId, tx);
-    if (!user || user.deletion_due_at) {
+    if (!user) {
       this.logger.error(
         { paymentId, userId },
         'Payment for a deleted or deleting account; refund manually',
       );
       return 'refused';
+    }
+    // They may still keep the account, so premium is applied; if it is erased instead, refund.
+    if (user.deletion_due_at) {
+      this.logger.warn(
+        { paymentId, userId },
+        'Payment for an account waiting to be deleted; refund if it is erased',
+      );
     }
 
     const now = this.clock.now();

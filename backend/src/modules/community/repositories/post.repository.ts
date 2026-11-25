@@ -6,7 +6,11 @@ import { ACTIVE_ACCOUNT } from '../../user';
 
 const feedInclude = {
   author: { select: { id: true, name: true, badge_level: true } },
-  _count: { select: { comments: { where: { is_hidden: false } } } },
+  _count: {
+    select: {
+      comments: { where: { is_hidden: false, author: ACTIVE_ACCOUNT } },
+    },
+  },
 } satisfies Prisma.PostInclude;
 
 export type FeedPost = Prisma.PostGetPayload<{ include: typeof feedInclude }>;
@@ -38,6 +42,13 @@ export class PostRepository {
 
   findById(postId: string): Promise<Post | null> {
     return this.prisma.post.findUnique({ where: { id: postId } });
+  }
+
+  /** A post that may be reported (hidden or not), unless its author is leaving. */
+  findReportable(postId: string): Promise<Post | null> {
+    return this.prisma.post.findFirst({
+      where: { id: postId, author: ACTIVE_ACCOUNT },
+    });
   }
 
   /** A post others may see and reply to: not hidden, author not leaving. */

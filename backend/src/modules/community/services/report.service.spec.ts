@@ -14,7 +14,7 @@ function build() {
     is_hidden: false,
   };
   const posts = {
-    findById: jest.fn(() => Promise.resolve(post)),
+    findReportable: jest.fn(() => Promise.resolve(post)),
     hide: jest.fn(() => Promise.resolve()),
   };
   const reportRepo = {
