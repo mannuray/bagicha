@@ -1,5 +1,6 @@
 import { InvariantError } from '../../../common/errors';
 import { OpenMeteoProvider } from './open-meteo.provider';
+import { OpenWeatherMapProvider } from './openweathermap.provider';
 import type { Fetch, WeatherProvider } from './weather-provider';
 
 type Env = Record<string, string | undefined>;
@@ -18,6 +19,14 @@ const REGISTRY: Record<string, ProviderEntry> = {
   'open-meteo': {
     build: (env, fetch) =>
       new OpenMeteoProvider(fetch, env.OPEN_METEO_API_KEY?.trim() || undefined),
+  },
+  openweathermap: {
+    requiredKey: 'OPENWEATHERMAP_API_KEY',
+    build: (env, fetch) =>
+      new OpenWeatherMapProvider(
+        fetch,
+        env.OPENWEATHERMAP_API_KEY?.trim() ?? '',
+      ),
   },
 };
 

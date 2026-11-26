@@ -36,6 +36,23 @@ describe('buildProviders', () => {
     expect(providers.map((p) => p.name)).toEqual(['Open-Meteo']);
   });
 
+  it('builds OpenWeatherMap as a fallback after Open-Meteo', () => {
+    const providers = buildProviders(
+      {
+        WEATHER_PROVIDERS: 'open-meteo,openweathermap',
+        OPENWEATHERMAP_API_KEY: 'key-1',
+      },
+      fetch,
+    );
+    expect(providers.map((p) => p.name)).toEqual(['Open-Meteo', 'OpenWeather']);
+  });
+
+  it('refuses OpenWeatherMap without its key (startup fails loudly, not silently)', () => {
+    expect(() =>
+      buildProviders({ WEATHER_PROVIDERS: 'openweathermap' }, fetch),
+    ).toThrow('A weather provider is missing its API key');
+  });
+
   it('builds nothing when weather is off', () => {
     expect(buildProviders({ WEATHER_PROVIDERS: 'none' }, fetch)).toEqual([]);
   });

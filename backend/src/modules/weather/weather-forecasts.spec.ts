@@ -1,3 +1,4 @@
+import { UpstreamError } from '../../common/errors';
 import type { PinoLogger } from 'nestjs-pino';
 import type { RedisService } from '../../common/redis/redis.service';
 import type { Forecast } from './domain/forecast';
@@ -93,6 +94,23 @@ describe('WeatherForecasts', () => {
       'Weather provider failed',
     );
     expect(JSON.stringify(log.warn.mock.calls)).not.toContain('25.61');
+  });
+
+  it("logs the provider's HTTP status, so a refused call says why", async () => {
+    const refused = provider('A', () =>
+      Promise.reject(
+        new UpstreamError('WEATHER_UPSTREAM', 'Weather provider failed', {
+          provider: 'A',
+          status: 429,
+        }),
+      ),
+    );
+    const { service, log } = build([refused, ok('B')]);
+    await service.forCell(cell);
+    expect(log.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: 'A', status: 429 }),
+      'Weather provider failed',
+    );
   });
 
   it('moves on when a provider hangs past the timeout, and aborts its request', async () => {
