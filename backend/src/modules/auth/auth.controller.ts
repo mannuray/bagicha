@@ -3,7 +3,6 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
-  Ip,
   Post,
   Request,
   UseGuards,
@@ -11,8 +10,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import type { AuthedRequest } from '../../common/auth/authed-request';
 import { AuthService } from './auth.service';
-import { RequestOtpDto } from './dto/request-otp.dto';
-import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { GoogleSignInDto } from './dto/google-sign-in.dto';
 import { RateLimit } from '../../common/rate-limit';
 import { JWT_ALLOW_PENDING } from '../../common/auth/allow-pending-deletion';
 
@@ -20,24 +18,12 @@ import { JWT_ALLOW_PENDING } from '../../common/auth/allow-pending-deletion';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('request-otp')
+  /** Signs in (or up) with a Google ID token; returns our own session token and the user. */
+  @Post('google')
   @RateLimit('auth')
   @HttpCode(HttpStatus.OK)
-  async requestOtp(
-    @Body() requestOtpDto: RequestOtpDto,
-    @Ip() callerIp: string,
-  ) {
-    return this.authService.requestOtp(requestOtpDto.phone_number, callerIp);
-  }
-
-  @Post('verify-otp')
-  @RateLimit('auth')
-  @HttpCode(HttpStatus.OK)
-  async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
-    return this.authService.verifyOtp(
-      verifyOtpDto.phone_number,
-      verifyOtpDto.otp,
-    );
+  async google(@Body() dto: GoogleSignInDto) {
+    return this.authService.signInWithGoogle(dto.id_token);
   }
 
   /** Signs out everywhere (every device's token stops working); open to accounts waiting to be deleted. */

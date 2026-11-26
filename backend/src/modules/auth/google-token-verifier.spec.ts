@@ -61,7 +61,9 @@ describe('GoogleAuthLibraryVerifier', () => {
   });
 
   it('refuses when Google rejects the token', async () => {
-    stubGoogle(new Error('Wrong recipient, payload audience != requiredAudience'));
+    stubGoogle(
+      new Error('Wrong recipient, payload audience != requiredAudience'),
+    );
     expect(
       await reasonOf(new GoogleAuthLibraryVerifier(CLIENT_ID).verify('tok')),
     ).toEqual(['AUTH_GOOGLE_INVALID', 401]);

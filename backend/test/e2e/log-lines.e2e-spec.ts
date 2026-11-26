@@ -4,6 +4,7 @@ import fs from 'fs';
 import request from 'supertest';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
+import { fakeGoogleToken } from './fake-google';
 import { resetDb, seedPlant, seedUser, tokenFor } from './fixtures';
 
 /** What actually reaches stdout, from the running app (not the serializers in isolation). */
@@ -106,14 +107,26 @@ describe('log lines from the running app', () => {
     expect(all).not.toContain('9876543210');
   });
 
+  it('a Google sign-in leaves no email or Google id in the logs', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/auth/google')
+      .send({ id_token: fakeGoogleToken('log-sub-77', 'logged@example.test') });
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 50));
+    const all = JSON.stringify(lines);
+    expect(lines.length).toBeGreaterThan(0);
+    expect(all).not.toContain('logged@example.test');
+    expect(all).not.toContain('log-sub-77');
+  });
+
   it('a body the parser refuses still gets a client error and a log line', async () => {
     const bad = await request(app.getHttpServer())
-      .post('/api/v1/auth/request-otp')
+      .post('/api/v1/auth/google')
       .set('Content-Type', 'application/json')
-      .send('{"phone_number": ');
+      .send('{"id_token": ');
     expect(bad.status).toBe(400);
     const encoded = await request(app.getHttpServer())
-      .post('/api/v1/auth/request-otp')
+      .post('/api/v1/auth/google')
       .set('Content-Type', 'application/json')
       .set('Content-Encoding', 'rot13')
       .send('{}');

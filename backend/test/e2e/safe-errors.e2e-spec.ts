@@ -81,12 +81,16 @@ describe('safe errors and request ids', () => {
     expect(res.body.error.code).toBe('POST_NOT_FOUND');
   });
 
-  it('two first sign-ins for the same phone at once both succeed', async () => {
-    const phone = '+919000001234';
+  it('two first sign-ins for the same Google account at once both succeed', async () => {
+    const identity = {
+      sub: 'race-sub',
+      email: 'race@example.test',
+      name: null,
+    };
     const users = app.get(UserRepository);
     const [a, b] = await Promise.all([
-      users.findOrCreateByPhone(phone),
-      users.findOrCreateByPhone(phone),
+      users.createFromGoogle(identity),
+      users.createFromGoogle(identity),
     ]);
     expect(a.user.id).toBe(b.user.id);
     expect([a.created, b.created].filter(Boolean)).toHaveLength(1);

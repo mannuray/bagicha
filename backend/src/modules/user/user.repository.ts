@@ -4,6 +4,16 @@ import { Tx } from '../../common/prisma/transaction';
 import { isUniqueViolation } from '../../common/prisma/unique-violation';
 import { PrismaService } from '../../prisma/prisma.service';
 
+/** What a Google sign-in tells us about a new account (the auth module's GoogleIdentity fits it). */
+export interface NewGoogleAccount {
+  sub: string;
+  email: string;
+  name: string | null;
+}
+
+/** Same limit the profile form allows. */
+const NAME_MAX = 100;
+
 /** A user's own row. Every method is keyed by the user's id. */
 @Injectable()
 export class UserRepository {
@@ -28,33 +38,59 @@ export class UserRepository {
     });
   }
 
-  findByPhone(phoneNumber: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: { phone_number: phoneNumber },
-    });
-  }
-
-  createWithPhone(phoneNumber: string): Promise<User> {
-    return this.prisma.user.create({ data: { phone_number: phoneNumber } });
+  findByGoogleSub(sub: string): Promise<User | null> {
+    return this.prisma.user.findUnique({ where: { google_sub: sub } });
   }
 
   /**
-   * The user with this phone, created on first sign-in. Safe when two first
-   * sign-ins race: the loser of the unique-phone race reads the winner's row.
+   * Hands an account from before Google sign-in to the Google account whose
+   * verified email it was given. Only when exactly one unclaimed account has
+   * that email (any letter case); otherwise nothing changes and null comes back.
    */
-  async findOrCreateByPhone(
-    phoneNumber: string,
+  async claimByEmail(sub: string, email: string): Promise<User | null> {
+    const rows = await this.prisma.$queryRaw<Array<{ id: string }>>`
+      UPDATE "users" SET "google_sub" = ${sub}, "updated_at" = now()
+      WHERE "google_sub" IS NULL AND lower("email") = lower(${email})
+        AND (SELECT count(*) FROM "users"
+             WHERE "google_sub" IS NULL AND lower("email") = lower(${email})) = 1
+      RETURNING "id"`;
+    return rows[0] ? this.findById(rows[0].id) : null;
+  }
+
+  /**
+   * The account for this Google id, created on first sign-in with Google's name.
+   * Safe when two first sign-ins race: the loser of the unique-id race reads the winner's row.
+   */
+  async createFromGoogle(
+    identity: NewGoogleAccount,
   ): Promise<{ user: User; created: boolean }> {
-    const existing = await this.findByPhone(phoneNumber);
-    if (existing) return { user: existing, created: false };
     try {
-      return { user: await this.createWithPhone(phoneNumber), created: true };
+      const user = await this.prisma.user.create({
+        data: {
+          google_sub: identity.sub,
+          email: identity.email,
+          name: identity.name?.trim().slice(0, NAME_MAX) || null,
+        },
+      });
+      return { user, created: true };
     } catch (err) {
       if (!isUniqueViolation(err)) throw err;
-      const winner = await this.findByPhone(phoneNumber);
+      const winner = await this.findByGoogleSub(identity.sub);
       if (!winner) throw err;
       return { user: winner, created: false };
     }
+  }
+
+  /** Keeps the stored email in step with the Google account. */
+  updateEmail(userId: string, email: string): Promise<User> {
+    return this.prisma.user.update({ where: { id: userId }, data: { email } });
+  }
+
+  setAvatarKey(userId: string, avatarKey: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { avatar_key: avatarKey },
+    });
   }
 
   /** Signs the user out everywhere; their phones stop getting reminders too. */

@@ -19,7 +19,7 @@ describe('push devices', () => {
     await resetDb(prisma);
     await clearRateLimitKeys();
     alice = await seedUser(prisma);
-    bob = await seedUser(prisma, { phone_number: '+919999900002' });
+    bob = await seedUser(prisma);
   });
   afterAll(async () => {
     await app.close();

@@ -3,7 +3,9 @@ import Redis from 'ioredis';
 import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Plant, PrismaClient, User } from '@prisma/client';
+import request from 'supertest';
 import { randomUUID } from 'crypto';
+import { fakeGoogleToken } from './fake-google';
 
 /** Empties every application table (keeps migration history). */
 export async function resetDb(prisma: PrismaClient): Promise<void> {
@@ -43,7 +45,8 @@ export async function seedUser(
 ): Promise<User> {
   return prisma.user.create({
     data: {
-      phone_number: `+91${Math.floor(6000000000 + Math.random() * 3999999999)}`,
+      google_sub: `sub-${randomUUID()}`,
+      email: `gardener-${randomUUID()}@example.test`,
       name: 'Test Gardener',
       district: 'Patna',
       ...overrides,
@@ -72,19 +75,14 @@ export function tokenFor(app: INestApplication, user: User): string {
 }
 
 /**
- * Clears rate-limit counters and per-phone code limits: every e2e file shares
- * one IP and one Redis, and runs reuse the same test phone numbers.
+ * Clears rate-limit counters: every e2e file shares one IP and one Redis.
  */
 export async function clearRateLimitKeys(): Promise<void> {
   const redis = new Redis({
     host: process.env.REDIS_HOST,
     port: Number(process.env.REDIS_PORT),
   });
-  const keys = [
-    ...(await redis.keys('{rl:*')),
-    ...(await redis.keys('otp_cooldown:*')),
-    ...(await redis.keys('otp_daily:*')),
-  ];
+  const keys = await redis.keys('{rl:*');
   if (keys.length) await redis.del(...keys);
   redis.disconnect();
 }
@@ -104,4 +102,11 @@ export async function noisePngBase64(bytes: number): Promise<string> {
     .png()
     .toBuffer();
   return png.toString('base64');
+}
+
+/** Signs a seeded user in through POST /auth/google with the fake Google. */
+export function signInWithGoogle(app: INestApplication, user: User) {
+  return request(app.getHttpServer())
+    .post('/api/v1/auth/google')
+    .send({ id_token: fakeGoogleToken(user.google_sub!, user.email!) });
 }

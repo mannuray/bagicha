@@ -10,6 +10,7 @@ import {
   resetDb,
   seedPlant,
   seedUser,
+  signInWithGoogle,
   tokenFor,
 } from './fixtures';
 
@@ -69,12 +70,7 @@ describe('account deletion', () => {
     it('sign-in succeeds and tells the app the deletion date', async () => {
       await markPending(alice);
       await clearRateLimitKeys();
-      const otp = await request(server())
-        .post('/api/v1/auth/request-otp')
-        .send({ phone_number: alice.phone_number });
-      const res = await request(server())
-        .post('/api/v1/auth/verify-otp')
-        .send({ phone_number: alice.phone_number, otp: otp.body.data.dev_otp });
+      const res = await signInWithGoogle(app, alice);
       expect(res.status).toBe(200);
       expect(res.body.data.user.deletion_due_at).not.toBeNull();
     });

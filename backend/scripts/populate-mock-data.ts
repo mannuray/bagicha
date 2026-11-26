@@ -1,16 +1,37 @@
-import { PrismaClient, RecordKind, TreeType, LifecycleStage, GrowthHabit, RecordPattern, LogType, TaskType, TaskPriority, TaskStatus, TaskSource, TaskCategory, RegionCluster, SeasonWindow, DropLevel, YieldQuality } from '@prisma/client';
+import {
+  PrismaClient,
+  RecordKind,
+  TreeType,
+  LifecycleStage,
+  GrowthHabit,
+  RecordPattern,
+  LogType,
+  TaskType,
+  TaskPriority,
+  TaskStatus,
+  TaskSource,
+  TaskCategory,
+  RegionCluster,
+  SeasonWindow,
+  DropLevel,
+  YieldQuality,
+} from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+/** The local mock gardener's stand-in Google id (local databases only). */
+const MOCK_GOOGLE_SUB = 'mock-gardener';
 
 async function main() {
   console.log('🌱 Starting to populate mock data for Malda...');
 
   // 1. Find or Create User
   const user = await prisma.user.upsert({
-    where: { phone_number: '+916202042225' },
+    where: { google_sub: MOCK_GOOGLE_SUB },
     update: {},
     create: {
-      phone_number: '+916202042225',
+      google_sub: MOCK_GOOGLE_SUB,
+      email: 'mock-gardener@example.test',
       name: 'Arjun Sharma',
       district: 'Patna',
       garden_types: ['trees', 'veggies'],
@@ -58,8 +79,12 @@ async function main() {
       stress_score: 0,
       pest_pressure_score: 1,
       treatment_count: 1,
-      cycle_summary: 'Ideal spring transition. Flowering density is at a 5-year high.',
-      recommended_next_cycle_actions: ['Monitor for Hopper activity in early March', 'Apply organic potash'],
+      cycle_summary:
+        'Ideal spring transition. Flowering density is at a 5-year high.',
+      recommended_next_cycle_actions: [
+        'Monitor for Hopper activity in early March',
+        'Apply organic potash',
+      ],
     },
   });
 
@@ -74,13 +99,15 @@ async function main() {
     {
       plant_id: plant.id,
       type: LogType.FLOWERING,
-      content: 'First major flowering cycle. The scent is overwhelming in the sanctuary.',
+      content:
+        'First major flowering cycle. The scent is overwhelming in the sanctuary.',
       timestamp: new Date('2023-02-25'),
     },
     {
       plant_id: plant.id,
       type: LogType.FLOWERING,
-      content: 'Spring 2025: Exceptional bloom. Panicles are large and healthy.',
+      content:
+        'Spring 2025: Exceptional bloom. Panicles are large and healthy.',
       timestamp: new Date('2025-02-12'),
       plant_cycle_id: cycle2025.id,
     },
@@ -93,12 +120,13 @@ async function main() {
       metadata: { fruit_set_strength: 'HIGH' },
     },
     {
-        plant_id: plant.id,
-        type: LogType.PHOTO,
-        content: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBVH-U7sXysGDYsa6cual1c1DqJ8furKsz8F4R2g0No_WnTP7DOhTD5cJuk8zeDxk_d50PDZ-8sBi_g4ZpFV8EwRoF7FlW4Fe9DIyXa0O4QKxuvD3ylC55FYRkON-zat6w5J4cOhfjnEOWAaYm1pFy_dfykFOgt0lZ6eMMPVKsPFH7WYTr1MFCz_p8bP8cdiwkBevCvzuBr4E19GAtF_0mr1w-FLf8g3fbLKTGPQW2Gl-vYYdCa-agAGiq_c6DFqh_fU7HvsiE3aNo',
-        timestamp: new Date('2025-02-15'),
-        plant_cycle_id: cycle2025.id,
-    }
+      plant_id: plant.id,
+      type: LogType.PHOTO,
+      content:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuBVH-U7sXysGDYsa6cual1c1DqJ8furKsz8F4R2g0No_WnTP7DOhTD5cJuk8zeDxk_d50PDZ-8sBi_g4ZpFV8EwRoF7FlW4Fe9DIyXa0O4QKxuvD3ylC55FYRkON-zat6w5J4cOhfjnEOWAaYm1pFy_dfykFOgt0lZ6eMMPVKsPFH7WYTr1MFCz_p8bP8cdiwkBevCvzuBr4E19GAtF_0mr1w-FLf8g3fbLKTGPQW2Gl-vYYdCa-agAGiq_c6DFqh_fU7HvsiE3aNo',
+      timestamp: new Date('2025-02-15'),
+      plant_cycle_id: cycle2025.id,
+    },
   ];
 
   for (const logData of journal_entries) {
@@ -114,7 +142,8 @@ async function main() {
       category: TaskCategory.WATERING,
       priority: TaskPriority.HIGH,
       source: TaskSource.SEASONAL_PACK,
-      reason: 'Malda variety requires consistent deep watering during fruit development to ensure the signature sweetness.',
+      reason:
+        'Malda variety requires consistent deep watering during fruit development to ensure the signature sweetness.',
       due_date: new Date(),
     },
     {
@@ -125,8 +154,8 @@ async function main() {
       priority: TaskPriority.MEDIUM,
       source: TaskSource.SYSTEM,
       reason: 'Ambient temperature in Patna is rising, increasing Hopper risk.',
-      due_date: new Date(Date.now() + 86400000), 
-    }
+      due_date: new Date(Date.now() + 86400000),
+    },
   ];
 
   for (const taskData of tasks) {

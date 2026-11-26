@@ -5,9 +5,12 @@ import { createTestApp } from './app';
 import { User } from '@prisma/client';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { clearRateLimitKeys, seedUser, tokenFor } from './fixtures';
+import { fakeGoogleToken } from './fake-google';
 
-// A fresh phone per request: one phone also has its own one-a-minute cooldown.
+// A fresh Google account per request, so each sign-in is independent.
 let seq = 0;
+const freshToken = () =>
+  fakeGoogleToken(`rl-${++seq}`, `rl-${seq}@example.test`);
 
 describe('rate limiting', () => {
   describe('with Redis available', () => {
@@ -34,9 +37,9 @@ describe('rate limiting', () => {
         const chain = [visitor, `172.71.198.${n}`, `10.29.117.${n}`];
         if (faked) chain.unshift(faked);
         return request(app.getHttpServer())
-          .post('/api/v1/auth/request-otp')
+          .post('/api/v1/auth/google')
           .set('X-Forwarded-For', chain.join(', '))
-          .send({ phone_number: `+9190000${String(++seq).padStart(5, '0')}` });
+          .send({ id_token: freshToken() });
       };
       for (let i = 0; i < 5; i += 1)
         await ask('152.59.155.164', `198.51.100.${i}`);
@@ -44,11 +47,11 @@ describe('rate limiting', () => {
       expect((await ask('152.59.155.200')).status).not.toBe(429);
     });
 
-    it('rejects the 6th OTP request in a minute with RATE_LIMITED', async () => {
+    it('rejects the 6th sign-in in a minute with RATE_LIMITED', async () => {
       const send = () =>
         request(app.getHttpServer())
-          .post('/api/v1/auth/request-otp')
-          .send({ phone_number: `+9199999${String(++seq).padStart(5, '0')}` });
+          .post('/api/v1/auth/google')
+          .send({ id_token: freshToken() });
       for (let i = 0; i < 5; i++) {
         expect((await send()).status).toBe(200);
       }
@@ -58,15 +61,13 @@ describe('rate limiting', () => {
       expect(blocked.body.error.details).toEqual({ bucket: 'auth' });
     });
 
-    it('counts OTP requests per IP even when a valid sign-in token is sent', async () => {
+    it('counts sign-ins per IP even when a valid session token is sent', async () => {
       const prisma = app.get(PrismaService);
       const token = `Bearer ${tokenFor(app, await seedUser(prisma))}`;
       const send = (auth?: string) => {
-        const r = request(app.getHttpServer()).post('/api/v1/auth/request-otp');
+        const r = request(app.getHttpServer()).post('/api/v1/auth/google');
         if (auth) void r.set('Authorization', auth);
-        return r.send({
-          phone_number: `+9198888${String(++seq).padStart(5, '0')}`,
-        });
+        return r.send({ id_token: freshToken() });
       };
       for (let i = 0; i < 5; i++) expect((await send()).status).toBe(200);
       expect((await send(token)).status).toBe(429);
@@ -122,16 +123,16 @@ describe('rate limiting', () => {
     it('fails open: requests still go through', async () => {
       for (let i = 0; i < 7; i++) {
         const res = await request(app.getHttpServer())
-          .post('/api/v1/auth/request-otp')
-          .send({ phone_number: `+9198888${String(++seq).padStart(5, '0')}` });
+          .post('/api/v1/auth/google')
+          .send({ id_token: freshToken() });
         expect(res.status).toBe(200);
       }
     });
 
-    it('still fails closed on OTP verification without a stored code', async () => {
+    it('still refuses a bad Google token', async () => {
       const res = await request(app.getHttpServer())
-        .post('/api/v1/auth/verify-otp')
-        .send({ phone_number: '+919999900003', otp: '000000' });
+        .post('/api/v1/auth/google')
+        .send({ id_token: 'not-a-google-token' });
       expect(res.status).toBe(401);
     });
   });

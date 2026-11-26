@@ -3,7 +3,13 @@ import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp } from './app';
-import { clearRateLimitKeys, resetDb, seedUser, tokenFor } from './fixtures';
+import {
+  clearRateLimitKeys,
+  resetDb,
+  seedUser,
+  signInWithGoogle,
+  tokenFor,
+} from './fixtures';
 
 /** Responses are built field by field: no database row reaches a client. */
 const USER_FIELDS = [
@@ -15,7 +21,7 @@ const USER_FIELDS = [
   'id',
   'language_pref',
   'name',
-  'phone_number',
+  'email',
   'premium_expires_at',
   'region_cluster',
   'reminder_evening_min',
@@ -55,13 +61,7 @@ describe('response allow-lists', () => {
 
   it('sign-in returns the same user view', async () => {
     await clearRateLimitKeys();
-    const server = app.getHttpServer();
-    const otp = await request(server)
-      .post('/api/v1/auth/request-otp')
-      .send({ phone_number: user.phone_number });
-    const res = await request(server)
-      .post('/api/v1/auth/verify-otp')
-      .send({ phone_number: user.phone_number, otp: otp.body.data.dev_otp });
+    const res = await signInWithGoogle(app, user);
     expect(res.status).toBe(200);
     expect(Object.keys(res.body.data.user).sort()).toEqual(USER_FIELDS);
   });

@@ -1,5 +1,8 @@
-import { OAuth2Client } from 'google-auth-library';
-import { ServiceUnavailableError, UnauthorizedError } from '../../common/errors';
+import { OAuth2Client, type TokenPayload } from 'google-auth-library';
+import {
+  ServiceUnavailableError,
+  UnauthorizedError,
+} from '../../common/errors';
 
 /** Who Google says signed in. `sub` is the account's permanent id; email can change. */
 export interface GoogleIdentity {
@@ -36,7 +39,7 @@ export class GoogleAuthLibraryVerifier extends GoogleTokenVerifier {
         'Google sign-in is not set up yet',
       );
     }
-    let payload;
+    let payload: TokenPayload | undefined;
     try {
       const ticket = await this.client.verifyIdToken({
         idToken,

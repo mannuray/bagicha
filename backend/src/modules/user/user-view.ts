@@ -6,7 +6,8 @@ import type { User } from '@prisma/client';
  */
 export interface UserView {
   id: string;
-  phone_number: string;
+  /** The Google account email: in the user's own view only, never shown to others. */
+  email: string | null;
   name: string | null;
   district: string | null;
   region_cluster: User['region_cluster'];
@@ -26,7 +27,7 @@ export interface UserView {
 export function toUserView(user: User): UserView {
   return {
     id: user.id,
-    phone_number: user.phone_number,
+    email: user.email,
     name: user.name,
     district: user.district,
     region_cluster: user.region_cluster,

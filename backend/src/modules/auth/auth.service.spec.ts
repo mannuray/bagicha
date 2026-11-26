@@ -1,253 +1,175 @@
-import { UnauthorizedError } from '../../common/errors';
-import { ConfigService } from '@nestjs/config';
+import { AuditAction } from '../audit';
 import { AuthService } from './auth.service';
-import { otpKey } from './otp-keys';
+import type { GoogleIdentity } from './google-token-verifier';
 
-const PHONE = '+916202042225';
+const IDENTITY: GoogleIdentity = {
+  sub: 'google-sub-1',
+  email: 'asha@example.com',
+  name: 'Asha Devi',
+  picture: 'https://lh3.googleusercontent.com/a/photo',
+};
 
-function build(env: Record<string, string | undefined>) {
-  const store = new Map<string, string>();
-  const redis = {
-    set: jest.fn((k: string, v: string) => {
-      store.set(k, v);
-      return Promise.resolve();
-    }),
-    get: jest.fn((k: string) => Promise.resolve(store.get(k) ?? null)),
-    del: jest.fn((k: string) => {
-      store.delete(k);
-      return Promise.resolve();
-    }),
-    setIfAbsent: jest.fn((k: string, v: string) => {
-      if (store.has(k)) return Promise.resolve(false);
-      store.set(k, v);
-      return Promise.resolve(true);
-    }),
-    incrWithTtl: jest.fn((k: string) => {
-      const next = Number(store.get(k) ?? '0') + 1;
-      store.set(k, String(next));
-      return Promise.resolve(next);
-    }),
+const userRow = (over: Record<string, unknown> = {}) => ({
+  id: 'u1',
+  google_sub: 'google-sub-1',
+  email: 'asha@example.com',
+  name: 'Asha Devi',
+  avatar_key: null,
+  token_version: 3,
+  garden_types: [],
+  ...over,
+});
+
+function build(
+  opts: {
+    bySub?: ReturnType<typeof userRow> | null;
+    claimed?: ReturnType<typeof userRow> | null;
+    created?: ReturnType<typeof userRow>;
+    createdIsNew?: boolean;
+    avatarKey?: string | null;
+    identity?: GoogleIdentity;
+  } = {},
+) {
+  const users = {
+    findByGoogleSub: jest.fn(() => Promise.resolve(opts.bySub ?? null)),
+    claimByEmail: jest.fn(() => Promise.resolve(opts.claimed ?? null)),
+    createFromGoogle: jest.fn(() =>
+      Promise.resolve({
+        user: opts.created ?? userRow(),
+        created: opts.createdIsNew ?? true,
+      }),
+    ),
+    updateEmail: jest.fn((id: string, email: string) =>
+      Promise.resolve(userRow({ id, email })),
+    ),
+    setAvatarKey: jest.fn((id: string, key: string) =>
+      Promise.resolve(userRow({ id, avatar_key: key })),
+    ),
   };
-  const user = { id: 'u1', phone_number: PHONE };
-  const prisma = {
-    findByPhone: jest.fn(() => Promise.resolve(user)),
-    createWithPhone: jest.fn(() => Promise.resolve(user)),
-    findOrCreateByPhone: jest.fn(() =>
-      Promise.resolve({ user, created: false }),
+  const verifier = {
+    verify: jest.fn(() => Promise.resolve(opts.identity ?? IDENTITY)),
+  };
+  const avatars = {
+    importFrom: jest.fn(() =>
+      Promise.resolve(
+        opts.avatarKey === undefined ? 'avatars/u1/x.jpg' : opts.avatarKey,
+      ),
     ),
   };
   const jwt = { sign: jest.fn(() => 'token') };
   const audit = { record: jest.fn(() => Promise.resolve()) };
-  const config = { get: (k: string) => env[k] } as unknown as ConfigService;
-  const logger = {
-    info: jest.fn(),
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  };
   const service = new AuthService(
-    prisma as any,
-    redis as any,
-    jwt as any,
-    config,
-    logger as any,
-    audit as any,
+    users as never,
+    verifier as never,
+    avatars as never,
+    jwt as never,
+    audit as never,
   );
-  return { service, store, audit, prisma, jwt, logger };
+  return { service, users, verifier, avatars, jwt, audit };
 }
 
-describe('AuthService', () => {
-  it('returns the issued OTP for on-screen testing when AUTH_EXPOSE_OTP is on', async () => {
-    const { service, store } = build({
-      NODE_ENV: 'development',
-      AUTH_EXPOSE_OTP: 'true',
+describe('AuthService.signInWithGoogle', () => {
+  it('signs in an existing Google account and refreshes its email', async () => {
+    const t = build({
+      bySub: userRow({ email: 'old@example.com' }),
+      identity: { ...IDENTITY, email: 'new@example.com' },
     });
-    const res = await service.requestOtp(PHONE);
+    const res = await t.service.signInWithGoogle('tok');
+    expect(t.verifier.verify).toHaveBeenCalledWith('tok');
+    expect(t.users.updateEmail).toHaveBeenCalledWith('u1', 'new@example.com');
+    expect(t.users.createFromGoogle).not.toHaveBeenCalled();
+    expect(t.avatars.importFrom).not.toHaveBeenCalled();
     expect(res).toEqual({
-      message: 'OTP sent successfully',
-      dev_otp: store.get(otpKey(PHONE)),
-    });
-  });
-
-  it('never returns the OTP unless AUTH_EXPOSE_OTP is on', async () => {
-    const { service } = build({ NODE_ENV: 'development' });
-    expect(await service.requestOtp(PHONE)).toEqual({
-      message: 'OTP sent successfully',
-    });
-  });
-
-  it('never returns the OTP in production, even if AUTH_EXPOSE_OTP is set', async () => {
-    const { service } = build({
-      NODE_ENV: 'production',
-      AUTH_EXPOSE_OTP: 'true',
-    });
-    expect(await service.requestOtp(PHONE)).toEqual({
-      message: 'OTP sent successfully',
-    });
-  });
-
-  it('rejects the old hard-coded backdoor when no dev OTP is configured', async () => {
-    const { service } = build({ NODE_ENV: 'development' });
-    await expect(service.verifyOtp(PHONE, '123456')).rejects.toBeInstanceOf(
-      UnauthorizedError,
-    );
-  });
-
-  it('accepts the configured dev OTP outside production', async () => {
-    const { service } = build({
-      NODE_ENV: 'development',
-      AUTH_DEV_OTP_PHONE: PHONE,
-      AUTH_DEV_OTP_CODE: '123456',
-    });
-    await expect(service.verifyOtp(PHONE, '123456')).resolves.toMatchObject({
       access_token: 'token',
+      user: expect.objectContaining({ id: 'u1', email: 'new@example.com' }),
     });
   });
 
-  it('ignores the dev OTP in production', async () => {
-    const { service } = build({
-      NODE_ENV: 'production',
-      AUTH_DEV_OTP_PHONE: PHONE,
-      AUTH_DEV_OTP_CODE: '123456',
+  it('claims the one unclaimed account with the same email, keeping its name and photo', async () => {
+    const t = build({
+      claimed: userRow({
+        id: 'old',
+        name: 'Mannu',
+        avatar_key: 'avatars/old/a.jpg',
+      }),
     });
-    await expect(service.verifyOtp(PHONE, '123456')).rejects.toBeInstanceOf(
-      UnauthorizedError,
+    const res = await t.service.signInWithGoogle('tok');
+    expect(t.users.claimByEmail).toHaveBeenCalledWith(
+      'google-sub-1',
+      'asha@example.com',
+    );
+    expect(t.users.createFromGoogle).not.toHaveBeenCalled();
+    expect(t.avatars.importFrom).not.toHaveBeenCalled();
+    expect(res.user).toEqual(
+      expect.objectContaining({
+        id: 'old',
+        name: 'Mannu',
+        avatar_key: 'avatars/old/a.jpg',
+      }),
     );
   });
 
-  it('never puts the phone number in a Redis key (Redis keys reach traces)', async () => {
-    const { service, store } = build({ NODE_ENV: 'development' });
-    await service.requestOtp(PHONE);
-    await service.verifyOtp(PHONE, '000000').catch(() => undefined);
-    const digits = PHONE.replace(/\D/g, '');
-    expect([...store.keys()].some((k) => k.includes(digits))).toBe(false);
-    expect(store.size).toBeGreaterThan(0);
+  it('creates an account with the Google name and photo when nothing matches', async () => {
+    const t = build({ created: userRow({ id: 'new', avatar_key: null }) });
+    const res = await t.service.signInWithGoogle('tok');
+    expect(t.users.createFromGoogle).toHaveBeenCalledWith(IDENTITY);
+    expect(t.avatars.importFrom).toHaveBeenCalledWith(
+      'new',
+      'https://lh3.googleusercontent.com/a/photo',
+    );
+    expect(t.users.setAvatarKey).toHaveBeenCalledWith(
+      'new',
+      'avatars/u1/x.jpg',
+    );
+    expect(res.user.avatar_key).toBe('avatars/u1/x.jpg');
   });
 
-  it('signs a token carrying only the user id, never the phone number', async () => {
-    const { service, store, jwt } = build({ NODE_ENV: 'development' });
-    await service.requestOtp(PHONE);
-    await service.verifyOtp(PHONE, store.get(otpKey(PHONE)) as string);
-    expect(jwt.sign).toHaveBeenCalledWith({ sub: 'u1' });
+  it('does not import a photo when the race was lost to an earlier sign-in', async () => {
+    const t = build({ createdIsNew: false });
+    await t.service.signInWithGoogle('tok');
+    expect(t.avatars.importFrom).not.toHaveBeenCalled();
   });
 
-  it('never logs the issued code (it is shown on screen only where AUTH_EXPOSE_OTP allows)', async () => {
-    const { service, logger } = build({
-      NODE_ENV: 'development',
-      AUTH_EXPOSE_OTP: 'true',
-    });
-    await service.requestOtp(PHONE);
-    for (const level of ['debug', 'info', 'warn', 'error'] as const)
-      expect(logger[level]).not.toHaveBeenCalled();
+  it('skips the photo when Google has none', async () => {
+    const t = build({ identity: { ...IDENTITY, picture: null } });
+    await t.service.signInWithGoogle('tok');
+    expect(t.avatars.importFrom).not.toHaveBeenCalled();
   });
 
-  it('one phone can ask for a code once a minute, and 10 times a day', async () => {
-    const { service, store } = build({ NODE_ENV: 'development' });
-    await service.requestOtp(PHONE);
-    await expect(service.requestOtp(PHONE)).rejects.toMatchObject({
-      reason: 'OTP_COOLDOWN',
-    });
-    for (let i = 0; i < 9; i += 1) {
-      for (const k of [...store.keys()])
-        if (k.startsWith('otp_cooldown:')) store.delete(k);
-      await service.requestOtp(PHONE);
-    }
-    for (const k of [...store.keys()])
-      if (k.startsWith('otp_cooldown:')) store.delete(k);
-    await expect(service.requestOtp(PHONE)).rejects.toMatchObject({
-      reason: 'OTP_DAILY_LIMIT',
-    });
+  it('still signs in when the photo import fails', async () => {
+    const t = build({ avatarKey: null, created: userRow({ id: 'new' }) });
+    const res = await t.service.signInWithGoogle('tok');
+    expect(t.users.setAvatarKey).not.toHaveBeenCalled();
+    expect(res.access_token).toBe('token');
+    expect(res.user.avatar_key).toBeNull();
   });
 
-  it("someone else using up a phone's daily codes does not lock its owner out", async () => {
-    const { service, store } = build({ NODE_ENV: 'development' });
-    const clearCooldown = () => {
-      for (const k of [...store.keys()])
-        if (k.startsWith('otp_cooldown:')) store.delete(k);
-    };
-    for (let i = 0; i < 10; i += 1) {
-      clearCooldown();
-      await service.requestOtp(PHONE, '198.51.100.7');
-    }
-    clearCooldown();
-    await expect(
-      service.requestOtp(PHONE, '198.51.100.7'),
-    ).rejects.toMatchObject({
-      reason: 'OTP_DAILY_LIMIT',
-    });
-    clearCooldown();
-    await expect(
-      service.requestOtp(PHONE, '203.0.113.9'),
-    ).resolves.toMatchObject({
-      message: expect.any(String),
-    });
-  });
-
-  it('asking for a new code does not reset the wrong-guess count', async () => {
-    const { service, store } = build({ NODE_ENV: 'development' });
-    await service.requestOtp(PHONE);
-    for (let i = 0; i < 3; i += 1)
-      await service.verifyOtp(PHONE, '000000').catch(() => undefined);
-    for (const k of [...store.keys()])
-      if (k.startsWith('otp_cooldown:')) store.delete(k);
-    await service.requestOtp(PHONE);
-    const fail = [...store.entries()].find(([k]) => k.startsWith('otp_fail:'));
-    expect(fail?.[1]).toBe('3');
-  });
-
-  it('stores a 6-digit OTP without using Math.random', async () => {
-    const spy = jest.spyOn(Math, 'random');
-    const { service, store } = build({ NODE_ENV: 'development' });
-    await service.requestOtp(PHONE);
-    expect(spy).not.toHaveBeenCalled();
-    expect(store.get(otpKey(PHONE))).toMatch(/^\d{6}$/);
-    spy.mockRestore();
-  });
-
-  it('accepts the OTP it stored, once', async () => {
-    const { service, store } = build({ NODE_ENV: 'development' });
-    await service.requestOtp(PHONE);
-    const otp = store.get(otpKey(PHONE)) as string;
-    await expect(service.verifyOtp(PHONE, otp)).resolves.toBeDefined();
-    await expect(service.verifyOtp(PHONE, otp)).rejects.toBeInstanceOf(
-      UnauthorizedError,
+  it('audits sign-in with user id, is_new_user and claimed_existing only', async () => {
+    const t = build({ claimed: userRow({ id: 'old' }) });
+    await t.service.signInWithGoogle('tok');
+    expect(t.audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorUserId: 'old',
+        action: AuditAction.AUTH_SIGNED_IN,
+        snapshot: {
+          user_id: 'old',
+          is_new_user: false,
+          claimed_existing: true,
+        },
+      }),
     );
   });
 
-  it('records one AUTH_SIGNED_IN audit event without the OTP', async () => {
-    const { service, store, audit } = build({ NODE_ENV: 'development' });
-    await service.requestOtp(PHONE);
-    const otp = store.get(otpKey(PHONE)) as string;
-    await service.verifyOtp(PHONE, otp);
-    expect(audit.record).toHaveBeenCalledTimes(1);
-    const [event] = audit.record.mock.calls[0] as unknown as [any];
-    expect(event).toMatchObject({
-      actorUserId: 'u1',
-      action: 'AUTH_SIGNED_IN',
-      targetType: 'user',
-      targetId: 'u1',
-      snapshot: {
-        user_id: 'u1',
-        phone_number_last4: '2225',
-        is_new_user: false,
-      },
-    });
-    expect(JSON.stringify(event)).not.toContain(otp);
+  it('token carries sub and token version only', async () => {
+    const t = build({ bySub: userRow() });
+    await t.service.signInWithGoogle('tok');
+    expect(t.jwt.sign).toHaveBeenCalledWith({ sub: 'u1', tv: 3 });
   });
 
-  it('burns the OTP after 5 wrong guesses, so the right code then fails', async () => {
-    const { service, store } = build({ NODE_ENV: 'development' });
-    await service.requestOtp(PHONE);
-    const otp = store.get(otpKey(PHONE)) as string;
-    const wrong = otp === '000000' ? '111111' : '000000';
-    for (let i = 0; i < 5; i++) {
-      await expect(service.verifyOtp(PHONE, wrong)).rejects.toBeInstanceOf(
-        UnauthorizedError,
-      );
-    }
-    expect(store.has(otpKey(PHONE))).toBe(false);
-    await expect(service.verifyOtp(PHONE, otp)).rejects.toBeInstanceOf(
-      UnauthorizedError,
-    );
+  it('does not sign in when the token is refused', async () => {
+    const t = build();
+    t.verifier.verify.mockRejectedValueOnce(new Error('AUTH_GOOGLE_INVALID'));
+    await expect(t.service.signInWithGoogle('bad')).rejects.toThrow();
+    expect(t.jwt.sign).not.toHaveBeenCalled();
   });
 });
