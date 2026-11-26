@@ -39,7 +39,8 @@ describe('outcomeOf', () => {
   it.each([
     ['messaging/registration-token-not-registered', 'invalid-token'],
     ['messaging/invalid-registration-token', 'invalid-token'],
-    ['messaging/invalid-argument', 'invalid-token'],
+    // Also sent for a malformed message: a payload bug must not wipe every phone.
+    ['messaging/invalid-argument', 'failed'],
     ['messaging/internal-error', 'failed'],
     ['messaging/server-unavailable', 'failed'],
   ])('%s → %s', (code, outcome) => {

@@ -152,14 +152,39 @@ describe('ReminderDispatchService', () => {
     expect(summary).toMatchObject({ sent: 1, tokensRemoved: 1 });
   });
 
-  it('frees the slot for a retry when every phone failed', async () => {
-    const { service, sends } = setup({
+  it('frees the slot and fails the job, so its retry sends it, when every phone failed', async () => {
+    const { service, sends, sent } = setup({
       now: MORNING,
-      outcomes: (t) => t.map(() => 'failed' as const),
+      users: [user('u1'), user('u2')],
+      outcomes: (t) =>
+        t[0] === 'tok-u1' ? ['failed'] : t.map(() => 'sent' as const),
     });
-    const summary = await service.run();
+    await expect(service.run()).rejects.toMatchObject({
+      reason: 'PUSH_RETRY',
+    });
     expect(sends.release).toHaveBeenCalledWith('u1', 'MORNING', '2026-11-27');
-    expect(summary).toMatchObject({ failed: 1, sent: 0 });
+    expect(sent).toHaveLength(2);
+    // The retry: u2 already has it, u1 is tried again.
+    sent.length = 0;
+    await expect(service.run()).rejects.toMatchObject({ reason: 'PUSH_RETRY' });
+    expect(sent.map((s) => s.tokens)).toEqual([['tok-u1']]);
+  });
+
+  it('gives a gardener’s slot back when their tasks cannot be loaded, finishes the others, then fails the job', async () => {
+    const { service, sends, tasks, sent } = setup({
+      now: MORNING,
+      users: [user('u1'), user('u2'), user('u3')],
+    });
+    tasks.reminderTasks.mockImplementation((userId: string) =>
+      userId === 'u2'
+        ? Promise.reject(new Error('pool timeout'))
+        : Promise.resolve([view()]),
+    );
+    await expect(service.run()).rejects.toMatchObject({
+      reason: 'PUSH_RETRY',
+    });
+    expect(sends.release).toHaveBeenCalledWith('u2', 'MORNING', '2026-11-27');
+    expect(sent.map((s) => s.tokens)).toEqual([['tok-u1'], ['tok-u3']]);
   });
 
   it('asks for tomorrow’s weather tasks in the evening only', async () => {

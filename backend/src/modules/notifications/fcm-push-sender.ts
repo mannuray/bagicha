@@ -13,11 +13,14 @@ import {
   type SendOutcome,
 } from './push-sender';
 
-/** Error codes meaning the token will never work again: the phone is forgotten. */
+/**
+ * Error codes meaning the token will never work again: the phone is forgotten.
+ * Not `invalid-argument`: FCM also sends it for a malformed message, and a
+ * payload bug must not wipe every phone.
+ */
 const DEAD_TOKEN_CODES = new Set([
   'messaging/registration-token-not-registered',
   'messaging/invalid-registration-token',
-  'messaging/invalid-argument',
 ]);
 
 /** High priority, so phones that hold back background apps (Xiaomi and others) still show it. */

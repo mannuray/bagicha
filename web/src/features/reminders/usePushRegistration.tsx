@@ -35,7 +35,7 @@ function usePushRegistration(): void {
     void (async () => {
       await port.ensureChannel();
       if ((await port.permission()) === 'granted') await port.register();
-    })().catch(() => undefined); // No Firebase config on this build: reminders simply stay off.
+    })().catch(() => undefined); // Registration failed (no network, Play services missing): try again next launch.
   }, [port, userId]);
 }
 

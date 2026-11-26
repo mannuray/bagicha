@@ -53,7 +53,18 @@ const nativePush: PushPort = {
   ensureChannel: () => PushNotifications.createChannel({ ...CHANNEL }),
 };
 
-export const capacitorPush: PushPort = Capacitor.isNativePlatform() ? nativePush : webPush;
+/**
+ * The phone's push service only on a phone build made with google-services.json:
+ * without it, registering throws inside Firebase and crashes the app.
+ */
+export function pushPortFor(build: { native: boolean; firebaseConfigured: boolean }): PushPort {
+  return build.native && build.firebaseConfigured ? nativePush : webPush;
+}
+
+export const capacitorPush: PushPort = pushPortFor({
+  native: Capacitor.isNativePlatform(),
+  firebaseConfigured: __FIREBASE_CONFIGURED__,
+});
 
 const PushPortContext = createContext<PushPort>(capacitorPush);
 export const PushPortProvider = PushPortContext.Provider;

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { RegionCluster, ReminderSlot } from '@prisma/client';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import type { Lang } from '../../common/http/lang';
+import { UpstreamError } from '../../common/errors';
 import { addDays, Clock } from '../../common/time';
 import { PlantNamesService, TaskService } from '../plant-ledger';
 import { regionFor } from '../regions';
@@ -21,6 +22,8 @@ export interface ReminderRunSummary {
   sent: number;
   empty: number;
   failed: number;
+  /** Gardeners whose slot was given back for the job's retry. */
+  retry: number;
   tokensRemoved: number;
   staleRemoved: number;
   sendsPruned: number;
@@ -66,6 +69,7 @@ export class ReminderDispatchService {
       sent: 0,
       empty: 0,
       failed: 0,
+      retry: 0,
       tokensRemoved: 0,
       staleRemoved: 0,
       sendsPruned: 0,
@@ -84,6 +88,14 @@ export class ReminderDispatchService {
       addDays(now, -KEEP_SENDS_DAYS),
     );
     this.logger.info({ ...summary }, 'push reminders run');
+    if (summary.retry > 0) {
+      // BullMQ retries only a failed job; gardeners already reminded keep their claim and are skipped.
+      throw new UpstreamError(
+        'PUSH_RETRY',
+        'Some reminders could not be sent; the job will retry them',
+        { retry: summary.retry },
+      );
+    }
     return summary;
   }
 
@@ -115,30 +127,54 @@ export class ReminderDispatchService {
 
       for (const user of users) {
         if (!(await this.sends.claim(user.id, slot, istDate))) continue;
-        const lang: Lang = user.language_pref === 'hi' ? 'hi' : 'en';
-        const due = await this.tasks.reminderTasks(
-          user.id,
-          window,
-          await namesFor(lang, user),
-        );
-        const message = composeReminder(
-          due.map((t) => toReminderTask(t, window.to)),
-          lang,
-        );
-        if (!message) {
-          summary.empty += 1;
-          continue;
+        try {
+          await this.remind(
+            user,
+            tokens.get(user.id) ?? [],
+            window,
+            namesFor,
+            { slot, istDate },
+            summary,
+          );
+        } catch {
+          // A failure for one gardener (a database blip) must not cost them the day's reminder.
+          await this.sends.release(user.id, slot, istDate);
+          summary.retry += 1;
         }
-        await this.deliver(
-          user.id,
-          tokens.get(user.id) ?? [],
-          { ...message, route: '/tasks' },
-          { slot, istDate },
-          summary,
-        );
       }
       if (users.length < BATCH_SIZE) break;
     }
+  }
+
+  private async remind(
+    user: ReminderUser,
+    tokens: string[],
+    window: { from: Date; to: Date; weatherUntil: Date | null },
+    namesFor: ReturnType<ReminderDispatchService['namesCache']>,
+    at: { slot: ReminderSlot; istDate: string },
+    summary: ReminderRunSummary,
+  ): Promise<void> {
+    const lang: Lang = user.language_pref === 'hi' ? 'hi' : 'en';
+    const due = await this.tasks.reminderTasks(
+      user.id,
+      window,
+      await namesFor(lang, user),
+    );
+    const message = composeReminder(
+      due.map((t) => toReminderTask(t, window.to)),
+      lang,
+    );
+    if (!message) {
+      summary.empty += 1;
+      return;
+    }
+    await this.deliver(
+      user.id,
+      tokens,
+      { ...message, route: '/tasks' },
+      at,
+      summary,
+    );
   }
 
   private async deliver(
@@ -160,6 +196,7 @@ export class ReminderDispatchService {
     if (outcomes.length > 0 && outcomes.every((o) => o === 'failed')) {
       // Nothing reached any phone: free the slot so the job's retry can send it.
       await this.sends.release(userId, at.slot, at.istDate);
+      summary.retry += 1;
     }
     summary.failed += 1;
   }

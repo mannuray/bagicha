@@ -4,6 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   plugins: [react()],
   css: true,
+  define: { __FIREBASE_CONFIGURED__: 'false' },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
