@@ -50,7 +50,8 @@
   },
   "auth": {
     "splash": {
-      "tagline": "Your orchard's memory"
+      "tagline": "Your orchard's memory",
+      "grows": "Fruit · Vegetables · Flowers"
     },
     "login": {
       "title": "Your Garden Awaits",
