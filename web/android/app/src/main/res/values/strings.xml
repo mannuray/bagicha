@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Bagicha</string>
-    <string name="title_activity_main">Bagicha</string>
-    <string name="package_name">com.bagicha.app</string>
-    <string name="custom_url_scheme">com.bagicha.app</string>
+    <string name="app_name">Budtale</string>
+    <string name="title_activity_main">Budtale</string>
+    <string name="package_name">com.budtale.app</string>
+    <string name="custom_url_scheme">com.budtale.app</string>
 </resources>

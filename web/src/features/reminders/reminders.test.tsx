@@ -190,7 +190,7 @@ describe('reminders in the profile', () => {
 
   it('explains how to turn notifications back on when the phone blocks them', async () => {
     renderSection(fakePort({ permission: 'denied' }).port);
-    expect(await screen.findByText('Notifications are off for Bagicha on this phone.')).toBeInTheDocument();
+    expect(await screen.findByText('Notifications are off for Budtale on this phone.')).toBeInTheDocument();
   });
 
   it('is not shown on the website', async () => {

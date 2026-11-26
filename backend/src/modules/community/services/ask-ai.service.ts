@@ -130,7 +130,7 @@ export class AskAiService {
 
     const knowledge = await this.relevantKnowledge(dto.question, speciesFamily);
     const prompt = `
-You are the Bagicha AI plant assistant for Indian gardeners and small orchards.
+You are the Budtale AI plant assistant for Indian gardeners and small orchards.
 
 Plant context:
 ${fenced(plantContext) || '(no specific plant context provided)'}

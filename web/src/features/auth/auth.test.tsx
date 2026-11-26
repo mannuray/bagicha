@@ -41,9 +41,9 @@ function AuthRoutes() {
 }
 
 describe('login', () => {
-  it('shows the Bagicha logo, the same mark as the browser icon', () => {
+  it('shows the Budtale logo, the same mark as the browser icon', () => {
     renderWithApp(<LoginScreen />, { route: '/login', user: null });
-    expect(screen.getByRole('img', { name: /bagicha logo/i })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /budtale logo/i })).toBeInTheDocument();
   });
 
   it('shows the Stitch mango-leaf photo behind the login header', () => {
@@ -216,12 +216,12 @@ describe('guards', () => {
 });
 
 describe('splash', () => {
-  it('shows the name, the tagline and what Bagicha grows, with the real logo', () => {
+  it('shows the name, the tagline and what Budtale grows, with the real logo', () => {
     renderWithApp(<SplashScreen />, { route: '/splash', user: null });
-    expect(screen.getByRole('heading', { name: 'Bagicha' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Budtale' })).toBeInTheDocument();
     expect(screen.getByText("Your orchard's memory")).toBeInTheDocument();
     expect(screen.getByText('Fruit · Vegetables · Flowers')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Bagicha logo' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Budtale logo' })).toBeInTheDocument();
   });
 
   it('sends a returning user who only lacks a region straight to the region step', async () => {

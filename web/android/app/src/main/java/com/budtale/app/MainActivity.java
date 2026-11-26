@@ -1,4 +1,4 @@
-package com.bagicha.app;
+package com.budtale.app;
 
 import com.getcapacitor.BridgeActivity;
 
