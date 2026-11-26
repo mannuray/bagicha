@@ -19,10 +19,19 @@ describe('composeReminder', () => {
   it('says one task in the singular, with no "+more"', () => {
     expect(
       composeReminder(
-        [task({ type: 'WATER', title: 'Water the plant', plantName: 'Tomato' })],
+        [
+          task({
+            type: 'WATER',
+            title: 'Water the plant',
+            plantName: 'Tomato',
+          }),
+        ],
         'en',
       ),
-    ).toEqual({ title: '1 garden task today', body: 'Water the plant (Tomato)' });
+    ).toEqual({
+      title: '1 garden task today',
+      body: 'Water the plant (Tomato)',
+    });
   });
 
   it('puts watering first, then high priority, then counts the rest', () => {
