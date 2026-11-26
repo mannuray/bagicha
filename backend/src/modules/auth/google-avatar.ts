@@ -48,15 +48,34 @@ export class GoogleAvatarImporter {
     if (protocol !== 'https:' || !hostname.endsWith('.googleusercontent.com')) {
       throw new Error('not a Google photo URL');
     }
+    // No redirects: the host check above must hold for the bytes we read.
     const res = await fetch(url, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      redirect: 'follow',
+      redirect: 'error',
     });
-    if (!res.ok) throw new Error(`status ${res.status}`);
+    if (!res.ok || !res.body) throw new Error(`status ${res.status}`);
     const declared = Number(res.headers.get('content-length') ?? '0');
     if (declared > MAX_UPLOAD_BYTES) throw new Error('too large');
-    const buffer = Buffer.from(await res.arrayBuffer());
-    if (buffer.length > MAX_UPLOAD_BYTES) throw new Error('too large');
-    return buffer;
+    return readCapped(res.body, MAX_UPLOAD_BYTES);
+  }
+}
+
+/** Reads a body, giving up as soon as it passes `cap` bytes (a missing length can't make us read it all). */
+async function readCapped(
+  body: ReadableStream<Uint8Array>,
+  cap: number,
+): Promise<Buffer> {
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) return Buffer.concat(chunks);
+    total += value.length;
+    if (total > cap) {
+      await reader.cancel();
+      throw new Error('too large');
+    }
+    chunks.push(value);
   }
 }
