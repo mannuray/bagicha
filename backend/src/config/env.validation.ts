@@ -21,6 +21,8 @@ export interface Env {
   OPEN_METEO_API_KEY?: string;
   /** OpenWeatherMap API key; required when WEATHER_PROVIDERS lists openweathermap. */
   OPENWEATHERMAP_API_KEY?: string;
+  /** Firebase service-account JSON, base64; push reminders are off without it. Never logged. */
+  FCM_SERVICE_ACCOUNT?: string;
   /** Sentry project DSN; crash reports are off without it. */
   SENTRY_DSN?: string;
   LOG_LEVEL?: string;

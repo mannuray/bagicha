@@ -102,6 +102,7 @@ Secrets live only in the Render dashboard and the Neon console, never in git. Se
 | `WEATHER_PROVIDERS` | `render.yaml` (optional) | Ordered weather sources, first tried first, e.g. `open-meteo`. Unset means `open-meteo`; `none` turns weather off. An unknown name stops the API from starting. |
 | `OPEN_METEO_API_KEY` | Render (optional) | Open-Meteo's paid API, required once the app is commercial. Without it the free, non-commercial API is used (a warning is logged in production). Secret. |
 | `OPENWEATHERMAP_API_KEY` | Render (required when `WEATHER_PROVIDERS` lists `openweathermap`) | OpenWeatherMap free API key (current weather + 5-day/3-hour forecast). The API refuses to start if the provider is listed without it. A new key can take a couple of hours to activate (401 until then). Secret. |
+| `FCM_SERVICE_ACCOUNT` | Render (optional) | Firebase service-account JSON for push reminders, base64-encoded on one line (`base64 -i key.json`). Without it the API starts and sends no pushes (one warning at boot); an unreadable value stops it starting. Secret. |
 | `SENTRY_DSN` | Render (optional) | Crash reports from the API to Sentry. Off when unset. |
 | `VITE_SENTRY_DSN` | Vercel (optional) | Crash reports from the web app to Sentry. Off when unset; takes effect on the next build. |
 | `VITE_SUPPORT_EMAIL` | Vercel | The address on the public `/delete-account` page for people who can't sign in. The line is hidden when unset. |
