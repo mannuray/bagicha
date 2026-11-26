@@ -13,7 +13,7 @@ const TAP_ROUTES = new Set(['/tasks']);
  * itself), sends the token to the server, and opens the tasks screen when a
  * reminder is tapped.
  */
-export function usePushRegistration(): void {
+function usePushRegistration(): void {
   const port = usePushPort();
   const navigate = useNavigate();
   const { user } = useSession();

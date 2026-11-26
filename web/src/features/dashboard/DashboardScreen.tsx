@@ -4,6 +4,7 @@ import orchardPhoto from '../../assets/stitch/dashboard-orchard.jpg';
 import { EmptyState, ErrorState, Icon, LoadingState, Pebble, Screen, SeeAllLink } from '../../ui';
 import { AddToGardenSheet } from '../crops';
 import { TaskGroups } from '../tasks';
+import { RemindersCard } from '../reminders';
 import { WeatherCard } from '../weather';
 import { useDashboard } from './useDashboard';
 
@@ -32,6 +33,7 @@ export function DashboardScreen() {
       </header>
 
       <main className="relative z-10 -mt-6 space-y-5 px-4">
+        <RemindersCard />
         <WeatherCard />
         <section aria-labelledby="week-heading" className="space-y-2 rounded-xl bg-surface pt-3">
           <div className="flex items-center justify-between px-2">
