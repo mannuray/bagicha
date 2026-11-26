@@ -34,6 +34,8 @@ const ALLOWED = new Set([
   'treeCareCount',
   'seasonGuideCount',
   'adviceCount',
+  'provider',
+  'cell',
 ]);
 
 /** Internal ids and counts are fine to log; values about a person are not. */

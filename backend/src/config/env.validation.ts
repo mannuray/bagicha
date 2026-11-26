@@ -19,6 +19,8 @@ export interface Env {
   WEATHER_PROVIDERS?: string;
   /** Open-Meteo paid API key; required for commercial use. */
   OPEN_METEO_API_KEY?: string;
+  /** OpenWeatherMap API key; required when WEATHER_PROVIDERS lists openweathermap. */
+  OPENWEATHERMAP_API_KEY?: string;
   /** Sentry project DSN; crash reports are off without it. */
   SENTRY_DSN?: string;
   LOG_LEVEL?: string;

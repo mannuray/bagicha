@@ -103,6 +103,19 @@ describe('structured logging', () => {
     expect(raw).not.toContain('curl');
   });
 
+  it('keeps which weather provider and grid cell failed (the cell is a rounded 0.1° square, not a person)', () => {
+    const { logger, lines } = capture();
+    logger.warn(
+      { provider: 'Open-Meteo', cell: '25.6,85.1', status: 429 },
+      'Weather provider failed',
+    );
+    expect(lines[0]).toMatchObject({
+      provider: 'Open-Meteo',
+      cell: '25.6,85.1',
+      status: 429,
+    });
+  });
+
   it('only allow-listed fields reach a line: personal fields are dropped, ids and counts kept', () => {
     const { logger, lines } = capture();
     logger.info(

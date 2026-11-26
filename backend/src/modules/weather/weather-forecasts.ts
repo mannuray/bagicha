@@ -1,5 +1,6 @@
 import type { PinoLogger } from 'nestjs-pino';
 import { z } from 'zod';
+import { AppError } from '../../common/errors';
 import type { RedisService } from '../../common/redis/redis.service';
 import type { Forecast } from './domain/forecast';
 import type { GridCell } from './domain/grid-cell';
@@ -96,7 +97,12 @@ export class WeatherForecasts {
       ]);
     } catch (err: unknown) {
       this.logger.warn(
-        { err, provider: provider.name, cell: cell.key },
+        {
+          err,
+          provider: provider.name,
+          cell: cell.key,
+          status: err instanceof AppError ? err.details?.status : undefined,
+        },
         'Weather provider failed',
       );
       return null;
