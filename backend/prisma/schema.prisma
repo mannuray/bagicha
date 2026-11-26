@@ -267,6 +267,10 @@ model User {
   deletion_requested_at DateTime?
   /// When the account is erased for good (30 days after the request). Non-null = pending deletion.
   deletion_due_at       DateTime?
+  /// Morning reminder time, minutes after midnight IST (06:00–11:45, 15-minute steps); null = off.
+  reminder_morning_min  Int?             @default(420) @db.SmallInt
+  /// Evening reminder time, minutes after midnight IST (15:00–21:45, 15-minute steps); null = off.
+  reminder_evening_min  Int?             @default(1080) @db.SmallInt
   created_at            DateTime         @default(now())
   updated_at            DateTime         @updatedAt
 
@@ -278,8 +282,12 @@ model User {
   verifications         ExpertVerification?
   personalized_overlays PersonalizedOverlay[]
   garden_places         GardenPlace[]
+  push_devices          PushDevice[]
+  reminder_sends        ReminderSend[]
 
   @@index([deletion_due_at])
+  @@index([reminder_morning_min])
+  @@index([reminder_evening_min])
   @@map("users")
 }
 
@@ -889,4 +897,46 @@ model CatalogueMeta {
   version Int @default(0)
 
   @@map("catalogue_meta")
+}
+
+enum PushPlatform {
+  ANDROID
+}
+
+enum ReminderSlot {
+  MORNING
+  EVENING
+}
+
+/// A phone that receives garden reminders. The token belongs to whoever registered it last.
+model PushDevice {
+  id           String       @id @default(uuid())
+  user_id      String
+  /// FCM registration token; never logged.
+  token        String       @unique
+  platform     PushPlatform
+  created_at   DateTime     @default(now())
+  /// Refreshed on every registration; devices unseen for 60 days are dropped.
+  last_seen_at DateTime     @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([last_seen_at])
+  @@map("push_devices")
+}
+
+/// One row per reminder slot handled for a user on an IST date: the guard against sending a slot twice.
+model ReminderSend {
+  user_id    String
+  slot       ReminderSlot
+  /// IST calendar date, YYYY-MM-DD.
+  ist_date   String
+  created_at DateTime     @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, slot, ist_date])
+  @@index([created_at])
+  @@map("reminder_sends")
 }
