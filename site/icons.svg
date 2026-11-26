@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <!-- Line icons for the Budtale website, used as <svg class="icon"><use href="/icons.svg#name"/></svg>. -->
+  <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+  <symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19C5 11 10 5 19 5c0 9-6 14-14 14zM5 19l7-7"/></symbol>
+  <symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="book" viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2 2 2 0 0 0 2 2h13M8 7h7"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="cloud" viewBox="0 0 24 24"><path d="M7 19h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 11.5 3.75 3.75 0 0 0 7 19zM15 3.5V2M19.5 5.5l1-1M21 10h1.5"/></symbol>
+  <symbol id="camera" viewBox="0 0 24 24"><path d="M3 8h4l2-3h6l2 3h4v12H3z"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
+  <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="warning" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 18h.01"/></symbol>
+  <symbol id="phone" viewBox="0 0 24 24"><rect x="6.5" y="2" width="11" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
+  <symbol id="translate" viewBox="0 0 24 24"><path d="M3 5h9M7.5 3v2M5.5 5c0 4 2.5 7 6 8M9.5 5c0 4-2.5 7-6.5 8M13 21l4-9 4 9M14.4 18h5.2"/></symbol>
+  <symbol id="sprout" viewBox="0 0 24 24"><path d="M12 21v-8M12 13C12 9 9 7 5 7c0 4 3 6 7 6zM12 11c0-4 3-6 7-6 0 4-3 6-7 6zM7 21h10"/></symbol>
+</svg>
