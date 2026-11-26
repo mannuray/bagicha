@@ -216,6 +216,14 @@ describe('guards', () => {
 });
 
 describe('splash', () => {
+  it('shows the name, the tagline and what Bagicha grows, with the real logo', () => {
+    renderWithApp(<SplashScreen />, { route: '/splash', user: null });
+    expect(screen.getByRole('heading', { name: 'Bagicha' })).toBeInTheDocument();
+    expect(screen.getByText("Your orchard's memory")).toBeInTheDocument();
+    expect(screen.getByText('Fruit · Vegetables · Flowers')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Bagicha logo' })).toBeInTheDocument();
+  });
+
   it('sends a returning user who only lacks a region straight to the region step', async () => {
     renderWithApp(
       <Routes>

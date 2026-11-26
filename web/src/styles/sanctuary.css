@@ -20,3 +20,24 @@
     box-shadow: inset 0 0 0 1px rgb(194 200 194 / 0.15);
   }
 }
+
+/* Splash: the glow behind the logo breathes slowly; still for people who ask for less motion. */
+@keyframes splash-aura {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.75;
+  }
+}
+.splash-aura {
+  animation: splash-aura 4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash-aura {
+    animation: none;
+  }
+}

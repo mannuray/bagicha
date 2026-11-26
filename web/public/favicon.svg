@@ -6,10 +6,9 @@
       <stop offset="1" stop-color="#173124"/>
     </linearGradient>
   </defs>
-  <!-- Pebble (squircle) in Bagicha forest green, with a cream sprout. -->
+  <!-- Pebble (squircle) in Bagicha forest green, with a cream water drop holding two leaves (src/ui/bagicha-mark.ts). -->
   <rect width="64" height="64" rx="18" fill="url(#bg)"/>
-  <path d="M32 50V30" stroke="#fcf9f4" stroke-width="3.5" stroke-linecap="round"/>
-  <path d="M32 31c0-9 6.5-15 16-15 0 9.5-6.5 15-16 15z" fill="#fcf9f4"/>
-  <path d="M32 37c0-7-5-12-13-12 0 7.5 5 12 13 12z" fill="#b0cdbb"/>
-  <path d="M22 50h20" stroke="#c76644" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M32 10C32 10 48 27 48 38.5A16 16 0 0 1 16 38.5C16 27 32 10 32 10Z" fill="#fcf9f4"/>
+  <path d="M32 47C32 38 36.5 33 43 32C43 41 38.5 46 32 47Z" fill="#173124"/>
+  <path d="M32 47C32 41 28.5 37 23.5 36.5C23.5 42.5 27 46.5 32 47Z" fill="#496455"/>
 </svg>
