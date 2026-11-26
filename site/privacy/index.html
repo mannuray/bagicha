@@ -28,7 +28,7 @@
       <table>
         <thead><tr><th scope="col">What</th><th scope="col">Why we need it</th><th scope="col">Who else can see it</th></tr></thead>
         <tbody>
-          <tr><td>Phone number</td><td>To sign you in with a one-time code</td><td>Nobody; never shown to other gardeners</td></tr>
+          <tr><td>Google account email, name and profile photo</td><td>To sign you in with Google and to help if you can't sign in; your name and photo start your profile, and you can change both</td><td>Email: nobody, never shown to other gardeners. Name and photo: other Budtale gardeners</td></tr>
           <tr><td>Name and profile photo (optional)</td><td>To show who you are in the community and chats</td><td>Other Budtale gardeners</td></tr>
           <tr><td>District, region and garden types</td><td>To time care reminders, season tips and sowing advice for your climate</td><td>Nobody</td></tr>
           <tr><td>Location, if you tap "Use my location" (rounded to about 100 m)</td><td>To find your district and local weather</td><td>Nobody; weather providers get a point rounded to about 11 km</td></tr>
@@ -38,7 +38,7 @@
           <tr><td>Premium payments</td><td>To give you premium features</td><td>Razorpay handles the payment; we only keep the plan and payment reference</td></tr>
           <tr><td>Language choice and sign-in token</td><td>To keep you signed in and show the app in English or Hindi</td><td>Stored in your browser or on your phone</td></tr>
           <tr><td>Phone notification token and reminder times (Android app only)</td><td>To send your morning and evening garden reminders at the times you pick</td><td>Google (Firebase Cloud Messaging) delivers each reminder; it sees the token and the reminder text (task and plant names)</td></tr>
-          <tr><td>Technical logs and crash reports</td><td>To keep the service running and fix bugs</td><td>Our hosting and error-reporting providers; we strip phone numbers, exact locations and request contents</td></tr>
+          <tr><td>Technical logs and crash reports</td><td>To keep the service running and fix bugs</td><td>Our hosting and error-reporting providers; we strip email addresses, exact locations and request contents</td></tr>
         </tbody>
       </table>
     </div>
@@ -59,7 +59,7 @@
           <tr><td>Open-Meteo</td><td>Weather forecasts (gets a rounded point only)</td><td>Europe</td></tr>
           <tr><td>Razorpay</td><td>Payments</td><td>India</td></tr>
           <tr><td>Sentry</td><td>Crash reports (no personal details)</td><td>[REGION OF YOUR SENTRY ACCOUNT]</td></tr>
-          <tr><td>[SMS or Google sign-in provider]</td><td>Sign-in</td><td>[REGION]</td></tr>
+          <tr><td>Google (Sign-In)</td><td>Sign-in with your Google account</td><td>Google servers</td></tr>
         </tbody>
       </table>
     </div>
@@ -78,7 +78,7 @@
     <ul>
       <li>See and correct your profile in the app at any time.</li>
       <li>Turn reminders off or change their times in Profile → Reminders, or block Budtale’s notifications in your phone’s settings.</li>
-      <li>Delete your account yourself: Profile → "Delete my account". The steps are also at <a href="https://bagicha-web.vercel.app/delete-account">bagicha-web.vercel.app/delete-account</a> (no app needed). If you cannot sign in, email [GRIEVANCE EMAIL] with your phone number.</li>
+      <li>Delete your account yourself: Profile → "Delete my account". The steps are also at <a href="https://bagicha-web.vercel.app/delete-account">bagicha-web.vercel.app/delete-account</a> (no app needed). If you cannot sign in, email [GRIEVANCE EMAIL] from your Google account's email address.</li>
       <li>Ask for a copy of your data: email [GRIEVANCE EMAIL]. We reply within 30 days.</li>
       <li>Withdraw consent by deleting your account; we then stop processing your data.</li>
       <li>Nominate someone to act for you if you die or cannot act, as the DPDP Act allows.</li>

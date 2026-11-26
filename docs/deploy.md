@@ -97,8 +97,9 @@ Secrets live only in the Render dashboard and the Neon console, never in git. Se
 | `MEDIA_ENDPOINT`, `MEDIA_PORT`, `MEDIA_USE_SSL`, `MEDIA_REGION` | `render.yaml` | S3 in `ap-south-1`. |
 | `GEMINI_API_KEY` | Render | Plant scan and diagnosis. Secret. |
 | `AI_PROVIDER` | `render.yaml` | `gemini`. |
-| `NODE_ENV` | `render.yaml` | `staging`. `production` refuses the on-screen OTP. |
-| `AUTH_EXPOSE_OTP` | `render.yaml` | `true`: the sign-in code is shown on the page until an SMS provider is chosen. |
+| `NODE_ENV` | `render.yaml` | `staging`. |
+| `GOOGLE_CLIENT_ID` | Render | The Google OAuth **web** client id; the only audience sign-in tokens may have (the Android app asks for tokens for this same id). Without it the API starts and sign-in answers 503 `AUTH_GOOGLE_NOT_CONFIGURED`. Not secret. |
+| `VITE_GOOGLE_CLIENT_ID` | `web/.env.production` | The same web client id, built into the website and the app. Without it the sign-in screen says Google sign-in isn't available. |
 | `WEATHER_PROVIDERS` | `render.yaml` (optional) | Ordered weather sources, first tried first, e.g. `open-meteo`. Unset means `open-meteo`; `none` turns weather off. An unknown name stops the API from starting. |
 | `OPEN_METEO_API_KEY` | Render (optional) | Open-Meteo's paid API, required once the app is commercial. Without it the free, non-commercial API is used (a warning is logged in production). Secret. |
 | `OPENWEATHERMAP_API_KEY` | Render (required when `WEATHER_PROVIDERS` lists `openweathermap`) | OpenWeatherMap free API key (current weather + 5-day/3-hour forecast). The API refuses to start if the provider is listed without it. A new key can take a couple of hours to activate (401 until then). Secret. |
@@ -109,12 +110,28 @@ Secrets live only in the Render dashboard and the Neon console, never in git. Se
 
 After changing a setting on Render, redeploy the service.
 
+### Google sign-in setup (once, by the owner)
+
+In the Google Cloud project that also holds Firebase for `com.budtale.app`:
+
+1. **OAuth consent screen:** app name Budtale, a support email, privacy policy `https://budtale.vercel.app/privacy`, terms `https://budtale.vercel.app/terms`. Scopes: `openid`, `email`, `profile` only. Publish it (External).
+2. **Web client** (Credentials → Create OAuth client ID → Web application). Authorised JavaScript origins: `https://bagicha-web.vercel.app` and `http://localhost:5173`. Its client id goes in `GOOGLE_CLIENT_ID` (Render) and `VITE_GOOGLE_CLIENT_ID` (`web/.env.production`).
+3. **Android client** (→ Android): package `com.budtale.app` and the SHA-1 of each signing key: the debug key (`keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android`) for local builds, and Play Console → App integrity → app signing key SHA-1 for store builds. The app never uses this id directly; Google checks it when the app asks for a token.
+
+### Releasing Google sign-in (one time)
+
+1. Set `GOOGLE_CLIENT_ID` on Render and `VITE_GOOGLE_CLIENT_ID` in `web/.env.production`.
+2. Note the user id of the account to carry over (it is matched by phone before the phone column goes).
+3. Apply migration `20261128100000_google_sign_in` (adds `google_sub` and `email`, drops `phone_number`; deletes no rows). Then set `email` on that user id to the owner's Gmail, so the first Google sign-in with it claims the account.
+4. Push, deploy Render, let Vercel build; redeploy `site/` (privacy and terms text).
+5. Rebuild the APK and sign in on a phone.
+
 ## Check the deploy worked
 
 ```bash
 curl -s https://bagicha-api.onrender.com/api/v1/health/live                 # status ok
 curl -s -o /dev/null -w '%{http_code}\n' https://bagicha-api.onrender.com/api/v1/crops/calendar   # 401: reached the API
-curl -s -o /dev/null -D - -X OPTIONS https://bagicha-api.onrender.com/api/v1/auth/request-otp -H 'Origin: https://bagicha-web.vercel.app' -H 'Access-Control-Request-Method: POST' | grep -i access-control-allow-origin   # CORS allows the site
+curl -s -o /dev/null -D - -X OPTIONS https://bagicha-api.onrender.com/api/v1/auth/google -H 'Origin: https://bagicha-web.vercel.app' -H 'Access-Control-Request-Method: POST' | grep -i access-control-allow-origin   # CORS allows the site
 ```
 
 Then sign in on the web app (the code is shown on screen), add a tree, and log a moment with a photo.

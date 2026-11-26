@@ -14,8 +14,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: staging
-      - key: AUTH_EXPOSE_OTP
-        value: "true"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
       - key: AI_PROVIDER
         value: gemini
       - key: LOG_LEVEL
