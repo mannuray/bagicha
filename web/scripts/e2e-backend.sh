@@ -17,8 +17,6 @@ export JWT_SECRET=e2e-secret
 export RAZORPAY_WEBHOOK_SECRET=e2e-webhook
 export AI_PROVIDER=fake
 export WEB_ORIGINS="http://localhost:${E2E_WEB_PORT:-5174}"
-export AUTH_DEV_OTP_PHONE=+919999988888
-export AUTH_DEV_OTP_CODE=123456
 export REDIS_HOST=localhost
 export REDIS_PORT="${E2E_REDIS_PORT:-6380}"
 export MEDIA_ENDPOINT=localhost
@@ -49,12 +47,24 @@ node - <<'NODE'
 const { PrismaClient } = require('@prisma/client');
 (async () => {
   const db = new PrismaClient();
-  const tables = await db.$queryRawUnsafe(`SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> '_prisma_migrations'`);
-  if (tables.length) await db.$executeRawUnsafe('TRUNCATE TABLE ' + tables.map((t) => `"public"."${t.tablename}"`).join(', ') + ' CASCADE');
+  // Keep the plant catalogue (the API refuses to start without it). The audit log
+  // refuses TRUNCATE; only a test reset may wipe it, with its guard off for that moment.
+  const tables = await db.$queryRawUnsafe(`SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> '_prisma_migrations' AND tablename NOT LIKE 'catalogue\\_%'`);
+  if (tables.length) {
+    await db.$transaction([
+      db.$executeRawUnsafe('ALTER TABLE "audit_events" DISABLE TRIGGER audit_events_no_truncate'),
+      db.$executeRawUnsafe('TRUNCATE TABLE ' + tables.map((t) => `"public"."${t.tablename}"`).join(', ') + ' CASCADE'),
+      db.$executeRawUnsafe('ALTER TABLE "audit_events" ENABLE TRIGGER audit_events_no_truncate'),
+    ]);
+  }
+  // The one gardener the core-loop test signs in as (web/e2e/session.ts mints its token).
+  await db.user.create({ data: { id: 'e2e-gardener', google_sub: 'e2e-sub', email: 'e2e@example.test' } });
   await db.$disconnect();
 })().catch((e) => { console.error(e); process.exit(1); });
 NODE
-# Clear rate-limit counters from earlier runs so the single sign-in isn't throttled.
+# Fill the plant catalogue if this database has none yet (the API needs it to start).
+npm run catalogue:push >/dev/null
+# Clear rate-limit counters from earlier runs.
 node -e "const R=require('ioredis');const r=new R({host:process.env.REDIS_HOST,port:+process.env.REDIS_PORT});r.keys('{rl:*').then(k=>k.length?r.del(...k):0).then(()=>r.quit())"
 
 npm run build >/dev/null

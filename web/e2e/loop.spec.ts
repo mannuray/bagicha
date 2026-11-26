@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import path from 'node:path';
+import { E2E_GARDENER, mintSession } from './session';
 
 const LEAF = path.join(import.meta.dirname, 'fixtures', 'leaf.jpg');
 const SHOTS = path.join(import.meta.dirname, '..', 'test-results', 'screens');
@@ -11,14 +12,21 @@ async function checkScreen(page: Page, name: string) {
   await page.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: true });
 }
 
-test('the core loop: sign in → onboard → add a tree → log → scan → complete the task → season review', async ({ page }) => {
-  // Sign in with the dev OTP (enabled only outside production).
+test('the core loop: signed in → onboard → add a tree → log → scan → complete the task → season review', async ({ page }) => {
+  // The sign-in screen (Google itself can't run here: no client id in this build).
   await page.goto('/login');
+  await expect(page.getByRole('link', { name: /privacy policy/i })).toBeVisible();
   await checkScreen(page, '01-login');
-  await page.getByLabel(/phone number/i).fill('9999988888');
-  await page.getByRole('button', { name: /send code/i }).click();
-  await page.getByLabel(/verification code/i).fill('123456');
-  await page.getByRole('button', { name: /verify/i }).click();
+  // Start signed in as the seeded gardener (scripts/e2e-backend.sh) with a token the backend accepts.
+  await page.addInitScript(
+    ({ token, user }) => {
+      if (localStorage.getItem('bagicha.token')) return; // set once; later reloads keep the app's own state
+      localStorage.setItem('bagicha.token', token);
+      localStorage.setItem('bagicha.user', JSON.stringify(user));
+    },
+    { token: mintSession('e2e-secret', E2E_GARDENER.id), user: E2E_GARDENER },
+  );
+  await page.goto('/');
 
   // Onboarding (fresh database, so it always runs).
   await checkScreen(page, '02-language');
@@ -123,13 +131,12 @@ test('the core loop: sign in → onboard → add a tree → log → scan → com
   await page.getByRole('button', { name: /start now/i }).click();
   const start = page.getByRole('dialog', { name: /start growing/i });
   await start.getByRole('button', { name: /i have seeds/i }).click();
-  await start.getByRole('button', { name: /add a place/i }).click();
-  await start.getByLabel(/place name/i).fill('Terrace bag');
+  // First place: the form is shown straight away.
   await start.getByRole('button', { name: /^grow-bag$/i }).click();
+  await start.getByLabel(/name \(optional\)/i).fill('Terrace bag');
   await start.getByRole('button', { name: /^full sun$/i }).click();
-  await start.getByRole('button', { name: /add place/i }).click();
   await start.getByRole('button', { name: /start season/i }).click();
-  await expect(page.getByText('In the bed · day 0 · Terrace bag')).toBeVisible();
+  await expect(page.getByText('Planted · day 0 · Terrace bag')).toBeVisible();
   await expect(page.getByRole('article', { name: /seedlings have come up/i })).toBeVisible();
   await checkScreen(page, '16-crop-journey');
   await page.getByRole('link', { name: /log a harvest/i }).click();
