@@ -13,7 +13,8 @@ export type RegionCluster = (typeof REGION_CLUSTERS)[number];
 
 export const userSchema = z.object({
   id: z.string(),
-  phone_number: z.string(),
+  /** The Google account email (sessions saved before Google sign-in have none). */
+  email: z.string().nullable().default(null),
   name: z.string().nullable(),
   district: z.string().nullable(),
   region_cluster: z.enum(REGION_CLUSTERS).nullable().default(null),

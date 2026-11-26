@@ -135,11 +135,11 @@ describe('api client', () => {
   });
 
   it('sends no Authorization header when signed out', async () => {
-    server.use(http.post(`${API}/auth/request-otp`, ({ request }) => {
+    server.use(http.post(`${API}/auth/google`, ({ request }) => {
       expect(request.headers.get('authorization')).toBeNull();
-      return ok('OTP sent successfully');
+      return ok('signed in');
     }));
-    await client(memoryTokens(null)).api.send('POST', '/auth/request-otp', {}, z.string());
+    await client(memoryTokens(null)).api.send('POST', '/auth/google', {}, z.string());
   });
 
   it('a 401 with a non-JSON body (proxy page) still signs out', async () => {

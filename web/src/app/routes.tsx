@@ -1,7 +1,7 @@
 import { AddToGardenButton, CropDetailScreen, CropHindiName, CropPebble, CropsScreen } from '../features/crops';
 import type { ReactNode } from 'react';
 import { Route, Routes } from 'react-router';
-import { LoginScreen, OtpScreen, RequireAuth, RequireOnboarded, SplashScreen } from '../features/auth';
+import { LoginScreen, RequireAuth, RequireOnboarded, SplashScreen } from '../features/auth';
 import { DeleteAccountInfoPage, DeleteAccountScreen, DeletionPendingScreen } from '../features/account';
 import { PlantDetailScreen, SeasonReviewScreen } from '../features/biography';
 import { DashboardScreen } from '../features/dashboard';
@@ -32,7 +32,6 @@ export function AppRoutes() {
       <Routes>
         <Route path="/splash" element={<SplashScreen />} />
         <Route path="/login" element={<LoginScreen />} />
-        <Route path="/login/otp" element={<OtpScreen />} />
         <Route path="/delete-account" element={<DeleteAccountInfoPage />} />
         <Route
           path="/account/deletion-pending"

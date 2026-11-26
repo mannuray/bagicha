@@ -31,7 +31,7 @@ export function memoryTokenStore(initial: string | null = 'test-token'): TokenSt
 
 export const testUser = (over: Partial<User> = {}): User => ({
   id: 'u1',
-  phone_number: '+919876543210',
+  email: 'asha@example.com',
   name: 'Asha',
   district: 'Patna',
   region_cluster: 'EAST_INDIA',

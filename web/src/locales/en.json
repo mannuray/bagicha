@@ -19,7 +19,6 @@
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "RATE_LIMITED": "Too many attempts. Please wait a minute and try again.",
-    "AUTH_INVALID_OTP": "That code didn't work. Check it, or request a new one.",
     "PLANT_NOT_FOUND": "This plant isn't in your garden.",
     "TASK_NOT_FOUND": "That task no longer exists. We've refreshed your list.",
     "AI_NOT_CONFIGURED": "Plant scanning isn't available right now.",
@@ -34,8 +33,6 @@
     "IMAGE_TOO_LARGE": "That photo is too large, even after shrinking it.",
     "TIMEOUT": "The server is taking too long. Please try again in a moment.",
     "BEARING_SINCE_YEAR_INVALID": "The fruiting year should be between the planted year and this year.",
-    "OTP_COOLDOWN": "A code was already sent. Please wait a minute before asking for another.",
-    "OTP_DAILY_LIMIT": "Too many codes for this number today. Please try again tomorrow.",
     "MEDIA_UNREADABLE": "We couldn't open that photo. Please try another one.",
     "MEDIA_TYPE_UNSUPPORTED": "Please choose a JPEG, PNG or WebP photo.",
     "IDEMPOTENCY_IN_PROGRESS": "This is still being saved — wait a moment and try again.",
@@ -54,23 +51,17 @@
       "grows": "Fruit · Vegetables · Flowers"
     },
     "login": {
-      "title": "Your Garden Awaits",
-      "subtitle": "Enter your phone number to continue",
-      "phoneLabel": "Phone number",
-      "phonePlaceholder": "Phone number",
-      "invalidPhone": "Enter a 10-digit Indian mobile number.",
-      "submit": "Send code"
+      "title": "Your Garden Awaits"
     },
-    "otp": {
-      "bar": "Verify Your Number",
-      "title": "Enter the Code",
-      "subtitle": "We've sent a 6-digit code to",
-      "label": "Verification code",
-      "submit": "Verify & continue",
-      "resend": "Resend code",
-      "noCode": "Didn't receive the code?",
-      "newCode": "Get a new code",
-      "testCode": "Test code: {{code}}"
+    "google": {
+      "subtitle": "Sign in with your Google account",
+      "button": "Continue with Google",
+      "failed": "Google sign-in didn't work. Please try again.",
+      "unavailable": "Google sign-in isn't available right now. Please try again later.",
+      "legalBefore": "By continuing you accept the",
+      "terms": "terms of use",
+      "legalAnd": "and agree to the",
+      "privacy": "privacy policy"
     }
   },
   "onboarding": {
@@ -165,7 +156,8 @@
     "attribution": "District boundaries: geoBoundaries (ODbL)",
     "photo": "Profile photo",
     "changePhoto": "Change profile photo",
-    "deleteAccount": "Delete my account"
+    "deleteAccount": "Delete my account",
+    "signedInAs": "Signed in as {{email}}"
   },
   "plants": {
     "list": {

@@ -4,17 +4,6 @@ import { useApi } from '../../lib/api';
 import { useSession } from './session';
 import { verifyResponseSchema } from './schemas';
 
-/** `dev_otp` comes back only from a local backend with AUTH_EXPOSE_OTP=true (never production). */
-const requestOtpSchema = z.object({ message: z.string(), dev_otp: z.string().optional() });
-
-export function useRequestOtp() {
-  const api = useApi();
-  return useMutation({
-    mutationFn: (phone: string) =>
-      api.send('POST', '/auth/request-otp', { phone_number: phone }, requestOtpSchema),
-  });
-}
-
 /**
  * Signs out here at once and tells the server to end every sign-in of this user.
  * The call is sent (with the token) before the token is cleared, and not awaited:
@@ -29,23 +18,12 @@ export function useSignOut(): () => void {
   };
 }
 
-export function useVerifyOtp() {
+/** Trades a Google ID token for our session; on success the gardener is signed in. */
+export function useGoogleSignIn() {
   const api = useApi();
   const { signIn } = useSession();
   return useMutation({
-    mutationFn: (input: { phone: string; otp: string }) =>
-      api.send(
-        'POST',
-        '/auth/verify-otp',
-        { phone_number: input.phone, otp: input.otp },
-        verifyResponseSchema,
-      ),
+    mutationFn: (idToken: string) => api.send('POST', '/auth/google', { id_token: idToken }, verifyResponseSchema),
     onSuccess: (res) => signIn(res.access_token, res.user),
   });
-}
-
-/** Indian mobile number as the backend expects it, or null if it isn't one. */
-export function toE164India(input: string): string | null {
-  const digits = input.replace(/\D/g, '').replace(/^(91|0)(?=\d{10}$)/, '');
-  return /^[6-9]\d{9}$/.test(digits) ? `+91${digits}` : null;
 }

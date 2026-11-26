@@ -8,7 +8,9 @@ import { z } from 'zod';
 import { useApi } from '../../lib/api';
 import { API, server } from '../../test/msw/server';
 import { renderWithApp, testUser } from '../../test/render';
-import { LoginScreen, OtpScreen, RequireAuth, RequireOnboarded, SplashScreen } from '.';
+import { vi } from 'vitest';
+import { LoginScreen, RequireAuth, RequireOnboarded, SplashScreen } from '.';
+import { GooglePortProvider, type GooglePort } from './google';
 
 const ok = (data: unknown) => HttpResponse.json({ success: true, data });
 const fail = (status: number, code: string) =>
@@ -23,7 +25,6 @@ function AuthRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginScreen />} />
-      <Route path="/login/otp" element={<OtpScreen />} />
       <Route path="/onboarding/language" element={<Where />} />
       <Route path="/onboarding/region" element={<Where />} />
       <Route
@@ -40,6 +41,32 @@ function AuthRoutes() {
   );
 }
 
+/** A phone: the account sheet returns this token, or 'cancelled'. */
+function nativeGoogle(result: string): GooglePort & { signIn: ReturnType<typeof vi.fn> } {
+  return { native: true, signIn: vi.fn(() => Promise.resolve(result)), renderButton: vi.fn(() => Promise.resolve()) };
+}
+
+/** The website: Google's button is drawn, and a click on it delivers this token at once. */
+function webGoogle(token: string): GooglePort & { renderButton: ReturnType<typeof vi.fn> } {
+  return {
+    native: false,
+    signIn: vi.fn(() => Promise.resolve('cancelled')),
+    renderButton: vi.fn((_el: HTMLElement, onToken: (t: string) => void) => {
+      onToken(token);
+      return Promise.resolve();
+    }),
+  };
+}
+
+function renderLogin(port: GooglePort) {
+  return renderWithApp(
+    <GooglePortProvider value={port}>
+      <AuthRoutes />
+    </GooglePortProvider>,
+    { route: '/login', user: null },
+  );
+}
+
 describe('login', () => {
   it('shows the Budtale logo, the same mark as the browser icon', () => {
     renderWithApp(<LoginScreen />, { route: '/login', user: null });
@@ -51,127 +78,63 @@ describe('login', () => {
     expect(container.querySelector('header img[src*="login-leaf"]')).not.toBeNull();
   });
 
-  it('sends +91 and the 10 digits, then asks for the code', async () => {
+  it('signs in with Google in the app and goes home when the profile is complete', async () => {
     let body: unknown;
     server.use(
-      http.post(`${API}/auth/request-otp`, async ({ request }) => {
+      http.post(`${API}/auth/google`, async ({ request }) => {
         body = await request.json();
-        return ok({ message: 'OTP sent successfully' });
+        return ok({ access_token: 'jwt', user: testUser() });
       }),
     );
-    renderWithApp(<AuthRoutes />, { route: '/login', user: null });
-    await userEvent.type(screen.getByLabelText(/phone number/i), '9876543210');
-    await userEvent.click(screen.getByRole('button', { name: /send code/i }));
-    expect(await screen.findByRole('heading', { name: /enter the code/i })).toBeInTheDocument();
-    expect(body).toEqual({ phone_number: '+919876543210' });
-  });
-
-  it('shows the code on the verification page when the test backend sends it', async () => {
-    server.use(http.post(`${API}/auth/request-otp`, () => ok({ message: 'OTP sent successfully', dev_otp: '482913' })));
-    renderWithApp(<AuthRoutes />, { route: '/login', user: null });
-    await userEvent.type(screen.getByLabelText(/phone number/i), '9876543210');
-    await userEvent.click(screen.getByRole('button', { name: /send code/i }));
-    expect(await screen.findByText(/test code/i)).toHaveTextContent('482913');
-  });
-
-  it('shows the new code after a resend', async () => {
-    let n = 0;
-    server.use(
-      http.post(`${API}/auth/request-otp`, () => {
-        n += 1;
-        return ok({ message: 'OTP sent successfully', dev_otp: n === 1 ? '111111' : '222222' });
-      }),
-    );
-    renderWithApp(<AuthRoutes />, { route: '/login', user: null });
-    await userEvent.type(screen.getByLabelText(/phone number/i), '9876543210');
-    await userEvent.click(screen.getByRole('button', { name: /send code/i }));
-    expect(await screen.findByText(/test code/i)).toHaveTextContent('111111');
-    await userEvent.click(screen.getByRole('button', { name: /resend code/i }));
-    await waitFor(() => expect(screen.getByText(/test code/i)).toHaveTextContent('222222'));
-  });
-
-  it('shows each typed digit in its own box', async () => {
-    renderWithApp(<OtpScreen />, { route: { pathname: '/login/otp', state: { phone: '+919876543210' } } });
-    await userEvent.type(screen.getByLabelText(/verification code/i), '48');
-    const boxes = screen.getAllByTestId('otp-box');
-    expect(boxes).toHaveLength(6);
-    expect(boxes.map((b) => b.textContent)).toEqual(['4', '8', '', '', '', '']);
-    expect(screen.getByText('+91 9876543210')).toBeInTheDocument();
-  });
-
-  it('shows the Stitch garden photo above the code', async () => {
-    const { container } = renderWithApp(<OtpScreen />, { route: { pathname: '/login/otp', state: { phone: '+919876543210' } } });
-    expect(container.querySelector('img[src*="otp-olive"]')).not.toBeNull();
-  });
-
-  it('shows no test code when the backend does not send one', async () => {
-    server.use(http.post(`${API}/auth/request-otp`, () => ok({ message: 'OTP sent successfully' })));
-    renderWithApp(<AuthRoutes />, { route: '/login', user: null });
-    await userEvent.type(screen.getByLabelText(/phone number/i), '9876543210');
-    await userEvent.click(screen.getByRole('button', { name: /send code/i }));
-    await screen.findByRole('heading', { name: /enter the code/i });
-    expect(screen.queryByText(/test code/i)).not.toBeInTheDocument();
-  });
-
-  it('rejects a short number without calling the server', async () => {
-    renderWithApp(<AuthRoutes />, { route: '/login', user: null });
-    await userEvent.type(screen.getByLabelText(/phone number/i), '98765');
-    await userEvent.click(screen.getByRole('button', { name: /send code/i }));
-    expect(screen.getByText(/10-digit/i)).toBeInTheDocument();
-  });
-
-  it('explains rate limiting', async () => {
-    server.use(http.post(`${API}/auth/request-otp`, () => fail(429, 'RATE_LIMITED')));
-    renderWithApp(<AuthRoutes />, { route: '/login', user: null });
-    await userEvent.type(screen.getByLabelText(/phone number/i), '9876543210');
-    await userEvent.click(screen.getByRole('button', { name: /send code/i }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(/too many attempts/i);
-  });
-});
-
-describe('otp', () => {
-  const otpRoute = { pathname: '/login/otp', state: { phone: '+919876543210' } };
-
-  it('signs in and goes home when the profile is complete', async () => {
-    server.use(
-      http.post(`${API}/auth/verify-otp`, () => ok({ access_token: 'jwt', user: testUser() })),
-    );
-    const { session } = renderWithApp(<AuthRoutes />, { route: otpRoute, user: null });
-    await userEvent.type(screen.getByLabelText(/verification code/i), '123456');
-    await userEvent.click(screen.getByRole('button', { name: /verify/i }));
+    const { session } = renderLogin(nativeGoogle('tok'));
+    await userEvent.click(screen.getByRole('button', { name: /continue with google/i }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/'));
+    expect(body).toEqual({ id_token: 'tok' });
     expect(session.tokens.get()).toBe('jwt');
   });
 
-  it('sends new users to onboarding', async () => {
+  it('sends a new gardener to onboarding', async () => {
     server.use(
-      http.post(`${API}/auth/verify-otp`, () =>
+      http.post(`${API}/auth/google`, () =>
         ok({ access_token: 'jwt', user: testUser({ district: null, region_cluster: null, garden_types: [] }) }),
       ),
     );
-    renderWithApp(<AuthRoutes />, { route: otpRoute, user: null });
-    await userEvent.type(screen.getByLabelText(/verification code/i), '123456');
-    await userEvent.click(screen.getByRole('button', { name: /verify/i }));
+    renderLogin(nativeGoogle('tok'));
+    await userEvent.click(screen.getByRole('button', { name: /continue with google/i }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/onboarding/language'));
   });
 
-  it('sends a returning user who only lacks a region straight to the region step', async () => {
-    server.use(
-      http.post(`${API}/auth/verify-otp`, () => ok({ access_token: 'jwt', user: testUser({ region_cluster: null }) })),
-    );
-    renderWithApp(<AuthRoutes />, { route: otpRoute, user: null });
-    await userEvent.type(screen.getByLabelText(/verification code/i), '123456');
-    await userEvent.click(screen.getByRole('button', { name: /verify/i }));
-    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/onboarding/region'));
+  it('a cancelled account picker shows no error and the button works again', async () => {
+    const port = nativeGoogle('cancelled');
+    renderLogin(port);
+    const button = screen.getByRole('button', { name: /continue with google/i });
+    await userEvent.click(button);
+    await waitFor(() => expect(port.signIn).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(button).toBeEnabled();
+    await userEvent.click(button);
+    expect(port.signIn).toHaveBeenCalledTimes(2);
   });
 
-  it('shows a wrong code and offers a new one', async () => {
-    server.use(http.post(`${API}/auth/verify-otp`, () => fail(401, 'AUTH_INVALID_OTP')));
-    renderWithApp(<AuthRoutes />, { route: otpRoute, user: null });
-    await userEvent.type(screen.getByLabelText(/verification code/i), '000000');
-    await userEvent.click(screen.getByRole('button', { name: /verify/i }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(/didn't work/i);
-    expect(screen.getByRole('button', { name: /new code/i })).toBeInTheDocument();
+  it('a refused sign-in shows the failure line', async () => {
+    server.use(http.post(`${API}/auth/google`, () => fail(401, 'AUTH_GOOGLE_INVALID')));
+    renderLogin(nativeGoogle('tok'));
+    await userEvent.click(screen.getByRole('button', { name: /continue with google/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/google sign-in didn't work/i);
+  });
+
+  it("on the website, Google's own button signs in", async () => {
+    server.use(http.post(`${API}/auth/google`, () => ok({ access_token: 'jwt', user: testUser() })));
+    const port = webGoogle('web-tok');
+    renderLogin(port);
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/'));
+    expect(port.renderButton).toHaveBeenCalled();
+  });
+
+  it('links to the privacy policy and terms on budtale.vercel.app', () => {
+    renderLogin(nativeGoogle('tok'));
+    expect(screen.getByRole('link', { name: /privacy policy/i })).toHaveAttribute('href', 'https://budtale.vercel.app/privacy');
+    expect(screen.getByRole('link', { name: /terms/i })).toHaveAttribute('href', 'https://budtale.vercel.app/terms');
   });
 });
 

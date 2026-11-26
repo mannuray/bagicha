@@ -42,7 +42,7 @@ export function ProfileScreen() {
           </div>
           <div className="space-y-0.5">
             <p className="font-headline text-2xl font-bold text-primary">{user.name ?? t('profile.noName')}</p>
-            <p className="font-label text-xs font-medium tracking-wide text-on-surface-variant">{user.phone_number}</p>
+            <p className="font-label text-xs font-medium tracking-wide text-on-surface-variant">{user.email ? t('profile.signedInAs', { email: user.email }) : null}</p>
           </div>
           <div className="relative flex w-full items-center justify-between overflow-hidden rounded-xl border border-secondary/10 bg-secondary-container/20 px-5 py-4">
             <div className="absolute left-0 top-0 h-full w-1 bg-secondary" aria-hidden />
