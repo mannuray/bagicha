@@ -6,6 +6,8 @@ const config: CapacitorConfig = {
   appId: 'com.bagicha.app',
   appName: 'Bagicha',
   webDir: 'dist',
+  // The splash green, so the WebView never flashes white between the launch splash and the web splash.
+  backgroundColor: '#173124',
 };
 
 export default config;
