@@ -116,6 +116,14 @@ describe('login', () => {
     expect(port.signIn).toHaveBeenCalledTimes(2);
   });
 
+  it('a phone that cannot reach Google sign-in says so', async () => {
+    const port = nativeGoogle('tok');
+    port.signIn.mockRejectedValueOnce(new Error('Developer console is not set up correctly'));
+    renderLogin(port);
+    await userEvent.click(screen.getByRole('button', { name: /continue with google/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/isn.t available/i);
+  });
+
   it('a refused sign-in shows the failure line', async () => {
     server.use(http.post(`${API}/auth/google`, () => fail(401, 'AUTH_GOOGLE_INVALID')));
     renderLogin(nativeGoogle('tok'));

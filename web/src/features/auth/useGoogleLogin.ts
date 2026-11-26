@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useGoogleSignIn } from './api';
 import { CANCELLED, useGooglePort } from './google';
@@ -14,6 +14,7 @@ export function useGoogleLogin() {
   const port = useGooglePort();
   const google = useGoogleSignIn();
   const { mutate } = google;
+  const [unavailable, setUnavailable] = useState(false);
 
   const exchange = useCallback(
     (idToken: string) => mutate(idToken, { onSuccess: ({ user }) => navigate(homeFor(user), { replace: true }) }),
@@ -26,10 +27,15 @@ export function useGoogleLogin() {
     [port, exchange],
   );
 
-  /** Phone: open the account sheet. A dismissed sheet is not an error. */
+  /** Phone: open the account sheet. A dismissed sheet is not an error; a broken setup is. */
   const signIn = async () => {
-    const token = await port.signIn().catch(() => CANCELLED);
-    if (token !== CANCELLED) exchange(token);
+    setUnavailable(false);
+    try {
+      const token = await port.signIn();
+      if (token !== CANCELLED) exchange(token);
+    } catch {
+      setUnavailable(true);
+    }
   };
 
   return {
@@ -40,5 +46,7 @@ export function useGoogleLogin() {
     sessionExpired: expired || loginState(location.state).reason === 'expired',
     busy: google.isPending,
     failed: google.isError,
+    /** The phone could not open Google sign-in at all. */
+    unavailable,
   };
 }

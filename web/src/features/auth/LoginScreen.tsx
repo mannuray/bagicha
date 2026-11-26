@@ -8,7 +8,7 @@ const SITE = 'https://budtale.vercel.app';
 
 export function LoginScreen() {
   const { t, i18n } = useTranslation();
-  const { native, signIn, renderButton, sessionExpired, busy, failed } = useGoogleLogin();
+  const { native, signIn, renderButton, sessionExpired, busy, failed, unavailable } = useGoogleLogin();
 
   return (
     <Screen>
@@ -33,6 +33,11 @@ export function LoginScreen() {
             </Button>
           ) : (
             <GoogleWebButton render={renderButton} locale={i18n.language} />
+          )}
+          {native && unavailable && (
+            <p role="alert" className="text-center font-body text-sm text-error">
+              {t('auth.google.unavailable')}
+            </p>
           )}
           {failed && (
             <p role="alert" className="text-center font-body text-sm text-error">

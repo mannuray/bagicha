@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+import { SocialLogin } from '@capgo/capacitor-social-login';
 import { createContext, useContext } from 'react';
 
 /**
@@ -79,6 +81,37 @@ export const webGoogle: GooglePort = {
   },
 };
 
-const GooglePortContext = createContext<GooglePort>(webGoogle);
+const isCancel = (err: unknown) => (err as { code?: unknown } | null)?.code === 'USER_CANCELLED';
+
+/**
+ * The phone: Android's account sheet (Credential Manager) through the plugin,
+ * asking for a token for the web client id, the one audience the server accepts.
+ */
+export function nativeGoogle(clientId: string): GooglePort {
+  let ready: Promise<void> | null = null;
+  return {
+    native: true,
+    async signIn() {
+      if (!clientId) throw new Error('Google sign-in is not set up');
+      ready ??= SocialLogin.initialize({ google: { webClientId: clientId } }).catch((err: unknown) => {
+        ready = null; // let the next tap try again
+        throw err;
+      });
+      await ready;
+      try {
+        const { result } = await SocialLogin.login({ provider: 'google', options: {} });
+        return ('idToken' in result && result.idToken) || CANCELLED;
+      } catch (err) {
+        if (isCancel(err)) return CANCELLED;
+        throw err;
+      }
+    },
+    renderButton: () => Promise.reject(new Error('The app uses its own button')),
+  };
+}
+
+const GooglePortContext = createContext<GooglePort>(
+  Capacitor.isNativePlatform() ? nativeGoogle(GOOGLE_CLIENT_ID) : webGoogle,
+);
 export const GooglePortProvider = GooglePortContext.Provider;
 export const useGooglePort = () => useContext(GooglePortContext);
