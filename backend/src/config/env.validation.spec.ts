@@ -46,12 +46,6 @@ describe('validateEnv', () => {
     );
   });
 
-  it('refuses AUTH_EXPOSE_OTP in production', () => {
-    expect(() =>
-      validateEnv({ ...base, AUTH_EXPOSE_OTP: 'true', NODE_ENV: 'production' }),
-    ).toThrow(/AUTH_EXPOSE_OTP/);
-  });
-
   it('refuses an unknown weather provider at startup', () => {
     expect(() =>
       validateEnv({ ...base, WEATHER_PROVIDERS: 'open-meteo,acme' }),

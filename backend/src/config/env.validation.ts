@@ -5,10 +5,8 @@ export interface Env {
   DATABASE_URL: string;
   JWT_SECRET: string;
   NODE_ENV?: string;
-  AUTH_DEV_OTP_PHONE?: string;
-  AUTH_DEV_OTP_CODE?: string;
-  /** "true" returns the OTP from request-otp for on-screen testing; refused in production. */
-  AUTH_EXPOSE_OTP?: string;
+  /** Google OAuth web client id: the only audience sign-in tokens may have. Sign-in answers 503 without it. */
+  GOOGLE_CLIENT_ID?: string;
   GEMINI_API_KEY?: string;
   GEMINI_MODEL?: string;
   RAZORPAY_KEY_ID?: string;
@@ -53,9 +51,6 @@ export function validateEnv(raw: Record<string, unknown>): Env {
   }
   if (provider === 'fake' && raw.NODE_ENV === 'production') {
     throw new InvariantError('AI_PROVIDER=fake is not allowed in production');
-  }
-  if (raw.AUTH_EXPOSE_OTP === 'true' && raw.NODE_ENV === 'production') {
-    throw new InvariantError('AUTH_EXPOSE_OTP is not allowed in production');
   }
   validateWeatherEnv(raw as Record<string, string | undefined>);
   return raw as Env;
