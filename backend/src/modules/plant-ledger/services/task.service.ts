@@ -270,6 +270,22 @@ export class TaskService {
     );
   }
 
+  /** What a garden reminder counts for the user, titled and named like the task list. */
+  async reminderTasks(
+    userId: string,
+    w: { from: Date; to: Date; weatherUntil: Date | null },
+    names: {
+      namer: PlantNamer;
+      titler: TaskTitler;
+      careTexter: CareTexter;
+    } = { namer: savedName, titler: savedTitle, careTexter: savedCareTexts },
+  ): Promise<TaskView[]> {
+    const rows = await this.tasks.listDueForReminder(userId, w);
+    return rows.map((r) =>
+      mapTaskView(r, names.namer, names.titler, names.careTexter),
+    );
+  }
+
   async listForUser(
     userId: string,
     q: PageQuery,
