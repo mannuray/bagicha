@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Bagicha",
+    "name": "Budtale",
     "reload": "Reload",
     "notFound": "Page not found",
     "home": "Go home",
@@ -156,7 +156,7 @@
     "premium": "Premium",
     "free": "Free",
     "active": "Active",
-    "premiumRow": "Bagicha Premium",
+    "premiumRow": "Budtale Premium",
     "groups": {
       "journal": "Journal Settings",
       "subscriptions": "Orchard Subscriptions",
@@ -504,7 +504,7 @@
       "firstIn": "first in {{month}}"
     },
     "since": "Since {{year}}",
-    "beforeBagicha": "Before Bagicha",
+    "beforeBagicha": "Before Budtale",
     "around": "Around {{from}}–{{to}}",
     "aroundYear": "Around {{year}}",
     "estimated": "estimated",
@@ -866,9 +866,9 @@
       "continue": "Continue with deletion"
     },
     "info": {
-      "title": "Delete your Bagicha account",
+      "title": "Delete your Budtale account",
       "scheduled": "Done. Your account will be deleted on {{date}}. Sign in before then if you change your mind.",
-      "steps": "To delete your account, sign in to Bagicha (in the app or at this website, no install needed), open Profile and tap “Delete my account”.",
+      "steps": "To delete your account, sign in to Budtale (in the app or at this website, no install needed), open Profile and tap “Delete my account”.",
       "notice": "Your account is deleted for good 30 days after you ask. Signing in during those 30 days lets you keep it.",
       "whatGoes": "Everything you added is deleted: your profile, plants, journal, photos, posts, replies and messages. We keep payment records (tax law) and a security log for one year, neither of which holds anything you wrote.",
       "email": "Can’t sign in? Email {{email}} from any address with your phone number, and we will delete the account for you.",
@@ -887,8 +887,8 @@
       "morning": "Morning",
       "evening": "Evening",
       "off": "Off",
-      "blocked": "Notifications are off for Bagicha on this phone.",
-      "howTo": "Turn them on in Settings → Apps → Bagicha → Notifications."
+      "blocked": "Notifications are off for Budtale on this phone.",
+      "howTo": "Turn them on in Settings → Apps → Budtale → Notifications."
     }
   }
 }

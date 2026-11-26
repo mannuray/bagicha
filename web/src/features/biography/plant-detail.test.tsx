@@ -565,18 +565,18 @@ describe('an old tree', () => {
     expect(within(milestones).getByRole('link', { name: /edit/i })).toHaveAttribute('href', '/plants/p1/edit');
   });
 
-  it('uses the gardener\'s answer: since 2019, or before Bagicha', async () => {
+  it('uses the gardener\'s answer: since 2019, or before Budtale', async () => {
     handlers({ plant: { life_profile: MANGO, bearing_status: 'BEARING', bearing_since_year: 2019 } });
     renderWithApp(routes, { route: '/plants/p1' });
     const milestones = await screen.findByRole('region', { name: /milestones/i });
     expect(within(card(milestones, /first flowering/i)).getByText('Since 2019')).toBeInTheDocument();
   });
 
-  it('says before Bagicha when it fruits but the year is unknown', async () => {
+  it('says before Budtale when it fruits but the year is unknown', async () => {
     handlers({ plant: { life_profile: MANGO, bearing_status: 'BEARING' } });
     renderWithApp(routes, { route: '/plants/p1' });
     const milestones = await screen.findByRole('region', { name: /milestones/i });
-    expect(within(card(milestones, /first fruit set/i)).getByText('Before Bagicha')).toBeInTheDocument();
+    expect(within(card(milestones, /first fruit set/i)).getByText('Before Budtale')).toBeInTheDocument();
   });
 
   it('the back button scrolls with the page instead of floating over the cards', async () => {

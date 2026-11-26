@@ -137,7 +137,7 @@ describe('signing in while deletion is pending', () => {
 describe('the public deletion page', () => {
   it('explains how to delete without signing in', () => {
     renderWithApp(<Account />, { route: '/delete-account', user: null });
-    expect(screen.getByRole('heading', { name: /delete your bagicha account/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /delete your budtale account/i })).toBeInTheDocument();
     expect(screen.getAllByText(/profile/i).length).toBeGreaterThan(0);
   });
 });
