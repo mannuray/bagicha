@@ -23,6 +23,8 @@ export class UserService {
       garden_types: dto.garden_types ?? undefined,
       language_pref: dto.language_pref ?? undefined,
       avatar_key: dto.avatar_key,
+      reminder_morning_min: dto.reminder_morning_min,
+      reminder_evening_min: dto.reminder_evening_min,
     });
     return toUserView(user);
   }
