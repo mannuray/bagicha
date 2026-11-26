@@ -57,11 +57,15 @@ export class UserRepository {
     }
   }
 
+  /** Signs the user out everywhere; their phones stop getting reminders too. */
   async bumpTokenVersion(userId: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { token_version: { increment: 1 } },
-    });
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { token_version: { increment: 1 } },
+      }),
+      this.prisma.pushDevice.deleteMany({ where: { user_id: userId } }),
+    ]);
   }
 
   /**
@@ -73,14 +77,18 @@ export class UserRepository {
     requestedAt: Date,
     dueAt: Date,
   ): Promise<{ user: User; marked: boolean }> {
-    const { count } = await this.prisma.user.updateMany({
-      where: { id: userId, deletion_due_at: null },
-      data: {
-        deletion_requested_at: requestedAt,
-        deletion_due_at: dueAt,
-        token_version: { increment: 1 },
-      },
-    });
+    const [{ count }] = await this.prisma.$transaction([
+      this.prisma.user.updateMany({
+        where: { id: userId, deletion_due_at: null },
+        data: {
+          deletion_requested_at: requestedAt,
+          deletion_due_at: dueAt,
+          token_version: { increment: 1 },
+        },
+      }),
+      // Signed out everywhere means no reminders either, even if the account is kept later.
+      this.prisma.pushDevice.deleteMany({ where: { user_id: userId } }),
+    ]);
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
     });
