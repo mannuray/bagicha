@@ -5,12 +5,12 @@ import hi from './hi.json';
 /** The owner approved the Hindi on 2026-11-15. */
 const HINDI_READY = true;
 /** Keys that stay English on purpose. */
-const INTENTIONALLY_ENGLISH = new Set(['app.name']);
+const INTENTIONALLY_ENGLISH = new Set(['app.name', 'account.delete.word']);
 /**
  * New English text whose Hindi is drafted but not yet approved by the owner:
  * it falls back to English until then. Remove a prefix once its Hindi is in.
  */
-const HINDI_PENDING_REVIEW: string[] = ['account.', 'profile.deleteAccount', 'errors.ACCOUNT_DELETION_DUE'];
+const HINDI_PENDING_REVIEW: string[] = [];
 
 type Tree = { [key: string]: string | Tree };
 const flat = (tree: Tree, prefix = ''): Array<[string, string]> =>
