@@ -10,6 +10,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { allowedMinutes } from '../reminder-times';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -53,4 +54,14 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(120)
   avatar_key?: string | null;
+
+  /** Minutes after midnight IST on a quarter-hour, 06:00–11:45; null turns the morning reminder off. */
+  @IsOptional()
+  @IsIn(allowedMinutes('MORNING'))
+  reminder_morning_min?: number | null;
+
+  /** Minutes after midnight IST on a quarter-hour, 15:00–21:45; null turns the evening reminder off. */
+  @IsOptional()
+  @IsIn(allowedMinutes('EVENING'))
+  reminder_evening_min?: number | null;
 }

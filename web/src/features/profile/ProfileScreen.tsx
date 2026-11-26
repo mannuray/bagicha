@@ -5,6 +5,7 @@ import { messageFor } from '../../lib/error-messages';
 import { Button, Chip, Icon, Screen, TextField, formSubmit } from '../../ui';
 import { useSession } from '../auth';
 import { DistrictField } from './DistrictField';
+import { RemindersSection } from './RemindersSection';
 import { ProfilePhoto } from './ProfilePhoto';
 import { RegionChooser } from './RegionChooser';
 import { regionById } from './regions';
@@ -82,6 +83,7 @@ export function ProfileScreen() {
               <Row icon="public" label={t('profile.region')} value={regionLabel ? t(regionLabel.labelKey) : '—'} onClick={open} />
               <Row icon="map" label={t('profile.district')} value={user.district ?? '—'} onClick={open} />
             </Group>
+            <RemindersSection />
           </div>
         ) : (
           <form onSubmit={formSubmit(f.save)} className="space-y-4 rounded-xl bg-surface-container-low p-4">

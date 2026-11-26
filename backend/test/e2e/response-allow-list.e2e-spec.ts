@@ -18,6 +18,8 @@ const USER_FIELDS = [
   'phone_number',
   'premium_expires_at',
   'region_cluster',
+  'reminder_evening_min',
+  'reminder_morning_min',
   'subscription_tier',
 ].sort();
 

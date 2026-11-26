@@ -149,6 +149,12 @@ describe('account erasure (day 30)', () => {
     await prisma.appliedPayment.create({
       data: { payment_id: 'pay_1', user_id: alice.id, plan_id: 'monthly' },
     });
+    await prisma.pushDevice.create({
+      data: { user_id: alice.id, token: 'tok-alice', platform: 'ANDROID' },
+    });
+    await prisma.reminderSend.create({
+      data: { user_id: alice.id, slot: 'MORNING', ist_date: '2026-11-26' },
+    });
     return { bobPost, bobComment, byAlice, aboutAlice, unrelated };
   }
 
@@ -177,6 +183,8 @@ describe('account erasure (day 30)', () => {
     expect(await prisma.userBlock.count()).toBe(0);
     expect(await prisma.expertVerification.count()).toBe(0);
     expect(await prisma.report.count()).toBe(0);
+    expect(await prisma.pushDevice.count()).toBe(0);
+    expect(await prisma.reminderSend.count()).toBe(0);
 
     // Bob keeps his plant, his post and his own reply on it; Alice's reply is gone.
     expect(

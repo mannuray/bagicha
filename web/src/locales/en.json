@@ -874,5 +874,21 @@
       "email": "Can’t sign in? Email {{email}} from any address with your phone number, and we will delete the account for you.",
       "signIn": "Sign in"
     }
+  },
+  "reminders": {
+    "card": {
+      "title": "Garden reminders",
+      "body": "Get a morning and evening reminder of your garden tasks.",
+      "turnOn": "Turn on",
+      "notNow": "Not now"
+    },
+    "section": {
+      "title": "Reminders",
+      "morning": "Morning",
+      "evening": "Evening",
+      "off": "Off",
+      "blocked": "Notifications are off for Bagicha on this phone.",
+      "howTo": "Turn them on in Settings → Apps → Bagicha → Notifications."
+    }
   }
 }

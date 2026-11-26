@@ -23,6 +23,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { PlantsModule } from './modules/plants/plants.module';
 import { UserModule } from './modules/user/user.module';
+import { NotificationsModule } from './modules/notifications';
 import { validateEnv } from './config/env.validation';
 import { LoggingModule } from './common/logging/logging.module';
 import { ObservabilityModule } from './common/observability';
@@ -73,6 +74,7 @@ import { AuditModule } from './modules/audit';
     SubscriptionModule,
     PlantsModule,
     UserModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

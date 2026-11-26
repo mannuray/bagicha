@@ -26,6 +26,9 @@ export const userSchema = z.object({
   avatar_key: z.string().nullable().default(null),
   /** Set while the account waits to be erased; the app offers to keep it. */
   deletion_due_at: z.string().nullable().default(null),
+  /** Reminder times, minutes after midnight IST; null = off. Sessions saved before reminders existed get the server's defaults. */
+  reminder_morning_min: z.number().int().nullable().default(420),
+  reminder_evening_min: z.number().int().nullable().default(1080),
 });
 export type User = z.infer<typeof userSchema>;
 

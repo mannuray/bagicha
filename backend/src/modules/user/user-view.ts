@@ -18,6 +18,9 @@ export interface UserView {
   avatar_key: string | null;
   /** Set while the account waits to be erased: the app offers to keep it. */
   deletion_due_at: Date | null;
+  /** Reminder times, minutes after midnight IST; null = that reminder is off. */
+  reminder_morning_min: number | null;
+  reminder_evening_min: number | null;
 }
 
 export function toUserView(user: User): UserView {
@@ -34,5 +37,7 @@ export function toUserView(user: User): UserView {
     badge_level: user.badge_level,
     avatar_key: user.avatar_key,
     deletion_due_at: user.deletion_due_at,
+    reminder_morning_min: user.reminder_morning_min,
+    reminder_evening_min: user.reminder_evening_min,
   };
 }

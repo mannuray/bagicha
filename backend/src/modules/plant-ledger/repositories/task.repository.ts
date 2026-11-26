@@ -75,6 +75,35 @@ export class TaskRepository {
     return { rows, total };
   }
 
+  /**
+   * Pending tasks on the user's living plants due in [from, to), plus WEATHER
+   * tasks due in [to, weatherUntil) when weatherUntil is set: what a garden
+   * reminder counts.
+   */
+  listDueForReminder(
+    userId: string,
+    w: { from: Date; to: Date; weatherUntil: Date | null },
+  ): Promise<TaskWithView[]> {
+    const due: Prisma.TaskWhereInput[] = [
+      { due_date: { gte: w.from, lt: w.to } },
+    ];
+    if (w.weatherUntil) {
+      due.push({
+        source: TaskSource.WEATHER,
+        due_date: { gte: w.to, lt: w.weatherUntil },
+      });
+    }
+    return this.prisma.task.findMany({
+      where: {
+        status: TaskStatus.PENDING,
+        plant: { user_id: userId, ended_at: null },
+        OR: due,
+      },
+      include: taskViewInclude,
+      orderBy: ORDER,
+    });
+  }
+
   async listForUser(
     userId: string,
     page: SkipTake,
