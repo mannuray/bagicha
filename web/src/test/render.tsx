@@ -42,6 +42,8 @@ export const testUser = (over: Partial<User> = {}): User => ({
   badge_level: 'Seedling',
   avatar_key: null,
   deletion_due_at: null,
+  reminder_morning_min: 420,
+  reminder_evening_min: 1080,
   ...over,
 });
 

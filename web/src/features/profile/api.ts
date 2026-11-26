@@ -15,6 +15,8 @@ export interface ProfileChanges {
   longitude?: number;
   garden_types?: string[];
   language_pref?: string;
+  reminder_morning_min?: number | null;
+  reminder_evening_min?: number | null;
 }
 
 /** Saves profile fields and refreshes the signed-in user from the response. */

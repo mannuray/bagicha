@@ -10,6 +10,7 @@ import { PlantFormScreen, PlantListScreen } from '../features/plants';
 import { GardenScreen, LanguageScreen, ProfileScreen, RegionScreen } from '../features/profile';
 import { DiagnoseResultScreen, IdentifyResultScreen, ScanScreen, ScanStateProvider } from '../features/scan';
 import { TasksScreen } from '../features/tasks';
+import { PushRegistration } from '../features/reminders';
 import { NotFoundScreen } from './NotFoundScreen';
 
 /** Crop photos and Hindi names for the plant list rows. */
@@ -27,6 +28,7 @@ const app = (screen: ReactNode) => (
 export function AppRoutes() {
   return (
     <ScanStateProvider>
+      <PushRegistration />
       <Routes>
         <Route path="/splash" element={<SplashScreen />} />
         <Route path="/login" element={<LoginScreen />} />
