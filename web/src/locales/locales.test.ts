@@ -10,7 +10,7 @@ const INTENTIONALLY_ENGLISH = new Set(['app.name', 'account.delete.word']);
  * New English text whose Hindi is drafted but not yet approved by the owner:
  * it falls back to English until then. Remove a prefix once its Hindi is in.
  */
-const HINDI_PENDING_REVIEW: string[] = ['reminders.'];
+const HINDI_PENDING_REVIEW: string[] = ['reminders.', 'landing.'];
 
 type Tree = { [key: string]: string | Tree };
 const flat = (tree: Tree, prefix = ''): Array<[string, string]> =>

@@ -11,6 +11,8 @@ import { GardenScreen, LanguageScreen, ProfileScreen, RegionScreen } from '../fe
 import { DiagnoseResultScreen, IdentifyResultScreen, ScanScreen, ScanStateProvider } from '../features/scan';
 import { TasksScreen } from '../features/tasks';
 import { PushRegistration } from '../features/reminders';
+import { WebHome } from '../features/landing';
+import { PrivacyPage, TermsPage } from '../features/legal';
 import { NotFoundScreen } from './NotFoundScreen';
 
 /** Crop photos and Hindi names for the plant list rows. */
@@ -34,6 +36,8 @@ export function AppRoutes() {
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/login/otp" element={<OtpScreen />} />
         <Route path="/delete-account" element={<DeleteAccountInfoPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
         <Route
           path="/account/deletion-pending"
           element={
@@ -47,7 +51,7 @@ export function AppRoutes() {
         <Route path="/onboarding/region" element={authed(<RegionScreen />)} />
         <Route path="/onboarding/garden" element={authed(<GardenScreen />)} />
 
-        <Route path="/" element={app(<DashboardScreen />)} />
+        <Route path="/" element={<WebHome app={app(<DashboardScreen />)} />} />
         <Route path="/plants" element={app(<PlantListScreen addSlot={<AddToGardenButton className={ADD_BUTTON} />} cropParts={CROP_PARTS} />)} />
         <Route path="/plants/new" element={app(<PlantFormScreen />)} />
         <Route path="/plants/:id" element={app(<PlantDetailScreen />)} />
