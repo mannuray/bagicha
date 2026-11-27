@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:NS;src:url(noto-serif-latin-700-normal.woff2)}
+@font-face{font-family:MRB;src:url(manrope-latin-700-normal.woff2)}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden}
+.c{position:relative;width:1080px;height:1920px;overflow:hidden}
+.green{background:radial-gradient(ellipse 900px 700px at 15% 0%,#2d4739,#173124)}
+.cream{background:radial-gradient(ellipse 900px 700px at 85% 0%,#f0ede8,#fcf9f4)}
+.k{position:absolute;left:96px;top:120px;font-family:MRB;font-size:30px;letter-spacing:5px;text-transform:uppercase}
+.h{position:absolute;left:96px;right:96px;top:176px;font-family:NS;font-size:76px;line-height:1.12;letter-spacing:-1px}
+.green .k{color:#ffb59c}.green .h{color:#fcf9f4}
+.cream .k{color:#9b4425}.cream .h{color:#173124}
+.phone{position:absolute;left:150px;top:450px;width:780px;padding:18px;border-radius:84px;background:#0f1f17;box-shadow:0 40px 90px rgba(6,32,20,.35)}
+.phone img{display:block;width:780px;border-radius:66px}
+.cream .phone{background:#1c1c19}
+</style></head><body><div class="c" id="c"><div class="k" id="k"></div><div class="h" id="h"></div><div class="phone"><img id="i"></div></div>
+<script>
+const q=new URLSearchParams(location.search);
+c.className='c '+q.get('t');k.textContent=q.get('k');h.textContent=q.get('h');i.src='cap-'+q.get('s')+'.png';
+</script></body></html>
