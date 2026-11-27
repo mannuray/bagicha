@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "82976348600",
+    "project_id": "bud-tale",
+    "storage_bucket": "bud-tale.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:82976348600:android:2c34baa38d2264d87c974d",
+        "android_client_info": {
+          "package_name": "com.budtale.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "82976348600-lg3bcgsa246tsr6a0d127kade61cmgba.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.budtale.app",
+            "certificate_hash": "911362f3cf8ec4a42beda92e70afab23f57577fa"
+          }
+        },
+        {
+          "client_id": "82976348600-ob24mtcvl0iv2rog351mfq8dl0gjn1s1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDT0sDfOYdTI1doI_uBM145WVMuYl_zZ98"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "82976348600-ob24mtcvl0iv2rog351mfq8dl0gjn1s1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
