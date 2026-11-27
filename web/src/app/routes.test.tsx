@@ -55,6 +55,14 @@ describe('routes', () => {
     if (shown) expect(within(screen.getByRole('navigation', { name: /main/i })).getAllByRole('link')).toHaveLength(4);
   });
 
+  it('the bottom nav stays glassy but mostly opaque, so page text does not compete with its labels', async () => {
+    backend();
+    renderWithApp(<AppRoutes />, { route: '/' });
+    const nav = await screen.findByRole('navigation', { name: /main/i });
+    expect(nav.className).toMatch(/\bglass-panel\b/);
+    expect(nav.className).toMatch(/\bbg-surface-bright\/85\b/);
+  });
+
   it('shows not-found for unknown routes', async () => {
     renderWithApp(<AppRoutes />, { route: '/nope' });
     expect(await screen.findByRole('heading', { name: /page not found/i })).toBeInTheDocument();

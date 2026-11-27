@@ -4,14 +4,14 @@ import { Icon } from './Icon';
 import { cx } from './cx';
 import { useNavTabs } from './nav-tabs';
 
-/** Glass bottom navigation; the active tab is a forest-gradient pebble. */
+/** Glass bottom navigation, 85% opaque so page text does not compete with the labels; the active tab is a forest-gradient pebble. */
 export function BottomNav() {
   const { t } = useTranslation();
   const tabs = useNavTabs();
   return (
     <nav
       aria-label={t('nav.label')}
-      className="glass-panel fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 rounded-t-[1.75rem] px-3 pb-3 pt-2 shadow-[0_-10px_40px_rgba(28,28,25,0.06)]"
+      className="glass-panel fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 rounded-t-[1.75rem] border-t border-outline-variant/30 bg-surface-bright/85 px-3 pb-3 pt-2 shadow-[0_-8px_24px_rgba(28,28,25,0.08)]"
     >
       <ul className="flex items-center justify-around">
         {tabs.map((tab) => (
