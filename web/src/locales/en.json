@@ -50,11 +50,12 @@
       "tagline": "Your orchard's memory",
       "grows": "Fruit · Vegetables · Flowers"
     },
-    "login": {
-      "title": "Your Garden Awaits"
-    },
     "google": {
-      "subtitle": "Sign in with your Google account",
+      "title": "Your garden, remembered.",
+      "tagline": "Care reminders for your trees, vegetables and flowers, timed to your district's season.",
+      "pointReminders": "Morning and evening reminders",
+      "pointSeasons": "Season tips for your region",
+      "pointJournal": "A journal for every plant",
       "button": "Continue with Google",
       "failed": "Google sign-in didn't work. Please try again.",
       "unavailable": "Google sign-in isn't available right now. Please try again later.",

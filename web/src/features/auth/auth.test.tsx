@@ -78,6 +78,14 @@ describe('login', () => {
     expect(container.querySelector('header img[src*="login-leaf"]')).not.toBeNull();
   });
 
+  it('says what Budtale does before asking to sign in', () => {
+    renderWithApp(<LoginScreen />, { route: '/login', user: null });
+    expect(screen.getByRole('heading', { name: 'Your garden, remembered.' })).toBeInTheDocument();
+    for (const point of ['Morning and evening reminders', 'Season tips for your region', 'A journal for every plant']) {
+      expect(screen.getByText(point)).toBeInTheDocument();
+    }
+  });
+
   it('signs in with Google in the app and goes home when the profile is complete', async () => {
     let body: unknown;
     server.use(

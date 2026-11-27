@@ -19,7 +19,7 @@ function backend() {
 describe('routes', () => {
   it('sends signed-out visitors to login', async () => {
     renderWithApp(<AppRoutes />, { route: '/plants', user: null });
-    expect(await screen.findByRole('heading', { name: /your garden awaits/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /your garden, remembered/i })).toBeInTheDocument();
   });
 
   it('sends incomplete profiles to onboarding', async () => {
