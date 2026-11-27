@@ -242,6 +242,7 @@
     "title": "The Daily Path",
     "plantTitle": "Care for this tree",
     "complete": "Mark done",
+    "done": "Done",
     "skip": "Skip",
     "subtitleAll": "Everything your garden needs",
     "subtitlePlant": "Maintenance for {{name}}",

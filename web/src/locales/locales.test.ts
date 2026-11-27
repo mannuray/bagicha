@@ -16,6 +16,7 @@ const HINDI_PENDING_REVIEW: string[] = [
   'profile.signedInAs',
   'account.delete.goes.profile',
   'account.info.email',
+  'tasks.done',
 ];
 
 type Tree = { [key: string]: string | Tree };

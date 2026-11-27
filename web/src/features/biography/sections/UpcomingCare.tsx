@@ -20,7 +20,7 @@ export function UpcomingCare({ plantId, now }: { plantId: string; now: Date }) {
       ) : next.length === 0 ? (
         <p className="font-body text-sm text-on-surface-variant">{t('tasks.emptyPlantBody')}</p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {next.map((task) => (
             <TaskCard key={task.id} task={task} now={now} showPlant={false} />
           ))}

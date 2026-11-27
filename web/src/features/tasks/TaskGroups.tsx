@@ -28,7 +28,7 @@ export function TaskGroups({
                 {t(`tasks.group.${s.key}`)}
               </h2>
             )}
-            <div className="space-y-3">
+            <div className="space-y-2">
               {s.items.map((task) => (
                 <TaskCard key={task.id} task={task} now={now} showPlant={showPlant} onError={onError} />
               ))}
@@ -47,7 +47,7 @@ export function ClosedHistory({ tasks, now, showPlant = true }: { tasks: Task[];
   return (
     <section aria-label={t('tasks.group.closed')} className="opacity-70">
       <h2 className="mb-3 font-label text-sm font-bold uppercase tracking-[0.1em] text-on-surface-variant">{t('tasks.group.closed')}</h2>
-      <div className="space-y-3">
+      <div className="space-y-2">
         {closed.map((task) => (
           <ClosedTaskCard key={task.id} task={task} now={now} showPlant={showPlant} />
         ))}

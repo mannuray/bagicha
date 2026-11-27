@@ -194,6 +194,7 @@ describe('tasks screen', () => {
     );
     renderWithApp(<TaskCard task={task} now={new Date()} />);
     const card = screen.getByRole('article', { name: /main feed after harvest/i });
+    await userEvent.click(within(card).getByRole('button', { name: /main feed after harvest/i }));
     const text = card.textContent ?? '';
     expect(text).toMatch(/organic way/i);
     expect(text.indexOf('Compost and neem cake')).toBeLessThan(text.indexOf('Urea + SSP'));
@@ -220,7 +221,39 @@ describe('tasks screen', () => {
     );
     renderWithApp(<TaskCard task={task} now={new Date()} />);
     const card = screen.getByRole('article', { name: /feed urea after fruit set/i });
+    await userEvent.click(within(card).getByRole('button', { name: /feed urea after fruit set/i }));
     expect(card.textContent).not.toMatch(/organic way/i);
     expect(card.textContent).toContain('The other half of the urea');
+  });
+
+  it('a task is one compact row: the care text stays folded until the title is tapped', async () => {
+    const { TaskCard, taskSchema } = await import('.');
+    const task = taskSchema.parse(
+      taskRecord({
+        source: 'TREE_CARE',
+        title: 'Hold back water before flowering',
+        care_how: { organic: 'Don’t water bearing trees now', chemical: null, why: 'A dry spell makes the tree flower', amount: null, window_end: null },
+      }),
+    );
+    renderWithApp(<TaskCard task={task} now={new Date()} />);
+    const card = screen.getByRole('article', { name: /hold back water/i });
+    const toggle = within(card).getByRole('button', { name: /hold back water/i });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(card.textContent).not.toContain('Don’t water bearing trees now');
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(card.textContent).toContain('Don’t water bearing trees now');
+    await userEvent.click(toggle);
+    expect(card.textContent).not.toContain('Don’t water bearing trees now');
+  });
+
+  it('marks done from the check circle at the start of the row, with Skip beside the title', async () => {
+    const { TaskCard, taskSchema } = await import('.');
+    renderWithApp(<TaskCard task={taskSchema.parse(taskRecord())} now={new Date()} />);
+    const card = screen.getByRole('article', { name: /plan pest response/i });
+    const buttons = within(card).getAllByRole('button');
+    expect(buttons[0]).toHaveAccessibleName(/mark done/i);
+    expect(buttons[0]).toHaveTextContent(/done$/i);
+    expect(buttons[buttons.length - 1]).toHaveAccessibleName(/skip/i);
   });
 });
