@@ -135,7 +135,7 @@ p, ol, ul { margin: 0; }
 .legal h2 { font-size: clamp(1.25rem, 3vw, 1.5rem); padding-top: 1rem; }
 .legal p, .legal li { font-size: 1rem; line-height: 1.7; }
 .legal .lead { color: var(--on-surface); }
-.legal ul { padding-left: 1.5rem; display: grid; gap: 0.5rem; }
+.legal ul, .legal ol { padding-left: 1.5rem; display: grid; gap: 0.5rem; }
 .legal a { font-weight: 700; color: var(--secondary); text-decoration: underline; }
 .table { overflow-x: auto; border-radius: 1rem; background: var(--surface-low); }
 .table table { width: 100%; min-width: 560px; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
