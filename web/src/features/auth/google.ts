@@ -98,13 +98,16 @@ export function nativeGoogle(clientId: string): GooglePort {
         throw err;
       });
       await ready;
+      let result;
       try {
-        const { result } = await SocialLogin.login({ provider: 'google', options: {} });
-        return ('idToken' in result && result.idToken) || CANCELLED;
+        ({ result } = await SocialLogin.login({ provider: 'google', options: {} }));
       } catch (err) {
         if (isCancel(err)) return CANCELLED;
         throw err;
       }
+      // No token means a setup problem (e.g. the client ids), not a choice the gardener made.
+      if ('idToken' in result && result.idToken) return result.idToken;
+      throw new Error('Google sign-in returned no ID token');
     },
     renderButton: () => Promise.reject(new Error('The app uses its own button')),
   };

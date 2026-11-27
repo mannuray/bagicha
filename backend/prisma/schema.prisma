@@ -244,6 +244,8 @@ enum SubscriptionTier {
 
 model User {
   id                    String           @id @default(uuid())
+  /// From phone sign-in, which Google sign-in replaced. Never read or shown; kept only until a later release drops it (the server before the switch still reads it).
+  phone_number          String?          @unique
   /// Google's permanent account id (the token's `sub`). Null only for accounts from before Google sign-in, which can't be signed in to until claimed by email.
   google_sub            String?          @unique
   /// Google account email, refreshed on each sign-in. Shown only to the user themselves; never logged.

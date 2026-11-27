@@ -85,6 +85,15 @@ describe('AuthService.signInWithGoogle', () => {
     });
   });
 
+  it('writes nothing when a returning account has the same email', async () => {
+    const t = build({ bySub: userRow({ email: IDENTITY.email }) });
+    const res = await t.service.signInWithGoogle('tok');
+    expect(t.users.updateEmail).not.toHaveBeenCalled();
+    expect(res.user).toEqual(
+      expect.objectContaining({ id: 'u1', email: IDENTITY.email }),
+    );
+  });
+
   it('claims the one unclaimed account with the same email, keeping its name and photo', async () => {
     const t = build({
       claimed: userRow({

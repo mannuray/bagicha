@@ -41,18 +41,18 @@ describe('rate limiting', () => {
           .set('X-Forwarded-For', chain.join(', '))
           .send({ id_token: freshToken() });
       };
-      for (let i = 0; i < 5; i += 1)
+      for (let i = 0; i < 20; i += 1)
         await ask('152.59.155.164', `198.51.100.${i}`);
       expect((await ask('152.59.155.164', '198.51.100.99')).status).toBe(429);
       expect((await ask('152.59.155.200')).status).not.toBe(429);
     });
 
-    it('rejects the 6th sign-in in a minute with RATE_LIMITED', async () => {
+    it('allows 20 sign-ins a minute from one address (shared mobile addresses), rejects the 21st with RATE_LIMITED', async () => {
       const send = () =>
         request(app.getHttpServer())
           .post('/api/v1/auth/google')
           .send({ id_token: freshToken() });
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 20; i++) {
         expect((await send()).status).toBe(200);
       }
       const blocked = await send();
@@ -69,7 +69,7 @@ describe('rate limiting', () => {
         if (auth) void r.set('Authorization', auth);
         return r.send({ id_token: freshToken() });
       };
-      for (let i = 0; i < 5; i++) expect((await send()).status).toBe(200);
+      for (let i = 0; i < 20; i++) expect((await send()).status).toBe(200);
       expect((await send(token)).status).toBe(429);
     });
 

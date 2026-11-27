@@ -30,9 +30,9 @@ describe('Google sign-in on the phone', () => {
     await expect(nativeGoogle('web-client-id').signIn()).rejects.toThrow(/developer console/i);
   });
 
-  it('a sign-in with no ID token counts as cancelled', async () => {
+  it('a sign-in with no ID token is an error, so a broken setup shows instead of doing nothing', async () => {
     plugin.login.mockResolvedValue({ provider: 'google', result: { responseType: 'online', idToken: null } });
-    await expect(nativeGoogle('web-client-id').signIn()).resolves.toBe(CANCELLED);
+    await expect(nativeGoogle('web-client-id').signIn()).rejects.toThrow();
   });
 
   it('initialises once with the web client id', async () => {

@@ -121,10 +121,11 @@ In the Google Cloud project that also holds Firebase for `com.budtale.app`:
 ### Releasing Google sign-in (one time)
 
 1. Set `GOOGLE_CLIENT_ID` on Render and `VITE_GOOGLE_CLIENT_ID` in `web/.env.production`.
-2. Note the user id of the account to carry over (it is matched by phone before the phone column goes).
-3. Apply migration `20261128100000_google_sign_in` (adds `google_sub` and `email`, drops `phone_number`; deletes no rows). Then set `email` on that user id to the owner's Gmail, so the first Google sign-in with it claims the account.
+2. Note the user id of the account to carry over (look it up by its phone number).
+3. Apply migration `20261128100000_google_sign_in`. It only adds (`google_sub`, `email`, and lets `phone_number` be empty), so the server still running keeps working until the deploy, and rolling back the code stays possible. Then set `email` on that user id to the owner's Gmail, so the first Google sign-in with it claims the account.
 4. Push, deploy Render, let Vercel build; redeploy `site/` (privacy and terms text).
 5. Rebuild the APK and sign in on a phone.
+6. Later, once Google sign-in has worked for a while and no rollback is wanted: a separate release drops `phone_number` (back up the `users` table first; this can't be undone).
 
 ## Check the deploy worked
 
@@ -134,7 +135,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://bagicha-api.onrender.com/api/v1
 curl -s -o /dev/null -D - -X OPTIONS https://bagicha-api.onrender.com/api/v1/auth/google -H 'Origin: https://bagicha-web.vercel.app' -H 'Access-Control-Request-Method: POST' | grep -i access-control-allow-origin   # CORS allows the site
 ```
 
-Then sign in on the web app (the code is shown on screen), add a tree, and log a moment with a photo.
+Then sign in on the web app with Google, add a tree, and log a moment with a photo.
 
 - **Backend review release 2** (migration `20261125120000_chat_conversations`): migration → API deploy (no push, no web change). The migration fills the new `conversations` table from existing messages, but messages sent between the migration and the deploy go through the old API, which doesn't update it. Right after the API is live, run this catch-up once against Neon (safe to repeat; it only adds missing pairs and moves a pair's latest message forward):
 

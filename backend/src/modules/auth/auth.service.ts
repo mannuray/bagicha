@@ -55,7 +55,10 @@ export class AuthService {
   private async arrive(identity: GoogleIdentity): Promise<Arrival> {
     const known = await this.users.findByGoogleSub(identity.sub);
     if (known) {
-      const user = await this.users.updateEmail(known.id, identity.email);
+      const user =
+        known.email === identity.email
+          ? known
+          : await this.users.updateEmail(known.id, identity.email);
       return { user, isNewUser: false, claimedExisting: false };
     }
     const claimed = await this.users.claimByEmail(identity.sub, identity.email);

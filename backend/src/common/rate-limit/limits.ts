@@ -12,9 +12,10 @@ export const RATE_LIMITS: Record<
   RateLimitBucket,
   { limit: number; ttl: number }
 > = {
-  // OTP request/verify per IP: slows SMS pumping. Brute force is capped per phone in AuthService
-  // (OTP burned after 5 wrong guesses). Behind a proxy, set Express 'trust proxy' so req.ip is the client.
-  auth: { limit: 5, ttl: MINUTE },
+  // Google sign-in per IP: slows account-creation spam (Google verifies who signs in, so there
+  // is nothing to guess). Room for many phones behind one shared mobile-carrier address.
+  // Behind a proxy, set Express 'trust proxy' so req.ip is the client.
+  auth: { limit: 20, ttl: MINUTE },
   // Every AI provider call costs money.
   ai: { limit: 20, ttl: HOUR },
   // Image processing (sharp) + storage.
