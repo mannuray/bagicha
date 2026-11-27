@@ -840,7 +840,7 @@
       "intro": "Your account will be deleted for good on {{date}}, 30 days from now. Until then you can sign in and keep it.",
       "whatGoes": "What will be deleted",
       "goes": {
-        "profile": "Your profile, phone number and location",
+        "profile": "Your profile, email address and location",
         "garden": "Your plants, journal, tasks, garden places and plant-doctor checks",
         "photos": "Every photo you added",
         "community": "Your posts and replies, and replies others left on your posts",
@@ -864,7 +864,7 @@
       "steps": "To delete your account, sign in to Budtale (in the app or at this website, no install needed), open Profile and tap “Delete my account”.",
       "notice": "Your account is deleted for good 30 days after you ask. Signing in during those 30 days lets you keep it.",
       "whatGoes": "Everything you added is deleted: your profile, plants, journal, photos, posts, replies and messages. We keep payment records (tax law) and a security log for one year, neither of which holds anything you wrote.",
-      "email": "Can’t sign in? Email {{email}} from any address with your phone number, and we will delete the account for you.",
+      "email": "Can’t sign in? Email {{email}} from the email address of the Google account you use for Budtale, and we will delete the account for you.",
       "signIn": "Sign in"
     }
   },

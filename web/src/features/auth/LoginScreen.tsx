@@ -20,11 +20,11 @@ export function LoginScreen() {
   return (
     <Screen className="flex flex-col">
       <AuthHero />
-      <main className="relative z-10 -mt-2 flex flex-1 flex-col px-6 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)]">
-        <div className="flex flex-1 flex-col justify-center">
+      <main className="relative z-10 -mt-4 flex flex-1 flex-col justify-between gap-6 px-6 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)]">
+        <div className="flex flex-col items-center text-center">
           <h1 className="font-headline text-[27px] font-semibold leading-[1.2] tracking-tight text-primary">{t('auth.google.title')}</h1>
-          <p className="mt-1.5 max-w-[92%] font-body text-[13px] leading-relaxed text-primary/75">{t('auth.google.tagline')}</p>
-          <ul className="mt-4 flex flex-col gap-2">
+          <p className="mt-2 max-w-[20rem] font-body text-[13px] leading-relaxed text-primary/75">{t('auth.google.tagline')}</p>
+          <ul className="mt-5 flex w-full flex-col gap-2 text-left">
             {POINTS.map(({ icon, key }) => (
               <li key={key} className="flex items-center gap-3.5 rounded-xl bg-surface-container-low px-3.5 py-2.5">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-container text-primary">
@@ -35,7 +35,7 @@ export function LoginScreen() {
             ))}
           </ul>
         </div>
-        <div className="flex flex-col gap-3 pt-6">
+        <div className="flex flex-col gap-3">
           {sessionExpired && (
             <p role="status" className="rounded-xl bg-secondary-fixed px-4 py-3 text-center font-body text-sm text-on-secondary-fixed">
               {t('errors.UNAUTHORIZED')}
