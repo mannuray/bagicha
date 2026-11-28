@@ -121,6 +121,47 @@ describe('ReminderDispatchService', () => {
     expect(summary).toMatchObject({ slot: 'MORNING', users: 2, sent: 2 });
   });
 
+  it('serves the quarter-hour the run was scheduled for, even when it starts late', async () => {
+    // Queued behind a slow 07:00 run, the 07:15 run only starts at 07:35.
+    const { service, audience } = setup({
+      now: new Date('2026-11-27T02:05:00Z'),
+    });
+    const summary = await service.run(new Date('2026-11-27T01:45:00Z'));
+    expect(audience.batch).toHaveBeenCalledWith('MORNING', 435, null, 200);
+    expect(summary).toMatchObject({ slot: 'MORNING', sent: 1, tooLate: false });
+  });
+
+  it('skips a run more than an hour late (the server was down) but still tidies up', async () => {
+    const { service, audience, devices, sent } = setup({
+      now: new Date('2026-11-27T02:31:00Z'),
+    });
+    const summary = await service.run(MORNING);
+    expect(audience.batch).not.toHaveBeenCalled();
+    expect(sent).toHaveLength(0);
+    expect(devices.removeStale).toHaveBeenCalled();
+    expect(summary).toMatchObject({ slot: null, tooLate: true });
+  });
+
+  it('reminds up to 10 gardeners at once, and every one of them', async () => {
+    const users = Array.from({ length: 25 }, (_, i) =>
+      user(`u${String(i).padStart(2, '0')}`),
+    );
+    const { service, sender } = setup({ now: MORNING, users });
+    let inFlight = 0;
+    let most = 0;
+    sender.send.mockImplementation(async (tokens: string[]) => {
+      inFlight += 1;
+      most = Math.max(most, inFlight);
+      await new Promise((r) => setTimeout(r, 5));
+      inFlight -= 1;
+      return tokens.map(() => 'sent' as const);
+    });
+    const summary = await service.run();
+    expect(most).toBe(10);
+    expect(sender.send).toHaveBeenCalledTimes(25);
+    expect(summary).toMatchObject({ users: 25, sent: 25 });
+  });
+
   it('does not send a slot twice on the same day', async () => {
     const { service, sent } = setup({ now: MORNING });
     await service.run();

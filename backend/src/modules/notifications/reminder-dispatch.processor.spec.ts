@@ -38,7 +38,23 @@ describe('ReminderDispatchProcessor', () => {
       service as unknown as ReminderDispatchService,
       logger() as unknown as PinoLogger,
     );
-    await expect(processor.process()).resolves.toEqual(summary);
+    await expect(
+      processor.process({ timestamp: 1_000, opts: {} } as unknown as Job),
+    ).resolves.toEqual(summary);
+  });
+
+  it('passes the time the run was scheduled for, not when it started', async () => {
+    const service = { run: jest.fn(() => Promise.resolve({})) };
+    const processor = new ReminderDispatchProcessor(
+      service as unknown as ReminderDispatchService,
+      logger() as unknown as PinoLogger,
+    );
+    // The scheduler adds the next run at `timestamp` with a delay up to its due time.
+    await processor.process({
+      timestamp: Date.parse('2026-11-27T01:40:00Z'),
+      opts: { delay: 5 * 60_000 },
+    } as unknown as Job);
+    expect(service.run).toHaveBeenCalledWith(new Date('2026-11-27T01:45:00Z'));
   });
 
   it('logs a failed run as an error after its last attempt', () => {

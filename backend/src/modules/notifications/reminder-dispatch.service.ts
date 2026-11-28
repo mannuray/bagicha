@@ -27,11 +27,17 @@ export interface ReminderRunSummary {
   tokensRemoved: number;
   staleRemoved: number;
   sendsPruned: number;
+  /** The run started over an hour after its quarter-hour (the server was down), so it sent nothing. */
+  tooLate: boolean;
 }
 
 const BATCH_SIZE = 200;
 const STALE_DEVICE_DAYS = 60;
 const KEEP_SENDS_DAYS = 30;
+/** Gardeners reminded at the same time: overlaps the push calls without crowding the database pool. */
+const PARALLEL = 10;
+/** A reminder later than this is no longer about "now"; the next day's comes instead. */
+const MAX_LATE_MS = 60 * 60_000;
 
 const istDayStart = (date: string) => new Date(`${date}T00:00:00+05:30`);
 const slotAt = (minute: number): ReminderSlot | null =>
@@ -61,8 +67,10 @@ export class ReminderDispatchService {
     private readonly logger: PinoLogger,
   ) {}
 
-  async run(): Promise<ReminderRunSummary> {
+  /** `dueAt` is the quarter-hour this run was scheduled for; it defaults to now. */
+  async run(dueAt?: Date): Promise<ReminderRunSummary> {
     const now = this.clock.now();
+    const at = dueAt ?? now;
     const summary: ReminderRunSummary = {
       slot: null,
       users: 0,
@@ -73,11 +81,12 @@ export class ReminderDispatchService {
       tokensRemoved: 0,
       staleRemoved: 0,
       sendsPruned: 0,
+      tooLate: now.getTime() - at.getTime() > MAX_LATE_MS,
     };
     if (!this.sender.enabled) return summary;
 
-    const { istDate, minute } = istQuarter(now);
-    summary.slot = slotAt(minute);
+    const { istDate, minute } = istQuarter(at);
+    summary.slot = summary.tooLate ? null : slotAt(minute);
     if (summary.slot)
       await this.sendSlot(summary.slot, istDate, minute, summary);
 
@@ -125,8 +134,8 @@ export class ReminderDispatchService {
       summary.users += users.length;
       const tokens = await this.devices.tokensFor(users.map((u) => u.id));
 
-      for (const user of users) {
-        if (!(await this.sends.claim(user.id, slot, istDate))) continue;
+      await eachLimited(users, PARALLEL, async (user) => {
+        if (!(await this.sends.claim(user.id, slot, istDate))) return;
         try {
           await this.remind(
             user,
@@ -141,7 +150,7 @@ export class ReminderDispatchService {
           await this.sends.release(user.id, slot, istDate);
           summary.retry += 1;
         }
-      }
+      });
       if (users.length < BATCH_SIZE) break;
     }
   }
@@ -223,6 +232,21 @@ export class ReminderDispatchService {
       return names;
     };
   }
+}
+
+/** Runs `fn` over `items` with at most `limit` running at once; `fn` handles its own errors. */
+async function eachLimited<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<void>,
+): Promise<void> {
+  let next = 0;
+  const lane = async () => {
+    while (next < items.length) await fn(items[next++]);
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, lane),
+  );
 }
 
 function toReminderTask(t: TaskView, tomorrowStart: Date): ReminderTask {

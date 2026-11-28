@@ -52,8 +52,9 @@ export class ReminderDispatchProcessor extends WorkerHost {
     super();
   }
 
-  process(): Promise<ReminderRunSummary> {
-    return this.dispatch.run();
+  /** The scheduler adds each run ahead of time with a delay up to its due time; a retry keeps both. */
+  process(job: Job): Promise<ReminderRunSummary> {
+    return this.dispatch.run(new Date(job.timestamp + (job.opts.delay ?? 0)));
   }
 
   @OnWorkerEvent('failed')
