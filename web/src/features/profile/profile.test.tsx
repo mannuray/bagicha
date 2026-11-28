@@ -247,6 +247,12 @@ describe('profile', () => {
     expect(screen.getByText('Signed in as asha@example.com')).toBeInTheDocument();
   });
 
+  it('shows which screens version the phone runs, for support after live updates', async () => {
+    const { default: appBundle } = await import('../../app-bundle.json');
+    renderWithApp(<Onboarding />, { route: '/profile' });
+    expect(screen.getByText(`Screens version ${appBundle.version}`)).toBeInTheDocument();
+  });
+
   it('shows the profile and signs out', async () => {
     const { session } = renderWithApp(<Onboarding />, { route: '/profile' });
     expect(screen.getByText('Asha')).toBeInTheDocument();

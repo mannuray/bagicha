@@ -1,0 +1,705 @@
+{
+  "min_native": 3,
+  "bundle": {
+    "version": 3,
+    "min_native": 3,
+    "force": true,
+    "files": [
+      {
+        "file_name": "apple-touch-icon.png",
+        "file_hash": "ec7c77636f8be9f3fe920a9ea785b98fb197ae27eba7fc19c0300fce57437729",
+        "download_url": "https://budtale.vercel.app/app-updates/files/ec7c77636f8be9f3fe920a9ea785b98fb197ae27eba7fc19c0300fce57437729"
+      },
+      {
+        "file_name": "assets/add-tree-sapling-CIYW2M12.jpg",
+        "file_hash": "1ed0e9bffb7db7275fe9305e6089e7612628c8efee1db72694a345ebfd41873a",
+        "download_url": "https://budtale.vercel.app/app-updates/files/1ed0e9bffb7db7275fe9305e6089e7612628c8efee1db72694a345ebfd41873a"
+      },
+      {
+        "file_name": "assets/amaranth-D0QlsfiE.jpg",
+        "file_hash": "bbe7ba483eadc6619c62824e54461dfdd3e7e0aa1898a710d36c0486c7078d19",
+        "download_url": "https://budtale.vercel.app/app-updates/files/bbe7ba483eadc6619c62824e54461dfdd3e7e0aa1898a710d36c0486c7078d19"
+      },
+      {
+        "file_name": "assets/ash_gourd-C5Yh2b6N.jpg",
+        "file_hash": "da6038a046c26b2fb70754d396279394d0aa773f441c00daac9d3fba2b39f2ee",
+        "download_url": "https://budtale.vercel.app/app-updates/files/da6038a046c26b2fb70754d396279394d0aa773f441c00daac9d3fba2b39f2ee"
+      },
+      {
+        "file_name": "assets/aster-QrPtx8XR.jpg",
+        "file_hash": "e1fa2788becca81074d3977a5cdd9412553608fe9c60e66efae6bbb6b4be5f41",
+        "download_url": "https://budtale.vercel.app/app-updates/files/e1fa2788becca81074d3977a5cdd9412553608fe9c60e66efae6bbb6b4be5f41"
+      },
+      {
+        "file_name": "assets/balsam-CegLjN6e.jpg",
+        "file_hash": "9b3a6b580c0193f7f392d877d807512aa54674b125254cb9bc59c3b41887f8b0",
+        "download_url": "https://budtale.vercel.app/app-updates/files/9b3a6b580c0193f7f392d877d807512aa54674b125254cb9bc59c3b41887f8b0"
+      },
+      {
+        "file_name": "assets/bathua-QArJkMkN.jpg",
+        "file_hash": "d4ac1f534188aa80260a83d9d6a8064777a7831dd10e19dcdf3175e9f3189da4",
+        "download_url": "https://budtale.vercel.app/app-updates/files/d4ac1f534188aa80260a83d9d6a8064777a7831dd10e19dcdf3175e9f3189da4"
+      },
+      {
+        "file_name": "assets/beetroot-BJ4wv_9M.jpg",
+        "file_hash": "dec9f39f0ee8db3eb9ffd821e8060573720cbf5cd2cbf4777696fddaae86103a",
+        "download_url": "https://budtale.vercel.app/app-updates/files/dec9f39f0ee8db3eb9ffd821e8060573720cbf5cd2cbf4777696fddaae86103a"
+      },
+      {
+        "file_name": "assets/bitter_gourd-d_JUQr3R.jpg",
+        "file_hash": "76421ab734cd3093cb8bce34fbc64faf59f8500ddbeb98038b9ac54faf340c5e",
+        "download_url": "https://budtale.vercel.app/app-updates/files/76421ab734cd3093cb8bce34fbc64faf59f8500ddbeb98038b9ac54faf340c5e"
+      },
+      {
+        "file_name": "assets/black_carrot-BRYvMN8o.jpg",
+        "file_hash": "db57a6d11e4d7fa3ebcb4804b5700a4fee75d073f9b32e6b38a01ef57a9e82fb",
+        "download_url": "https://budtale.vercel.app/app-updates/files/db57a6d11e4d7fa3ebcb4804b5700a4fee75d073f9b32e6b38a01ef57a9e82fb"
+      },
+      {
+        "file_name": "assets/bottle_gourd-F98CcpJw.jpg",
+        "file_hash": "3c4d23b7e8e6a265d4f141ec6d3784bce55f35ad12c5348ebcd64b725783a61b",
+        "download_url": "https://budtale.vercel.app/app-updates/files/3c4d23b7e8e6a265d4f141ec6d3784bce55f35ad12c5348ebcd64b725783a61b"
+      },
+      {
+        "file_name": "assets/brinjal-Dv6RJrQ5.jpg",
+        "file_hash": "186dc8bdf9099f7b876aa1f3ba6c35e425384dec21eea524daaf30786b883c64",
+        "download_url": "https://budtale.vercel.app/app-updates/files/186dc8bdf9099f7b876aa1f3ba6c35e425384dec21eea524daaf30786b883c64"
+      },
+      {
+        "file_name": "assets/cabbage-CnaTwvTa.jpg",
+        "file_hash": "9cab159cd493a8efd71c49c21617b4dd0c27ea8344d41ab4f6f81c6ad695b30a",
+        "download_url": "https://budtale.vercel.app/app-updates/files/9cab159cd493a8efd71c49c21617b4dd0c27ea8344d41ab4f6f81c6ad695b30a"
+      },
+      {
+        "file_name": "assets/calendula-DEzXsu15.jpg",
+        "file_hash": "32e63e13eb1a0fc8767a76e8f462aff9b1fa68af1ec0d63dc8f7e41996e6469b",
+        "download_url": "https://budtale.vercel.app/app-updates/files/32e63e13eb1a0fc8767a76e8f462aff9b1fa68af1ec0d63dc8f7e41996e6469b"
+      },
+      {
+        "file_name": "assets/capsicum-DlQC6kqG.jpg",
+        "file_hash": "159e416ebf757d7ec13066aa930d465f0a6decdc7997d32a594b70f5a1240542",
+        "download_url": "https://budtale.vercel.app/app-updates/files/159e416ebf757d7ec13066aa930d465f0a6decdc7997d32a594b70f5a1240542"
+      },
+      {
+        "file_name": "assets/carrot-BiH8w3ja.jpg",
+        "file_hash": "050155a0e984105840df24fc3642194706392b288300ea994b2965282528b915",
+        "download_url": "https://budtale.vercel.app/app-updates/files/050155a0e984105840df24fc3642194706392b288300ea994b2965282528b915"
+      },
+      {
+        "file_name": "assets/cauliflower-DAWo7vJ9.jpg",
+        "file_hash": "e6e4590e08b2b3d44ae7064eb73f90847cbc37966bf6cfab3ba2df35268c8712",
+        "download_url": "https://budtale.vercel.app/app-updates/files/e6e4590e08b2b3d44ae7064eb73f90847cbc37966bf6cfab3ba2df35268c8712"
+      },
+      {
+        "file_name": "assets/celosia-BUJdb2Sv.jpg",
+        "file_hash": "af359588512521f57903a7e3afe7dd097dabe933567c0038a280a4ba4edc5dbc",
+        "download_url": "https://budtale.vercel.app/app-updates/files/af359588512521f57903a7e3afe7dd097dabe933567c0038a280a4ba4edc5dbc"
+      },
+      {
+        "file_name": "assets/chana-DFU3sS0W.jpg",
+        "file_hash": "d64e3fb20d99477857555b95b7808d9b4fbcca25f84410c17b27c0d64ac9dd51",
+        "download_url": "https://budtale.vercel.app/app-updates/files/d64e3fb20d99477857555b95b7808d9b4fbcca25f84410c17b27c0d64ac9dd51"
+      },
+      {
+        "file_name": "assets/chilli-By5sYdYz.jpg",
+        "file_hash": "d980d533e6252dbef302387c390a8265b8c01c8a299a6ac18d082edee85fc59a",
+        "download_url": "https://budtale.vercel.app/app-updates/files/d980d533e6252dbef302387c390a8265b8c01c8a299a6ac18d082edee85fc59a"
+      },
+      {
+        "file_name": "assets/coriander-BRxjqsaO.jpg",
+        "file_hash": "01bf9dc99fa98e638cd8ee52211b5ae9425ac095a21db63f4e8aa66f9928efb0",
+        "download_url": "https://budtale.vercel.app/app-updates/files/01bf9dc99fa98e638cd8ee52211b5ae9425ac095a21db63f4e8aa66f9928efb0"
+      },
+      {
+        "file_name": "assets/cosmos-A6ZSz8gP.jpg",
+        "file_hash": "3162aead8d181a8d589f39df24c314bb140438226d789cc249b320530bd85923",
+        "download_url": "https://budtale.vercel.app/app-updates/files/3162aead8d181a8d589f39df24c314bb140438226d789cc249b320530bd85923"
+      },
+      {
+        "file_name": "assets/cucumber-BBAJJfYe.jpg",
+        "file_hash": "4959f0d9fc54060a09ab7625eaafef3a64141afa9dec0b36a35f164a2896602a",
+        "download_url": "https://budtale.vercel.app/app-updates/files/4959f0d9fc54060a09ab7625eaafef3a64141afa9dec0b36a35f164a2896602a"
+      },
+      {
+        "file_name": "assets/dahlia-CG7MSTDT.jpg",
+        "file_hash": "09ec40020a1ea8718146766a096cfcf8669936795312e242b8f7926fac55d8f2",
+        "download_url": "https://budtale.vercel.app/app-updates/files/09ec40020a1ea8718146766a096cfcf8669936795312e242b8f7926fac55d8f2"
+      },
+      {
+        "file_name": "assets/dashboard-orchard-DtJP8GHr.jpg",
+        "file_hash": "99cdd2d7b754a50ec457854443250ebbd6dda6936e3dc1138c886371a33fc789",
+        "download_url": "https://budtale.vercel.app/app-updates/files/99cdd2d7b754a50ec457854443250ebbd6dda6936e3dc1138c886371a33fc789"
+      },
+      {
+        "file_name": "assets/dianthus-DwtUomz1.jpg",
+        "file_hash": "e0bdf4befd582f8151e9c2dc6e57d972d7a8e9580e0ae7fcea2943df975a43e8",
+        "download_url": "https://budtale.vercel.app/app-updates/files/e0bdf4befd582f8151e9c2dc6e57d972d7a8e9580e0ae7fcea2943df975a43e8"
+      },
+      {
+        "file_name": "assets/french_beans-B9sFFEi9.jpg",
+        "file_hash": "67522810f7a4a096b8517aba575b2c2718fd91a2f4685783d33648d9e31723b4",
+        "download_url": "https://budtale.vercel.app/app-updates/files/67522810f7a4a096b8517aba575b2c2718fd91a2f4685783d33648d9e31723b4"
+      },
+      {
+        "file_name": "assets/garden-flowers-DF4jNxWT.jpg",
+        "file_hash": "dbdbfd9268133e23776b5c293a6f83d02e4a2bad937eb870a21ad5c191718376",
+        "download_url": "https://budtale.vercel.app/app-updates/files/dbdbfd9268133e23776b5c293a6f83d02e4a2bad937eb870a21ad5c191718376"
+      },
+      {
+        "file_name": "assets/garden-hero-CRHWOmlP.jpg",
+        "file_hash": "36b0742ffb4ffc4a2a0a5c41f6ad551db3d7c3e37169cd49365e21ed07a41807",
+        "download_url": "https://budtale.vercel.app/app-updates/files/36b0742ffb4ffc4a2a0a5c41f6ad551db3d7c3e37169cd49365e21ed07a41807"
+      },
+      {
+        "file_name": "assets/garden-trees-BpRVlgfD.jpg",
+        "file_hash": "1053c985d83575f4743b376ea68cad4d55fdfc55896706262e54b0f874c1a762",
+        "download_url": "https://budtale.vercel.app/app-updates/files/1053c985d83575f4743b376ea68cad4d55fdfc55896706262e54b0f874c1a762"
+      },
+      {
+        "file_name": "assets/garden-veggies-CwKjLIN_.jpg",
+        "file_hash": "fe2bca077460d2550c8b365e0874f71a9c967443e2e6c9a6cd6cb7d8f3d9d1f6",
+        "download_url": "https://budtale.vercel.app/app-updates/files/fe2bca077460d2550c8b365e0874f71a9c967443e2e6c9a6cd6cb7d8f3d9d1f6"
+      },
+      {
+        "file_name": "assets/garlic-3OoqBKPZ.jpg",
+        "file_hash": "cb0c1fb332d342625ab047e912fe2fa00c29778ea45282940903323dd58f3492",
+        "download_url": "https://budtale.vercel.app/app-updates/files/cb0c1fb332d342625ab047e912fe2fa00c29778ea45282940903323dd58f3492"
+      },
+      {
+        "file_name": "assets/ginger-CVjahNHg.jpg",
+        "file_hash": "a236373303a8ad02878575e519992c5e13aee4e7ec42ddf40d346704c4950438",
+        "download_url": "https://budtale.vercel.app/app-updates/files/a236373303a8ad02878575e519992c5e13aee4e7ec42ddf40d346704c4950438"
+      },
+      {
+        "file_name": "assets/gladiolus-fHM8lG_P.jpg",
+        "file_hash": "99a4d3a5dca8fba3c568221238a0ab9be71d4ae667cfee051067f20ed52ebfe4",
+        "download_url": "https://budtale.vercel.app/app-updates/files/99a4d3a5dca8fba3c568221238a0ab9be71d4ae667cfee051067f20ed52ebfe4"
+      },
+      {
+        "file_name": "assets/gomphrena-KcKOlU5I.jpg",
+        "file_hash": "3d473cc56596be00ab13a301627fe47e267bf259cc2d13460e15bcbffa6afb19",
+        "download_url": "https://budtale.vercel.app/app-updates/files/3d473cc56596be00ab13a301627fe47e267bf259cc2d13460e15bcbffa6afb19"
+      },
+      {
+        "file_name": "assets/index-AE-ORMQt.css",
+        "file_hash": "9177567aa5838aa4a1e7b3cfc382f9042946ccf24d32117cd4bc503472fdf302",
+        "download_url": "https://budtale.vercel.app/app-updates/files/9177567aa5838aa4a1e7b3cfc382f9042946ccf24d32117cd4bc503472fdf302"
+      },
+      {
+        "file_name": "assets/index-Bdiiy6vt.js",
+        "file_hash": "1b80de6eed66e100d790f02d3929869897a27890c53467ade78960206abe43ca",
+        "download_url": "https://budtale.vercel.app/app-updates/files/1b80de6eed66e100d790f02d3929869897a27890c53467ade78960206abe43ca"
+      },
+      {
+        "file_name": "assets/khesari-_AB4Ssge.jpg",
+        "file_hash": "e68c01797eb2555bb57ca56d5dc287c7bcfd8b0e8980a3f34007015368aea7d3",
+        "download_url": "https://budtale.vercel.app/app-updates/files/e68c01797eb2555bb57ca56d5dc287c7bcfd8b0e8980a3f34007015368aea7d3"
+      },
+      {
+        "file_name": "assets/larkspur-C6_i1421.jpg",
+        "file_hash": "fbf7a3fe018bf09aab2d3b3e2049f156740a7e2404dd3a3d08f4bbadfef7e3b8",
+        "download_url": "https://budtale.vercel.app/app-updates/files/fbf7a3fe018bf09aab2d3b3e2049f156740a7e2404dd3a3d08f4bbadfef7e3b8"
+      },
+      {
+        "file_name": "assets/lettuce-D1F7VrIr.jpg",
+        "file_hash": "def91cfd3181e9d06a83d2041cacf43aa0e7812b94f5e98cd960d45eadb67d81",
+        "download_url": "https://budtale.vercel.app/app-updates/files/def91cfd3181e9d06a83d2041cacf43aa0e7812b94f5e98cd960d45eadb67d81"
+      },
+      {
+        "file_name": "assets/lily_asiatic-Dm19b0Gs.jpg",
+        "file_hash": "70f5cb5013b5ce1d9127594117ddb5bd468f4402dc7812b6c23374547f22fc7c",
+        "download_url": "https://budtale.vercel.app/app-updates/files/70f5cb5013b5ce1d9127594117ddb5bd468f4402dc7812b6c23374547f22fc7c"
+      },
+      {
+        "file_name": "assets/lobia-BodQ9LtM.jpg",
+        "file_hash": "bafb9491925f8427b6925feb57ee3d40f005bc2bb6dfd16c393845f119ac882e",
+        "download_url": "https://budtale.vercel.app/app-updates/files/bafb9491925f8427b6925feb57ee3d40f005bc2bb6dfd16c393845f119ac882e"
+      },
+      {
+        "file_name": "assets/login-leaf-lsUD-cZy.jpg",
+        "file_hash": "8a869682a8e204ed13acb432bdc457a38129d53a0470b93554dddf709cf1510e",
+        "download_url": "https://budtale.vercel.app/app-updates/files/8a869682a8e204ed13acb432bdc457a38129d53a0470b93554dddf709cf1510e"
+      },
+      {
+        "file_name": "assets/manrope-cyrillic-400-normal-BMzJvInZ.woff2",
+        "file_hash": "5a987d1484070f1ea54de7c10ebfa4057a18e379361dbe5fd5c4fa4c2d95ef39",
+        "download_url": "https://budtale.vercel.app/app-updates/files/5a987d1484070f1ea54de7c10ebfa4057a18e379361dbe5fd5c4fa4c2d95ef39"
+      },
+      {
+        "file_name": "assets/manrope-cyrillic-400-normal-Dvx59UGC.woff",
+        "file_hash": "377eaffaf00d2fe381870f08f098e3ad266618253c9d4197647b89816784e49c",
+        "download_url": "https://budtale.vercel.app/app-updates/files/377eaffaf00d2fe381870f08f098e3ad266618253c9d4197647b89816784e49c"
+      },
+      {
+        "file_name": "assets/manrope-cyrillic-500-normal-B1OEZity.woff2",
+        "file_hash": "ab67a6d3a3fc134b74e966f10de67b1ae07c1c29fd7ebb6cb0705488f1128e22",
+        "download_url": "https://budtale.vercel.app/app-updates/files/ab67a6d3a3fc134b74e966f10de67b1ae07c1c29fd7ebb6cb0705488f1128e22"
+      },
+      {
+        "file_name": "assets/manrope-cyrillic-500-normal-CNwnNrRC.woff",
+        "file_hash": "5e86bae45417edeebd782a31adccfaa811e938fe93099cbe4b7991e7d74e0847",
+        "download_url": "https://budtale.vercel.app/app-updates/files/5e86bae45417edeebd782a31adccfaa811e938fe93099cbe4b7991e7d74e0847"
+      },
+      {
+        "file_name": "assets/manrope-cyrillic-700-normal-7JNVKxyl.woff",
+        "file_hash": "64d81d2579261c073c8e7ed0964f7b1735707ac3afc6c60a49531918e1cb128f",
+        "download_url": "https://budtale.vercel.app/app-updates/files/64d81d2579261c073c8e7ed0964f7b1735707ac3afc6c60a49531918e1cb128f"
+      },
+      {
+        "file_name": "assets/manrope-cyrillic-700-normal-Dw_fZAg2.woff2",
+        "file_hash": "2ad647b9159d27d27f4999b30598f92e60449fb20d80803bc7b85afafbb446d5",
+        "download_url": "https://budtale.vercel.app/app-updates/files/2ad647b9159d27d27f4999b30598f92e60449fb20d80803bc7b85afafbb446d5"
+      },
+      {
+        "file_name": "assets/manrope-greek-400-normal-CM4qok81.woff2",
+        "file_hash": "47f1b5621859a25df69ec1f1c7ed0ca3aadc3eccd1770c6e89cd5af06f1a0bf8",
+        "download_url": "https://budtale.vercel.app/app-updates/files/47f1b5621859a25df69ec1f1c7ed0ca3aadc3eccd1770c6e89cd5af06f1a0bf8"
+      },
+      {
+        "file_name": "assets/manrope-greek-400-normal-DuX9RsAR.woff",
+        "file_hash": "b1ef144fe025cbadcfb7880bc611535586d7f45461e7add7305ea2ea9ccad6ed",
+        "download_url": "https://budtale.vercel.app/app-updates/files/b1ef144fe025cbadcfb7880bc611535586d7f45461e7add7305ea2ea9ccad6ed"
+      },
+      {
+        "file_name": "assets/manrope-greek-500-normal-DyxYGEtJ.woff",
+        "file_hash": "5bb4928d86ca19d24b2b2fd9f2cb5e8080acad32ef5d6b2f9bf1abc1d65afa38",
+        "download_url": "https://budtale.vercel.app/app-updates/files/5bb4928d86ca19d24b2b2fd9f2cb5e8080acad32ef5d6b2f9bf1abc1d65afa38"
+      },
+      {
+        "file_name": "assets/manrope-greek-500-normal-GeMIHyWm.woff2",
+        "file_hash": "68c1619731941dd395b6b2c1ac05d2588815758eabcd5785cf579b10e9a94d27",
+        "download_url": "https://budtale.vercel.app/app-updates/files/68c1619731941dd395b6b2c1ac05d2588815758eabcd5785cf579b10e9a94d27"
+      },
+      {
+        "file_name": "assets/manrope-greek-700-normal-CHUG9PD8.woff2",
+        "file_hash": "b37807fe106dc58c57642635ae7ea172abe65b380fea7b8894615a5883b26ec5",
+        "download_url": "https://budtale.vercel.app/app-updates/files/b37807fe106dc58c57642635ae7ea172abe65b380fea7b8894615a5883b26ec5"
+      },
+      {
+        "file_name": "assets/manrope-greek-700-normal-DyfsrCpP.woff",
+        "file_hash": "caefb2ca9d80515325f901a72b5f3a88a6cb23b603a7aa2ed25e07133214aeb3",
+        "download_url": "https://budtale.vercel.app/app-updates/files/caefb2ca9d80515325f901a72b5f3a88a6cb23b603a7aa2ed25e07133214aeb3"
+      },
+      {
+        "file_name": "assets/manrope-latin-400-normal-8tf8FM3T.woff",
+        "file_hash": "1bf66c29a29f1b71d507cb97fc138cd130b856ed05b55decd3a2944b413cb636",
+        "download_url": "https://budtale.vercel.app/app-updates/files/1bf66c29a29f1b71d507cb97fc138cd130b856ed05b55decd3a2944b413cb636"
+      },
+      {
+        "file_name": "assets/manrope-latin-400-normal-PaqtzbVb.woff2",
+        "file_hash": "849290ef12a2eeb9af5c11924120d11aa4ae8b435ed3347d7fc8bc240c293ca3",
+        "download_url": "https://budtale.vercel.app/app-updates/files/849290ef12a2eeb9af5c11924120d11aa4ae8b435ed3347d7fc8bc240c293ca3"
+      },
+      {
+        "file_name": "assets/manrope-latin-500-normal-BYYD-dBL.woff2",
+        "file_hash": "19874318747181a650eda439c37955220b849d9c4797c9e0718ee67d4bf929bc",
+        "download_url": "https://budtale.vercel.app/app-updates/files/19874318747181a650eda439c37955220b849d9c4797c9e0718ee67d4bf929bc"
+      },
+      {
+        "file_name": "assets/manrope-latin-500-normal-DMZssgOp.woff",
+        "file_hash": "c805ac8fd73fb95ddba74e624500c7d7d9a8ec6434d723bb6a9b76173c9e41b4",
+        "download_url": "https://budtale.vercel.app/app-updates/files/c805ac8fd73fb95ddba74e624500c7d7d9a8ec6434d723bb6a9b76173c9e41b4"
+      },
+      {
+        "file_name": "assets/manrope-latin-700-normal-BZp_XxE4.woff2",
+        "file_hash": "d2a12c85a831e4b5db341767d0347fa3d1361d22a1fcb3e361a16b6c90080f71",
+        "download_url": "https://budtale.vercel.app/app-updates/files/d2a12c85a831e4b5db341767d0347fa3d1361d22a1fcb3e361a16b6c90080f71"
+      },
+      {
+        "file_name": "assets/manrope-latin-700-normal-DGRFkw-m.woff",
+        "file_hash": "e5d35fda4759b0d63ebcc6cca0627d98d9208254ce851c85df29e4d12aeafb61",
+        "download_url": "https://budtale.vercel.app/app-updates/files/e5d35fda4759b0d63ebcc6cca0627d98d9208254ce851c85df29e4d12aeafb61"
+      },
+      {
+        "file_name": "assets/manrope-latin-ext-400-normal-C-X6QNXX.woff",
+        "file_hash": "143798f65cc631e6af5a77f0d34a2597bbef1ff1b24b73f6e6b12c2a79ebeb14",
+        "download_url": "https://budtale.vercel.app/app-updates/files/143798f65cc631e6af5a77f0d34a2597bbef1ff1b24b73f6e6b12c2a79ebeb14"
+      },
+      {
+        "file_name": "assets/manrope-latin-ext-400-normal-CMDvPJRp.woff2",
+        "file_hash": "72c5354a6f814f3bd38dc3d8caee774f7557b301e69d8428e677b7b73d58d9ee",
+        "download_url": "https://budtale.vercel.app/app-updates/files/72c5354a6f814f3bd38dc3d8caee774f7557b301e69d8428e677b7b73d58d9ee"
+      },
+      {
+        "file_name": "assets/manrope-latin-ext-500-normal-EtoS1VaI.woff",
+        "file_hash": "f350e57f7de487eafb00f3dfc0ba0389670f929fe3c23d7ced337d94179291ac",
+        "download_url": "https://budtale.vercel.app/app-updates/files/f350e57f7de487eafb00f3dfc0ba0389670f929fe3c23d7ced337d94179291ac"
+      },
+      {
+        "file_name": "assets/manrope-latin-ext-500-normal-dm74KBQw.woff2",
+        "file_hash": "40787d0c2ff6301cb60b504b6c7a2518c5e0104e6f0f5329c14536d6ed1b884d",
+        "download_url": "https://budtale.vercel.app/app-updates/files/40787d0c2ff6301cb60b504b6c7a2518c5e0104e6f0f5329c14536d6ed1b884d"
+      },
+      {
+        "file_name": "assets/manrope-latin-ext-700-normal-DYOwVNan.woff2",
+        "file_hash": "dc7c46d7eb269cc90650d7f70cf49aafa39a98444e6882cc84096acbc156bfcd",
+        "download_url": "https://budtale.vercel.app/app-updates/files/dc7c46d7eb269cc90650d7f70cf49aafa39a98444e6882cc84096acbc156bfcd"
+      },
+      {
+        "file_name": "assets/manrope-latin-ext-700-normal-eVCcYqtJ.woff",
+        "file_hash": "b707ffc6454e54831a69d6c7db32d427b4a2bb914153c1f850fc4f888be7c35f",
+        "download_url": "https://budtale.vercel.app/app-updates/files/b707ffc6454e54831a69d6c7db32d427b4a2bb914153c1f850fc4f888be7c35f"
+      },
+      {
+        "file_name": "assets/manrope-vietnamese-400-normal-D7E_mLGF.woff",
+        "file_hash": "1d4631ba5036c35a61c5e342f06d4ffffab85ac0e800fda9e0ceff8ef19aebea",
+        "download_url": "https://budtale.vercel.app/app-updates/files/1d4631ba5036c35a61c5e342f06d4ffffab85ac0e800fda9e0ceff8ef19aebea"
+      },
+      {
+        "file_name": "assets/manrope-vietnamese-400-normal-DHb3EETF.woff2",
+        "file_hash": "dcb0ae6367203b04f930051188cbe02e8096c42db99d5ab6b77f16287fb4fa1b",
+        "download_url": "https://budtale.vercel.app/app-updates/files/dcb0ae6367203b04f930051188cbe02e8096c42db99d5ab6b77f16287fb4fa1b"
+      },
+      {
+        "file_name": "assets/manrope-vietnamese-500-normal-DCXiE_xi.woff2",
+        "file_hash": "33f057ea61fa597818617de3b9f66a5a3955fc1b0047e17b0f4887a975c6c732",
+        "download_url": "https://budtale.vercel.app/app-updates/files/33f057ea61fa597818617de3b9f66a5a3955fc1b0047e17b0f4887a975c6c732"
+      },
+      {
+        "file_name": "assets/manrope-vietnamese-500-normal-DaZ8i3XM.woff",
+        "file_hash": "969fa71a32335bd8c326fa00391d909d01498bfa2c67d0b182e859e5c079e737",
+        "download_url": "https://budtale.vercel.app/app-updates/files/969fa71a32335bd8c326fa00391d909d01498bfa2c67d0b182e859e5c079e737"
+      },
+      {
+        "file_name": "assets/manrope-vietnamese-700-normal-CUqMx5-1.woff2",
+        "file_hash": "36c3f8e0a1c59e1bc2fd2a9cabab5b478b488882beebb534e4bd1a8360bf845b",
+        "download_url": "https://budtale.vercel.app/app-updates/files/36c3f8e0a1c59e1bc2fd2a9cabab5b478b488882beebb534e4bd1a8360bf845b"
+      },
+      {
+        "file_name": "assets/manrope-vietnamese-700-normal-pt65Fn2Z.woff",
+        "file_hash": "19bc9ab84376bb2f88eb858d4293c75dad965c70df7755d0a7f03d10080174b2",
+        "download_url": "https://budtale.vercel.app/app-updates/files/19bc9ab84376bb2f88eb858d4293c75dad965c70df7755d0a7f03d10080174b2"
+      },
+      {
+        "file_name": "assets/marigold-x5541apk.jpg",
+        "file_hash": "2793f2f056be56f9f943c73e3f0fb609cf19be32248959140c6a48b993c98ede",
+        "download_url": "https://budtale.vercel.app/app-updates/files/2793f2f056be56f9f943c73e3f0fb609cf19be32248959140c6a48b993c98ede"
+      },
+      {
+        "file_name": "assets/material-symbols-outlined-CP_JrVKe.woff2",
+        "file_hash": "c126361daaf865d1359bd639657e3456f1dbf51d9e2242724924c529fa5e22f4",
+        "download_url": "https://budtale.vercel.app/app-updates/files/c126361daaf865d1359bd639657e3456f1dbf51d9e2242724924c529fa5e22f4"
+      },
+      {
+        "file_name": "assets/methi-BXTYqrgD.jpg",
+        "file_hash": "bf30fa1b9b75fb2e47991675f8b2d4a638267efa5e85b8b04a91a2f8df9b0c24",
+        "download_url": "https://budtale.vercel.app/app-updates/files/bf30fa1b9b75fb2e47991675f8b2d4a638267efa5e85b8b04a91a2f8df9b0c24"
+      },
+      {
+        "file_name": "assets/moment-leaves-BFumXRw2.jpg",
+        "file_hash": "d77fe36299c18e993c8cf0695d7ef11b7ae73fa83f436664179efe49406a6636",
+        "download_url": "https://budtale.vercel.app/app-updates/files/d77fe36299c18e993c8cf0695d7ef11b7ae73fa83f436664179efe49406a6636"
+      },
+      {
+        "file_name": "assets/mustard_greens-DTaHkmra.jpg",
+        "file_hash": "f2c1b4f5e4a87b6adc5bf3293108d40f65dfef68a942e6149f8d2e6458c39c7c",
+        "download_url": "https://budtale.vercel.app/app-updates/files/f2c1b4f5e4a87b6adc5bf3293108d40f65dfef68a942e6149f8d2e6458c39c7c"
+      },
+      {
+        "file_name": "assets/noto-serif-cyrillic-400-normal-CoUCwD1R.woff",
+        "file_hash": "cb2c6ed7f566546fc95a9cda591912d00e8aac709870e0d063ec43619269fada",
+        "download_url": "https://budtale.vercel.app/app-updates/files/cb2c6ed7f566546fc95a9cda591912d00e8aac709870e0d063ec43619269fada"
+      },
+      {
+        "file_name": "assets/noto-serif-cyrillic-400-normal-aKKVvgXJ.woff2",
+        "file_hash": "8deaf453448fb06f5cdd79262bc0a22a8af999541ef2639202f6dc44d0cae392",
+        "download_url": "https://budtale.vercel.app/app-updates/files/8deaf453448fb06f5cdd79262bc0a22a8af999541ef2639202f6dc44d0cae392"
+      },
+      {
+        "file_name": "assets/noto-serif-cyrillic-700-normal-B1CJcCkW.woff2",
+        "file_hash": "1dd6e758015cc8e424c0d57eabb94addf4adcba14c67ecdfd3b6386fc88295d0",
+        "download_url": "https://budtale.vercel.app/app-updates/files/1dd6e758015cc8e424c0d57eabb94addf4adcba14c67ecdfd3b6386fc88295d0"
+      },
+      {
+        "file_name": "assets/noto-serif-cyrillic-700-normal-shQtHmBr.woff",
+        "file_hash": "1995f4c4137423cfd3629e62118997f0fc7d73dc2f364fe4c164784d2d285c2a",
+        "download_url": "https://budtale.vercel.app/app-updates/files/1995f4c4137423cfd3629e62118997f0fc7d73dc2f364fe4c164784d2d285c2a"
+      },
+      {
+        "file_name": "assets/noto-serif-cyrillic-ext-400-normal-2InBkf9u.woff2",
+        "file_hash": "0755b43b6a12ecbc955540aabe0e2753093eb744b6e0dbbab50c7a133bc5519b",
+        "download_url": "https://budtale.vercel.app/app-updates/files/0755b43b6a12ecbc955540aabe0e2753093eb744b6e0dbbab50c7a133bc5519b"
+      },
+      {
+        "file_name": "assets/noto-serif-cyrillic-ext-400-normal-BijI9M04.woff",
+        "file_hash": "b2a0413d930907fc8863ec49e50212c7218d26413eb281d4eb1b5990ca4d9e81",
+        "download_url": "https://budtale.vercel.app/app-updates/files/b2a0413d930907fc8863ec49e50212c7218d26413eb281d4eb1b5990ca4d9e81"
+      },
+      {
+        "file_name": "assets/noto-serif-cyrillic-ext-700-normal-2SbxXn-Q.woff",
+        "file_hash": "f1cde0e55b3f40b4947da6891c517b95de1447080a063d25037484fa6927d6e4",
+        "download_url": "https://budtale.vercel.app/app-updates/files/f1cde0e55b3f40b4947da6891c517b95de1447080a063d25037484fa6927d6e4"
+      },
+      {
+        "file_name": "assets/noto-serif-cyrillic-ext-700-normal-DXcv7_v_.woff2",
+        "file_hash": "a81d26bfa75cf51c3249d83d4ad788f883b3c56ef32e297202fbeb1c84c30994",
+        "download_url": "https://budtale.vercel.app/app-updates/files/a81d26bfa75cf51c3249d83d4ad788f883b3c56ef32e297202fbeb1c84c30994"
+      },
+      {
+        "file_name": "assets/noto-serif-greek-400-normal-B3ECBf8v.woff2",
+        "file_hash": "4f87b0a2fc2f0a9ce734414bb54edb9bb3e9f0143c4d17e3879881adf8058cfa",
+        "download_url": "https://budtale.vercel.app/app-updates/files/4f87b0a2fc2f0a9ce734414bb54edb9bb3e9f0143c4d17e3879881adf8058cfa"
+      },
+      {
+        "file_name": "assets/noto-serif-greek-400-normal-i7vYTb6g.woff",
+        "file_hash": "a09eee0fa003e956630fd887e677286083bb8c62bd4bcd73334e1cc48279ee3a",
+        "download_url": "https://budtale.vercel.app/app-updates/files/a09eee0fa003e956630fd887e677286083bb8c62bd4bcd73334e1cc48279ee3a"
+      },
+      {
+        "file_name": "assets/noto-serif-greek-700-normal-Coxro6sX.woff",
+        "file_hash": "d5d8452c6a098edd18e02954cd626699d3f4b024ffc4e89207ffb310a6aa24cc",
+        "download_url": "https://budtale.vercel.app/app-updates/files/d5d8452c6a098edd18e02954cd626699d3f4b024ffc4e89207ffb310a6aa24cc"
+      },
+      {
+        "file_name": "assets/noto-serif-greek-700-normal-Cx5ck3FK.woff2",
+        "file_hash": "bd24b899d9fe3955fed1c9b0ffa1d12aca02db45474fe906735456430a2efd36",
+        "download_url": "https://budtale.vercel.app/app-updates/files/bd24b899d9fe3955fed1c9b0ffa1d12aca02db45474fe906735456430a2efd36"
+      },
+      {
+        "file_name": "assets/noto-serif-greek-ext-400-normal-8V3SQMVO.woff",
+        "file_hash": "e113bd46e074bace849c73590dc54a234bc1a41b263053ce3e88684af2dfeb0a",
+        "download_url": "https://budtale.vercel.app/app-updates/files/e113bd46e074bace849c73590dc54a234bc1a41b263053ce3e88684af2dfeb0a"
+      },
+      {
+        "file_name": "assets/noto-serif-greek-ext-400-normal-fffGn9To.woff2",
+        "file_hash": "82791822ba505972b0be62837a4875a07547859f0f66189572372c05614fda66",
+        "download_url": "https://budtale.vercel.app/app-updates/files/82791822ba505972b0be62837a4875a07547859f0f66189572372c05614fda66"
+      },
+      {
+        "file_name": "assets/noto-serif-greek-ext-700-normal-BdVf8m3e.woff2",
+        "file_hash": "bef9cf09cf749d942c62bd44295c25205ac425a4b036e1bea545976a31a2e563",
+        "download_url": "https://budtale.vercel.app/app-updates/files/bef9cf09cf749d942c62bd44295c25205ac425a4b036e1bea545976a31a2e563"
+      },
+      {
+        "file_name": "assets/noto-serif-greek-ext-700-normal-DHVqdzP4.woff",
+        "file_hash": "451189688deab6af85a9938c9335fa5825cc9138b9146389fdac88f8463de371",
+        "download_url": "https://budtale.vercel.app/app-updates/files/451189688deab6af85a9938c9335fa5825cc9138b9146389fdac88f8463de371"
+      },
+      {
+        "file_name": "assets/noto-serif-latin-400-normal-BV_iYGc9.woff2",
+        "file_hash": "4c0cbe3eec50d260754d681c17ee2af49a43d7fd93ce42877f665fcb1a889b87",
+        "download_url": "https://budtale.vercel.app/app-updates/files/4c0cbe3eec50d260754d681c17ee2af49a43d7fd93ce42877f665fcb1a889b87"
+      },
+      {
+        "file_name": "assets/noto-serif-latin-400-normal-DT0cwSa_.woff",
+        "file_hash": "084719f02390eba8960814e1845fba7e6857d63895f53fe8321bcac6b4c73d40",
+        "download_url": "https://budtale.vercel.app/app-updates/files/084719f02390eba8960814e1845fba7e6857d63895f53fe8321bcac6b4c73d40"
+      },
+      {
+        "file_name": "assets/noto-serif-latin-700-normal-CIw17UNa.woff2",
+        "file_hash": "0d0b440760c93e6fec440ad438d10cea6c70367a0f5ecfcfa15cef0a85c67093",
+        "download_url": "https://budtale.vercel.app/app-updates/files/0d0b440760c93e6fec440ad438d10cea6c70367a0f5ecfcfa15cef0a85c67093"
+      },
+      {
+        "file_name": "assets/noto-serif-latin-700-normal-mX-AlFMT.woff",
+        "file_hash": "7057093244f719a3fd3706e9d1941b4161941ffcce81ecc661bc93644bbbd6df",
+        "download_url": "https://budtale.vercel.app/app-updates/files/7057093244f719a3fd3706e9d1941b4161941ffcce81ecc661bc93644bbbd6df"
+      },
+      {
+        "file_name": "assets/noto-serif-latin-ext-400-normal-CMAsOjEZ.woff2",
+        "file_hash": "536857e8de0e3b12176fefbf1233a294c7dece1f2f4d018d26cb386a8de75cd0",
+        "download_url": "https://budtale.vercel.app/app-updates/files/536857e8de0e3b12176fefbf1233a294c7dece1f2f4d018d26cb386a8de75cd0"
+      },
+      {
+        "file_name": "assets/noto-serif-latin-ext-400-normal-DmIgJaL_.woff",
+        "file_hash": "5443f53e1d3d95b5ad311882a1238dbaac267bf9b885f6540ff8d6d8ea633308",
+        "download_url": "https://budtale.vercel.app/app-updates/files/5443f53e1d3d95b5ad311882a1238dbaac267bf9b885f6540ff8d6d8ea633308"
+      },
+      {
+        "file_name": "assets/noto-serif-latin-ext-700-normal-BRvgVta8.woff2",
+        "file_hash": "52c9361ebb521542e71e5a11aa5683ab3bbd8df5428888e95786478bb1377cba",
+        "download_url": "https://budtale.vercel.app/app-updates/files/52c9361ebb521542e71e5a11aa5683ab3bbd8df5428888e95786478bb1377cba"
+      },
+      {
+        "file_name": "assets/noto-serif-latin-ext-700-normal-B_G30Asf.woff",
+        "file_hash": "53c93b83b08735885318e3fefcbd8706b03bbb8236a618ff4d150ac449dca66a",
+        "download_url": "https://budtale.vercel.app/app-updates/files/53c93b83b08735885318e3fefcbd8706b03bbb8236a618ff4d150ac449dca66a"
+      },
+      {
+        "file_name": "assets/noto-serif-math-400-normal-B8cPkepj.woff",
+        "file_hash": "01b246a68ea4c2b52520d53c08683f8b3b5ea3fde0376d730f198cd39892b2a6",
+        "download_url": "https://budtale.vercel.app/app-updates/files/01b246a68ea4c2b52520d53c08683f8b3b5ea3fde0376d730f198cd39892b2a6"
+      },
+      {
+        "file_name": "assets/noto-serif-math-400-normal-DimicZOx.woff2",
+        "file_hash": "4c33efa73f0b53a28a48dae9034f12f32a23669e935f426ee8202936b3ef5680",
+        "download_url": "https://budtale.vercel.app/app-updates/files/4c33efa73f0b53a28a48dae9034f12f32a23669e935f426ee8202936b3ef5680"
+      },
+      {
+        "file_name": "assets/noto-serif-math-700-normal-DeYfkfSk.woff",
+        "file_hash": "aca409cc6b8786b4b45c0dc7084dbead46c96d1c4cd10f75bac41d4d9d6dd570",
+        "download_url": "https://budtale.vercel.app/app-updates/files/aca409cc6b8786b4b45c0dc7084dbead46c96d1c4cd10f75bac41d4d9d6dd570"
+      },
+      {
+        "file_name": "assets/noto-serif-math-700-normal-DmKVFEfL.woff2",
+        "file_hash": "3e12e3d0bb825f9cd73ac1c0c6d64bf1f9f21526f898e316f2fdd13a57383464",
+        "download_url": "https://budtale.vercel.app/app-updates/files/3e12e3d0bb825f9cd73ac1c0c6d64bf1f9f21526f898e316f2fdd13a57383464"
+      },
+      {
+        "file_name": "assets/noto-serif-vietnamese-400-normal-B2Tmka3c.woff2",
+        "file_hash": "207dac0723db2e3832fb864c23a416dd953df68b27289acaec79ed94cd37b7ee",
+        "download_url": "https://budtale.vercel.app/app-updates/files/207dac0723db2e3832fb864c23a416dd953df68b27289acaec79ed94cd37b7ee"
+      },
+      {
+        "file_name": "assets/noto-serif-vietnamese-400-normal-I93X-UPO.woff",
+        "file_hash": "e1c1dd555321557f750798bf7db7a40780677cbe06b4d6f9a1634af08a779638",
+        "download_url": "https://budtale.vercel.app/app-updates/files/e1c1dd555321557f750798bf7db7a40780677cbe06b4d6f9a1634af08a779638"
+      },
+      {
+        "file_name": "assets/noto-serif-vietnamese-700-normal-BVYKy-KI.woff",
+        "file_hash": "5cfc090fb6eb46c8ac0204d3e59d4e62d80ad66bce1fd866f77f8d67185f809e",
+        "download_url": "https://budtale.vercel.app/app-updates/files/5cfc090fb6eb46c8ac0204d3e59d4e62d80ad66bce1fd866f77f8d67185f809e"
+      },
+      {
+        "file_name": "assets/noto-serif-vietnamese-700-normal-DmLHmu9q.woff2",
+        "file_hash": "e2c65dbf3abb07aee564c409257b942d3baedc2f4fe2f585ae88bf3d821503fc",
+        "download_url": "https://budtale.vercel.app/app-updates/files/e2c65dbf3abb07aee564c409257b942d3baedc2f4fe2f585ae88bf3d821503fc"
+      },
+      {
+        "file_name": "assets/okra-C-LwP5qD.jpg",
+        "file_hash": "ad8471af78d856fc07281736bd41db280a231de987ea2490f78daf71296b6603",
+        "download_url": "https://budtale.vercel.app/app-updates/files/ad8471af78d856fc07281736bd41db280a231de987ea2490f78daf71296b6603"
+      },
+      {
+        "file_name": "assets/onion-BAORzu4q.jpg",
+        "file_hash": "4b29f83be4c04c2a96a13e5649b47d278c7dafad0c408e2e9bf8f8a75f5a13c1",
+        "download_url": "https://budtale.vercel.app/app-updates/files/4b29f83be4c04c2a96a13e5649b47d278c7dafad0c408e2e9bf8f8a75f5a13c1"
+      },
+      {
+        "file_name": "assets/palak-DpOQDkQm.jpg",
+        "file_hash": "decb43eee84f0d42d73886a140b2a86196e6c0c9a0d72364ab1af71e4d9a697e",
+        "download_url": "https://budtale.vercel.app/app-updates/files/decb43eee84f0d42d73886a140b2a86196e6c0c9a0d72364ab1af71e4d9a697e"
+      },
+      {
+        "file_name": "assets/pansy-Df07b0Vb.jpg",
+        "file_hash": "efb27d920b999f52e022a0239a8ddbc48b4b53a7e796f0d927d1c7ea960aeed0",
+        "download_url": "https://budtale.vercel.app/app-updates/files/efb27d920b999f52e022a0239a8ddbc48b4b53a7e796f0d927d1c7ea960aeed0"
+      },
+      {
+        "file_name": "assets/peas-Dy-PHOR7.jpg",
+        "file_hash": "be088e2620a5280db7e88db51febb4d863f094a36fae519edbfb1abe24de37f8",
+        "download_url": "https://budtale.vercel.app/app-updates/files/be088e2620a5280db7e88db51febb4d863f094a36fae519edbfb1abe24de37f8"
+      },
+      {
+        "file_name": "assets/petunia-oxoi5fWe.jpg",
+        "file_hash": "eeca931c0f3827fe312cb50af509c4a05b65a92800665c5597eef5677e6d10bc",
+        "download_url": "https://budtale.vercel.app/app-updates/files/eeca931c0f3827fe312cb50af509c4a05b65a92800665c5597eef5677e6d10bc"
+      },
+      {
+        "file_name": "assets/portulaca-DvoqE9MG.jpg",
+        "file_hash": "f065c400727e2e3627000afb23faf3ad3b93c17c5596a194a8116cca1403642b",
+        "download_url": "https://budtale.vercel.app/app-updates/files/f065c400727e2e3627000afb23faf3ad3b93c17c5596a194a8116cca1403642b"
+      },
+      {
+        "file_name": "assets/potato-y9XPvxcC.jpg",
+        "file_hash": "ef8ce5f2b7245812dc395050a8f79520ee363d6ec1c4d431c9a4cafd8fd197bf",
+        "download_url": "https://budtale.vercel.app/app-updates/files/ef8ce5f2b7245812dc395050a8f79520ee363d6ec1c4d431c9a4cafd8fd197bf"
+      },
+      {
+        "file_name": "assets/pumpkin-B_cQDP2W.jpg",
+        "file_hash": "07582d6360bab8b31f2cecca92d2fd3ed71ff1cb3f6ae9d6adf5a88f6af374eb",
+        "download_url": "https://budtale.vercel.app/app-updates/files/07582d6360bab8b31f2cecca92d2fd3ed71ff1cb3f6ae9d6adf5a88f6af374eb"
+      },
+      {
+        "file_name": "assets/radish-BF0XOXrB.jpg",
+        "file_hash": "271caf3f50f8ffe426b5879283bfa0f46daeb5a2d77e1017342f655e0d04d342",
+        "download_url": "https://budtale.vercel.app/app-updates/files/271caf3f50f8ffe426b5879283bfa0f46daeb5a2d77e1017342f655e0d04d342"
+      },
+      {
+        "file_name": "assets/rajnigandha-DbajgrHV.jpg",
+        "file_hash": "fe9c59959a33faaa2112a105c18ebb977f31ecc165484ae0009a070124e4d42b",
+        "download_url": "https://budtale.vercel.app/app-updates/files/fe9c59959a33faaa2112a105c18ebb977f31ecc165484ae0009a070124e4d42b"
+      },
+      {
+        "file_name": "assets/ridge_gourd-CbDx9KN_.jpg",
+        "file_hash": "79d84bcf4df3e0e53a978752f8facad00dba9c00ca5436887a0a2c7fd26eb954",
+        "download_url": "https://budtale.vercel.app/app-updates/files/79d84bcf4df3e0e53a978752f8facad00dba9c00ca5436887a0a2c7fd26eb954"
+      },
+      {
+        "file_name": "assets/salvia-Bhy3ehKp.jpg",
+        "file_hash": "b2adfdfe925f3cc7d10b5b91fe523bf725ec85b32075edfc197637bdbb0a12af",
+        "download_url": "https://budtale.vercel.app/app-updates/files/b2adfdfe925f3cc7d10b5b91fe523bf725ec85b32075edfc197637bdbb0a12af"
+      },
+      {
+        "file_name": "assets/sem-6UB5V5pN.jpg",
+        "file_hash": "516ee7b17be946984130a3fa1242bfb53e7cc6edcefffaf6cf4c119f13aa19ad",
+        "download_url": "https://budtale.vercel.app/app-updates/files/516ee7b17be946984130a3fa1242bfb53e7cc6edcefffaf6cf4c119f13aa19ad"
+      },
+      {
+        "file_name": "assets/splash-leaves-BP6IJL8H.jpg",
+        "file_hash": "a9cec621b1a2094b68bbbaf5c0c813aaed09b06fd47ae0deed4361839afaa5d9",
+        "download_url": "https://budtale.vercel.app/app-updates/files/a9cec621b1a2094b68bbbaf5c0c813aaed09b06fd47ae0deed4361839afaa5d9"
+      },
+      {
+        "file_name": "assets/sunflower-jSh7TYHF.jpg",
+        "file_hash": "d01388d5d829856e5e1b11afe47c6d2d97c36cecd828b031f65489433ae0e771",
+        "download_url": "https://budtale.vercel.app/app-updates/files/d01388d5d829856e5e1b11afe47c6d2d97c36cecd828b031f65489433ae0e771"
+      },
+      {
+        "file_name": "assets/sweet_pea-D0NilzCp.jpg",
+        "file_hash": "c08b9fd303d485ca78376470e6aa5aaf231d4f24648d72c5cd23c0b14c9f6346",
+        "download_url": "https://budtale.vercel.app/app-updates/files/c08b9fd303d485ca78376470e6aa5aaf231d4f24648d72c5cd23c0b14c9f6346"
+      },
+      {
+        "file_name": "assets/tinda-CV6bGboN.jpg",
+        "file_hash": "581cb211cf199ee5aa8769e17cb0dfbea7f865a83032f81819866145db942576",
+        "download_url": "https://budtale.vercel.app/app-updates/files/581cb211cf199ee5aa8769e17cb0dfbea7f865a83032f81819866145db942576"
+      },
+      {
+        "file_name": "assets/tomato-BSkqKCiC.jpg",
+        "file_hash": "53f1dc6a74d7165edc3f1072d41e1765a85aaf0b491d5f37c56f504066277fe6",
+        "download_url": "https://budtale.vercel.app/app-updates/files/53f1dc6a74d7165edc3f1072d41e1765a85aaf0b491d5f37c56f504066277fe6"
+      },
+      {
+        "file_name": "assets/tree-hero-BUOuPW-Z.jpg",
+        "file_hash": "515e9022c0c429fe1d098674311c9382e74b610a25a1d64f8b0e950800b8f83a",
+        "download_url": "https://budtale.vercel.app/app-updates/files/515e9022c0c429fe1d098674311c9382e74b610a25a1d64f8b0e950800b8f83a"
+      },
+      {
+        "file_name": "assets/turmeric-BlpifCCP.jpg",
+        "file_hash": "ce055d77b93e5345bfba23c2caff17e0274cb49364e18dcf31f294d6c5106fb9",
+        "download_url": "https://budtale.vercel.app/app-updates/files/ce055d77b93e5345bfba23c2caff17e0274cb49364e18dcf31f294d6c5106fb9"
+      },
+      {
+        "file_name": "assets/turnip-BrNG8SMo.jpg",
+        "file_hash": "9b8ff775d43603b1e00164c13411bfe8112723a80c945994f844dfa4e9a6fcdf",
+        "download_url": "https://budtale.vercel.app/app-updates/files/9b8ff775d43603b1e00164c13411bfe8112723a80c945994f844dfa4e9a6fcdf"
+      },
+      {
+        "file_name": "assets/web-BO3dLJHl.js",
+        "file_hash": "c5e955a8214fadd87e27cfedfbad2d0856c52cacf5fe562d931f497b2e641ff5",
+        "download_url": "https://budtale.vercel.app/app-updates/files/c5e955a8214fadd87e27cfedfbad2d0856c52cacf5fe562d931f497b2e641ff5"
+      },
+      {
+        "file_name": "assets/web-CSR6yBeg.js",
+        "file_hash": "f05870b547ac2f65493c298e614af8a00e9e89047806bd2107a37c5df522d59a",
+        "download_url": "https://budtale.vercel.app/app-updates/files/f05870b547ac2f65493c298e614af8a00e9e89047806bd2107a37c5df522d59a"
+      },
+      {
+        "file_name": "assets/web-CzoGhvq2.js",
+        "file_hash": "35cc6867797455ff1505f484f5907891ec5747e0de8c863a3d3d48d3113f3cc2",
+        "download_url": "https://budtale.vercel.app/app-updates/files/35cc6867797455ff1505f484f5907891ec5747e0de8c863a3d3d48d3113f3cc2"
+      },
+      {
+        "file_name": "assets/web-sMN3p5vE.js",
+        "file_hash": "fc46e4b193b76d2fb2ab4fbe5030505a75d68e80bcecf5d0b586fdcd7b06121a",
+        "download_url": "https://budtale.vercel.app/app-updates/files/fc46e4b193b76d2fb2ab4fbe5030505a75d68e80bcecf5d0b586fdcd7b06121a"
+      },
+      {
+        "file_name": "assets/zinnia-D_T54I1v.jpg",
+        "file_hash": "2f108967ffab4ea9f9cd1a42b83388073da7e81f97ac8f8bc8f279c047934be2",
+        "download_url": "https://budtale.vercel.app/app-updates/files/2f108967ffab4ea9f9cd1a42b83388073da7e81f97ac8f8bc8f279c047934be2"
+      },
+      {
+        "file_name": "favicon.svg",
+        "file_hash": "92173fec53fd28a20298d87c47c26aed9eb54d21236f8602f336d945aea2337a",
+        "download_url": "https://budtale.vercel.app/app-updates/files/92173fec53fd28a20298d87c47c26aed9eb54d21236f8602f336d945aea2337a"
+      },
+      {
+        "file_name": "index.html",
+        "file_hash": "233caf9a5e779f4f8ddece13ee0035163a914a08c0bd29897699aa24ef7ec5a1",
+        "download_url": "https://budtale.vercel.app/app-updates/files/233caf9a5e779f4f8ddece13ee0035163a914a08c0bd29897699aa24ef7ec5a1"
+      }
+    ]
+  }
+}

@@ -12,6 +12,18 @@ const config: CapacitorConfig = {
     // Google only: the other providers would bundle Facebook's SDK, which adds
     // advertising-ID and install-referrer permissions to an app that has no ads.
     SocialLogin: { providers: { google: true, facebook: false, apple: false, twitter: false } },
+    // Live updates, self-hosted (src/features/app-updates): manual mode, and every Capgo cloud
+    // URL blanked so no update checks or statistics go to Capgo's servers.
+    CapacitorUpdater: {
+      autoUpdate: false,
+      updateUrl: '',
+      statsUrl: '',
+      channelUrl: '',
+      appReadyTimeout: 10000,
+      resetWhenUpdate: true,
+      autoDeletePrevious: true,
+      autoDeleteFailed: true,
+    },
   },
 };
 

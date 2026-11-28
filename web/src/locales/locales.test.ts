@@ -17,6 +17,8 @@ const HINDI_PENDING_REVIEW: string[] = [
   'account.delete.goes.profile',
   'account.info.email',
   'tasks.done',
+  'appUpdate.',
+  'profile.screensVersion',
 ];
 
 type Tree = { [key: string]: string | Tree };

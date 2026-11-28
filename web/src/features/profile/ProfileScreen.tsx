@@ -1,3 +1,4 @@
+import appBundle from '../../app-bundle.json';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -134,7 +135,9 @@ export function ProfileScreen() {
           </Link>
         </div>
         {/* The district map's licence (ODbL) asks for this credit. */}
-        <p className="pb-4 text-center font-label text-[11px] text-outline">{t('profile.attribution')}</p>
+        <p className="text-center font-label text-[11px] text-outline">{t('profile.attribution')}</p>
+        {/* Which live update this phone runs (src/features/app-updates). */}
+        <p className="pb-4 text-center font-label text-[11px] text-outline">{t('profile.screensVersion', { version: appBundle.version })}</p>
       </main>
     </Screen>
   );

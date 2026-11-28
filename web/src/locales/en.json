@@ -158,7 +158,8 @@
     "photo": "Profile photo",
     "changePhoto": "Change profile photo",
     "deleteAccount": "Delete my account",
-    "signedInAs": "Signed in as {{email}}"
+    "signedInAs": "Signed in as {{email}}",
+    "screensVersion": "Screens version {{version}}"
   },
   "plants": {
     "list": {
@@ -883,6 +884,14 @@
       "off": "Off",
       "blocked": "Notifications are off for Budtale on this phone.",
       "howTo": "Turn them on in Settings → Apps → Budtale → Notifications."
+    }
+  },
+  "appUpdate": {
+    "updating": "Updating Budtale…",
+    "required": {
+      "title": "Update Budtale",
+      "body": "This version of Budtale is too old to keep working. Update it from Google Play to carry on; your garden is safe.",
+      "button": "Update"
     }
   }
 }
