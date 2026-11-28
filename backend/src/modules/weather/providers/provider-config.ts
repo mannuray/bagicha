@@ -32,6 +32,18 @@ const REGISTRY: Record<string, ProviderEntry> = {
 
 const DEFAULT = ['open-meteo'];
 
+/** Every setting the weather sources read; the module passes exactly these through. */
+const SETTINGS = [
+  'WEATHER_PROVIDERS',
+  'OPEN_METEO_API_KEY',
+  'OPENWEATHERMAP_API_KEY',
+] as const;
+
+/** The weather settings, read through `get` (ConfigService in the app). */
+export function readWeatherEnv(get: (key: string) => string | undefined): Env {
+  return Object.fromEntries(SETTINGS.map((key) => [key, get(key)]));
+}
+
 /** WEATHER_PROVIDERS: an ordered list ("open-meteo,openweathermap"); unset means Open-Meteo, "none" turns weather off. */
 export function parseProviderNames(raw: string | undefined): string[] {
   if (raw === undefined || raw.trim() === '') return DEFAULT;

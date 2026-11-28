@@ -6,7 +6,7 @@ import { RedisService } from '../../common/redis/redis.service';
 import { CatalogueModule } from '../catalogue';
 import { PlantLedgerModule } from '../plant-ledger';
 import { RegionsModule } from '../regions';
-import { buildProviders } from './providers/provider-config';
+import { buildProviders, readWeatherEnv } from './providers/provider-config';
 import { WeatherController } from './weather.controller';
 import { WeatherAudienceRepository } from './weather-audience.repository';
 import { WeatherForecasts } from './weather-forecasts';
@@ -42,10 +42,7 @@ const PROVIDER_TIMEOUT_MS = 4000;
         logger: PinoLogger,
       ) => {
         logger.setContext(WeatherForecasts.name);
-        const env = {
-          WEATHER_PROVIDERS: config.get<string>('WEATHER_PROVIDERS'),
-          OPEN_METEO_API_KEY: config.get<string>('OPEN_METEO_API_KEY'),
-        };
+        const env = readWeatherEnv((key) => config.get<string>(key));
         const providers = buildProviders(env, globalThis.fetch);
         if (
           config.get<string>('NODE_ENV') === 'production' &&

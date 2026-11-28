@@ -1,5 +1,9 @@
 import { InvariantError } from '../../../common/errors';
-import { buildProviders, parseProviderNames } from './provider-config';
+import {
+  buildProviders,
+  parseProviderNames,
+  readWeatherEnv,
+} from './provider-config';
 
 const fetch = jest.fn() as unknown as typeof globalThis.fetch;
 
@@ -55,5 +59,25 @@ describe('buildProviders', () => {
 
   it('builds nothing when weather is off', () => {
     expect(buildProviders({ WEATHER_PROVIDERS: 'none' }, fetch)).toEqual([]);
+  });
+});
+
+describe('readWeatherEnv', () => {
+  it('reads every setting the providers need, so a configured OpenWeatherMap starts', () => {
+    const settings: Record<string, string> = {
+      WEATHER_PROVIDERS: 'openweathermap,open-meteo',
+      OPENWEATHERMAP_API_KEY: 'owm-test-key',
+      UNRELATED: 'x',
+    };
+    const env = readWeatherEnv((key) => settings[key]);
+    expect(env).toEqual({
+      WEATHER_PROVIDERS: 'openweathermap,open-meteo',
+      OPEN_METEO_API_KEY: undefined,
+      OPENWEATHERMAP_API_KEY: 'owm-test-key',
+    });
+    expect(buildProviders(env, fetch).map((p) => p.name)).toEqual([
+      'OpenWeather',
+      'Open-Meteo',
+    ]);
   });
 });
